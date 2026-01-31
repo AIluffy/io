@@ -1,6 +1,8 @@
 import { cloneValue, snapshotValue } from './snapshot.js';
+import { notifyUpdate, notifyValue } from './batch.js';
 import { createUpdate } from './updates.js';
 import type {
+  OinErrorHandler,
   OinTreeArrayUnit,
   OinTreeNode,
   OinPatch,
@@ -10,6 +12,7 @@ import type {
   OinUpdate,
 } from './types.js';
 import { createUnit, isUnit } from './unit.js';
+import { emitError } from './debug.js';
 
 const INTERNAL = Symbol.for('@org/oin/internal');
 
@@ -20,12 +23,69 @@ type TreeScopeNode = OinTreeScope<Record<string, unknown>>;
 type TreeArrayNode = OinTreeArrayUnit<unknown>;
 type TreeNode = OinUnit<unknown> | TreeScopeNode | TreeArrayNode;
 
-type TreeContext = {
-  pathToNode: Map<string, TreeNode>;
+type PathTrieNode = {
+  node: TreeNode | undefined;
+  children: Map<PathSegment, PathTrieNode>;
 };
 
-function pathKey(path: NodePath): string {
-  return JSON.stringify(path);
+type TreeContext = {
+  root: PathTrieNode;
+  errorListeners: Set<OinErrorHandler>;
+};
+
+function createTrieNode(): PathTrieNode {
+  return { node: undefined, children: new Map() };
+}
+
+function setPathNode(ctx: TreeContext, path: NodePath, node: TreeNode): void {
+  let current = ctx.root;
+  for (const seg of path) {
+    const next = current.children.get(seg);
+    if (next) {
+      current = next;
+      continue;
+    }
+    const created = createTrieNode();
+    current.children.set(seg, created);
+    current = created;
+  }
+  current.node = node;
+}
+
+function getPathNode(ctx: TreeContext, path: NodePath): TreeNode | undefined {
+  let current = ctx.root;
+  for (const seg of path) {
+    const next = current.children.get(seg);
+    if (!next) return undefined;
+    current = next;
+  }
+  return current.node;
+}
+
+function deletePathNode(ctx: TreeContext, path: NodePath): void {
+  if (path.length === 0) {
+    ctx.root.node = undefined;
+    return;
+  }
+  const stack: PathTrieNode[] = [ctx.root];
+  let current = ctx.root;
+  for (const seg of path) {
+    const next = current.children.get(seg);
+    if (!next) return;
+    current = next;
+    stack.push(current);
+  }
+  current.node = undefined;
+
+  for (let i = path.length - 1; i >= 0; i -= 1) {
+    const parent = stack[i];
+    const seg = path[i];
+    const child = parent.children.get(seg);
+    if (!child) continue;
+    if (child.node !== undefined) break;
+    if (child.children.size > 0) break;
+    parent.children.delete(seg);
+  }
 }
 
 const noopUnsubscribe: OinUnsubscribe = () => {
@@ -81,6 +141,10 @@ type TreeScopeState = {
   children: Map<string, TreeNode>;
   revision: number;
   isCommitting: boolean;
+  valueEpoch: number;
+  cachedSnapshot: Record<string, unknown> | undefined;
+  cachedSnapshotEpoch: number;
+  hasCachedSnapshot: boolean;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<string, OinUnsubscribe>;
@@ -93,6 +157,10 @@ type TreeArrayState = {
   children: TreeNode[];
   revision: number;
   isCommitting: boolean;
+  valueEpoch: number;
+  cachedSnapshot: unknown[] | undefined;
+  cachedSnapshotEpoch: number;
+  hasCachedSnapshot: boolean;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<TreeNode, OinUnsubscribe>;
@@ -131,7 +199,7 @@ function registerSubtree(
   path: NodePath,
   node: TreeNode
 ): void {
-  ctx.pathToNode.set(pathKey(path), node);
+  setPathNode(ctx, path, node);
 
   const internal = getInternal(node);
   if (!internal) return;
@@ -157,7 +225,7 @@ function unregisterSubtree(
   path: NodePath,
   node: TreeNode
 ): void {
-  ctx.pathToNode.delete(pathKey(path));
+  deletePathNode(ctx, path);
 
   const internal = getInternal(node);
   if (!internal) return;
@@ -197,25 +265,44 @@ function getNodeValue(node: TreeNode): unknown {
   return snapshotValue(node);
 }
 
-function emitScopeValue(state: TreeScopeState): void {
+function getScopeSnapshot(state: TreeScopeState): Record<string, unknown> {
+  if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
+    return state.cachedSnapshot as Record<string, unknown>;
   const plain: Record<string, unknown> = {};
   for (const [key, node] of state.children.entries())
     plain[key] = getNodeValue(node);
-  const value = snapshotValue(plain);
-  for (const listener of state.valueListeners) listener(value);
+  const value = snapshotValue(plain) as Record<string, unknown>;
+  state.cachedSnapshot = value;
+  state.cachedSnapshotEpoch = state.valueEpoch;
+  state.hasCachedSnapshot = true;
+  return value;
+}
+
+function getArraySnapshot(state: TreeArrayState): unknown[] {
+  if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
+    return state.cachedSnapshot as unknown[];
+  const values = snapshotValue(state.children.map((c) => getNodeValue(c)));
+  state.cachedSnapshot = values;
+  state.cachedSnapshotEpoch = state.valueEpoch;
+  state.hasCachedSnapshot = true;
+  return values;
+}
+
+function emitScopeValue(state: TreeScopeState): void {
+  const value = getScopeSnapshot(state);
+  notifyValue(state.valueListeners, value);
 }
 
 function emitScopeUpdate(state: TreeScopeState, update: OinUpdate): void {
-  for (const listener of state.updateListeners) listener(update);
+  notifyUpdate(state.updateListeners, update);
 }
 
 function emitArrayValue(state: TreeArrayState): void {
-  const values = snapshotValue(state.children.map((c) => getNodeValue(c)));
-  for (const listener of state.valueListeners) listener(values);
+  notifyValue(state.valueListeners, getArraySnapshot(state));
 }
 
 function emitArrayUpdate(state: TreeArrayState, update: OinUpdate): void {
-  for (const listener of state.updateListeners) listener(update);
+  notifyUpdate(state.updateListeners, update);
 }
 
 function attachChildToScope(
@@ -230,6 +317,7 @@ function attachChildToScope(
     typeof maybeValueSub.subscribe === 'function'
       ? maybeValueSub.subscribe(() => {
           if (state.isCommitting) return;
+          state.valueEpoch += 1;
           emitScopeValue(state);
         })
       : noopUnsubscribe;
@@ -272,6 +360,7 @@ function attachChildToArray(state: TreeArrayState, child: TreeNode): void {
     typeof maybeValueSub.subscribe === 'function'
       ? maybeValueSub.subscribe(() => {
           if (state.isCommitting) return;
+          state.valueEpoch += 1;
           emitArrayValue(state);
         })
       : noopUnsubscribe;
@@ -329,6 +418,10 @@ function createTreeScope(
     children: new Map(),
     revision: 0,
     isCommitting: false,
+    valueEpoch: 0,
+    cachedSnapshot: undefined,
+    cachedSnapshotEpoch: -1,
+    hasCachedSnapshot: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -345,12 +438,7 @@ function createTreeScope(
   for (const [key, child] of state.children.entries())
     attachChildToScope(state, key, child);
 
-  const snapshot = (): Record<string, unknown> => {
-    const plain: Record<string, unknown> = {};
-    for (const [key, child] of state.children.entries())
-      plain[key] = getNodeValue(child);
-    return snapshotValue(plain);
-  };
+  const snapshot = (): Record<string, unknown> => getScopeSnapshot(state);
 
   const subscribe = (
     fn: (v: Record<string, unknown>) => void
@@ -373,103 +461,128 @@ function createTreeScope(
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean }
   ): void => {
-    const existing = state.children.get(key);
-    if (!existing) throw new Error(`oinTree scope: missing key ${key}`);
+    try {
+      const existing = state.children.get(key);
+      if (!existing) throw new Error(`oinTree scope: missing key ${key}`);
 
-    if (isUnit(existing)) {
-      const internal = getInternal(existing);
-      if (!internal || internal.kind !== 'unit')
-        throw new Error('oinTree scope: invalid unit internal');
-      const before = internal.getValue();
-      internal.setValue(next, {
-        emitUpdate: false,
-        emitValue: options?.emitValue !== false,
-      });
-      const after = internal.getValue();
-      if (!Object.is(before, after)) state.revision += 1;
-      return;
+      if (isUnit(existing)) {
+        const internal = getInternal(existing);
+        if (!internal || internal.kind !== 'unit')
+          throw new Error('oinTree scope: invalid unit internal');
+        const before = internal.getValue();
+        internal.setValue(next, {
+          emitUpdate: false,
+          emitValue: options?.emitValue !== false,
+        });
+        const after = internal.getValue();
+        if (!Object.is(before, after)) state.revision += 1;
+        return;
+      }
+
+      detachChildFromScope(state, key);
+      unregisterSubtree(ctx, [...path, key], existing);
+      const replaced = createTreeNode(ctx, [...path, key], next);
+      state.children.set(key, replaced);
+      attachChildToScope(state, key, replaced);
+      state.revision += 1;
+      state.valueEpoch += 1;
+      if (options?.emitValue !== false) emitScopeValue(state);
+    } catch (error) {
+      emitError(scope, error, [...path, key], 'set');
+      throw error;
     }
-
-    detachChildFromScope(state, key);
-    unregisterSubtree(ctx, [...path, key], existing);
-    const replaced = createTreeNode(ctx, [...path, key], next);
-    state.children.set(key, replaced);
-    attachChildToScope(state, key, replaced);
-    state.revision += 1;
-    if (options?.emitValue !== false) emitScopeValue(state);
   };
 
   const commit = (fn: (draft: Record<string, unknown>) => void): void => {
-    const before = snapshot();
-    const draft = cloneValue(before);
-    fn(draft);
+    try {
+      const before = snapshot();
+      const draft = cloneValue(before);
+      fn(draft);
 
-    for (const key of Object.keys(draft)) {
-      if (!(key in before))
-        throw new Error(`oinTree scope: unknown key ${key}`);
-    }
+      for (const key of Object.keys(draft)) {
+        if (!(key in before))
+          throw new Error(`oinTree scope: unknown key ${key}`);
+      }
 
-    const patches: OinPatch[] = [];
-    const baseRevision = state.revision;
+      const patches: OinPatch[] = [];
+      const baseRevision = state.revision;
 
-    const applyNodeDiff = (
-      parentState: TreeScopeState | TreeArrayState,
-      segment: string | number,
-      node: TreeNode,
-      prev: unknown,
-      next: unknown,
-      relPath: PathSegment[]
-    ): boolean => {
-      if (isPlainObject(prev) && isPlainObject(next)) {
-        const internal = getInternal(node);
-        if (internal?.kind === 'scope') {
-          const childState = internal.getState();
-          childState.isCommitting = true;
-          const changed = applyScopeDiff(childState, prev, next, relPath);
-          childState.isCommitting = false;
-          if (changed) emitScopeValue(childState);
-          return changed;
+      const applyNodeDiff = (
+        parentState: TreeScopeState | TreeArrayState,
+        segment: string | number,
+        node: TreeNode,
+        prev: unknown,
+        next: unknown,
+        relPath: PathSegment[]
+      ): boolean => {
+        if (isPlainObject(prev) && isPlainObject(next)) {
+          const internal = getInternal(node);
+          if (internal?.kind === 'scope') {
+            const childState = internal.getState();
+            childState.isCommitting = true;
+            const changed = applyScopeDiff(childState, prev, next, relPath);
+            childState.isCommitting = false;
+            if (changed) emitScopeValue(childState);
+            return changed;
+          }
         }
-      }
 
-      if (Array.isArray(prev) && Array.isArray(next)) {
-        const internal = getInternal(node);
-        if (internal?.kind === 'array') {
-          const childState = internal.getState();
-          childState.isCommitting = true;
-          const changed = applyArrayDiff(childState, prev, next, relPath);
-          childState.isCommitting = false;
-          if (changed) emitArrayValue(childState);
-          return changed;
+        if (Array.isArray(prev) && Array.isArray(next)) {
+          const internal = getInternal(node);
+          if (internal?.kind === 'array') {
+            const childState = internal.getState();
+            childState.isCommitting = true;
+            const changed = applyArrayDiff(childState, prev, next, relPath);
+            childState.isCommitting = false;
+            if (changed) emitArrayValue(childState);
+            return changed;
+          }
         }
-      }
 
-      if (Object.is(prev, next)) return false;
+        if (Object.is(prev, next)) return false;
 
-      if (isUnit(node)) {
-        const internal = getInternal(node);
-        if (!internal || internal.kind !== 'unit')
-          throw new Error('oinTree commit: invalid unit internal');
-        internal.setValue(next, { emitUpdate: false, emitValue: true });
-        patches.push({
-          op: 'set',
-          path: relPath,
-          prev: cloneValue(prev),
-          next: cloneValue(next),
-        });
-        return true;
-      }
+        if (isUnit(node)) {
+          const internal = getInternal(node);
+          if (!internal || internal.kind !== 'unit')
+            throw new Error('oinTree commit: invalid unit internal');
+          internal.setValue(next, { emitUpdate: false, emitValue: true });
+          patches.push({
+            op: 'set',
+            path: relPath,
+            prev: cloneValue(prev),
+            next: cloneValue(next),
+          });
+          return true;
+        }
 
-      if (typeof segment === 'string') {
-        detachChildFromScope(parentState as TreeScopeState, segment);
+        if (typeof segment === 'string') {
+          detachChildFromScope(parentState as TreeScopeState, segment);
+          unregisterSubtree(ctx, [...parentState.path, segment], node);
+          const replaced = createTreeNode(
+            ctx,
+            [...parentState.path, segment],
+            next
+          );
+          (parentState as TreeScopeState).children.set(segment, replaced);
+          attachChildToScope(parentState as TreeScopeState, segment, replaced);
+          patches.push({
+            op: 'set',
+            path: relPath,
+            prev: cloneValue(prev),
+            next: cloneValue(next),
+          });
+          return true;
+        }
+
+        detachChildFromArray(parentState as TreeArrayState, node);
         unregisterSubtree(ctx, [...parentState.path, segment], node);
         const replaced = createTreeNode(
           ctx,
           [...parentState.path, segment],
           next
         );
-        (parentState as TreeScopeState).children.set(segment, replaced);
-        attachChildToScope(parentState as TreeScopeState, segment, replaced);
+        (parentState as TreeArrayState).children[segment] = replaced;
+        attachChildToArray(parentState as TreeArrayState, replaced);
         patches.push({
           op: 'set',
           path: relPath,
@@ -477,173 +590,164 @@ function createTreeScope(
           next: cloneValue(next),
         });
         return true;
-      }
+      };
 
-      detachChildFromArray(parentState as TreeArrayState, node);
-      unregisterSubtree(ctx, [...parentState.path, segment], node);
-      const replaced = createTreeNode(
-        ctx,
-        [...parentState.path, segment],
-        next
+      const applyScopeDiff = (
+        scopeState: TreeScopeState,
+        prevObj: Record<string, unknown>,
+        nextObj: Record<string, unknown>,
+        relPath: PathSegment[]
+      ): boolean => {
+        let changed = false;
+        for (const key of Object.keys(nextObj)) {
+          if (!(key in prevObj))
+            throw new Error(`oinTree scope: unknown key ${key}`);
+        }
+        for (const key of Object.keys(prevObj)) {
+          const node = scopeState.children.get(key);
+          if (!node) continue;
+          const prev = prevObj[key];
+          const next = nextObj[key];
+
+          if (isPlainObject(prev) && isPlainObject(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'scope') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyScopeDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitScopeValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          if (Array.isArray(prev) && Array.isArray(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'array') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyArrayDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitArrayValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
+            ...relPath,
+            key,
+          ]);
+          changed = changed || nodeChanged;
+        }
+        return changed;
+      };
+
+      const applyArrayDiff = (
+        arrayState: TreeArrayState,
+        prevArr: unknown[],
+        nextArr: unknown[],
+        relPath: PathSegment[]
+      ): boolean => {
+        if (prevArr.length !== nextArr.length) {
+          const arrayNode = getPathNode(ctx, arrayState.path);
+          if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
+
+          for (let i = 0; i < arrayState.children.length; i += 1) {
+            const child = arrayState.children[i];
+            detachChildFromArray(arrayState, child);
+            unregisterSubtree(ctx, [...arrayState.path, i], child);
+          }
+          arrayState.children = nextArr.map((v, index) =>
+            createTreeNode(ctx, [...arrayState.path, index], v)
+          );
+          for (const child of arrayState.children)
+            attachChildToArray(arrayState, child);
+
+          if (arrayNode) registerSubtree(ctx, arrayState.path, arrayNode);
+
+          patches.push({
+            op: 'splice',
+            path: relPath,
+            start: 0,
+            deleteCount: prevArr.length,
+            deleted: prevArr.map((v) => cloneValue(v)),
+            items: nextArr.map((v) => cloneValue(v)),
+          });
+          return true;
+        }
+
+        let changed = false;
+        for (let i = 0; i < prevArr.length; i += 1) {
+          const node = arrayState.children[i];
+          const prev = prevArr[i];
+          const next = nextArr[i];
+
+          if (isPlainObject(prev) && isPlainObject(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'scope') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyScopeDiff(childState, prev, next, [
+                ...relPath,
+                i,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitScopeValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          if (Array.isArray(prev) && Array.isArray(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'array') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyArrayDiff(childState, prev, next, [
+                ...relPath,
+                i,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitArrayValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          const nodeChanged = applyNodeDiff(arrayState, i, node, prev, next, [
+            ...relPath,
+            i,
+          ]);
+          changed = changed || nodeChanged;
+        }
+        return changed;
+      };
+
+      state.isCommitting = true;
+      const changed = applyScopeDiff(state, before, draft, []);
+      state.isCommitting = false;
+
+      if (!changed) return;
+      state.revision += 1;
+      state.valueEpoch += 1;
+      emitScopeUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, patches)
       );
-      (parentState as TreeArrayState).children[segment] = replaced;
-      attachChildToArray(parentState as TreeArrayState, replaced);
-      patches.push({
-        op: 'set',
-        path: relPath,
-        prev: cloneValue(prev),
-        next: cloneValue(next),
-      });
-      return true;
-    };
-
-    const applyScopeDiff = (
-      scopeState: TreeScopeState,
-      prevObj: Record<string, unknown>,
-      nextObj: Record<string, unknown>,
-      relPath: PathSegment[]
-    ): boolean => {
-      let changed = false;
-      for (const key of Object.keys(nextObj)) {
-        if (!(key in prevObj))
-          throw new Error(`oinTree scope: unknown key ${key}`);
-      }
-      for (const key of Object.keys(prevObj)) {
-        const node = scopeState.children.get(key);
-        if (!node) continue;
-        const prev = prevObj[key];
-        const next = nextObj[key];
-
-        if (isPlainObject(prev) && isPlainObject(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'scope') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyScopeDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitScopeValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
-        }
-
-        if (Array.isArray(prev) && Array.isArray(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'array') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyArrayDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitArrayValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
-        }
-
-        const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
-          ...relPath,
-          key,
-        ]);
-        changed = changed || nodeChanged;
-      }
-      return changed;
-    };
-
-    const applyArrayDiff = (
-      arrayState: TreeArrayState,
-      prevArr: unknown[],
-      nextArr: unknown[],
-      relPath: PathSegment[]
-    ): boolean => {
-      if (prevArr.length !== nextArr.length) {
-        const arrayNode = ctx.pathToNode.get(pathKey(arrayState.path));
-        if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
-
-        for (let i = 0; i < arrayState.children.length; i += 1) {
-          const child = arrayState.children[i];
-          detachChildFromArray(arrayState, child);
-          unregisterSubtree(ctx, [...arrayState.path, i], child);
-        }
-        arrayState.children = nextArr.map((v, index) =>
-          createTreeNode(ctx, [...arrayState.path, index], v)
-        );
-        for (const child of arrayState.children)
-          attachChildToArray(arrayState, child);
-
-        if (arrayNode) registerSubtree(ctx, arrayState.path, arrayNode);
-
-        patches.push({
-          op: 'splice',
-          path: relPath,
-          start: 0,
-          deleteCount: prevArr.length,
-          deleted: prevArr.map((v) => cloneValue(v)),
-          items: nextArr.map((v) => cloneValue(v)),
-        });
-        return true;
-      }
-
-      let changed = false;
-      for (let i = 0; i < prevArr.length; i += 1) {
-        const node = arrayState.children[i];
-        const prev = prevArr[i];
-        const next = nextArr[i];
-
-        if (isPlainObject(prev) && isPlainObject(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'scope') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyScopeDiff(childState, prev, next, [
-              ...relPath,
-              i,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitScopeValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
-        }
-
-        if (Array.isArray(prev) && Array.isArray(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'array') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyArrayDiff(childState, prev, next, [
-              ...relPath,
-              i,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitArrayValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
-        }
-
-        const nodeChanged = applyNodeDiff(arrayState, i, node, prev, next, [
-          ...relPath,
-          i,
-        ]);
-        changed = changed || nodeChanged;
-      }
-      return changed;
-    };
-
-    state.isCommitting = true;
-    const changed = applyScopeDiff(state, before, draft, []);
-    state.isCommitting = false;
-
-    if (!changed) return;
-    state.revision += 1;
-    emitScopeUpdate(state, createUpdate(baseRevision, state.revision, patches));
-    emitScopeValue(state);
+      emitScopeValue(state);
+    } catch (error) {
+      state.isCommitting = false;
+      emitError(scope, error, path, 'commit');
+      throw error;
+    }
   };
 
   const scope: Record<string, unknown> = {};
@@ -664,7 +768,7 @@ function createTreeScope(
     },
   });
 
-  ctx.pathToNode.set(pathKey(path), scope as unknown as TreeNode);
+  setPathNode(ctx, path, scope as unknown as TreeNode);
   return scope as unknown as OinTreeScope<Record<string, unknown>>;
 }
 
@@ -679,6 +783,10 @@ function createTreeArray(
     ),
     revision: 0,
     isCommitting: false,
+    valueEpoch: 0,
+    cachedSnapshot: undefined,
+    cachedSnapshotEpoch: -1,
+    hasCachedSnapshot: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -689,13 +797,12 @@ function createTreeArray(
 
   for (const child of state.children) attachChildToArray(state, child);
 
-  const snapshot = (): unknown[] =>
-    snapshotValue(state.children.map((c) => getNodeValue(c)));
+  const snapshot = (): unknown[] => getArraySnapshot(state);
 
   const array = function (): unknown[] {
     return snapshot();
   } as unknown as OinTreeArrayUnit<unknown> & object;
-  ctx.pathToNode.set(pathKey(path), array as unknown as TreeNode);
+  setPathNode(ctx, path, array as unknown as TreeNode);
 
   const rebuildMapping = (): void => {
     rebuildSubtreeMapping(state, array as unknown as TreeNode);
@@ -751,22 +858,34 @@ function createTreeArray(
     items: unknown[],
     options?: { emitValue?: boolean }
   ) => {
-    state.revision += 1;
-    performSplice(start, deleteCount, items);
-    if (options?.emitValue !== false) emitArrayValue(state);
+    try {
+      state.revision += 1;
+      performSplice(start, deleteCount, items);
+      state.valueEpoch += 1;
+      if (options?.emitValue !== false) emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, path, 'splice');
+      throw error;
+    }
   };
 
   const applySortOrder = (
     order: number[],
     options?: { emitValue?: boolean }
   ) => {
-    if (order.length !== state.children.length)
-      throw new Error('oinTree array: invalid sort order length');
-    const old = state.children.slice();
-    state.children = order.map((oldIndex) => old[oldIndex]);
-    rebuildMapping();
-    state.revision += 1;
-    if (options?.emitValue !== false) emitArrayValue(state);
+    try {
+      if (order.length !== state.children.length)
+        throw new Error('oinTree array: invalid sort order length');
+      const old = state.children.slice();
+      state.children = order.map((oldIndex) => old[oldIndex]);
+      rebuildMapping();
+      state.revision += 1;
+      state.valueEpoch += 1;
+      if (options?.emitValue !== false) emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, path, 'sort');
+      throw error;
+    }
   };
 
   const setIndex = (
@@ -774,82 +893,106 @@ function createTreeArray(
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean }
   ) => {
-    const existing = state.children[index];
-    if (!existing)
-      throw new Error(`oinTree array: index out of range ${index}`);
+    try {
+      const existing = state.children[index];
+      if (!existing)
+        throw new Error(`oinTree array: index out of range ${index}`);
 
-    if (isUnit(existing)) {
-      const internal = getInternal(existing);
-      if (!internal || internal.kind !== 'unit')
-        throw new Error('oinTree array: invalid unit internal');
-      const before = internal.getValue();
-      internal.setValue(next, {
-        emitUpdate: false,
-        emitValue: options?.emitValue !== false,
-      });
-      const after = internal.getValue();
-      if (!Object.is(before, after)) state.revision += 1;
-      return;
+      if (isUnit(existing)) {
+        const internal = getInternal(existing);
+        if (!internal || internal.kind !== 'unit')
+          throw new Error('oinTree array: invalid unit internal');
+        const before = internal.getValue();
+        internal.setValue(next, {
+          emitUpdate: false,
+          emitValue: options?.emitValue !== false,
+        });
+        const after = internal.getValue();
+        if (!Object.is(before, after)) state.revision += 1;
+        return;
+      }
+
+      detachChildFromArray(state, existing);
+      unregisterSubtree(ctx, [...path, index], existing);
+      const replaced = createTreeNode(ctx, [...path, index], next);
+      state.children[index] = replaced;
+      attachChildToArray(state, replaced);
+      state.revision += 1;
+      state.valueEpoch += 1;
+      if (options?.emitValue !== false) emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [...path, index], 'set');
+      throw error;
     }
-
-    detachChildFromArray(state, existing);
-    unregisterSubtree(ctx, [...path, index], existing);
-    const replaced = createTreeNode(ctx, [...path, index], next);
-    state.children[index] = replaced;
-    attachChildToArray(state, replaced);
-    state.revision += 1;
-    if (options?.emitValue !== false) emitArrayValue(state);
   };
 
   const push = (...items: unknown[]): void => {
-    if (items.length === 0) return;
-    const baseRevision = state.revision;
-    state.revision += 1;
+    try {
+      if (items.length === 0) return;
+      const baseRevision = state.revision;
+      state.revision += 1;
 
-    const start = state.children.length;
-    const created = items.map((v, i) =>
-      createTreeNode(ctx, [...path, start + i], v)
-    );
-    for (const child of created) attachChildToArray(state, child);
-    state.children.push(...created);
-    rebuildMapping();
+      const start = state.children.length;
+      const created = items.map((v, i) =>
+        createTreeNode(ctx, [...path, start + i], v)
+      );
+      for (const child of created) attachChildToArray(state, child);
+      state.children.push(...created);
+      rebuildMapping();
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start,
-      deleteCount: 0,
-      deleted: [],
-      items: items.map((v) => cloneValue(v)),
-    };
-    emitArrayUpdate(state, createUpdate(baseRevision, state.revision, [patch]));
-    emitArrayValue(state);
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start,
+        deleteCount: 0,
+        deleted: [],
+        items: items.map((v) => cloneValue(v)),
+      };
+      emitArrayUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, [patch])
+      );
+      state.valueEpoch += 1;
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, path, 'push');
+      throw error;
+    }
   };
 
   const pop = (): unknown => {
-    if (state.children.length === 0) return undefined;
-    const baseRevision = state.revision;
-    state.revision += 1;
+    try {
+      if (state.children.length === 0) return undefined;
+      const baseRevision = state.revision;
+      state.revision += 1;
 
-    const start = state.children.length - 1;
-    const removed = state.children.pop();
-    if (!removed) return undefined;
-    const removedValue = getNodeValue(removed);
-    detachChildFromArray(state, removed);
-    unregisterSubtree(ctx, [...path, start], removed);
-    rebuildMapping();
+      const start = state.children.length - 1;
+      const removed = state.children.pop();
+      if (!removed) return undefined;
+      const removedValue = getNodeValue(removed);
+      detachChildFromArray(state, removed);
+      unregisterSubtree(ctx, [...path, start], removed);
+      rebuildMapping();
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start,
-      deleteCount: 1,
-      deleted: [cloneValue(removedValue)],
-      items: [],
-    };
-    emitArrayUpdate(state, createUpdate(baseRevision, state.revision, [patch]));
-    emitArrayValue(state);
-    return removedValue;
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start,
+        deleteCount: 1,
+        deleted: [cloneValue(removedValue)],
+        items: [],
+      };
+      emitArrayUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, [patch])
+      );
+      state.valueEpoch += 1;
+      emitArrayValue(state);
+      return removedValue;
+    } catch (error) {
+      emitError(array, error, path, 'pop');
+      throw error;
+    }
   };
 
   const splice = (
@@ -857,98 +1000,240 @@ function createTreeArray(
     deleteCount: number,
     ...items: unknown[]
   ): void => {
-    const baseRevision = state.revision;
-    state.revision += 1;
+    try {
+      const baseRevision = state.revision;
+      state.revision += 1;
 
-    const { normalizedStart, dc, removedValues } = performSplice(
-      start,
-      deleteCount,
-      items
-    );
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start: normalizedStart,
-      deleteCount: dc,
-      deleted: removedValues.map((v) => cloneValue(v)),
-      items: items.map((v) => cloneValue(v)),
-    };
-    emitArrayUpdate(state, createUpdate(baseRevision, state.revision, [patch]));
-    emitArrayValue(state);
-    rebuildMapping();
+      const { normalizedStart, dc, removedValues } = performSplice(
+        start,
+        deleteCount,
+        items
+      );
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start: normalizedStart,
+        deleteCount: dc,
+        deleted: removedValues.map((v) => cloneValue(v)),
+        items: items.map((v) => cloneValue(v)),
+      };
+      emitArrayUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, [patch])
+      );
+      state.valueEpoch += 1;
+      emitArrayValue(state);
+      rebuildMapping();
+    } catch (error) {
+      emitError(array, error, path, 'splice');
+      throw error;
+    }
   };
 
   const sort = (compareFn?: (a: unknown, b: unknown) => number): void => {
-    if (state.children.length <= 1) return;
-    const baseRevision = state.revision;
-    state.revision += 1;
+    try {
+      if (state.children.length <= 1) return;
+      const baseRevision = state.revision;
+      state.revision += 1;
 
-    const decorated = state.children.map((child, index) => ({
-      child,
-      index,
-      value: getNodeValue(child),
-    }));
-    decorated.sort((a, b) => {
-      const av = a.value;
-      const bv = b.value;
-      if (compareFn) return compareFn(av, bv);
-      if (typeof av === 'number' && typeof bv === 'number') return av - bv;
-      const as = String(av);
-      const bs = String(bv);
-      if (as === bs) return 0;
-      return as > bs ? 1 : -1;
-    });
-    const order = decorated.map((d) => d.index);
-    state.children = decorated.map((d) => d.child);
-    rebuildMapping();
+      const decorated = state.children.map((child, index) => ({
+        child,
+        index,
+        value: getNodeValue(child),
+      }));
+      decorated.sort((a, b) => {
+        const av = a.value;
+        const bv = b.value;
+        if (compareFn) return compareFn(av, bv);
+        if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+        const as = String(av);
+        const bs = String(bv);
+        if (as === bs) return 0;
+        return as > bs ? 1 : -1;
+      });
+      const order = decorated.map((d) => d.index);
+      state.children = decorated.map((d) => d.child);
+      rebuildMapping();
 
-    emitArrayUpdate(
-      state,
-      createUpdate(baseRevision, state.revision, [
-        { op: 'sort', path: [], order },
-      ])
-    );
-    emitArrayValue(state);
+      emitArrayUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, [
+          { op: 'sort', path: [], order },
+        ])
+      );
+      state.valueEpoch += 1;
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, path, 'sort');
+      throw error;
+    }
   };
 
   const commit = (fn: (draft: unknown[]) => void): void => {
-    const before = snapshot();
-    const draft = cloneValue(before);
-    fn(draft);
+    try {
+      const before = snapshot();
+      const draft = cloneValue(before);
+      fn(draft);
 
-    const baseRevision = state.revision;
-    const patches: OinPatch[] = [];
+      const baseRevision = state.revision;
+      const patches: OinPatch[] = [];
 
-    const applyScopeDiff = (
-      scopeState: TreeScopeState,
-      prevObj: Record<string, unknown>,
-      nextObj: Record<string, unknown>,
-      relPath: PathSegment[]
-    ): boolean => {
-      let changed = false;
-      for (const key of Object.keys(nextObj)) {
-        if (!(key in prevObj))
-          throw new Error(`oinTree scope: unknown key ${key}`);
-      }
-      for (const key of Object.keys(prevObj)) {
-        const node = scopeState.children.get(key);
-        if (!node) continue;
-        const prev = prevObj[key];
-        const next = nextObj[key];
+      const applyScopeDiff = (
+        scopeState: TreeScopeState,
+        prevObj: Record<string, unknown>,
+        nextObj: Record<string, unknown>,
+        relPath: PathSegment[]
+      ): boolean => {
+        let changed = false;
+        for (const key of Object.keys(nextObj)) {
+          if (!(key in prevObj))
+            throw new Error(`oinTree scope: unknown key ${key}`);
+        }
+        for (const key of Object.keys(prevObj)) {
+          const node = scopeState.children.get(key);
+          if (!node) continue;
+          const prev = prevObj[key];
+          const next = nextObj[key];
 
+          if (isPlainObject(prev) && isPlainObject(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'scope') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyScopeDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitScopeValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          if (Array.isArray(prev) && Array.isArray(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'array') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyArrayDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitArrayValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
+            ...relPath,
+            key,
+          ]);
+          changed = changed || nodeChanged;
+        }
+        return changed;
+      };
+
+      const applyArrayDiff = (
+        arrayState: TreeArrayState,
+        prevArr: unknown[],
+        nextArr: unknown[],
+        relPath: PathSegment[]
+      ): boolean => {
+        if (prevArr.length !== nextArr.length) {
+          const arrayNode = getPathNode(ctx, arrayState.path);
+          if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
+
+          for (let i = 0; i < arrayState.children.length; i += 1) {
+            const child = arrayState.children[i];
+            detachChildFromArray(arrayState, child);
+            unregisterSubtree(ctx, [...arrayState.path, i], child);
+          }
+          arrayState.children = nextArr.map((v, index) =>
+            createTreeNode(ctx, [...arrayState.path, index], v)
+          );
+          for (const child of arrayState.children)
+            attachChildToArray(arrayState, child);
+
+          if (arrayNode) registerSubtree(ctx, arrayState.path, arrayNode);
+
+          patches.push({
+            op: 'splice',
+            path: relPath,
+            start: 0,
+            deleteCount: prevArr.length,
+            deleted: prevArr.map((v) => cloneValue(v)),
+            items: nextArr.map((v) => cloneValue(v)),
+          });
+          return true;
+        }
+
+        let changed = false;
+        for (let i = 0; i < prevArr.length; i += 1) {
+          const node = arrayState.children[i];
+          const prev = prevArr[i];
+          const next = nextArr[i];
+
+          if (isPlainObject(prev) && isPlainObject(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'scope') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyScopeDiff(childState, prev, next, [
+                ...relPath,
+                i,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitScopeValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          if (Array.isArray(prev) && Array.isArray(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'array') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyArrayDiff(childState, prev, next, [
+                ...relPath,
+                i,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitArrayValue(childState);
+              changed = changed || childChanged;
+              continue;
+            }
+          }
+
+          const nodeChanged = applyNodeDiff(arrayState, i, node, prev, next, [
+            ...relPath,
+            i,
+          ]);
+          changed = changed || nodeChanged;
+        }
+        return changed;
+      };
+
+      const applyNodeDiff = (
+        parentState: TreeScopeState | TreeArrayState,
+        segment: string | number,
+        node: TreeNode,
+        prev: unknown,
+        next: unknown,
+        relPath: PathSegment[]
+      ): boolean => {
         if (isPlainObject(prev) && isPlainObject(next)) {
           const internal = getInternal(node);
           if (internal?.kind === 'scope') {
             const childState = internal.getState();
             childState.isCommitting = true;
-            const childChanged = applyScopeDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
+            const changed = applyScopeDiff(childState, prev, next, relPath);
             childState.isCommitting = false;
-            if (childChanged) emitScopeValue(childState);
-            changed = changed || childChanged;
-            continue;
+            if (changed) emitScopeValue(childState);
+            return changed;
           }
         }
 
@@ -957,165 +1242,57 @@ function createTreeArray(
           if (internal?.kind === 'array') {
             const childState = internal.getState();
             childState.isCommitting = true;
-            const childChanged = applyArrayDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
+            const changed = applyArrayDiff(childState, prev, next, relPath);
             childState.isCommitting = false;
-            if (childChanged) emitArrayValue(childState);
-            changed = changed || childChanged;
-            continue;
+            if (changed) emitArrayValue(childState);
+            return changed;
           }
         }
 
-        const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
-          ...relPath,
-          key,
-        ]);
-        changed = changed || nodeChanged;
-      }
-      return changed;
-    };
+        if (Object.is(prev, next)) return false;
 
-    const applyArrayDiff = (
-      arrayState: TreeArrayState,
-      prevArr: unknown[],
-      nextArr: unknown[],
-      relPath: PathSegment[]
-    ): boolean => {
-      if (prevArr.length !== nextArr.length) {
-        const arrayNode = ctx.pathToNode.get(pathKey(arrayState.path));
-        if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
-
-        for (let i = 0; i < arrayState.children.length; i += 1) {
-          const child = arrayState.children[i];
-          detachChildFromArray(arrayState, child);
-          unregisterSubtree(ctx, [...arrayState.path, i], child);
-        }
-        arrayState.children = nextArr.map((v, index) =>
-          createTreeNode(ctx, [...arrayState.path, index], v)
-        );
-        for (const child of arrayState.children)
-          attachChildToArray(arrayState, child);
-
-        if (arrayNode) registerSubtree(ctx, arrayState.path, arrayNode);
-
-        patches.push({
-          op: 'splice',
-          path: relPath,
-          start: 0,
-          deleteCount: prevArr.length,
-          deleted: prevArr.map((v) => cloneValue(v)),
-          items: nextArr.map((v) => cloneValue(v)),
-        });
-        return true;
-      }
-
-      let changed = false;
-      for (let i = 0; i < prevArr.length; i += 1) {
-        const node = arrayState.children[i];
-        const prev = prevArr[i];
-        const next = nextArr[i];
-
-        if (isPlainObject(prev) && isPlainObject(next)) {
+        if (isUnit(node)) {
           const internal = getInternal(node);
-          if (internal?.kind === 'scope') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyScopeDiff(childState, prev, next, [
-              ...relPath,
-              i,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitScopeValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
+          if (!internal || internal.kind !== 'unit')
+            throw new Error('oinTree commit: invalid unit internal');
+          internal.setValue(next, { emitUpdate: false, emitValue: true });
+          patches.push({
+            op: 'set',
+            path: relPath,
+            prev: cloneValue(prev),
+            next: cloneValue(next),
+          });
+          return true;
         }
 
-        if (Array.isArray(prev) && Array.isArray(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'array') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyArrayDiff(childState, prev, next, [
-              ...relPath,
-              i,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitArrayValue(childState);
-            changed = changed || childChanged;
-            continue;
-          }
+        if (typeof segment === 'string') {
+          detachChildFromScope(parentState as TreeScopeState, segment);
+          unregisterSubtree(ctx, [...parentState.path, segment], node);
+          const replaced = createTreeNode(
+            ctx,
+            [...parentState.path, segment],
+            next
+          );
+          (parentState as TreeScopeState).children.set(segment, replaced);
+          attachChildToScope(parentState as TreeScopeState, segment, replaced);
+          patches.push({
+            op: 'set',
+            path: relPath,
+            prev: cloneValue(prev),
+            next: cloneValue(next),
+          });
+          return true;
         }
 
-        const nodeChanged = applyNodeDiff(arrayState, i, node, prev, next, [
-          ...relPath,
-          i,
-        ]);
-        changed = changed || nodeChanged;
-      }
-      return changed;
-    };
-
-    const applyNodeDiff = (
-      parentState: TreeScopeState | TreeArrayState,
-      segment: string | number,
-      node: TreeNode,
-      prev: unknown,
-      next: unknown,
-      relPath: PathSegment[]
-    ): boolean => {
-      if (isPlainObject(prev) && isPlainObject(next)) {
-        const internal = getInternal(node);
-        if (internal?.kind === 'scope') {
-          const childState = internal.getState();
-          childState.isCommitting = true;
-          const changed = applyScopeDiff(childState, prev, next, relPath);
-          childState.isCommitting = false;
-          if (changed) emitScopeValue(childState);
-          return changed;
-        }
-      }
-
-      if (Array.isArray(prev) && Array.isArray(next)) {
-        const internal = getInternal(node);
-        if (internal?.kind === 'array') {
-          const childState = internal.getState();
-          childState.isCommitting = true;
-          const changed = applyArrayDiff(childState, prev, next, relPath);
-          childState.isCommitting = false;
-          if (changed) emitArrayValue(childState);
-          return changed;
-        }
-      }
-
-      if (Object.is(prev, next)) return false;
-
-      if (isUnit(node)) {
-        const internal = getInternal(node);
-        if (!internal || internal.kind !== 'unit')
-          throw new Error('oinTree commit: invalid unit internal');
-        internal.setValue(next, { emitUpdate: false, emitValue: true });
-        patches.push({
-          op: 'set',
-          path: relPath,
-          prev: cloneValue(prev),
-          next: cloneValue(next),
-        });
-        return true;
-      }
-
-      if (typeof segment === 'string') {
-        detachChildFromScope(parentState as TreeScopeState, segment);
+        detachChildFromArray(parentState as TreeArrayState, node);
         unregisterSubtree(ctx, [...parentState.path, segment], node);
         const replaced = createTreeNode(
           ctx,
           [...parentState.path, segment],
           next
         );
-        (parentState as TreeScopeState).children.set(segment, replaced);
-        attachChildToScope(parentState as TreeScopeState, segment, replaced);
+        (parentState as TreeArrayState).children[segment] = replaced;
+        attachChildToArray(parentState as TreeArrayState, replaced);
         patches.push({
           op: 'set',
           path: relPath,
@@ -1123,34 +1300,25 @@ function createTreeArray(
           next: cloneValue(next),
         });
         return true;
-      }
+      };
 
-      detachChildFromArray(parentState as TreeArrayState, node);
-      unregisterSubtree(ctx, [...parentState.path, segment], node);
-      const replaced = createTreeNode(
-        ctx,
-        [...parentState.path, segment],
-        next
+      state.isCommitting = true;
+      const changed = applyArrayDiff(state, before, draft as unknown[], []);
+      state.isCommitting = false;
+
+      if (!changed) return;
+      state.revision += 1;
+      emitArrayUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, patches)
       );
-      (parentState as TreeArrayState).children[segment] = replaced;
-      attachChildToArray(parentState as TreeArrayState, replaced);
-      patches.push({
-        op: 'set',
-        path: relPath,
-        prev: cloneValue(prev),
-        next: cloneValue(next),
-      });
-      return true;
-    };
-
-    state.isCommitting = true;
-    const changed = applyArrayDiff(state, before, draft as unknown[], []);
-    state.isCommitting = false;
-
-    if (!changed) return;
-    state.revision += 1;
-    emitArrayUpdate(state, createUpdate(baseRevision, state.revision, patches));
-    emitArrayValue(state);
+      state.valueEpoch += 1;
+      emitArrayValue(state);
+    } catch (error) {
+      state.isCommitting = false;
+      emitError(array, error, path, 'commit');
+      throw error;
+    }
   };
 
   Object.defineProperties(array, {
@@ -1185,6 +1353,9 @@ function createTreeArray(
 }
 
 export function oinTree<T>(initial: T): OinTreeNode<T> {
-  const ctx: TreeContext = { pathToNode: new Map() };
+  const ctx: TreeContext = {
+    root: createTrieNode(),
+    errorListeners: new Set(),
+  };
   return createTreeNode(ctx, [], initial) as unknown as OinTreeNode<T>;
 }

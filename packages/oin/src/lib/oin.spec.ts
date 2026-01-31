@@ -1,7 +1,12 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
+import { batch } from './batch.js';
+import { onError, onMutation } from './debug.js';
+import { derive } from './derive.js';
 import { formula } from './formula.js';
 import { oin } from './oin.js';
+import { oinDeep } from './oin-deep.js';
 import { oinTree } from './oin-tree.js';
+import { Signal, computed, effect } from './signals.js';
 import { applyUpdate, invertUpdate, mergeUpdates, replay } from './updates.js';
 import type {
   OinArrayUnit,
@@ -199,12 +204,145 @@ describe('oinTree: nested split', () => {
     const rootInternal = (user as unknown as Record<PropertyKey, unknown>)[
       INTERNAL
     ] as {
-      getState: () => { ctx: { pathToNode: Map<string, unknown> } };
+      getState: () => {
+        ctx: {
+          root: {
+            node?: unknown;
+            children: Map<string | number, unknown>;
+          };
+        };
+      };
     };
-    const node = rootInternal
-      .getState()
-      .ctx.pathToNode.get(JSON.stringify(['profile', 'age']));
-    expect(node).toBe(user.profile.age);
+    const ctxRoot = rootInternal.getState().ctx.root as unknown as {
+      node?: unknown;
+      children: Map<string | number, unknown>;
+    };
+    const profileTrie = ctxRoot.children.get('profile') as {
+      node?: unknown;
+      children: Map<string | number, unknown>;
+    };
+    const ageTrie = profileTrie.children.get('age') as { node?: unknown };
+    expect(ageTrie.node).toBe(user.profile.age);
+  });
+});
+
+describe('signals: computed/effect', () => {
+  it('tracks leaf units and reruns only when dependencies change', async () => {
+    const s = oinTree({ user: { name: 'a', age: 1 } });
+    const seen: string[] = [];
+    const stop = effect(() => {
+      seen.push(s.user.name());
+    });
+    await Promise.resolve();
+    expect(seen).toEqual(['a']);
+
+    s.user.age(2);
+    await Promise.resolve();
+    expect(seen).toEqual(['a']);
+
+    s.user.name('b');
+    await Promise.resolve();
+    expect(seen).toEqual(['a', 'b']);
+    stop();
+  });
+
+  it('supports standalone Signal.State and Signal.Computed', () => {
+    const count = new Signal.State(1);
+    const double = computed(() => count.get() * 2);
+    expect(double.get()).toBe(2);
+    count.set(2);
+    expect(double.get()).toBe(4);
+  });
+});
+
+describe('batch', () => {
+  it('coalesces shared listeners across multiple units', () => {
+    const u1 = oin(0);
+    const u2 = oin(0);
+    const u3 = oin(0);
+    let calls = 0;
+    const cb = () => {
+      calls += 1;
+    };
+    u1.subscribe(cb);
+    u2.subscribe(cb);
+    u3.subscribe(cb);
+
+    batch(() => {
+      u1(1);
+      u2(2);
+      u3(3);
+    });
+    expect(calls).toBe(1);
+  });
+
+  it('stabilizes snapshot references within the same revision', () => {
+    const s = oin({ a: 1 });
+    const v1 = s.snapshot();
+    const v2 = s.snapshot();
+    expect(v1).toBe(v2);
+    s.a(2);
+    const v3 = s.snapshot();
+    expect(v3).not.toBe(v2);
+  });
+});
+
+describe('oinDeep', () => {
+  it('creates deep nodes (types and runtime)', () => {
+    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    expectTypeOf(scope.user.name).toEqualTypeOf<OinUnit<string>>();
+    expect(scope.user.name()).toBe('a');
+    scope.user.name('b');
+    expect(scope.user.name()).toBe('b');
+  });
+});
+
+describe('derive', () => {
+  it('supports type-safe selectors with property access', async () => {
+    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    const display = derive(scope, (s) => `${s.user.name} (${s.user.age})`);
+    expect(display()).toBe('a (1)');
+    const seen: string[] = [];
+    const unsub = display.subscribe((v) => seen.push(v));
+
+    scope.user.age(2);
+    await Promise.resolve();
+    scope.user.name('b');
+    await Promise.resolve();
+
+    unsub();
+    expect(display()).toBe('b (2)');
+    expect(seen).toEqual(['a (2)', 'b (2)']);
+  });
+});
+
+describe('debug hooks', () => {
+  it('onMutation emits per-patch callbacks', () => {
+    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    const seen: Array<{ path: OinPath; op: string }> = [];
+    const unsub = onMutation(scope, (patch, path) => {
+      seen.push({ path, op: patch.op });
+    });
+    scope.user.name('b');
+    scope.user.age(2);
+    unsub();
+    expect(seen).toContainEqual({ path: ['user', 'name'], op: 'set' });
+    expect(seen).toContainEqual({ path: ['user', 'age'], op: 'set' });
+  });
+
+  it('onError emits on failed mutations', () => {
+    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    const seen: Array<{ path: OinPath; op: string }> = [];
+    const unsub = onError(scope, (_error, path, op) => {
+      seen.push({ path, op });
+    });
+    expect(() => {
+      scope.commit(() => {
+        throw new Error('boom');
+      });
+    }).toThrow();
+    unsub();
+    expect(seen[0]).toMatchObject({ path: [], op: 'commit' });
   });
 });
 

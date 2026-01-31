@@ -1,6 +1,15 @@
-import { cloneValue, readValue, snapshotValue } from './snapshot.js';
+import { cloneValue, readValue } from './snapshot.js';
+import { notifyUpdate, notifyValue } from './batch.js';
+import { trackRead } from './signals.js';
 import { createUpdate } from './updates.js';
-import type { OinPatch, OinUnit, OinUnsubscribe, OinUpdate } from './types.js';
+import type {
+  OinErrorHandler,
+  OinPatch,
+  OinUnit,
+  OinUnsubscribe,
+  OinUpdate,
+} from './types.js';
+import { emitError } from './debug.js';
 
 const INTERNAL = Symbol.for('@org/oin/internal');
 
@@ -8,8 +17,12 @@ type UnitState<T> = {
   initial: T;
   value: T;
   revision: number;
+  cachedRead: T | undefined;
+  cachedReadRevision: number;
+  hasCachedRead: boolean;
   valueListeners: Set<(value: T) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
+  errorListeners: Set<OinErrorHandler>;
 };
 
 type SetOptions = {
@@ -24,13 +37,23 @@ type UnitInternal<T> = {
   getState: () => UnitState<T>;
 };
 
-function emitValue<T>(state: UnitState<T>): void {
+function readCachedValue<T>(state: UnitState<T>): T {
+  if (state.hasCachedRead && state.cachedReadRevision === state.revision)
+    return state.cachedRead as T;
   const v = readValue(state.value);
-  for (const listener of state.valueListeners) listener(v);
+  state.cachedRead = v;
+  state.cachedReadRevision = state.revision;
+  state.hasCachedRead = true;
+  return v;
+}
+
+function emitValue<T>(state: UnitState<T>): void {
+  const v = readCachedValue(state);
+  notifyValue(state.valueListeners, v);
 }
 
 function emitUpdate(state: UnitState<unknown>, update: OinUpdate): void {
-  for (const listener of state.updateListeners) listener(update);
+  notifyUpdate(state.updateListeners, update);
 }
 
 export function createUnit<T>(initial: T): OinUnit<T> {
@@ -38,46 +61,58 @@ export function createUnit<T>(initial: T): OinUnit<T> {
     initial: cloneValue(initial),
     value: cloneValue(initial),
     revision: 0,
+    cachedRead: undefined,
+    cachedReadRevision: -1,
+    hasCachedRead: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
+    errorListeners: new Set(),
   };
 
   const setValue = (next: T | ((prev: T) => T), options?: SetOptions): void => {
-    const emitValueFlag = options?.emitValue !== false;
-    const emitUpdateFlag = options?.emitUpdate !== false;
+    try {
+      const emitValueFlag = options?.emitValue !== false;
+      const emitUpdateFlag = options?.emitUpdate !== false;
 
-    const prev = state.value;
-    const resolved =
-      typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
-    if (Object.is(prev, resolved)) return;
+      const prev = state.value;
+      const resolved =
+        typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
+      if (Object.is(prev, resolved)) return;
 
-    const baseRevision = state.revision;
-    state.revision += 1;
-    state.value = resolved;
+      const baseRevision = state.revision;
+      state.revision += 1;
+      state.value = resolved;
 
-    if (emitUpdateFlag) {
-      const patch: OinPatch = {
-        op: 'set',
-        path: [],
-        prev: cloneValue(prev),
-        next: cloneValue(resolved),
-      };
-      const update = createUpdate(baseRevision, state.revision, [patch]);
-      emitUpdate(state as UnitState<unknown>, update);
+      if (emitUpdateFlag) {
+        const patch: OinPatch = {
+          op: 'set',
+          path: [],
+          prev: cloneValue(prev),
+          next: cloneValue(resolved),
+        };
+        const update = createUpdate(baseRevision, state.revision, [patch]);
+        emitUpdate(state as UnitState<unknown>, update);
+      }
+
+      if (emitValueFlag) emitValue(state);
+    } catch (error) {
+      emitError(unitFn, error, [], 'set');
+      throw error;
     }
-
-    if (emitValueFlag) emitValue(state);
   };
 
   function unit(): T;
   function unit(next: T | ((prev: T) => T)): void;
   function unit(next?: T | ((prev: T) => T)): T | void {
-    if (arguments.length === 0) return readValue(state.value);
+    if (arguments.length === 0) {
+      trackRead(unitFn);
+      return readCachedValue(state);
+    }
     setValue(next as T | ((prev: T) => T));
   }
   const unitFn = unit as OinUnit<T>;
 
-  const snapshot = (): T => snapshotValue(state.value);
+  const snapshot = (): T => readCachedValue(state);
 
   const subscribe = (fn: (v: T) => void): OinUnsubscribe => {
     state.valueListeners.add(fn);
@@ -94,7 +129,12 @@ export function createUnit<T>(initial: T): OinUnit<T> {
   };
 
   const reset = (): void => {
-    setValue(cloneValue(state.initial));
+    try {
+      setValue(cloneValue(state.initial));
+    } catch (error) {
+      emitError(unitFn, error, [], 'reset');
+      throw error;
+    }
   };
 
   Object.defineProperties(unit, {

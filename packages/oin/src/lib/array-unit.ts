@@ -1,13 +1,16 @@
 import { cloneValue, snapshotValue } from './snapshot.js';
+import { notifyUpdate, notifyValue } from './batch.js';
 import { createUpdate } from './updates.js';
 import type {
   OinArrayUnit,
+  OinErrorHandler,
   OinPatch,
   OinUnit,
   OinUnsubscribe,
   OinUpdate,
 } from './types.js';
 import { createUnit } from './unit.js';
+import { emitError } from './debug.js';
 
 const INTERNAL = Symbol.for('@org/oin/internal');
 
@@ -34,8 +37,12 @@ type ArrayState<T> = {
   elementValueUnsubs: Map<OinUnit<T>, OinUnsubscribe>;
   elementUpdateUnsubs: Map<OinUnit<T>, OinUnsubscribe>;
   revision: number;
+  cachedSnapshot: T[] | undefined;
+  cachedSnapshotRevision: number;
+  hasCachedSnapshot: boolean;
   valueListeners: Set<(value: T[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
+  errorListeners: Set<OinErrorHandler>;
 };
 
 type ArrayInternal<T> = {
@@ -51,12 +58,25 @@ type ArrayInternal<T> = {
 };
 
 function emitArrayValue<T>(state: ArrayState<T>): void {
-  const values = snapshotValue(state.units.map((u) => u()));
-  for (const listener of state.valueListeners) listener(values);
+  const values = getArraySnapshot(state);
+  notifyValue(state.valueListeners, values);
 }
 
 function emitArrayUpdate<T>(state: ArrayState<T>, update: OinUpdate): void {
-  for (const listener of state.updateListeners) listener(update);
+  notifyUpdate(state.updateListeners, update);
+}
+
+function getArraySnapshot<T>(state: ArrayState<T>): T[] {
+  if (
+    state.hasCachedSnapshot &&
+    state.cachedSnapshotRevision === state.revision
+  )
+    return state.cachedSnapshot as T[];
+  const values = snapshotValue(state.units.map((u) => u()));
+  state.cachedSnapshot = values;
+  state.cachedSnapshotRevision = state.revision;
+  state.hasCachedSnapshot = true;
+  return values;
 }
 
 function attachElementBubbling<T>(
@@ -101,13 +121,17 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     elementValueUnsubs: new Map(),
     elementUpdateUnsubs: new Map(),
     revision: 0,
+    cachedSnapshot: undefined,
+    cachedSnapshotRevision: -1,
+    hasCachedSnapshot: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
+    errorListeners: new Set(),
   };
 
   for (const unit of state.units) attachElementBubbling(state, unit);
 
-  const snapshot = (): T[] => snapshotValue(state.units.map((u) => u()));
+  const snapshot = (): T[] => getArraySnapshot(state);
 
   const subscribe = (fn: (v: T[]) => void): OinUnsubscribe => {
     state.valueListeners.add(fn);
@@ -143,127 +167,152 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
   };
 
   const push = (...items: T[]): void => {
-    if (items.length === 0) return;
+    try {
+      if (items.length === 0) return;
 
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const start = state.units.length;
-    const created = items.map((v) => createUnit(cloneValue(v)));
-    for (const unit of created) attachElementBubbling(state, unit);
-    state.units.push(...created);
+      const baseRevision = state.revision;
+      state.revision += 1;
+      const start = state.units.length;
+      const created = items.map((v) => createUnit(cloneValue(v)));
+      for (const unit of created) attachElementBubbling(state, unit);
+      state.units.push(...created);
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start,
-      deleteCount: 0,
-      deleted: [],
-      items: items.map((v) => cloneValue(v)),
-    };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
-    emitArrayUpdate(state, update);
-    emitArrayValue(state);
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start,
+        deleteCount: 0,
+        deleted: [],
+        items: items.map((v) => cloneValue(v)),
+      };
+      const update = createUpdate(baseRevision, state.revision, [patch]);
+      emitArrayUpdate(state, update);
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'push');
+      throw error;
+    }
   };
 
   const pop = (): T | undefined => {
-    if (state.units.length === 0) return undefined;
+    try {
+      if (state.units.length === 0) return undefined;
 
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const start = state.units.length - 1;
-    const removedUnit = state.units.pop();
-    if (!removedUnit) return undefined;
-    const removedValue = removedUnit();
-    detachElementBubbling(state, removedUnit);
+      const baseRevision = state.revision;
+      state.revision += 1;
+      const start = state.units.length - 1;
+      const removedUnit = state.units.pop();
+      if (!removedUnit) return undefined;
+      const removedValue = removedUnit();
+      detachElementBubbling(state, removedUnit);
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start,
-      deleteCount: 1,
-      deleted: [cloneValue(removedValue)],
-      items: [],
-    };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
-    emitArrayUpdate(state, update);
-    emitArrayValue(state);
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start,
+        deleteCount: 1,
+        deleted: [cloneValue(removedValue)],
+        items: [],
+      };
+      const update = createUpdate(baseRevision, state.revision, [patch]);
+      emitArrayUpdate(state, update);
+      emitArrayValue(state);
 
-    return removedValue;
+      return removedValue;
+    } catch (error) {
+      emitError(array, error, [], 'pop');
+      throw error;
+    }
   };
 
   const splice = (start: number, deleteCount: number, ...items: T[]): void => {
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const { normalizedStart, dc, removedValues } = performSplice(
-      start,
-      deleteCount,
-      items
-    );
+    try {
+      const baseRevision = state.revision;
+      state.revision += 1;
+      const { normalizedStart, dc, removedValues } = performSplice(
+        start,
+        deleteCount,
+        items
+      );
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start: normalizedStart,
-      deleteCount: dc,
-      deleted: removedValues.map((v) => cloneValue(v)),
-      items: items.map((v) => cloneValue(v)),
-    };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
-    emitArrayUpdate(state, update);
-    emitArrayValue(state);
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start: normalizedStart,
+        deleteCount: dc,
+        deleted: removedValues.map((v) => cloneValue(v)),
+        items: items.map((v) => cloneValue(v)),
+      };
+      const update = createUpdate(baseRevision, state.revision, [patch]);
+      emitArrayUpdate(state, update);
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'splice');
+      throw error;
+    }
   };
 
   const sort = (compareFn?: (a: T, b: T) => number): void => {
-    if (state.units.length <= 1) return;
+    try {
+      if (state.units.length <= 1) return;
 
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const decorated = state.units.map((unit, index) => ({
-      unit,
-      index,
-      value: unit(),
-    }));
-    decorated.sort((a, b) => {
-      const av = a.value;
-      const bv = b.value;
-      if (compareFn) return compareFn(av, bv);
-      if (av === bv) return 0;
-      return av > bv ? 1 : -1;
-    });
+      const baseRevision = state.revision;
+      state.revision += 1;
+      const decorated = state.units.map((unit, index) => ({
+        unit,
+        index,
+        value: unit(),
+      }));
+      decorated.sort((a, b) => {
+        const av = a.value;
+        const bv = b.value;
+        if (compareFn) return compareFn(av, bv);
+        if (av === bv) return 0;
+        return av > bv ? 1 : -1;
+      });
 
-    const order = decorated.map((d) => d.index);
-    state.units = decorated.map((d) => d.unit);
+      const order = decorated.map((d) => d.index);
+      state.units = decorated.map((d) => d.unit);
 
-    const patch: OinPatch = { op: 'sort', path: [], order };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
-    emitArrayUpdate(state, update);
-    emitArrayValue(state);
+      const patch: OinPatch = { op: 'sort', path: [], order };
+      const update = createUpdate(baseRevision, state.revision, [patch]);
+      emitArrayUpdate(state, update);
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'sort');
+      throw error;
+    }
   };
 
   const commit = (fn: (draft: T[]) => void): void => {
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const before = state.units.map((u) => u());
-    const draft = before.map((v) => cloneValue(v));
-    fn(draft);
+    try {
+      const baseRevision = state.revision;
+      state.revision += 1;
+      const before = state.units.map((u) => u());
+      const draft = before.map((v) => cloneValue(v));
+      fn(draft);
 
-    for (const u of state.units) detachElementBubbling(state, u);
+      for (const u of state.units) detachElementBubbling(state, u);
 
-    state.units = draft.map((v) => createUnit(cloneValue(v)));
-    for (const u of state.units) attachElementBubbling(state, u);
+      state.units = draft.map((v) => createUnit(cloneValue(v)));
+      for (const u of state.units) attachElementBubbling(state, u);
 
-    const patch: OinPatch = {
-      op: 'splice',
-      path: [],
-      start: 0,
-      deleteCount: before.length,
-      deleted: before.map((v) => cloneValue(v)),
-      items: draft.map((v) => cloneValue(v)),
-    };
+      const patch: OinPatch = {
+        op: 'splice',
+        path: [],
+        start: 0,
+        deleteCount: before.length,
+        deleted: before.map((v) => cloneValue(v)),
+        items: draft.map((v) => cloneValue(v)),
+      };
 
-    const update = createUpdate(baseRevision, state.revision, [patch]);
-    emitArrayUpdate(state, update);
-    emitArrayValue(state);
+      const update = createUpdate(baseRevision, state.revision, [patch]);
+      emitArrayUpdate(state, update);
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'commit');
+      throw error;
+    }
   };
 
   const setIndex = (
@@ -271,14 +320,19 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     next: T,
     options?: { emitUpdate?: boolean; emitValue?: boolean }
   ): void => {
-    const unit = state.units[index];
-    if (!unit) throw new Error(`ArrayUnit: index out of range ${index}`);
-    const internal = getUnitInternal(unit);
-    const before = internal.getValue();
-    internal.setValue(next, options);
-    const after = internal.getValue();
-    if (!Object.is(before, after) && options?.emitUpdate === false) {
-      state.revision += 1;
+    try {
+      const unit = state.units[index];
+      if (!unit) throw new Error(`ArrayUnit: index out of range ${index}`);
+      const internal = getUnitInternal(unit);
+      const before = internal.getValue();
+      internal.setValue(next, options);
+      const after = internal.getValue();
+      if (!Object.is(before, after) && options?.emitUpdate === false) {
+        state.revision += 1;
+      }
+    } catch (error) {
+      emitError(array, error, [index], 'set');
+      throw error;
     }
   };
 
@@ -287,18 +341,28 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     deleteCount: number,
     items: T[]
   ): void => {
-    state.revision += 1;
-    performSplice(start, deleteCount, items);
-    emitArrayValue(state);
+    try {
+      state.revision += 1;
+      performSplice(start, deleteCount, items);
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'splice');
+      throw error;
+    }
   };
 
   const applySortOrder = (order: number[]): void => {
-    if (order.length !== state.units.length)
-      throw new Error('ArrayUnit: invalid sort order length');
-    const old = state.units.slice();
-    state.units = order.map((oldIndex) => old[oldIndex]);
-    state.revision += 1;
-    emitArrayValue(state);
+    try {
+      if (order.length !== state.units.length)
+        throw new Error('ArrayUnit: invalid sort order length');
+      const old = state.units.slice();
+      state.units = order.map((oldIndex) => old[oldIndex]);
+      state.revision += 1;
+      emitArrayValue(state);
+    } catch (error) {
+      emitError(array, error, [], 'sort');
+      throw error;
+    }
   };
 
   const reduce = <R>(

@@ -105,3 +105,25 @@ export type OinTreeScope<T extends Record<string, unknown>> = {
   subscribe(fn: (v: T) => void): OinUnsubscribe;
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
 };
+
+export type UnwrapOin<T> = T extends readonly (infer U)[]
+  ? UnwrapOin<U>[]
+  : T extends Record<string, unknown>
+  ? { [K in keyof T]: UnwrapOin<T[K]> }
+  : T;
+
+export type OinMutationOp =
+  | 'set'
+  | 'reset'
+  | 'commit'
+  | 'push'
+  | 'pop'
+  | 'splice'
+  | 'sort'
+  | 'applyUpdate';
+
+export type OinErrorHandler = (
+  error: unknown,
+  path: OinPath,
+  operation: OinMutationOp
+) => void;

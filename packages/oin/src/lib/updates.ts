@@ -1,3 +1,5 @@
+import { notifyUpdate } from './batch.js';
+import { emitError } from './debug.js';
 import type { OinPatch, OinUnit, OinUpdate } from './types.js';
 
 const INTERNAL = Symbol.for('@org/oin/internal');
@@ -8,6 +10,7 @@ type InternalUnit = {
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean }
   ) => void;
+  getState?: () => unknown;
 };
 
 type InternalScope = {
@@ -19,6 +22,7 @@ type InternalScope = {
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean }
   ) => void;
+  getState?: () => unknown;
 };
 
 type InternalArray = {
@@ -36,6 +40,7 @@ type InternalArray = {
     options?: { emitValue?: boolean }
   ) => void;
   applySortOrder: (order: number[], options?: { emitValue?: boolean }) => void;
+  getState?: () => unknown;
 };
 
 type Internal =
@@ -143,7 +148,11 @@ export function invertUpdate(update: OinUpdate): OinUpdate {
   return createUpdate(update.revision, update.baseRevision, inverted);
 }
 
-export function applyUpdate(target: unknown, update: OinUpdate): void {
+export function applyUpdate(
+  target: unknown,
+  update: OinUpdate,
+  options?: { emitUpdate?: boolean }
+): void {
   const rootInternal = getInternal(target);
   if (!rootInternal) throw new Error('applyUpdate: target is not an OIN node');
 
@@ -182,66 +191,79 @@ export function applyUpdate(target: unknown, update: OinUpdate): void {
   };
 
   for (const patch of update.patches) {
-    if (patch.op === 'set') {
-      if (patch.path.length === 0) {
-        const internal = getInternal(target);
-        if (!internal || internal.kind !== 'unit') {
-          throw new Error('applyUpdate: unsupported root set');
+    try {
+      if (patch.op === 'set') {
+        if (patch.path.length === 0) {
+          const internal = getInternal(target);
+          if (!internal || internal.kind !== 'unit') {
+            throw new Error('applyUpdate: unsupported root set');
+          }
+          internal.setValue(patch.next, { emitUpdate: false, emitValue: true });
+          continue;
         }
-        internal.setValue(patch.next, { emitUpdate: false, emitValue: true });
-        continue;
+
+        const parentPath = patch.path.slice(0, -1);
+        const last = patch.path[patch.path.length - 1];
+        const parentNode = resolveNode(target, parentPath);
+        const parentInternal = getInternal(parentNode);
+        if (!parentInternal) throw new Error('applyUpdate: invalid parent node');
+
+        if (parentInternal.kind === 'scope') {
+          if (typeof last !== 'string')
+            throw new Error('applyUpdate: invalid scope key');
+          parentInternal.applySet(last, patch.next, {
+            emitUpdate: false,
+            emitValue: true,
+          });
+          continue;
+        }
+
+        if (parentInternal.kind === 'array') {
+          if (typeof last !== 'number')
+            throw new Error('applyUpdate: invalid array index');
+          parentInternal.setIndex(last, patch.next, {
+            emitUpdate: false,
+            emitValue: true,
+          });
+          continue;
+        }
+
+        throw new Error('applyUpdate: set target is not a container');
       }
 
-      const parentPath = patch.path.slice(0, -1);
-      const last = patch.path[patch.path.length - 1];
-      const parentNode = resolveNode(target, parentPath);
-      const parentInternal = getInternal(parentNode);
-      if (!parentInternal) throw new Error('applyUpdate: invalid parent node');
-
-      if (parentInternal.kind === 'scope') {
-        if (typeof last !== 'string')
-          throw new Error('applyUpdate: invalid scope key');
-        parentInternal.applySet(last, patch.next, {
-          emitUpdate: false,
+      if (patch.op === 'splice') {
+        const arrayNode = resolveNode(target, patch.path);
+        const arrayInternal = getInternal(arrayNode);
+        if (!arrayInternal || arrayInternal.kind !== 'array')
+          throw new Error('applyUpdate: splice target is not array');
+        arrayInternal.applySplice(patch.start, patch.deleteCount, patch.items, {
           emitValue: true,
         });
         continue;
       }
 
-      if (parentInternal.kind === 'array') {
-        if (typeof last !== 'number')
-          throw new Error('applyUpdate: invalid array index');
-        parentInternal.setIndex(last, patch.next, {
-          emitUpdate: false,
-          emitValue: true,
-        });
+      if (patch.op === 'sort') {
+        const arrayNode = resolveNode(target, patch.path);
+        const arrayInternal = getInternal(arrayNode);
+        if (!arrayInternal || arrayInternal.kind !== 'array')
+          throw new Error('applyUpdate: sort target is not array');
+        arrayInternal.applySortOrder(patch.order, { emitValue: true });
         continue;
       }
 
-      throw new Error('applyUpdate: set target is not a container');
+      throw new Error('applyUpdate: unsupported patch');
+    } catch (error) {
+      emitError(target, error, patch.path, 'applyUpdate');
+      throw error;
     }
+  }
 
-    if (patch.op === 'splice') {
-      const arrayNode = resolveNode(target, patch.path);
-      const arrayInternal = getInternal(arrayNode);
-      if (!arrayInternal || arrayInternal.kind !== 'array')
-        throw new Error('applyUpdate: splice target is not array');
-      arrayInternal.applySplice(patch.start, patch.deleteCount, patch.items, {
-        emitValue: true,
-      });
-      continue;
-    }
-
-    if (patch.op === 'sort') {
-      const arrayNode = resolveNode(target, patch.path);
-      const arrayInternal = getInternal(arrayNode);
-      if (!arrayInternal || arrayInternal.kind !== 'array')
-        throw new Error('applyUpdate: sort target is not array');
-      arrayInternal.applySortOrder(patch.order, { emitValue: true });
-      continue;
-    }
-
-    throw new Error('applyUpdate: unsupported patch');
+  if (options?.emitUpdate) {
+    const internal = getInternal(target);
+    const state = (internal as unknown as { getState?: () => unknown })?.getState?.();
+    const listeners = (state as { updateListeners?: Set<(u: OinUpdate) => void> })
+      .updateListeners;
+    if (listeners && listeners instanceof Set) notifyUpdate(listeners, update);
   }
 }
 
