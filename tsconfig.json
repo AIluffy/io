@@ -4,16 +4,16 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/strings"
+      "path": "./packages/oin-svelte"
     },
     {
-      "path": "./packages/colors"
+      "path": "./packages/oin-react"
     },
     {
-      "path": "./packages/async"
+      "path": "./packages/oin-vue"
     },
     {
-      "path": "./packages/utils"
+      "path": "./packages/oin"
     }
   ]
 }
