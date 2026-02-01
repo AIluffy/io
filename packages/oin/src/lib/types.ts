@@ -78,15 +78,17 @@ export type OinNode<T> = T extends readonly (infer U)[]
   ? OinScope<T>
   : OinUnit<T>;
 
-export type OinTreeNode<T> = T extends readonly (infer U)[]
-  ? OinTreeArrayUnit<U>
+export type OinTreeNode<T, MaxDepth extends number = 8> = MaxDepth extends 0
+  ? OinUnit<T>
+  : T extends readonly (infer U)[]
+  ? OinTreeArrayUnit<U, PrevDepth<MaxDepth>>
   : T extends Record<string, unknown>
-  ? OinTreeScope<T>
+  ? OinTreeScope<T, PrevDepth<MaxDepth>>
   : OinUnit<T>;
 
-export type OinTreeArrayUnit<T> = {
+export type OinTreeArrayUnit<T, MaxDepth extends number = 8> = {
   (): T[];
-  [i: number]: OinTreeNode<T>;
+  [i: number]: OinTreeNode<T, MaxDepth>;
   push(...items: T[]): void;
   pop(): T | undefined;
   splice(start: number, deleteCount: number, ...items: T[]): void;
@@ -97,8 +99,11 @@ export type OinTreeArrayUnit<T> = {
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
 };
 
-export type OinTreeScope<T extends Record<string, unknown>> = {
-  [K in keyof T]: OinTreeNode<T[K]>;
+export type OinTreeScope<
+  T extends Record<string, unknown>,
+  MaxDepth extends number = 8
+> = {
+  [K in keyof T]: OinTreeNode<T[K], MaxDepth>;
 } & {
   commit(fn: (draft: T) => void): void;
   snapshot(): T;
@@ -106,11 +111,79 @@ export type OinTreeScope<T extends Record<string, unknown>> = {
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
 };
 
-export type UnwrapOin<T> = T extends readonly (infer U)[]
-  ? UnwrapOin<U>[]
-  : T extends Record<string, unknown>
-  ? { [K in keyof T]: UnwrapOin<T[K]> }
+export type OinTypeInferenceMode = 'unknown' | 'error';
+
+type DepthTable = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+type PrevDepth<N extends number> = DepthTable[N] extends number ? DepthTable[N] : 0;
+
+type OinTypeError<Message extends string> = {
+  readonly __oin_type_inference_error__: Message;
+};
+
+type TypeFailure<
+  Message extends string,
+  Mode extends OinTypeInferenceMode
+> = Mode extends 'error' ? never & OinTypeError<Message> : unknown;
+
+type IsRecord<T> = [T] extends [Record<string, unknown>] ? true : false;
+type IsArray<T> = [T] extends [readonly unknown[]] ? true : false;
+
+export type UnwrapOin<
+  T,
+  MaxDepth extends number = 8,
+  Mode extends OinTypeInferenceMode = 'unknown'
+> = MaxDepth extends 0
+  ? TypeFailure<'UnwrapOin: exceeded MaxDepth', Mode>
+  : IsArray<T> extends true
+  ? T extends readonly (infer U)[]
+    ? UnwrapOin<U, PrevDepth<MaxDepth>, Mode>[]
+    : never
+  : IsRecord<T> extends true
+  ? { [K in keyof T]: UnwrapOin<T[K], PrevDepth<MaxDepth>, Mode> }
   : T;
+
+type PathSegment = string | number;
+
+type PathOfImpl<T, Depth extends number> = Depth extends 0
+  ? never
+  : [T] extends [readonly (infer U)[]]
+  ? [number] | [number, ...PathOfImpl<U, PrevDepth<Depth>>]
+  : [T] extends [Record<string, unknown>]
+  ? {
+      [K in Extract<keyof T, string>]:
+        | [K]
+        | [K, ...PathOfImpl<T[K], PrevDepth<Depth>>];
+    }[Extract<keyof T, string>]
+  : never;
+
+export type OinPathOf<T, MaxDepth extends number = 5> =
+  | []
+  | PathOfImpl<T, MaxDepth>;
+
+type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer R]
+  ? R
+  : [];
+
+export type OinPathValue<
+  T,
+  P extends ReadonlyArray<PathSegment>
+> = T extends unknown
+  ? P extends []
+    ? T
+    : P[0] extends number
+    ? T extends readonly (infer U)[]
+      ? OinPathValue<U, Tail<P>>
+      : unknown
+    : P[0] extends keyof T
+    ? OinPathValue<T[P[0]], Tail<P>>
+    : unknown
+  : never;
+
+export type OinErrorHandlerFor<T, MaxDepth extends number = 5> = (
+  error: unknown,
+  path: OinPathOf<T, MaxDepth>,
+  operation: OinMutationOp
+) => void;
 
 export type OinMutationOp =
   | 'set'

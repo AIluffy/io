@@ -1,0 +1,35 @@
+---
+title: "formula"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+<const D extends readonly FormulaDep[], T>(deps: D, compute: (...args: { [K in keyof D]: DepArg<D[K]>; }) => T) => OinDerived<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| deps | `D` |
+| compute | `(...args: { [K in keyof D]: DepArg<D[K]>; }) => T` |
+
+## 返回
+
+`OinDerived<T>`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 鉴权
+
+- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。
+
+## 源码
+
+- `packages/oin/src/lib/formula.ts`

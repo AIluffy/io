@@ -35,6 +35,10 @@ jobs:
       # Prepend any command with "nx record --" to record its logs to Nx Cloud
       - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
       - run: npx nx run-many -t lint test build typecheck
+      - run: npm run docs:check
+      - run: npm run build -w apps/docs
+        env:
+          ASTRO_TELEMETRY_DISABLED: 1
       # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/ci/features/self-healing-ci
       - run: npx nx fix-ci
         if: always()

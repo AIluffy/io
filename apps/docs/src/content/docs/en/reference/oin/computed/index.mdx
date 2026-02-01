@@ -1,0 +1,34 @@
+---
+title: "computed"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+<T>(fn: () => T) => SignalComputed<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| fn | `() => T` |
+
+## Returns
+
+`SignalComputed<T>`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Authentication
+
+- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.
+
+## Source
+
+- `packages/oin/src/lib/signals.ts`

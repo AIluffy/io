@@ -1,0 +1,37 @@
+---
+title: Welcome to OIN
+description: The core & framework adaptation package.
+template: splash
+hero:
+  tagline: Reactive state management with deep signal support.
+  image:
+    file: ../../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /en/intro/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/org/oin
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Next Steps
+
+<CardGrid stagger>
+	<Card title="Signals" icon="pencil">
+		Learn about OIN's fine-grained reactivity system.
+	</Card>
+	<Card title="Batching" icon="add-document">
+		Understand how updates are optimized.
+	</Card>
+	<Card title="Frameworks" icon="setting">
+		Integrate with React, Vue, and Svelte.
+	</Card>
+	<Card title="Deep Reactivity" icon="open-book">
+		Manage complex nested state with ease.
+	</Card>
+</CardGrid>

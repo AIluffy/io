@@ -1,0 +1,49 @@
+{
+  "name": "@org/oin-devtools-react",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@org/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "@org/oin-devtools": "*",
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0",
+    "vite": "^7.0.0"
+  },
+  "nx": {
+    "tags": [
+      "scope:oin-devtools-react"
+    ],
+    "targets": {
+      "build-base": {
+        "command": "echo 'Running build-base for oin-devtools-react. This can be replaced with arbitrary commands.'",
+        "cache": true
+      },
+      "build": {
+        "dependsOn": [
+          "build-base"
+        ]
+      }
+    }
+  }
+}

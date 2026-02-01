@@ -1,0 +1,35 @@
+---
+title: "replay"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+(target: unknown, updates: OinUpdate[]) => void
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| updates | `OinUpdate[]` |
+
+## Returns
+
+`void`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Authentication
+
+- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.
+
+## Source
+
+- `packages/oin/src/lib/updates.ts`

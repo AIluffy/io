@@ -1,0 +1,65 @@
+---
+title: 快速开始
+description: 如何安装和使用 OIN。
+sidebar:
+  order: 2
+---
+
+import { Steps, FileTree } from '@astrojs/starlight/components';
+
+## 安装
+
+<Steps>
+
+1.  安装核心包:
+
+    ```bash
+    npm install @org/oin
+    ```
+
+2.  安装框架适配器 (可选):
+
+    ```bash
+    npm install @org/oin-react
+    ```
+
+</Steps>
+
+## 项目结构
+
+<FileTree>
+- src
+  - components
+  - store
+    - index.ts
+  - App.tsx
+</FileTree>
+
+## 第一个状态
+
+```ts
+import { oin } from '@org/oin';
+
+const count = oin(0);
+
+count();          // 读取
+count(1);         // 写入
+count((v) => v + 1);
+```
+
+## 深层树模式
+
+`oin()` 对对象默认是浅层 Scope（只有第一层 key 会变成 unit）。当你希望 `user.profile.name(...)` 这种深层属性级 Unit 时，使用 `oinTree()` / `oinDeep()`。
+
+```ts
+import { oinDeep } from '@org/oin';
+
+const user = oinDeep({ profile: { name: 'Ada' } });
+
+user.profile.name();        // "Ada"
+user.profile.name('Grace'); // 写入路径 ["profile","name"]
+```
+
+## 下一步
+
+- 从侧边栏的 Reference 进入完整 API 参考。

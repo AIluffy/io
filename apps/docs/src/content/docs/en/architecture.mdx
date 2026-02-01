@@ -1,0 +1,56 @@
+---
+title: Architecture
+description: How OIN is structured internally and why it is designed this way.
+sidebar:
+  order: 3
+---
+
+import architectureDiagram from '../../../assets/oin-architecture.svg';
+
+OIN is a TypeScript state library built around a small set of primitives (Unit / Scope / ArrayUnit / Tree) plus an explicit change log format (Patch/Update). This page maps the exported API to the internal modules, and explains the design choices.
+
+## High-level Architecture
+
+<img src={architectureDiagram} alt="OIN architecture overview" width="1200" height="520" />
+
+## Modules
+
+### Data model
+
+- `Unit<T>`: a function-like cell: `unit()` reads, `unit(next)` writes.
+- `Scope<T>`: an object where each key is an `OinUnit`, with `commit()` to update multiple keys as one update.
+- `ArrayUnit<T>`: an array container with element units and array operations (`splice`, `sort`, etc.).
+- `TreeNode<T>`: deep-structured nodes created by `oinTree()` / `oinDeep()` for path-level updates.
+
+Source mapping (core package): `unit.ts`, `scope.ts`, `array-unit.ts`, `oin-tree.ts`, `types.ts`.
+
+### Mutation & observability
+
+- Patch is the smallest mutation record (`set`, `splice`, `sort`) with a `path`.
+- Update is a list of patches plus metadata; it can be merged, inverted, applied, and replayed.
+- Batching coalesces notifications and merges updates.
+- Debug hooks provide centralized observability for mutations and failures.
+
+Source mapping: `updates.ts`, `batch.ts`, `debug.ts`.
+
+### Derived values
+
+- `formula(deps, compute)` is explicit and subscription-driven (no hidden dependencies).
+- `derive(node, selector)` is selector-driven and uses the internal reactive core to track reads.
+- The internal reactive core (`state`, `computed`, `effect`, `untrack`) powers derivations and scheduling.
+
+Source mapping: `formula.ts`, `derive.ts`, `signals.ts`.
+
+### Snapshots
+
+All reads that return objects/arrays are frozen snapshots to prevent accidental in-place mutation and to keep “same revision” values referentially stable.
+
+Source mapping: `snapshot.ts`.
+
+## Technology choices
+
+- TypeScript-first API: public types are part of the contract and enable safe refactoring.
+- Explicit Patch/Update format: enables time-travel, replay, and potential external synchronization.
+- Frozen snapshots: makes mutation bugs obvious and improves “read-only by default” ergonomics.
+- Monorepo toolchain: Nx for consistent builds/tests; Vite/Vitest for fast iteration.
+- Docs site: Astro + Starlight with Pagefind for full-text search and a structured sidebar.

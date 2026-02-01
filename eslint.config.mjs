@@ -8,6 +8,9 @@ export default [
     ignores: [
       '**/dist',
       '**/build',
+      '**/.astro/**',
+      '**/vite.config.*',
+      '**/vitest.config.*',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
     ],
@@ -19,23 +22,35 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          allow: ['^.*/eslint(.base)?.config.[cm]?[jt]s$'],
           depConstraints: [
             {
-              sourceTag: 'scope:shared',
-              onlyDependOnLibsWithTags: ['scope:shared'],
+              sourceTag: 'scope:oin',
+              onlyDependOnLibsWithTags: ['scope:oin'],
             },
             {
-              sourceTag: 'scope:async',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:async'],
+              sourceTag: 'scope:oin-devtools',
+              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-devtools'],
             },
             {
-              sourceTag: 'scope:colors',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:colors'],
+              sourceTag: 'scope:oin-react',
+              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-react'],
             },
             {
-              sourceTag: 'scope:strings',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:strings'],
+              sourceTag: 'scope:oin-devtools-react',
+              onlyDependOnLibsWithTags: [
+                'scope:oin',
+                'scope:oin-devtools',
+                'scope:oin-devtools-react',
+              ],
+            },
+            {
+              sourceTag: 'scope:oin-svelte',
+              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-svelte'],
+            },
+            {
+              sourceTag: 'scope:oin-vue',
+              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-vue'],
             },
           ],
         },

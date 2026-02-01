@@ -1,0 +1,37 @@
+---
+title: 欢迎使用 OIN
+description: OIN 核心与框架适配文档。
+template: splash
+hero:
+  tagline: 具有深度信号支持的响应式状态管理。
+  image:
+    file: ../../../assets/houston.webp
+  actions:
+    - text: 开始使用
+      link: /zh-cn/intro/
+      icon: right-arrow
+      variant: primary
+    - text: 查看 GitHub
+      link: https://github.com/org/oin
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## 下一步
+
+<CardGrid stagger>
+	<Card title="信号 (Signals)" icon="pencil">
+		了解 OIN 的细粒度响应式系统。
+	</Card>
+	<Card title="批处理 (Batching)" icon="add-document">
+		理解更新是如何被优化的。
+	</Card>
+	<Card title="框架集成" icon="setting">
+		集成 React, Vue, 和 Svelte。
+	</Card>
+	<Card title="深度响应" icon="open-book">
+		轻松管理复杂的嵌套状态。
+	</Card>
+</CardGrid>

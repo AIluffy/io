@@ -1,4 +1,5 @@
 import { cloneValue, snapshotValue } from './snapshot.js';
+import { createDraft, finishDraft } from './cow.js';
 import { notifyUpdate, notifyValue } from './batch.js';
 import { createUpdate } from './updates.js';
 import type {
@@ -286,24 +287,46 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
 
   const commit = (fn: (draft: T[]) => void): void => {
     try {
+      const before = snapshotValue(state.units.map((u) => u()), { owned: true });
+      const draft = createDraft(before);
+      fn(draft);
+      const next = finishDraft(draft);
+
+      let changed = before.length !== next.length;
+      if (!changed) {
+        for (let i = 0; i < before.length; i += 1) {
+          if (!Object.is(before[i], next[i])) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (!changed) return;
+
       const baseRevision = state.revision;
       state.revision += 1;
-      const before = state.units.map((u) => u());
-      const draft = before.map((v) => cloneValue(v));
-      fn(draft);
 
-      for (const u of state.units) detachElementBubbling(state, u);
-
-      state.units = draft.map((v) => createUnit(cloneValue(v)));
-      for (const u of state.units) attachElementBubbling(state, u);
+      if (before.length !== next.length) {
+        for (const u of state.units) detachElementBubbling(state, u);
+        state.units = next.map((v) => createUnit(v));
+        for (const u of state.units) attachElementBubbling(state, u);
+      } else {
+        for (let i = 0; i < next.length; i += 1) {
+          const unit = state.units[i];
+          if (!unit) continue;
+          if (Object.is(unit(), next[i])) continue;
+          const internal = getUnitInternal(unit);
+          internal.setValue(next[i], { emitUpdate: false, emitValue: false });
+        }
+      }
 
       const patch: OinPatch = {
         op: 'splice',
         path: [],
         start: 0,
         deleteCount: before.length,
-        deleted: before.map((v) => cloneValue(v)),
-        items: draft.map((v) => cloneValue(v)),
+        deleted: before as unknown[],
+        items: next as unknown[],
       };
 
       const update = createUpdate(baseRevision, state.revision, [patch]);
@@ -377,7 +400,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
   };
 
   const array = function () {
-    return snapshotValue(state.units.map((u) => u()));
+    return snapshotValue(state.units.map((u) => u()), { owned: true });
   } as OinArrayUnit<T>;
 
   Object.defineProperties(array, {

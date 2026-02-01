@@ -1,0 +1,103 @@
+---
+title: DevTools
+description: 集成化调试：时间旅行、差异查看、性能指标与导出。
+sidebar:
+  order: 6
+---
+
+OIN DevTools 把底层的 `subscribeUpdate` + `onError` 调试钩子升级为一套完整工作流：
+
+- 变更时间线（录制 mutations）
+- 时间旅行（撤销 / 重做 / 跳转）
+- patch 级与 snapshot 级差异查看
+- 变更性能指标（每次 update 的开销）
+- 导出（JSON + Redux DevTools 导入格式）
+- 隔离（DevTools 出错不会影响业务应用）
+
+## 安装
+
+```bash
+npm i @org/oin-devtools @org/oin-devtools-react
+```
+
+## 创建 DevTools 实例
+
+```ts
+import { oinDeep } from '@org/oin';
+import { createOinDevtools } from '@org/oin-devtools';
+
+const store = oinDeep({
+  counter: 0,
+  user: { name: 'Ada' },
+});
+
+const devtools = createOinDevtools(store, {
+  name: 'My Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## 使用 React 面板（UI 方案 A）
+
+```tsx
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@org/oin-devtools-react';
+
+export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
+  return (
+    <OinDevtoolsErrorBoundary>
+      <OinDevtoolsPanel devtools={devtools} height={420} />
+    </OinDevtoolsErrorBoundary>
+  );
+}
+```
+
+## 时间旅行
+
+- `undo()`：对当前 entry 计算 `invertUpdate(update)` 并通过 `applyUpdate(..., { emitUpdate: false })` 回滚。
+- `redo()`：重新应用原始 update。
+- `goTo(index)`：在历史中逐步 undo/redo 直到目标游标。
+
+当游标不在末尾时发生新的变更，DevTools 会截断“未来”并继续线性录制。
+
+## 差异查看
+
+- patch diff：直接来源于 `OinUpdate.patches`（set/splice/sort），始终可用。
+- snapshot diff：在 `captureSnapshots: 'always'` 时可用，通过比较 `snapshotBefore` 与 `snapshotAfter` 得到更直观的深度差异。
+
+## 性能指标
+
+DevTools 会记录：
+
+- `patchCount`
+- `intervalMs`（相邻 update 的时间间隔）
+- `snapshotMs`（采集 snapshot 的耗时）
+- `diffMs`（生成 diff 的耗时）
+- `totalMs`（DevTools 自身处理一次 update 的总耗时）
+
+## 导出
+
+```ts
+const json = devtools.export.json();
+
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## Redux DevTools 在线桥接（可选）
+
+如果你使用 Redux DevTools 浏览器扩展，可以启用桥接：
+
+```ts
+const devtools = createOinDevtools(store, {
+  reduxDevTools: { enabled: true, name: 'OIN Store' },
+});
+
+devtools.connectReduxDevToolsExtension({ window: globalThis });
+```
+
+## 参考
+
+- API：`/zh-cn/reference/oin-devtools/`
+- React UI：`/zh-cn/reference/oin-devtools-react/`
+

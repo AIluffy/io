@@ -1,0 +1,14 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/components/SiteTitle.astro';
+---
+
+<span class="custom-title">🌟</span>
+<Default {...Astro.props} />
+
+<style>
+	.custom-title {
+		margin-right: 0.5rem;
+        font-size: 1.5rem;
+	}
+</style>

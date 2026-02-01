@@ -1,0 +1,39 @@
+---
+title: "OinDevtools"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+OinDevtools
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| getState | `() => OinDevtoolsState` |
+| subscribe | `(listener: (event: OinDevtoolsEvent) => void) => Unsubscribe` |
+| setEnabled | `(enabled: boolean) => void` |
+| pause | `() => void` |
+| resume | `() => void` |
+| destroy | `() => void` |
+| clear | `() => void` |
+| timeTravel | `{ undo: () => boolean; redo: () => boolean; goTo: (index: number) => boolean; }` |
+| export | `{ json: () => string; reduxDevToolsImport: () => ReduxDevToolsImportState; }` |
+| connectReduxDevToolsExtension | `(options?: { window?: unknown; name?: string; }) => OinDevtoolsBridge \| null` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Authentication
+
+- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.
+
+## Source
+
+- `packages/oin-devtools/src/lib/types.ts`

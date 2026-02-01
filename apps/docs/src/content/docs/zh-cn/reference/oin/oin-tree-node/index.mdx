@@ -1,0 +1,32 @@
+---
+title: "OinTreeNode"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+OinTreeNode<T>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
+| subscribe | `((fn: (v: unknown[]) => void) => OinUnsubscribe) \| ((fn: (v: T) => void) => OinUnsubscribe) \| ((fn: (v: T) => void) => OinUnsubscribe)` |
+| subscribeUpdate | `((fn: (u: OinUpdate) => void) => OinUnsubscribe) \| ((fn: (u: OinUpdate) => void) => OinUnsubscribe) \| ((fn: (u: OinUpdate) => void) => OinUnsubscribe)` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 鉴权
+
+- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。
+
+## 源码
+
+- `packages/oin/src/lib/types.ts`

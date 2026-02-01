@@ -1,4 +1,5 @@
 import { cloneValue, snapshotValue } from './snapshot.js';
+import { createDraft, finishDraft } from './cow.js';
 import { notifyUpdate, notifyValue } from './batch.js';
 import { createUpdate } from './updates.js';
 import type {
@@ -73,7 +74,7 @@ function getScopeSnapshot<T extends Record<string, unknown>>(
     return state.cachedSnapshot as T;
   const plain: Record<string, unknown> = {};
   for (const [key, unit] of state.units.entries()) plain[key] = unit();
-  const value = snapshotValue(plain as T);
+  const value = snapshotValue(plain as T, { owned: true });
   state.cachedSnapshot = value;
   state.cachedSnapshotRevision = state.revision;
   state.hasCachedSnapshot = true;
@@ -136,25 +137,25 @@ export function createScope<T extends Record<string, unknown>>(
 
   const commit = (fn: (draft: T) => void): void => {
     try {
-      const before: Record<string, unknown> = {};
-      for (const [key, unit] of state.units.entries()) before[key] = unit();
-      const draft = cloneValue(before) as T;
+      const before = snapshot() as Record<string, unknown>;
+      const draft = createDraft(before) as T;
       fn(draft);
+      const next = finishDraft(draft) as Record<string, unknown>;
 
       const patches: OinPatch[] = [];
       isCommitting = true;
       for (const [key, unit] of state.units.entries()) {
-        const next = (draft as Record<string, unknown>)[key];
+        const nextValue = next[key];
         const prev = before[key];
-        if (Object.is(prev, next)) continue;
+        if (Object.is(prev, nextValue)) continue;
         patches.push({
           op: 'set',
           path: [key],
-          prev: cloneValue(prev),
-          next: cloneValue(next),
+          prev,
+          next: nextValue,
         });
         const unitInternal = getUnitInternal(unit);
-        unitInternal.setValue(next, { emitUpdate: false, emitValue: true });
+        unitInternal.setValue(nextValue, { emitUpdate: false, emitValue: true });
       }
       isCommitting = false;
 

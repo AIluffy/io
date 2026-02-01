@@ -1,0 +1,41 @@
+{
+  "name": "@org/oin-devtools",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@org/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "@org/oin": "*",
+    "tslib": "^2.3.0"
+  },
+  "nx": {
+    "tags": [
+      "scope:oin-devtools"
+    ],
+    "targets": {
+      "build-base": {
+        "command": "echo 'Running build-base for oin-devtools. This can be replaced with arbitrary commands.'",
+        "cache": true
+      },
+      "build": {
+        "dependsOn": [
+          "build-base"
+        ]
+      }
+    }
+  }
+}

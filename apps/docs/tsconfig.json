@@ -1,0 +1,16 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "references": [
+    {
+      "path": "../../packages/oin-devtools-react"
+    },
+    {
+      "path": "../../packages/oin-devtools"
+    },
+    {
+      "path": "../../packages/oin"
+    }
+  ]
+}

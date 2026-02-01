@@ -1,0 +1,39 @@
+---
+title: "OinDevtools"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+OinDevtools
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| getState | `() => OinDevtoolsState` |
+| subscribe | `(listener: (event: OinDevtoolsEvent) => void) => Unsubscribe` |
+| setEnabled | `(enabled: boolean) => void` |
+| pause | `() => void` |
+| resume | `() => void` |
+| destroy | `() => void` |
+| clear | `() => void` |
+| timeTravel | `{ undo: () => boolean; redo: () => boolean; goTo: (index: number) => boolean; }` |
+| export | `{ json: () => string; reduxDevToolsImport: () => ReduxDevToolsImportState; }` |
+| connectReduxDevToolsExtension | `(options?: { window?: unknown; name?: string; }) => OinDevtoolsBridge \| null` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 鉴权
+
+- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。
+
+## 源码
+
+- `packages/oin-devtools/src/lib/types.ts`

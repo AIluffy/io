@@ -77,18 +77,19 @@ export function createUnit<T>(initial: T): OinUnit<T> {
       const prev = state.value;
       const resolved =
         typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
-      if (Object.is(prev, resolved)) return;
+      const after = cloneValue(resolved);
+      if (Object.is(prev, after)) return;
 
       const baseRevision = state.revision;
       state.revision += 1;
-      state.value = resolved;
+      state.value = after;
 
       if (emitUpdateFlag) {
         const patch: OinPatch = {
           op: 'set',
           path: [],
-          prev: cloneValue(prev),
-          next: cloneValue(resolved),
+          prev,
+          next: after,
         };
         const update = createUpdate(baseRevision, state.revision, [patch]);
         emitUpdate(state as UnitState<unknown>, update);

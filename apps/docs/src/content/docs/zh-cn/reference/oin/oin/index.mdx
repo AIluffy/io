@@ -1,0 +1,34 @@
+---
+title: "oin"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+<T>(initial: T) => OinNode<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| initial | `T` |
+
+## 返回
+
+`OinNode<T>`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 鉴权
+
+- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。
+
+## 源码
+
+- `packages/oin/src/lib/oin.ts`

@@ -1,0 +1,39 @@
+---
+title: 维护与流程
+description: 文档更新流程、访问控制与发布规范。
+sidebar:
+  order: 6
+---
+
+## 访问权限
+
+- 站点为静态站点。如果使用 GitHub Pages 发布，站点本身不提供可靠的读者鉴权能力。
+- 通过仓库权限、分支保护与强制评审来控制“谁可以更新文档”。
+- 若需要对读者做鉴权，请将静态站点部署在访问网关之后（例如带 SSO 的反向代理）。
+
+## 更新流程
+
+- 将 `apps/docs/src/content/docs/**` 视为产品代码：必须走 PR + 评审。
+- 当对外 API 发生变化时，先重新生成 API 参考：
+
+```bash
+npm run docs:generate-api
+```
+
+- 校验生成物已提交且与源码一致：
+
+```bash
+npm run docs:check
+```
+
+- 本地构建文档站点：
+
+```bash
+npm run build -w apps/docs
+```
+
+## CI 约束
+
+- CI 会执行 `docs:check`，防止 API 文档与源码导出产生漂移。
+- 文档部署会在构建站点前生成 API 参考，确保代码变更时站点同步更新。
+

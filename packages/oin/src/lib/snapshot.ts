@@ -1,12 +1,32 @@
-export function cloneValue<T>(value: T): T {
-  if (value === null || value === undefined) return value;
-  if (typeof value !== 'object') return value;
+const IMMUTABLE_ROOTS = new WeakSet<object>();
+let deepCloneCount = 0;
+
+function isImmutableRoot(value: object): boolean {
+  return IMMUTABLE_ROOTS.has(value);
+}
+
+function markImmutableRoot(value: object): void {
+  IMMUTABLE_ROOTS.add(value);
+}
+
+function deepClone<T>(value: T): T {
+  deepCloneCount += 1;
   const maybeStructuredClone = (globalThis as Record<PropertyKey, unknown>)
     .structuredClone;
   if (typeof maybeStructuredClone === 'function') {
     return (maybeStructuredClone as (v: unknown) => unknown)(value) as T;
   }
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function toImmutable<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  if (isImmutableRoot(value as object)) return value;
+  const cloned = deepClone(value);
+  const frozen = deepFreeze(cloned);
+  markImmutableRoot(frozen as object);
+  return frozen;
 }
 
 export function deepFreeze<T>(value: T): T {
@@ -37,12 +57,34 @@ export function deepFreeze<T>(value: T): T {
   return value;
 }
 
-export function snapshotValue<T>(value: T): T {
-  return deepFreeze(cloneValue(value));
+function freezeOwned<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  if (isImmutableRoot(value as object)) return value;
+  const frozen = deepFreeze(value);
+  markImmutableRoot(frozen as object);
+  return frozen;
+}
+
+export function cloneValue<T>(value: T): T {
+  return toImmutable(value);
+}
+
+export function snapshotValue<T>(value: T, options?: { owned?: boolean }): T {
+  if (options?.owned) return freezeOwned(value);
+  return toImmutable(value);
 }
 
 export function readValue<T>(value: T): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
-  return snapshotValue(value);
+  if (isImmutableRoot(value as object)) return value;
+  return toImmutable(value);
 }
+
+export const __testing = {
+  resetDeepCloneCount: () => {
+    deepCloneCount = 0;
+  },
+  getDeepCloneCount: () => deepCloneCount,
+};

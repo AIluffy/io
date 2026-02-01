@@ -14,6 +14,12 @@
     },
     {
       "path": "./packages/oin"
+    },
+    {
+      "path": "./packages/oin-devtools-react"
+    },
+    {
+      "path": "./packages/oin-devtools"
     }
   ]
 }

@@ -1,4 +1,10 @@
-import type { OinDerived, OinNode, OinTreeNode, OinUnsubscribe, UnwrapOin } from './types.js';
+import type {
+  OinDerived,
+  OinNode,
+  OinTreeNode,
+  OinUnsubscribe,
+  UnwrapOin,
+} from './types.js';
 import { computed, effect } from './signals.js';
 import { snapshotValue } from './snapshot.js';
 
@@ -8,11 +14,17 @@ type Internal = { kind: 'array' | 'unit' | 'scope' | 'derived' };
 
 function getInternal(value: unknown): Internal | undefined {
   if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object') return undefined;
+  if (typeof value !== 'function' && typeof value !== 'object')
+    return undefined;
   const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
   if (typeof internal !== 'object' || internal === null) return undefined;
   const kind = (internal as { kind?: unknown }).kind;
-  if (kind === 'array' || kind === 'unit' || kind === 'scope' || kind === 'derived')
+  if (
+    kind === 'array' ||
+    kind === 'unit' ||
+    kind === 'scope' ||
+    kind === 'derived'
+  )
     return { kind };
   return undefined;
 }
@@ -51,7 +63,11 @@ function getValueView<T>(node: unknown): T {
         return getValueView(child);
       }
 
-      if (prop === 'length' && internal?.kind === 'array') {
+      if (
+        typeof prop === 'string' &&
+        prop === 'length' &&
+        internal?.kind === 'array'
+      ) {
         const arr = (target as unknown as { (): unknown[] })();
         return arr.length;
       }
@@ -114,4 +130,3 @@ export function derive<T, R>(
 
   return derived;
 }
-

@@ -1,4 +1,5 @@
 import { cloneValue, snapshotValue } from './snapshot.js';
+import { createDraft, finishDraft } from './cow.js';
 import { notifyUpdate, notifyValue } from './batch.js';
 import { createUpdate } from './updates.js';
 import type {
@@ -262,7 +263,7 @@ function hasSnapshot(value: unknown): value is { snapshot(): unknown } {
 function getNodeValue(node: TreeNode): unknown {
   if (typeof node === 'function') return node();
   if (hasSnapshot(node)) return node.snapshot();
-  return snapshotValue(node);
+  return snapshotValue(node, { owned: false });
 }
 
 function getScopeSnapshot(state: TreeScopeState): Record<string, unknown> {
@@ -271,7 +272,10 @@ function getScopeSnapshot(state: TreeScopeState): Record<string, unknown> {
   const plain: Record<string, unknown> = {};
   for (const [key, node] of state.children.entries())
     plain[key] = getNodeValue(node);
-  const value = snapshotValue(plain) as Record<string, unknown>;
+  const value = snapshotValue(plain, { owned: true }) as Record<
+    string,
+    unknown
+  >;
   state.cachedSnapshot = value;
   state.cachedSnapshotEpoch = state.valueEpoch;
   state.hasCachedSnapshot = true;
@@ -281,7 +285,12 @@ function getScopeSnapshot(state: TreeScopeState): Record<string, unknown> {
 function getArraySnapshot(state: TreeArrayState): unknown[] {
   if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
     return state.cachedSnapshot as unknown[];
-  const values = snapshotValue(state.children.map((c) => getNodeValue(c)));
+  const values = snapshotValue(
+    state.children.map((c) => getNodeValue(c)),
+    {
+      owned: true,
+    }
+  );
   state.cachedSnapshot = values;
   state.cachedSnapshotEpoch = state.valueEpoch;
   state.hasCachedSnapshot = true;
@@ -496,10 +505,11 @@ function createTreeScope(
   const commit = (fn: (draft: Record<string, unknown>) => void): void => {
     try {
       const before = snapshot();
-      const draft = cloneValue(before);
+      const draft = createDraft(before);
       fn(draft);
+      const next = finishDraft(draft);
 
-      for (const key of Object.keys(draft)) {
+      for (const key of Object.keys(next)) {
         if (!(key in before))
           throw new Error(`oinTree scope: unknown key ${key}`);
       }
@@ -678,8 +688,8 @@ function createTreeScope(
             path: relPath,
             start: 0,
             deleteCount: prevArr.length,
-            deleted: prevArr.map((v) => cloneValue(v)),
-            items: nextArr.map((v) => cloneValue(v)),
+            deleted: prevArr,
+            items: nextArr,
           });
           return true;
         }
@@ -732,7 +742,7 @@ function createTreeScope(
       };
 
       state.isCommitting = true;
-      const changed = applyScopeDiff(state, before, draft, []);
+      const changed = applyScopeDiff(state, before, next, []);
       state.isCommitting = false;
 
       if (!changed) return;
@@ -1259,8 +1269,8 @@ function createTreeArray(
           patches.push({
             op: 'set',
             path: relPath,
-            prev: cloneValue(prev),
-            next: cloneValue(next),
+            prev,
+            next,
           });
           return true;
         }
@@ -1278,8 +1288,8 @@ function createTreeArray(
           patches.push({
             op: 'set',
             path: relPath,
-            prev: cloneValue(prev),
-            next: cloneValue(next),
+            prev,
+            next,
           });
           return true;
         }
@@ -1296,8 +1306,8 @@ function createTreeArray(
         patches.push({
           op: 'set',
           path: relPath,
-          prev: cloneValue(prev),
-          next: cloneValue(next),
+          prev,
+          next,
         });
         return true;
       };

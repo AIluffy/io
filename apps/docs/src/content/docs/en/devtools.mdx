@@ -1,0 +1,103 @@
+---
+title: DevTools
+description: Integrated debugging with time-travel, diffs, perf metrics, and exports.
+sidebar:
+  order: 6
+---
+
+OIN DevTools turns the low-level `subscribeUpdate` + `onError` hooks into a full debugging workflow:
+
+- Event timeline (recorded mutations)
+- Time-travel (undo / redo / jump)
+- Patch-level and snapshot-level diffs
+- Perf telemetry for each update
+- Export (JSON + Redux DevTools import state)
+- Isolation (DevTools errors don’t break the app)
+
+## Install
+
+```bash
+npm i @org/oin-devtools @org/oin-devtools-react
+```
+
+## Create a DevTools instance
+
+```ts
+import { oinDeep } from '@org/oin';
+import { createOinDevtools } from '@org/oin-devtools';
+
+const store = oinDeep({
+  counter: 0,
+  user: { name: 'Ada' },
+});
+
+const devtools = createOinDevtools(store, {
+  name: 'My Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## Use the React panel (UI option A)
+
+```tsx
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@org/oin-devtools-react';
+
+export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
+  return (
+    <OinDevtoolsErrorBoundary>
+      <OinDevtoolsPanel devtools={devtools} height={420} />
+    </OinDevtoolsErrorBoundary>
+  );
+}
+```
+
+## Time travel
+
+- `devtools.timeTravel.undo()` applies `invertUpdate(update)` with `applyUpdate(..., { emitUpdate: false })`.
+- `devtools.timeTravel.redo()` re-applies the original update.
+- `devtools.timeTravel.goTo(index)` steps between entries to reach a target cursor.
+
+When the cursor is not at the end and a new mutation happens, DevTools truncates the “future” and continues recording linearly.
+
+## Diffs
+
+- Patch diff is derived from `OinUpdate.patches` (set/splice/sort) and is always available.
+- Snapshot diff is available when `captureSnapshots: 'always'` and is computed by comparing `snapshotBefore` and `snapshotAfter`.
+
+## Perf telemetry
+
+DevTools records:
+
+- `patchCount`
+- `intervalMs` between updates
+- `snapshotMs` cost (snapshot capture time)
+- `diffMs` cost (diff calculation time)
+- `totalMs` DevTools processing time per update
+
+## Export
+
+```ts
+const json = devtools.export.json();
+
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## Redux DevTools bridge (optional)
+
+If you use the Redux DevTools browser extension, enable the bridge:
+
+```ts
+const devtools = createOinDevtools(store, {
+  reduxDevTools: { enabled: true, name: 'OIN Store' },
+});
+
+devtools.connectReduxDevToolsExtension({ window: globalThis });
+```
+
+## Reference
+
+- API: `/en/reference/oin-devtools/`
+- React UI: `/en/reference/oin-devtools-react/`
+

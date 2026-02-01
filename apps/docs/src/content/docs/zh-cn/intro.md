@@ -1,0 +1,56 @@
+---
+title: 介绍
+description: 什么是 OIN?
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+**OIN** 是一个 TypeScript 状态库：以少量原语（Unit / Scope / ArrayUnit / Tree）作为数据模型，并用显式变更日志（Patch/Update）记录每次写入，从而支持派生、批处理与框架适配。
+
+## 主要特性
+
+- **可组合原语**：`oin()` 根据初始值创建 Unit / Scope / ArrayUnit。
+- **深层树模式**：`oinTree()` / `oinDeep()` 构建可按路径定位的深层节点。
+- **派生**：`formula()`（显式依赖）与 `derive()`（selector 驱动）。
+- **批处理**：`batch()` 合并通知并合并 updates。
+- **适配器**：React/Vue/Svelte 绑定统一遵循 `snapshot() + subscribe()` 协议。
+
+## 示例
+
+<Tabs>
+  <TabItem label="Core">
+    ```ts
+    import { oin, batch } from '@org/oin';
+
+    const count = oin(0);
+
+    count();      // 0
+    count(1);     // 写入
+    count();      // 1
+
+    batch(() => {
+      count((v) => v + 1);
+      count((v) => v + 1);
+    });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { oin } from '@org/oin';
+    import { useOin } from '@org/oin-react';
+
+    const count = oin(0);
+
+    export function Counter() {
+      const value = useOin(count);
+      return (
+        <button onClick={() => count((v) => v + 1)}>
+          {value}
+        </button>
+      );
+    }
+    ```
+  </TabItem>
+</Tabs>
