@@ -1,3 +1,123 @@
+# AGENTS.md - OIN Monorepo Guidelines
+
+## Build Commands (Nx)
+
+Always use `nx` instead of direct tool invocation:
+
+```bash
+# Build a single project
+nx run <project>:build
+
+# Run all tests
+nx run-many -t test
+
+# Run single test file
+nx run <project>:test --testPathPattern=<filename>
+
+# Run specific test
+nx run <project>:test --testNamePattern="<test name>"
+
+# Lint a project
+nx run <project>:lint
+
+# Type check a project
+nx run <project>:typecheck
+
+# Run affected tests (based on git changes)
+nx affected -t test
+
+# Build all projects
+nx run-many -t build
+```
+
+### Available Projects
+
+- `@oin/store` - Core library
+- `@oin/react`, `@oin/vue`, `@oin/svelte` - Framework adapters
+- `@oin/devtools`, `@oin/devtools-react` - DevTools
+- `apps-docs` - Documentation site
+- `oin-example-core-node`, `oin-example-react-vite`, `oin-example-vue-vite`, `oin-example-svelte-vite` - Examples
+- `@org/source` - Workspace root
+
+## Code Style Guidelines
+
+### TypeScript Configuration
+
+- Target: ES2022 with NodeNext module resolution
+- Strict mode enabled
+- Unused locals must be eliminated
+- No implicit returns or overrides
+- Declaration maps emitted
+
+### Formatting (Prettier)
+
+- Single quotes only
+- Run `nx run <project>:lint` to auto-fix
+
+### Import Style
+
+```typescript
+// Order: types first, then local imports
+import type { SomeType } from './types.js';
+import { helperFunction } from './utils.js';
+
+// Internal symbol naming
+const INTERNAL = Symbol.for('@org/oin/internal');
+```
+
+### Naming Conventions
+
+- **Functions**: camelCase (`createUnit`, `applyUpdate`)
+- **Types**: PascalCase with `Oin` prefix (`OinUnit`, `OinScope`)
+- **Internal functions**: camelCase, descriptive
+- **Constants**: UPPER_SNAKE_CASE or camelCase for private
+
+### Error Handling
+
+```typescript
+// Always emit errors through debug system
+try {
+  // operation
+} catch (error) {
+  emitError(target, error, path, 'operationName');
+  throw error;
+}
+```
+
+### Type Safety
+
+- Use `unknown` instead of `any`
+- Explicit return types on exported functions
+- Type guards for runtime checks (`isUnit`, `isPlainObject`)
+- Branded types for internal markers
+
+### Testing (Vitest)
+
+```typescript
+import { describe, expect, it } from 'vitest';
+
+describe('feature', () => {
+  it('should behave correctly', () => {
+    expect(result).toBe(expected);
+  });
+});
+```
+
+### Module Boundaries
+
+Projects use Nx tags for dependency constraints:
+
+- `scope:oin` - Core library
+- `scope:oin-react`, `scope:oin-vue`, `scope:oin-svelte` - Adapters
+- `scope:oin-devtools` - DevTools
+
+### Key Patterns
+
+1. **Snapshot safety**: Always return frozen snapshots
+2. **COW updates**: Use `createDraft`/`finishDraft` for mutations
+3. **Batching**: Wrap multiple updates in `batch()`
+4. **Subscription cleanup**: Always return unsubscribe function
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 

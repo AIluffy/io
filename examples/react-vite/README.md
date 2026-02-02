@@ -9,6 +9,5 @@ npm run dev
 
 ## What it demonstrates
 
-- `@org/oin`: `oin()` creates a Unit
-- `@org/oin-react`: `useOin(source)` subscribes via `snapshot() + subscribe()`
-
+- `@oin/store`: `oin()` creates a Unit
+- `@oin/react`: `useOin(source)` subscribes via `snapshot() + subscribe()`

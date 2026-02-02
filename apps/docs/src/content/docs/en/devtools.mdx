@@ -17,14 +17,14 @@ OIN DevTools turns the low-level `subscribeUpdate` + `onError` hooks into a full
 ## Install
 
 ```bash
-npm i @org/oin-devtools @org/oin-devtools-react
+npm i @oin/devtools @oin/devtools-react
 ```
 
 ## Create a DevTools instance
 
 ```ts
-import { oinDeep } from '@org/oin';
-import { createOinDevtools } from '@org/oin-devtools';
+import { oinDeep } from '@oin/store';
+import { createOinDevtools } from '@oin/devtools';
 
 const store = oinDeep({
   counter: 0,
@@ -42,7 +42,7 @@ const devtools = createOinDevtools(store, {
 ## Use the React panel (UI option A)
 
 ```tsx
-import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@org/oin-devtools-react';
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@oin/devtools-react';
 
 export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
   return (
@@ -100,4 +100,3 @@ devtools.connectReduxDevToolsExtension({ window: globalThis });
 
 - API: `/en/reference/oin-devtools/`
 - React UI: `/en/reference/oin-devtools-react/`
-

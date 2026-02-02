@@ -415,3 +415,161 @@ describe('formula: unit-level deps and release', () => {
     expect(unitInternal.getState().valueListeners.size).toBe(base);
   });
 });
+
+describe('updates: replay/invert consistency', () => {
+  function createRng(seed: number): () => number {
+    let s = seed >>> 0;
+    return () => {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 0x1_0000_0000;
+    };
+  }
+
+  function randInt(rng: () => number, maxExclusive: number): number {
+    return Math.floor(rng() * maxExclusive);
+  }
+
+  it('replays and inverts unit updates across multiple seeds', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const rng = createRng(seed);
+      const u1 = oin(0);
+      const seen: OinUpdate[] = [];
+      u1.subscribeUpdate((u) => seen.push(u));
+
+      for (let i = 0; i < 80; i += 1) {
+        if (rng() < 0.6) {
+          const delta = randInt(rng, 11) - 5;
+          u1((v) => v + delta);
+        } else {
+          u1(randInt(rng, 200) - 100);
+        }
+      }
+
+      const u2 = oin(0);
+      replay(u2, seen);
+      expect(u2()).toBe(u1());
+
+      const merged = mergeUpdates(seen);
+      const u3 = oin(0);
+      applyUpdate(u3, merged);
+      expect(u3()).toBe(u1());
+      applyUpdate(u3, invertUpdate(merged));
+      expect(u3()).toBe(0);
+    }
+  });
+
+  it('replays and inverts mixed scope updates', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const rng = createRng(seed);
+      const s1 = oin({ a: 0, b: 0 });
+      const seen: OinUpdate[] = [];
+      s1.subscribeUpdate((u) => seen.push(u));
+
+      for (let i = 0; i < 60; i += 1) {
+        const op = randInt(rng, 3);
+        if (op === 0) s1.a(randInt(rng, 100));
+        else if (op === 1) s1.b((v) => v + (randInt(rng, 7) - 3));
+        else {
+          s1.commit((draft) => {
+            draft.a = randInt(rng, 100);
+            draft.b = randInt(rng, 100);
+          });
+        }
+      }
+
+      const s2 = oin({ a: 0, b: 0 });
+      replay(s2, seen);
+      expect(s2.snapshot()).toEqual(s1.snapshot());
+
+      const merged = mergeUpdates(seen);
+      const s3 = oin({ a: 0, b: 0 });
+      applyUpdate(s3, merged);
+      expect(s3.snapshot()).toEqual(s1.snapshot());
+      applyUpdate(s3, invertUpdate(merged));
+      expect(s3.snapshot()).toEqual({ a: 0, b: 0 });
+    }
+  });
+
+  it('replays and inverts mixed array updates', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const rng = createRng(seed);
+      const a1 = oin([0, 1, 2, 3]);
+      const seen: OinUpdate[] = [];
+      a1.subscribeUpdate((u) => seen.push(u));
+
+      for (let i = 0; i < 80; i += 1) {
+        const op = randInt(rng, 5);
+        if (op === 0) a1.push(randInt(rng, 50));
+        else if (op === 1) a1.pop();
+        else if (op === 2) {
+          const start = a1().length === 0 ? 0 : randInt(rng, a1().length);
+          const del = a1().length === 0 ? 0 : randInt(rng, 3);
+          a1.splice(start, del, randInt(rng, 50));
+        } else if (op === 3) {
+          const len = a1().length;
+          if (len > 0) {
+            const idx = randInt(rng, len);
+            a1[idx](randInt(rng, 1000));
+          }
+        } else {
+          a1.sort((x, y) => x - y);
+        }
+      }
+
+      const a2 = oin([0, 1, 2, 3]);
+      replay(a2, seen);
+      expect(a2()).toEqual(a1());
+
+      const merged = mergeUpdates(seen);
+      const a3 = oin([0, 1, 2, 3]);
+      applyUpdate(a3, merged);
+      expect(a3()).toEqual(a1());
+      applyUpdate(a3, invertUpdate(merged));
+      expect(a3()).toEqual([0, 1, 2, 3]);
+    }
+  });
+
+  it('replays deep path updates on oinTree roots', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const rng = createRng(seed);
+      const t1 = oinTree({
+        user: { name: 'a', age: 1 },
+        items: [{ count: 1 }, { count: 2 }],
+      });
+      const seen: OinUpdate[] = [];
+      t1.subscribeUpdate((u) => seen.push(u));
+
+      for (let i = 0; i < 60; i += 1) {
+        const op = randInt(rng, 5);
+        if (op === 0) {
+          const name = String.fromCharCode(97 + randInt(rng, 3));
+          t1.user.name(name);
+        } else if (op === 1) {
+          t1.user.age((v) => v + 1);
+        } else if (op === 2) {
+          const len = t1.items().length;
+          if (len > 0) {
+            const idx = randInt(rng, len);
+            t1.items[idx].count((v) => v + (randInt(rng, 5) - 2));
+          }
+        } else if (op === 3) {
+          t1.items.push({ count: randInt(rng, 10) });
+        } else {
+          const len = t1.items().length;
+          if (len > 0) {
+            const start = randInt(rng, len);
+            const del = randInt(rng, Math.min(2, len - start) + 1);
+            t1.items.splice(start, del);
+          }
+        }
+      }
+
+      const t2 = oinTree({
+        user: { name: 'a', age: 1 },
+        items: [{ count: 1 }, { count: 2 }],
+      });
+      replay(t2, seen);
+      expect(t2.snapshot()).toEqual(t1.snapshot());
+    }
+  });
+});

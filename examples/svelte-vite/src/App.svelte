@@ -1,6 +1,6 @@
 <script>
-  import { oin } from '@org/oin';
-  import { toWritable } from '@org/oin-svelte';
+  import { oin } from '@oin/store';
+  import { toWritable } from '@oin/svelte';
 
   const count = oin(0);
   const countStore = toWritable(count);

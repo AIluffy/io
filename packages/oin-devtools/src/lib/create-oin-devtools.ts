@@ -1,5 +1,5 @@
-import { applyUpdate, invertUpdate, onError } from '@org/oin';
-import type { OinPatch, OinUpdate } from '@org/oin';
+import { applyUpdate, invertUpdate, onError } from '@oin/store';
+import type { OinPatch, OinUpdate } from '@oin/store';
 import { diffSnapshots } from './diff-snapshots.js';
 import { exportReduxDevToolsImportState } from './export-redux-devtools.js';
 import { sanitizeForJson } from './sanitize.js';

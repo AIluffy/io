@@ -1,4 +1,4 @@
-import { batch, invertUpdate, mergeUpdates, oinDeep, replay } from '@org/oin';
+import { batch, invertUpdate, mergeUpdates, oinDeep, replay } from '@oin/store';
 
 const store = oinDeep({
   todos: [{ id: 'a', title: 'Learn OIN', done: false }],

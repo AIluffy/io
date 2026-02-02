@@ -14,13 +14,13 @@ import { Steps, FileTree } from '@astrojs/starlight/components';
 1.  Install the core package:
 
     ```bash
-    npm install @org/oin
+    npm install @oin/store
     ```
 
 2.  Install your framework adapter (optional):
 
     ```bash
-    npm install @org/oin-react
+    npm install @oin/react
     ```
 
 </Steps>
@@ -38,7 +38,7 @@ import { Steps, FileTree } from '@astrojs/starlight/components';
 ## First State
 
 ```ts
-import { oin } from '@org/oin';
+import { oin } from '@oin/store';
 
 const count = oin(0);
 
@@ -52,7 +52,7 @@ count((v) => v + 1);
 `oin()` creates a shallow scope for objects (only the first level becomes units). Use `oinTree()` / `oinDeep()` when you want nested properties to be units as well.
 
 ```ts
-import { oinDeep } from '@org/oin';
+import { oinDeep } from '@oin/store';
 
 const user = oinDeep({ profile: { name: 'Ada' } });
 

@@ -87,6 +87,20 @@ export function createUpdate(
   return { id: newId(), baseRevision, revision, patches };
 }
 
+function pathKey(path: ReadonlyArray<string | number>): string {
+  let out = '';
+  for (let i = 0; i < path.length; i += 1) {
+    const seg = path[i];
+    if (typeof seg === 'number') {
+      out += `|n:${seg}`;
+      continue;
+    }
+    const escaped = seg.replace(/([\\|:])/g, '\\$1');
+    out += `|s:${escaped}`;
+  }
+  return out;
+}
+
 export function mergeUpdates(updates: OinUpdate[]): OinUpdate {
   if (updates.length === 0) return createUpdate(0, 0, []);
   if (updates.length === 1) return updates[0];
@@ -99,7 +113,7 @@ export function mergeUpdates(updates: OinUpdate[]): OinUpdate {
         last &&
         last.op === 'set' &&
         patch.op === 'set' &&
-        JSON.stringify(last.path) === JSON.stringify(patch.path)
+        pathKey(last.path) === pathKey(patch.path)
       ) {
         merged[merged.length - 1] = { ...last, next: patch.next };
         continue;

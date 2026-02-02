@@ -1,6 +1,6 @@
 import { customRef, onScopeDispose, shallowRef } from 'vue';
 import type { Ref, ShallowRef } from 'vue';
-import type { OinUnit } from '@org/oin';
+import type { OinUnit } from '@oin/store';
 
 type OinSource<T> = {
   snapshot(): T;

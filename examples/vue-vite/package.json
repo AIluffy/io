@@ -8,13 +8,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@org/oin": "file:../../packages/oin",
-    "@org/oin-vue": "file:../../packages/oin-vue",
-    "vue": "^3.5.0"
+    "@oin/store": "*",
+    "@oin/vue": "*",
+    "vue": "^3.5.27"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.4",
-    "typescript": "^5.9.2",
-    "vite": "^7.0.0"
+    "@vitejs/plugin-vue": "^6.0.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "nx": {
+    "targets": {
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "examples/vue-vite",
+          "command": "vue-tsc --noEmit"
+        }
+      }
+    }
   }
 }

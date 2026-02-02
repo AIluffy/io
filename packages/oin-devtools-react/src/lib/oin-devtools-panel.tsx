@@ -1,5 +1,5 @@
-import { diffSnapshots } from '@org/oin-devtools';
-import type { OinDevtools, OinHistoryEntry, OinSnapshotDiff } from '@org/oin-devtools';
+import { diffSnapshots } from '@oin/devtools';
+import type { OinDevtools, OinHistoryEntry, OinSnapshotDiff } from '@oin/devtools';
 import type { CSSProperties } from 'react';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 

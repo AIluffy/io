@@ -22,7 +22,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <Tabs>
   <TabItem label="Core">
     ```ts
-    import { oin, batch } from '@org/oin';
+    import { oin, batch } from '@oin/store';
 
     const count = oin(0);
 
@@ -38,8 +38,8 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
   </TabItem>
   <TabItem label="React">
     ```tsx
-    import { oin } from '@org/oin';
-    import { useOin } from '@org/oin-react';
+    import { oin } from '@oin/store';
+    import { useOin } from '@oin/react';
 
     const count = oin(0);
 

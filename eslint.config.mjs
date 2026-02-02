@@ -7,6 +7,7 @@ export default [
   {
     ignores: [
       '**/dist',
+      '**/dist-types',
       '**/build',
       '**/.astro/**',
       '**/vite.config.*',

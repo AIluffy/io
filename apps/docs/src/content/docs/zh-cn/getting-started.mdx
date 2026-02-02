@@ -14,13 +14,13 @@ import { Steps, FileTree } from '@astrojs/starlight/components';
 1.  安装核心包:
 
     ```bash
-    npm install @org/oin
+    npm install @oin/store
     ```
 
 2.  安装框架适配器 (可选):
 
     ```bash
-    npm install @org/oin-react
+    npm install @oin/react
     ```
 
 </Steps>
@@ -38,7 +38,7 @@ import { Steps, FileTree } from '@astrojs/starlight/components';
 ## 第一个状态
 
 ```ts
-import { oin } from '@org/oin';
+import { oin } from '@oin/store';
 
 const count = oin(0);
 
@@ -52,7 +52,7 @@ count((v) => v + 1);
 `oin()` 对对象默认是浅层 Scope（只有第一层 key 会变成 unit）。当你希望 `user.profile.name(...)` 这种深层属性级 Unit 时，使用 `oinTree()` / `oinDeep()`。
 
 ```ts
-import { oinDeep } from '@org/oin';
+import { oinDeep } from '@oin/store';
 
 const user = oinDeep({ profile: { name: 'Ada' } });
 

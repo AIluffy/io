@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react';
 import { Component } from 'react';
 
 export type OinDevtoolsErrorBoundaryProps = {
-  fallback?: (args: { error: unknown; reset: () => void }) => JSX.Element;
-  children: JSX.Element;
+  fallback?: (args: { error: unknown; reset: () => void }) => ReactNode;
+  children: ReactNode;
 };
 
 type State = { error: unknown | null };

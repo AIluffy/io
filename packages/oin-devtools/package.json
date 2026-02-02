@@ -1,5 +1,5 @@
 {
-  "name": "@org/oin-devtools",
+  "name": "@oin/devtools",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,7 +8,6 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "@org/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
@@ -19,8 +18,8 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@org/oin": "*",
-    "tslib": "^2.3.0"
+    "@oin/store": "*",
+    "tslib": "^2.8.1"
   },
   "nx": {
     "tags": [

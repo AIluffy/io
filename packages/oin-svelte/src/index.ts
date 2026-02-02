@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'svelte/store';
-import type { OinUnit } from '@org/oin';
+import type { OinUnit } from '@oin/store';
 
 type OinSource<T> = {
   snapshot(): T;

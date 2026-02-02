@@ -6,6 +6,6 @@
     "start": "node index.mjs"
   },
   "dependencies": {
-    "@org/oin": "file:../../packages/oin"
+    "@oin/store": "*"
   }
 }

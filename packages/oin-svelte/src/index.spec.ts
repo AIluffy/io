@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { oin } from '@org/oin';
+import { oin } from '@oin/store';
 import { toReadable, toWritable } from './index.js';
 
 describe('@org/oin-svelte', () => {
@@ -17,4 +17,3 @@ describe('@org/oin-svelte', () => {
     expect(typeof readable.subscribe).toBe('function');
   });
 });
-

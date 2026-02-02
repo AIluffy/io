@@ -1,6 +1,6 @@
-# @org/oin
+# @oin/store
 
-OIN 核心状态库：Unit / ArrayUnit / Scope / Derived（formula）/ Commit / Snapshot，并支持更新追踪、合并与回放。
+OIN 核心状态库：Unit / ArrayUnit / Scope / Derived（formula）/ Snapshot，并支持更新追踪、合并与回放。
 
 ## 深层对象
 

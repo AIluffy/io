@@ -73,7 +73,7 @@ function getArraySnapshot<T>(state: ArrayState<T>): T[] {
     state.cachedSnapshotRevision === state.revision
   )
     return state.cachedSnapshot as T[];
-  const values = snapshotValue(state.units.map((u) => u()));
+  const values = snapshotValue(state.units.map((u) => u()), { owned: true });
   state.cachedSnapshot = values;
   state.cachedSnapshotRevision = state.revision;
   state.hasCachedSnapshot = true;

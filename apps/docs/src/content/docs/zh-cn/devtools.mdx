@@ -17,14 +17,14 @@ OIN DevTools 把底层的 `subscribeUpdate` + `onError` 调试钩子升级为一
 ## 安装
 
 ```bash
-npm i @org/oin-devtools @org/oin-devtools-react
+npm i @oin/devtools @oin/devtools-react
 ```
 
 ## 创建 DevTools 实例
 
 ```ts
-import { oinDeep } from '@org/oin';
-import { createOinDevtools } from '@org/oin-devtools';
+import { oinDeep } from '@oin/store';
+import { createOinDevtools } from '@oin/devtools';
 
 const store = oinDeep({
   counter: 0,
@@ -42,7 +42,7 @@ const devtools = createOinDevtools(store, {
 ## 使用 React 面板（UI 方案 A）
 
 ```tsx
-import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@org/oin-devtools-react';
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@oin/devtools-react';
 
 export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
   return (
@@ -100,4 +100,3 @@ devtools.connectReduxDevToolsExtension({ window: globalThis });
 
 - API：`/zh-cn/reference/oin-devtools/`
 - React UI：`/zh-cn/reference/oin-devtools-react/`
-

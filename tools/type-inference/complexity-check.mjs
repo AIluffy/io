@@ -21,7 +21,7 @@ function parseCheckTimeMs(output) {
 function runOnce({ width, depth }) {
   const typeStr = buildNestedType(width, depth);
   const ts = `
-import type { UnwrapOin, OinPathOf } from '@org/oin';
+import type { UnwrapOin, OinPathOf } from '@oin/store';
 
 type State = ${typeStr};
 type Unwrapped = UnwrapOin<State>;
@@ -76,4 +76,3 @@ async function main() {
 }
 
 await main();
-

@@ -6,16 +6,21 @@
 
 ## 📦 项目概述
 
-本仓库包含以下 4 个包：
+本仓库包含以下 6 个包：
 
 - **核心包**
 
-  - `@org/oin` - 细粒度响应式状态管理核心库
+  - `@oin/store` - 细粒度响应式状态管理核心库
 
 - **框架集成包**
-  - `@org/oin-react` - React 集成（Hooks）
-  - `@org/oin-svelte` - Svelte 集成（Stores）
-  - `@org/oin-vue` - Vue 集成（Refs）
+
+  - `@oin/react` - React 集成（Hooks）
+  - `@oin/svelte` - Svelte 集成（Stores）
+  - `@oin/vue` - Vue 集成（Refs）
+
+- **DevTools**
+  - `@oin/devtools` - 运行时观察与导出能力
+  - `@oin/devtools-react` - React 面板组件
 
 ## 🚀 快速开始
 
@@ -24,19 +29,19 @@
 npm install
 
 # 构建所有包
-npx nx run-many -t build
+nx run-many -t build
 
 # 运行测试
-npx nx run-many -t test
+nx run-many -t test
 
 # 检查所有项目
-npx nx run-many -t lint
+nx run-many -t lint
 
 # 并行运行所有任务
-npx nx run-many -t lint test build --parallel=3
+nx run-many -t lint test build --parallel=3
 
 # 可视化项目依赖图
-npx nx graph
+nx graph
 ```
 
 ## 💡 核心功能
@@ -44,7 +49,7 @@ npx nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { oin, oinTree, formula } from '@org/oin';
+import { oin, oinTree, formula } from '@oin/store';
 
 // 基础单元
 const count = oin(0);
@@ -81,7 +86,7 @@ const double = formula([count], (c) => c * 2);
 ### 4. 更新历史与回放
 
 ```typescript
-import { applyUpdate, invertUpdate, replay } from '@org/oin';
+import { applyUpdate, invertUpdate, replay } from '@oin/store';
 
 const updates: OinUpdate[] = [];
 state.subscribeUpdate((u) => updates.push(u));
@@ -96,7 +101,7 @@ applyUpdate(state, invertUpdate(update));
 ### 5. TC39 信号兼容
 
 ```typescript
-import { Signal, computed, effect } from '@org/oin';
+import { Signal, computed, effect } from '@oin/store';
 
 const count = new Signal.State(1);
 const double = computed(() => count.get() * 2);
@@ -108,7 +113,7 @@ effect(() => console.log(double.get()));
 ### React
 
 ```typescript
-import { useOin } from '@org/oin-react';
+import { useOin } from '@oin/react';
 
 function Counter({ count }) {
   const value = useOin(count);
@@ -119,7 +124,7 @@ function Counter({ count }) {
 ### Svelte
 
 ```typescript
-import { toReadable, toWritable } from '@org/oin-svelte';
+import { toReadable, toWritable } from '@oin/svelte';
 
 // 只读 store
 const store = toReadable(state);
@@ -131,7 +136,7 @@ const writable = toWritable(unit);
 ### Vue
 
 ```typescript
-import { useOin, oinRef } from '@org/oin-vue';
+import { useOin, oinRef } from '@oin/vue';
 
 // 组合式函数
 const state = useOin(source);
@@ -157,12 +162,14 @@ const ref = oinRef(unit);
 
 本项目使用标签强制模块边界：
 
-| 包                | 标签               | 可依赖的包   |
-| ----------------- | ------------------ | ------------ |
-| `@org/oin`        | `scope:oin`        | 无（基础库） |
-| `@org/oin-react`  | `scope:oin-react`  | `scope:oin`  |
-| `@org/oin-svelte` | `scope:oin-svelte` | `scope:oin`  |
-| `@org/oin-vue`    | `scope:oin-vue`    | `scope:oin`  |
+| 包                    | 标签                       | 可依赖的包           |
+| --------------------- | -------------------------- | -------------------- |
+| `@oin/store`          | `scope:oin`                | 无（基础库）         |
+| `@oin/react`          | `scope:oin-react`          | `scope:oin`          |
+| `@oin/svelte`         | `scope:oin-svelte`         | `scope:oin`          |
+| `@oin/vue`            | `scope:oin-vue`            | `scope:oin`          |
+| `@oin/devtools`       | `scope:oin-devtools`       | `scope:oin`          |
+| `@oin/devtools-react` | `scope:oin-devtools-react` | `scope:oin-devtools` |
 
 ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
@@ -170,34 +177,34 @@ ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
 ```bash
 # 项目探索
-npx nx graph                                    # 交互式依赖图
-npx nx list                                     # 列出已安装插件
-npx nx show project oin --web                  # 查看项目详情
+nx graph                                    # 交互式依赖图
+nx list                                     # 列出已安装插件
+nx show project @oin/store --web                  # 查看项目详情
 
 # 开发
-npx nx build oin                               # 构建特定包
-npx nx test oin                                # 测试特定包
-npx nx lint oin-react                          # 检查特定包
+nx build @oin/store                               # 构建特定包
+nx test @oin/store                                # 测试特定包
+nx lint @oin/react                          # 检查特定包
 
 # 批量任务
-npx nx run-many -t build                       # 构建所有项目
-npx nx run-many -t test --parallel=3          # 并行测试
-npx nx affected -t build                       # 仅构建受影响项目
+nx run-many -t build                       # 构建所有项目
+nx run-many -t test --parallel=3          # 并行测试
+nx affected -t build                       # 仅构建受影响项目
 
 # 发布管理
-npx nx release --dry-run                       # 预览发布变更
-npx nx release                                 # 创建新发布
+nx release --dry-run                       # 预览发布变更
+nx release                                 # 创建新发布
 ```
 
 ## 🧪 测试模块边界
 
-尝试在 `@org/oin-react` 中导入 `@org/oin-svelte`：
+尝试在 `@oin/react` 中导入 `@oin/svelte`：
 
 ```typescript
-import { toReadable } from '@org/oin-svelte'; // 错误！
+import { toReadable } from '@oin/svelte'; // 错误！
 ```
 
-运行 `npx nx lint oin-react` 会报错：违反模块边界规则。
+运行 `nx lint @oin/react` 会报错：违反模块边界规则。
 
 ## 🔗 了解更多
 

@@ -1,4 +1,4 @@
-import type { OinMutationOp, OinPatch, OinUpdate } from '@org/oin';
+import type { OinMutationOp, OinPatch, OinUpdate } from '@oin/store';
 
 export type Unsubscribe = () => void;
 

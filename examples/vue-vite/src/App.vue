@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { oin } from '@org/oin';
-import { oinRef } from '@org/oin-vue';
+import { oin } from '@oin/store';
+import { oinRef } from '@oin/vue';
 
 const count = oin(0);
 const countRef = oinRef(count);

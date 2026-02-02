@@ -8,12 +8,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@org/oin": "file:../../packages/oin",
-    "@org/oin-svelte": "file:../../packages/oin-svelte",
-    "svelte": "^5.0.0"
+    "@oin/store": "*",
+    "@oin/svelte": "*",
+    "svelte": "^5.49.1"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "vite": "^7.0.0"
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "vite": "^7.3.1"
   }
 }

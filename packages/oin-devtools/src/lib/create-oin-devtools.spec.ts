@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { oinDeep } from '@org/oin';
+import { oinDeep } from '@oin/store';
 import { createOinDevtools } from './create-oin-devtools.js';
 
 describe('oin-devtools: createOinDevtools', () => {

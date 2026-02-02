@@ -9,6 +9,5 @@ npm run dev
 
 ## What it demonstrates
 
-- `@org/oin`: `oin()` creates a Unit
-- `@org/oin-svelte`: `toWritable(unit)` converts a Unit into a Svelte store
-
+- `@oin/store`: `oin()` creates a Unit
+- `@oin/svelte`: `toWritable(unit)` converts a Unit into a Svelte store

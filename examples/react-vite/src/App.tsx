@@ -1,5 +1,5 @@
-import { oin } from '@org/oin';
-import { useOin } from '@org/oin-react';
+import { oin } from '@oin/store';
+import { useOin } from '@oin/react';
 
 const count = oin(0);
 
