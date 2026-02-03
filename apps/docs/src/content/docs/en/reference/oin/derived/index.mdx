@@ -1,0 +1,50 @@
+---
+title: "derived"
+description: "function export"
+---
+
+## Signatures
+
+```ts
+<T, R>(
+  node: OinNode<T> | OinTreeNode<T>,
+  selector: (state: UnwrapOin<T>) => R
+) => OinDerived<R>
+```
+
+```ts
+<const D extends readonly (OinArrayUnit<unknown> | OinUnit<unknown> | { (): unknown })[], T>(
+  deps: D,
+  compute: (...args: { [K in keyof D]: DepArg<D[K]> }) => T
+) => OinDerived<T>
+```
+
+```ts
+<T>(compute: () => T) => OinDerived<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| node | `OinNode<T> \| OinTreeNode<T>` |
+| selector | `(state: UnwrapOin<T>) => R` |
+| deps | `readonly (OinArrayUnit<unknown> \| OinUnit<unknown> \| { (): unknown })[]` |
+| compute | `(...args) => T` |
+
+## Returns
+
+`OinDerived<R>` or `OinDerived<T>`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Authentication
+
+- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.
+
+## Source
+
+- `packages/oin/src/lib/core/derived.ts`

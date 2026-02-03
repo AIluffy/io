@@ -19,6 +19,8 @@ const LOCALES = [
       auth: 'Authentication',
       source: 'Source',
       indexTitle: 'API Reference',
+      experimentalTitle: 'Experimental (@oin/store/experimental)',
+      experimentalNote: '**Experimental**: import from `@oin/store/experimental`.',
       none: '(none)',
       errorsBody: [
         '- This library does not define standardized error codes.',
@@ -41,6 +43,8 @@ const LOCALES = [
       auth: '鉴权',
       source: '源码',
       indexTitle: 'API 参考',
+      experimentalTitle: '实验特性（@oin/store/experimental）',
+      experimentalNote: '**实验特性**：请从 `@oin/store/experimental` 引入。',
       none: '（无）',
       errorsBody: [
         '- 本库未定义标准化错误码。',
@@ -195,12 +199,13 @@ function getExportKind(symbol) {
   return 'value';
 }
 
-function renderFrontmatter({ title, description }) {
+function renderFrontmatter({ title, description, extra }) {
   const safeTitle = title ?? '';
   const safeDescription = description ?? '';
+  const extraBlock = extra ? `\n${extra}` : '';
   return `---\ntitle: ${JSON.stringify(
     safeTitle
-  )}\ndescription: ${JSON.stringify(safeDescription)}\n---\n`;
+  )}\ndescription: ${JSON.stringify(safeDescription)}${extraBlock}\n---\n`;
 }
 
 function renderParamsTable(params, labels) {
@@ -248,12 +253,17 @@ function renderExportPage({
   signature,
   declaredType,
   sourcePath,
+  isExperimental,
 }) {
   const title = exportName;
   const description = `${exportKind} export`;
 
   let body = '';
+  const frontmatterExtra = isExperimental ? 'sidebar:\n  hidden: true' : '';
 
+  if (isExperimental) {
+    body += `\n${localeLabels.experimentalNote}\n`;
+  }
   if (signature) {
     body += `\n## ${localeLabels.signature}\n\n\`\`\`ts\n${signature.signatureText}\n\`\`\`\n`;
     body += renderParamsTable(signature.params, localeLabels);
@@ -268,17 +278,32 @@ function renderExportPage({
   body += renderSource(sourcePath, localeLabels);
 
   return (
-    `${renderFrontmatter({ title, description })}\n${body}`.trimEnd() + '\n'
+    `${renderFrontmatter({ title, description, extra: frontmatterExtra })}\n${body}`.trimEnd() +
+    '\n'
   );
 }
 
-function renderPackageIndex({ localeLabels, packageName, exports }) {
+function renderPackageIndex({
+  localeLabels,
+  packageName,
+  publicExports,
+  experimentalExports,
+}) {
   const title = `${localeLabels.indexTitle}: ${packageName}`;
   const description = `Exports of ${packageName}`;
 
-  const items = exports.map((e) => `- [${e.name}](./${e.slug}/)`).join('\n');
+  const publicItems = publicExports
+    .map((e) => `- [${e.name}](./${e.slug}/)`)
+    .join('\n');
 
-  return `${renderFrontmatter({ title, description })}\n\n${items}\n`;
+  let content = `${renderFrontmatter({ title, description })}\n\n${publicItems}\n`;
+  if (experimentalExports.length > 0) {
+    const experimentalItems = experimentalExports
+      .map((e) => `- [${e.name}](./${e.slug}/)`)
+      .join('\n');
+    content += `\n## ${localeLabels.experimentalTitle}\n\n${experimentalItems}\n`;
+  }
+  return content;
 }
 
 function renderVersionsPage({ localeId, localeLabels, packages }) {
@@ -312,11 +337,15 @@ async function discoverPackages() {
     if (!(await fileExists(pkgJsonPath))) continue;
     if (!(await fileExists(srcIndexPath))) continue;
     const pkgJson = await readJson(pkgJsonPath);
+    const experimentalEntryPath = path.join(dirPath, 'src', 'experimental.ts');
     result.push({
       dirName: dirent.name,
       packageName: pkgJson.name ?? dirent.name,
       version: pkgJson.version ?? null,
       entryFile: srcIndexPath,
+      experimentalEntryFile: (await fileExists(experimentalEntryPath))
+        ? experimentalEntryPath
+        : null,
     });
   }
   return result.sort((a, b) => a.packageName.localeCompare(b.packageName));
@@ -330,7 +359,7 @@ async function generate() {
     const sourceFile = program.getSourceFile(pkg.entryFile);
     if (!sourceFile) continue;
 
-    const exports = getModuleExports(checker, sourceFile)
+    const publicExports = getModuleExports(checker, sourceFile)
       .map((symbol) => {
         const name = symbol.getName();
         const targetSymbol = resolveExportSymbol(checker, symbol);
@@ -341,10 +370,53 @@ async function generate() {
           : getDeclaredType(checker, targetSymbol);
         const sourcePath = getSymbolDeclPath(targetSymbol);
         const slug = kebabCase(name);
-        return { name, kind, signature, declaredType, sourcePath, slug };
+        return {
+          name,
+          kind,
+          signature,
+          declaredType,
+          sourcePath,
+          slug,
+          isExperimental: false,
+        };
       })
       .filter((e) => e.slug.length > 0)
       .sort((a, b) => a.name.localeCompare(b.name));
+
+    let experimentalExports = [];
+    if (pkg.experimentalEntryFile) {
+      const expProgram = createProgram(pkg.experimentalEntryFile);
+      const expSourceFile = expProgram.program.getSourceFile(
+        pkg.experimentalEntryFile
+      );
+      if (expSourceFile) {
+        experimentalExports = getModuleExports(expProgram.checker, expSourceFile)
+          .map((symbol) => {
+            const name = symbol.getName();
+            const targetSymbol = resolveExportSymbol(expProgram.checker, symbol);
+            const kind = getExportKind(targetSymbol);
+            const signature = getSignature(expProgram.checker, targetSymbol);
+            const declaredType = signature
+              ? null
+              : getDeclaredType(expProgram.checker, targetSymbol);
+            const sourcePath = getSymbolDeclPath(targetSymbol);
+            const slug = kebabCase(name);
+            return {
+              name,
+              kind,
+              signature,
+              declaredType,
+              sourcePath,
+              slug,
+              isExperimental: true,
+            };
+          })
+          .filter((e) => e.slug.length > 0)
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+    }
+
+    const exports = [...publicExports, ...experimentalExports];
 
     for (const locale of LOCALES) {
       const pkgDir = path.join(docsRoot, locale.id, 'reference', pkg.dirName);
@@ -354,7 +426,8 @@ async function generate() {
         renderPackageIndex({
           localeLabels: locale.labels,
           packageName: pkg.packageName,
-          exports,
+          publicExports,
+          experimentalExports,
         }),
         'utf8'
       );
@@ -369,6 +442,7 @@ async function generate() {
           signature: exp.signature,
           declaredType: exp.declaredType,
           sourcePath: exp.sourcePath,
+          isExperimental: exp.isExperimental,
         });
         await fs.writeFile(path.join(expDir, 'index.mdx'), mdx, 'utf8');
       }

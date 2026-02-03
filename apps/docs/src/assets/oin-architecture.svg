@@ -26,8 +26,8 @@
 
   <rect x="820" y="40" width="340" height="200" class="box" />
   <text x="850" y="78" class="title">Derived / Reactive Core</text>
-  <text x="850" y="110" class="text">formula (explicit deps)</text>
-  <text x="850" y="134" class="text">derive (selector + signals)</text>
+  <text x="850" y="110" class="text">derived (deps)</text>
+  <text x="850" y="134" class="text">derived (selector)</text>
   <text x="850" y="170" class="muted">state • computed • effect • untrack</text>
 
   <rect x="40" y="280" width="520" height="200" class="box" />

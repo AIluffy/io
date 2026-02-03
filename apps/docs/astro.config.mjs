@@ -44,6 +44,17 @@ export default defineConfig({
           translations: { 'zh-cn': '参考' },
           autogenerate: { directory: 'reference' },
         },
+        {
+          label: 'Experimental',
+          translations: { 'zh-cn': '实验特性' },
+          items: [
+            { label: 'Signal', slug: 'reference/oin/signal' },
+            { label: 'state', slug: 'reference/oin/state' },
+            { label: 'computed', slug: 'reference/oin/computed' },
+            { label: 'effect', slug: 'reference/oin/effect' },
+            { label: 'untrack', slug: 'reference/oin/untrack' },
+          ],
+        },
       ],
       customCss: ['./src/styles/custom.css'],
       components: {

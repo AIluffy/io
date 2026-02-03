@@ -1,0 +1,50 @@
+---
+title: "derived"
+description: "function export"
+---
+
+## 签名
+
+```ts
+<T, R>(
+  node: OinNode<T> | OinTreeNode<T>,
+  selector: (state: UnwrapOin<T>) => R
+) => OinDerived<R>
+```
+
+```ts
+<const D extends readonly (OinArrayUnit<unknown> | OinUnit<unknown> | { (): unknown })[], T>(
+  deps: D,
+  compute: (...args: { [K in keyof D]: DepArg<D[K]> }) => T
+) => OinDerived<T>
+```
+
+```ts
+<T>(compute: () => T) => OinDerived<T>
+```
+
+## 参数
+
+| 名称 | 类型 |
+| --- | --- |
+| node | `OinNode<T> \| OinTreeNode<T>` |
+| selector | `(state: UnwrapOin<T>) => R` |
+| deps | `readonly (OinArrayUnit<unknown> \| OinUnit<unknown> \| { (): unknown })[]` |
+| compute | `(...args) => T` |
+
+## 返回值
+
+`OinDerived<R>` 或 `OinDerived<T>`
+
+## 错误
+
+- 本库不定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 抛出（operation, path, value）。
+
+## 认证
+
+- 不适用。OIN 是本地 TypeScript/JavaScript 库，不涉及认证。
+
+## 源码
+
+- `packages/oin/src/lib/core/derived.ts`

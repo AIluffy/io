@@ -49,7 +49,7 @@ nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { oin, formula } from '@oin/store';
+import { derived, oin } from '@oin/store';
 
 // 基础单元
 const count = oin(0);
@@ -84,7 +84,7 @@ list.sort((a, b) => a - b);
 ### 3. 计算属性
 
 ```typescript
-const double = formula([count], (c) => c * 2);
+const double = derived([count], (c) => c * 2);
 ```
 
 ### 4. 更新历史与回放
@@ -105,7 +105,7 @@ applyUpdate(state, invertUpdate(update));
 ### 5. TC39 信号兼容
 
 ```typescript
-import { Signal, computed, effect } from '@oin/store';
+import { Signal, computed, effect } from '@oin/store/experimental';
 
 const count = new Signal.State(1);
 const double = computed(() => count.get() * 2);

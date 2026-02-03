@@ -9,14 +9,17 @@ import type {
 } from '../utils/types.js';
 import { batch } from '../utils/batch.js';
 import { onError, onMutation } from '../utils/debug.js';
-import { derive } from '../core/derive.js';
-import { formula } from '../core/formula.js';
+import { derived } from '../core/derived.js';
 import { oin } from '../core/oin.js';
-import { oinDeep } from '../core/oin-deep.js';
 import { oinTree } from '../core/oin-tree.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 import { Signal, computed, effect } from '../utils/signals.js';
-import { applyUpdate, invertUpdate, mergeUpdates, replay } from '../utils/updates.js';
+import {
+  applyUpdate,
+  invertUpdate,
+  mergeUpdates,
+  replay,
+} from '../utils/updates.js';
 
 describe('oin: unit', () => {
   it('supports get/set/functional set/reset', () => {
@@ -75,8 +78,8 @@ describe('oin: array', () => {
     const values: number[][] = [];
     const unsub = arr.subscribe((v) => values.push(v));
 
-    const sum = formula([arr], (a) =>
-      a.reduce((p: number, n: OinUnit<number>) => p + n(), 0)
+    const sum = derived([arr], (a) =>
+      a.reduce((p: number, n: OinUnit<number>) => p + n(), 0),
     );
     expect(sum()).toBe(6);
 
@@ -175,7 +178,7 @@ describe('oinTree: deep path replay', () => {
     s1.meta.tag('b');
 
     const paths: OinPath[] = updates.flatMap((u) =>
-      u.patches.map((p) => p.path)
+      u.patches.map((p) => p.path),
     );
     expect(paths).toContainEqual(['items', 0, 'count']);
     expect(paths).toContainEqual(['items']);
@@ -287,20 +290,10 @@ describe('batch', () => {
   });
 });
 
-describe('oinDeep', () => {
-  it('creates deep nodes (types and runtime)', () => {
-    const scope = oinDeep({ user: { name: 'a', age: 1 } });
-    expectTypeOf(scope.user.name).toEqualTypeOf<OinUnit<string>>();
-    expect(scope.user.name()).toBe('a');
-    scope.user.name('b');
-    expect(scope.user.name()).toBe('b');
-  });
-});
-
-describe('derive', () => {
+describe('derived', () => {
   it('supports type-safe selectors with property access', async () => {
-    const scope = oinDeep({ user: { name: 'a', age: 1 } });
-    const display = derive(scope, (s) => `${s.user.name} (${s.user.age})`);
+    const scope = oinTree({ user: { name: 'a', age: 1 } });
+    const display = derived(scope, (s) => `${s.user.name} (${s.user.age})`);
     expect(display()).toBe('a (1)');
     const seen: string[] = [];
     const unsub = display.subscribe((v) => seen.push(v));
@@ -318,7 +311,7 @@ describe('derive', () => {
 
 describe('debug hooks', () => {
   it('onMutation emits per-patch callbacks', () => {
-    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    const scope = oinTree({ user: { name: 'a', age: 1 } });
     const seen: Array<{ path: OinPath; op: string }> = [];
     const unsub = onMutation(scope, (patch, path) => {
       seen.push({ path, op: patch.op });
@@ -331,7 +324,7 @@ describe('debug hooks', () => {
   });
 
   it('onError emits on failed mutations', () => {
-    const scope = oinDeep({ user: { name: 'a', age: 1 } });
+    const scope = oinTree({ user: { name: 'a', age: 1 } });
     const seen: Array<{ path: OinPath; op: string }> = [];
     const unsub = onError(scope, (_error, path, op) => {
       seen.push({ path, op });
@@ -357,8 +350,8 @@ describe('types', () => {
     const scope = oin({ a: 1 });
     expectTypeOf(scope).toEqualTypeOf<OinScope<{ a: number }>>();
 
-    const derived = formula([unit], (n) => n + 1);
-    expectTypeOf(derived()).toEqualTypeOf<number>();
+    const d = derived([unit], (n) => n + 1);
+    expectTypeOf(d()).toEqualTypeOf<number>();
   });
 
   it('infers tree node types', () => {
@@ -371,19 +364,19 @@ describe('types', () => {
   });
 });
 
-describe('formula: unit-level deps and release', () => {
+describe('derived: unit-level deps and release', () => {
   it('recomputes only when dependent unit changes', () => {
     const user = oinTree({ profile: { name: 'a', age: 1 } });
     let calls = 0;
-    const derived = formula([user.profile.age], (a) => {
+    const d = derived([user.profile.age], (a) => {
       calls += 1;
       return a * 2;
     });
 
-    const unsub = derived.subscribe(() => {
+    const unsub = d.subscribe(() => {
       return undefined;
     });
-    expect(derived()).toBe(2);
+    expect(d()).toBe(2);
     const before = calls;
 
     user.profile.name('b');
@@ -391,7 +384,7 @@ describe('formula: unit-level deps and release', () => {
 
     user.profile.age((v) => v + 1);
     expect(calls).toBeGreaterThan(before);
-    expect(derived()).toBe(4);
+    expect(d()).toBe(4);
 
     unsub();
   });
@@ -405,8 +398,8 @@ describe('formula: unit-level deps and release', () => {
     };
     const base = unitInternal.getState().valueListeners.size;
 
-    const derived = formula([user.profile.age], (a) => a + 1);
-    const unsub = derived.subscribe(() => {
+    const d = derived([user.profile.age], (a) => a + 1);
+    const unsub = d.subscribe(() => {
       return undefined;
     });
     expect(unitInternal.getState().valueListeners.size).toBe(base + 1);

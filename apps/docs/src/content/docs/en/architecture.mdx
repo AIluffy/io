@@ -20,7 +20,7 @@ OIN is a TypeScript state library built around a small set of primitives (Unit /
 - `Unit<T>`: a function-like cell: `unit()` reads, `unit(next)` writes.
 - `Scope<T>`: an object where each key is an `OinUnit`, with `commit()` to update multiple keys as one update.
 - `ArrayUnit<T>`: an array container with element units and array operations (`splice`, `sort`, etc.).
-- `TreeNode<T>`: deep-structured nodes created by `oin()` for path-level updates (`oinTree()` / `oinDeep()` are deprecated).
+- `TreeNode<T>`: deep-structured nodes created by `oin()` for path-level updates.
 
 Source mapping (core package): `unit.ts`, `scope.ts`, `array-unit.ts`, `oin-tree.ts`, `types.ts`.
 
@@ -35,11 +35,11 @@ Source mapping: `updates.ts`, `batch.ts`, `debug.ts`.
 
 ### Derived values
 
-- `formula(deps, compute)` is explicit and subscription-driven (no hidden dependencies).
-- `derive(node, selector)` is selector-driven and uses the internal reactive core to track reads.
-- The internal reactive core (`state`, `computed`, `effect`, `untrack`) powers derivations and scheduling.
+- `derived(deps, compute)` is explicit and subscription-driven (no hidden dependencies).
+- `derived(node, selector)` is selector-driven and uses the internal reactive core to track reads.
+- `derived(() => ...)` maps to the internal reactive core (`state`, `computed`, `effect`, `untrack`).
 
-Source mapping: `formula.ts`, `derive.ts`, `signals.ts`.
+Source mapping: `core/derived.ts`, `utils/signals.ts`.
 
 ### Snapshots
 
