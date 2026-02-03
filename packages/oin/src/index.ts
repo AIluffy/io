@@ -1,6 +1,6 @@
 export { formula } from './lib/formula.js';
 export { oinTree } from './lib/oin-tree.js';
-export { oin } from './lib/oin.js';
+export { oin, oinShallow } from './lib/oin.js';
 export { oinDeep } from './lib/oin-deep.js';
 export { batch } from './lib/batch.js';
 export { Signal, computed, effect, state, untrack } from './lib/signals.js';
@@ -13,6 +13,7 @@ export type {
   OinErrorHandlerFor,
   OinMutationOp,
   OinNode,
+  OinResult,
   OinPatch,
   OinPathOf,
   OinPathValue,
@@ -22,6 +23,7 @@ export type {
   OinTreeScope,
   OinUnit,
   OinUpdate,
+  Primitive,
   UnwrapOin,
 } from './lib/types.js';
 export {

@@ -47,18 +47,20 @@ count(1);         // 写入
 count((v) => v + 1);
 ```
 
-## 深层树模式
+## 默认深层
 
-`oin()` 对对象默认是浅层 Scope（只有第一层 key 会变成 unit）。当你希望 `user.profile.name(...)` 这种深层属性级 Unit 时，使用 `oinTree()` / `oinDeep()`。
+`oin()` 对 object / array 默认进行 deep 处理，因此 `user.profile.name(...)` 这种深层属性级 Unit 不需要额外切换 API。
 
 ```ts
-import { oinDeep } from '@oin/store';
+import { oin } from '@oin/store';
 
-const user = oinDeep({ profile: { name: 'Ada' } });
+const user = oin({ profile: { name: 'Ada' } });
 
 user.profile.name();        // "Ada"
 user.profile.name('Grace'); // 写入路径 ["profile","name"]
 ```
+
+如需“仅第一层变成 unit”的旧行为，使用 `oinShallow()`；`oinTree()` / `oinDeep()` 仍可用但已弃用。
 
 ## 下一步
 

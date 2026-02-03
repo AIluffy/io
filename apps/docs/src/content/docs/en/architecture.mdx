@@ -20,7 +20,7 @@ OIN is a TypeScript state library built around a small set of primitives (Unit /
 - `Unit<T>`: a function-like cell: `unit()` reads, `unit(next)` writes.
 - `Scope<T>`: an object where each key is an `OinUnit`, with `commit()` to update multiple keys as one update.
 - `ArrayUnit<T>`: an array container with element units and array operations (`splice`, `sort`, etc.).
-- `TreeNode<T>`: deep-structured nodes created by `oinTree()` / `oinDeep()` for path-level updates.
+- `TreeNode<T>`: deep-structured nodes created by `oin()` for path-level updates (`oinTree()` / `oinDeep()` are deprecated).
 
 Source mapping (core package): `unit.ts`, `scope.ts`, `array-unit.ts`, `oin-tree.ts`, `types.ts`.
 

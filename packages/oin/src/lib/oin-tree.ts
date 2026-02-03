@@ -17,7 +17,7 @@ import { emitError } from './debug.js';
 
 const INTERNAL = Symbol.for('@org/oin/internal');
 
-type PathSegment = string | number;
+type PathSegment = PropertyKey;
 type NodePath = readonly PathSegment[];
 
 type TreeScopeNode = OinTreeScope<Record<string, unknown>>;
@@ -32,6 +32,9 @@ type PathTrieNode = {
 type TreeContext = {
   root: PathTrieNode;
   errorListeners: Set<OinErrorHandler>;
+  devtools: boolean;
+  silent: boolean;
+  seen: WeakMap<object, TreeNode>;
 };
 
 function createTrieNode(): PathTrieNode {
@@ -39,6 +42,7 @@ function createTrieNode(): PathTrieNode {
 }
 
 function setPathNode(ctx: TreeContext, path: NodePath, node: TreeNode): void {
+  if (!ctx.devtools) return;
   let current = ctx.root;
   for (const seg of path) {
     const next = current.children.get(seg);
@@ -54,6 +58,7 @@ function setPathNode(ctx: TreeContext, path: NodePath, node: TreeNode): void {
 }
 
 function getPathNode(ctx: TreeContext, path: NodePath): TreeNode | undefined {
+  if (!ctx.devtools) return undefined;
   let current = ctx.root;
   for (const seg of path) {
     const next = current.children.get(seg);
@@ -64,6 +69,7 @@ function getPathNode(ctx: TreeContext, path: NodePath): TreeNode | undefined {
 }
 
 function deletePathNode(ctx: TreeContext, path: NodePath): void {
+  if (!ctx.devtools) return;
   if (path.length === 0) {
     ctx.root.node = undefined;
     return;
@@ -98,18 +104,18 @@ type UnitInternal = {
   getValue: () => unknown;
   setValue: (
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   getState: () => unknown;
 };
 
 type TreeScopeInternal = {
   kind: 'scope';
-  getChild: (key: string) => TreeNode | undefined;
+  getChild: (key: PropertyKey) => TreeNode | undefined;
   applySet: (
-    key: string,
+    key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   getState: () => TreeScopeState;
 };
@@ -120,13 +126,13 @@ type TreeArrayInternal = {
   setIndex: (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   applySplice: (
     start: number,
     deleteCount: number,
     items: unknown[],
-    options?: { emitValue?: boolean }
+    options?: { emitValue?: boolean },
   ) => void;
   applySortOrder: (order: number[], options?: { emitValue?: boolean }) => void;
   getState: () => TreeArrayState;
@@ -139,7 +145,8 @@ type TreeInternal =
   | { kind: 'derived' };
 
 type TreeScopeState = {
-  children: Map<string, TreeNode>;
+  children: Map<PropertyKey, TreeNode>;
+  node: TreeNode;
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
@@ -148,14 +155,15 @@ type TreeScopeState = {
   hasCachedSnapshot: boolean;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
-  childValueUnsubs: Map<string, OinUnsubscribe>;
-  childUpdateUnsubs: Map<string, OinUnsubscribe>;
+  childValueUnsubs: Map<PropertyKey, OinUnsubscribe>;
+  childUpdateUnsubs: Map<PropertyKey, OinUnsubscribe>;
   ctx: TreeContext;
   path: NodePath;
 };
 
 type TreeArrayState = {
   children: TreeNode[];
+  node: TreeNode;
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
@@ -198,8 +206,12 @@ function getInternal(value: unknown): TreeInternal | undefined {
 function registerSubtree(
   ctx: TreeContext,
   path: NodePath,
-  node: TreeNode
+  node: TreeNode,
+  visited?: WeakSet<object>,
 ): void {
+  const seen = visited ?? new WeakSet<object>();
+  if (seen.has(node as unknown as object)) return;
+  seen.add(node as unknown as object);
   setPathNode(ctx, path, node);
 
   const internal = getInternal(node);
@@ -208,7 +220,7 @@ function registerSubtree(
   if (internal.kind === 'scope') {
     const state = internal.getState();
     for (const [key, child] of state.children.entries()) {
-      registerSubtree(ctx, [...path, key], child);
+      registerSubtree(ctx, [...path, key], child, seen);
     }
     return;
   }
@@ -216,7 +228,7 @@ function registerSubtree(
   if (internal.kind === 'array') {
     const state = internal.getState();
     for (let i = 0; i < state.children.length; i += 1) {
-      registerSubtree(ctx, [...path, i], state.children[i]);
+      registerSubtree(ctx, [...path, i], state.children[i], seen);
     }
   }
 }
@@ -224,8 +236,12 @@ function registerSubtree(
 function unregisterSubtree(
   ctx: TreeContext,
   path: NodePath,
-  node: TreeNode
+  node: TreeNode,
+  visited?: WeakSet<object>,
 ): void {
+  const seen = visited ?? new WeakSet<object>();
+  if (seen.has(node as unknown as object)) return;
+  seen.add(node as unknown as object);
   deletePathNode(ctx, path);
 
   const internal = getInternal(node);
@@ -234,7 +250,7 @@ function unregisterSubtree(
   if (internal.kind === 'scope') {
     const state = internal.getState();
     for (const [key, child] of state.children.entries()) {
-      unregisterSubtree(ctx, [...path, key], child);
+      unregisterSubtree(ctx, [...path, key], child, seen);
     }
     return;
   }
@@ -242,14 +258,14 @@ function unregisterSubtree(
   if (internal.kind === 'array') {
     const state = internal.getState();
     for (let i = 0; i < state.children.length; i += 1) {
-      unregisterSubtree(ctx, [...path, i], state.children[i]);
+      unregisterSubtree(ctx, [...path, i], state.children[i], seen);
     }
   }
 }
 
 function rebuildSubtreeMapping(
   state: { ctx: TreeContext; path: NodePath },
-  node: TreeNode
+  node: TreeNode,
 ): void {
   unregisterSubtree(state.ctx, state.path, node);
   registerSubtree(state.ctx, state.path, node);
@@ -260,41 +276,63 @@ function hasSnapshot(value: unknown): value is { snapshot(): unknown } {
   return typeof (value as { snapshot?: unknown }).snapshot === 'function';
 }
 
-function getNodeValue(node: TreeNode): unknown {
-  if (typeof node === 'function') return node();
+function getNodeValue(
+  node: TreeNode,
+  cache: WeakMap<object, unknown>,
+): unknown {
+  const internal = getInternal(node);
+  if (internal?.kind === 'unit') return (node as OinUnit<unknown>).snapshot();
+  if (internal?.kind === 'scope')
+    return getScopeSnapshot(internal.getState(), cache);
+  if (internal?.kind === 'array')
+    return getArraySnapshot(internal.getState(), cache);
   if (hasSnapshot(node)) return node.snapshot();
   return snapshotValue(node, { owned: false });
 }
 
-function getScopeSnapshot(state: TreeScopeState): Record<string, unknown> {
+function getScopeSnapshot(
+  state: TreeScopeState,
+  cache?: WeakMap<object, unknown>,
+): Record<string, unknown> {
   if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
     return state.cachedSnapshot as Record<string, unknown>;
-  const plain: Record<string, unknown> = {};
+  const local = cache ?? new WeakMap<object, unknown>();
+  const cached = local.get(state.node as unknown as object);
+  if (cached) return cached as Record<string, unknown>;
+  const plain: Record<PropertyKey, unknown> = {};
+  local.set(state.node as unknown as object, plain);
   for (const [key, node] of state.children.entries())
-    plain[key] = getNodeValue(node);
+    plain[key] = getNodeValue(node, local);
   const value = snapshotValue(plain, { owned: true }) as Record<
     string,
     unknown
   >;
-  state.cachedSnapshot = value;
+  local.set(state.node as unknown as object, value);
+  state.cachedSnapshot = value as unknown as Record<string, unknown>;
   state.cachedSnapshotEpoch = state.valueEpoch;
   state.hasCachedSnapshot = true;
-  return value;
+  return state.cachedSnapshot;
 }
 
-function getArraySnapshot(state: TreeArrayState): unknown[] {
+function getArraySnapshot(
+  state: TreeArrayState,
+  cache?: WeakMap<object, unknown>,
+): unknown[] {
   if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
     return state.cachedSnapshot as unknown[];
-  const values = snapshotValue(
-    state.children.map((c) => getNodeValue(c)),
-    {
-      owned: true,
-    }
-  );
-  state.cachedSnapshot = values;
+  const local = cache ?? new WeakMap<object, unknown>();
+  const cached = local.get(state.node as unknown as object);
+  if (cached) return cached as unknown[];
+  const values = new Array(state.children.length);
+  local.set(state.node as unknown as object, values);
+  for (let i = 0; i < state.children.length; i += 1)
+    values[i] = getNodeValue(state.children[i], local);
+  const frozen = snapshotValue(values, { owned: true }) as unknown[];
+  local.set(state.node as unknown as object, frozen);
+  state.cachedSnapshot = frozen;
   state.cachedSnapshotEpoch = state.valueEpoch;
   state.hasCachedSnapshot = true;
-  return values;
+  return frozen;
 }
 
 function emitScopeValue(state: TreeScopeState): void {
@@ -316,8 +354,8 @@ function emitArrayUpdate(state: TreeArrayState, update: OinUpdate): void {
 
 function attachChildToScope(
   state: TreeScopeState,
-  key: string,
-  child: TreeNode
+  key: PropertyKey,
+  child: TreeNode,
 ): void {
   const maybeValueSub = child as unknown as Partial<{
     subscribe: (fn: (v: unknown) => void) => OinUnsubscribe;
@@ -345,7 +383,7 @@ function attachChildToScope(
           state.revision += 1;
           emitScopeUpdate(
             state,
-            createUpdate(baseRevision, state.revision, patches)
+            createUpdate(baseRevision, state.revision, patches),
           );
         })
       : noopUnsubscribe;
@@ -354,7 +392,7 @@ function attachChildToScope(
   state.childUpdateUnsubs.set(key, updateUnsub);
 }
 
-function detachChildFromScope(state: TreeScopeState, key: string): void {
+function detachChildFromScope(state: TreeScopeState, key: PropertyKey): void {
   state.childValueUnsubs.get(key)?.();
   state.childUpdateUnsubs.get(key)?.();
   state.childValueUnsubs.delete(key);
@@ -390,7 +428,7 @@ function attachChildToArray(state: TreeArrayState, child: TreeNode): void {
           state.revision += 1;
           emitArrayUpdate(
             state,
-            createUpdate(baseRevision, state.revision, patches)
+            createUpdate(baseRevision, state.revision, patches),
           );
         })
       : noopUnsubscribe;
@@ -409,10 +447,27 @@ function detachChildFromArray(state: TreeArrayState, child: TreeNode): void {
 function createTreeNode(
   ctx: TreeContext,
   path: NodePath,
-  initial: unknown
+  initial: unknown,
 ): TreeNode {
+  if (initial !== null && typeof initial === 'object') {
+    const existing = ctx.seen.get(initial as object);
+    if (existing) {
+      setPathNode(ctx, path, existing);
+      return existing;
+    }
+  }
   if (Array.isArray(initial)) return createTreeArray(ctx, path, initial);
   if (isPlainObject(initial)) return createTreeScope(ctx, path, initial);
+  if (initial !== null && typeof initial === 'object') {
+    if (ctx.silent) {
+      const unit = createUnit(cloneValue(initial)) as unknown as TreeNode;
+      registerSubtree(ctx, path, unit);
+      return unit;
+    }
+    throw new TypeError(
+      'oinTree: deep mode only supports plain objects and arrays',
+    );
+  }
   const unit = createUnit(cloneValue(initial)) as unknown as TreeNode;
   registerSubtree(ctx, path, unit);
   return unit;
@@ -421,10 +476,11 @@ function createTreeNode(
 function createTreeScope(
   ctx: TreeContext,
   path: NodePath,
-  initial: Record<string, unknown>
+  initial: Record<string, unknown>,
 ): OinTreeScope<Record<string, unknown>> {
   const state: TreeScopeState = {
     children: new Map(),
+    node: undefined as unknown as TreeNode,
     revision: 0,
     isCommitting: false,
     valueEpoch: 0,
@@ -439,8 +495,13 @@ function createTreeScope(
     path,
   };
 
-  for (const key of Object.keys(initial)) {
-    const child = createTreeNode(ctx, [...path, key], initial[key]);
+  const scope: Record<PropertyKey, unknown> = {};
+  state.node = scope as unknown as TreeNode;
+  ctx.seen.set(initial as unknown as object, scope as unknown as TreeNode);
+
+  const initialAny = initial as unknown as Record<PropertyKey, unknown>;
+  for (const key of Reflect.ownKeys(initialAny)) {
+    const child = createTreeNode(ctx, [...path, key], initialAny[key]);
     state.children.set(key, child);
   }
 
@@ -450,7 +511,7 @@ function createTreeScope(
   const snapshot = (): Record<string, unknown> => getScopeSnapshot(state);
 
   const subscribe = (
-    fn: (v: Record<string, unknown>) => void
+    fn: (v: Record<string, unknown>) => void,
   ): OinUnsubscribe => {
     state.valueListeners.add(fn);
     return () => {
@@ -466,13 +527,14 @@ function createTreeScope(
   };
 
   const applySet = (
-    key: string,
+    key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ): void => {
     try {
       const existing = state.children.get(key);
-      if (!existing) throw new Error(`oinTree scope: missing key ${key}`);
+      if (!existing)
+        throw new Error(`oinTree scope: missing key ${String(key)}`);
 
       if (isUnit(existing)) {
         const internal = getInternal(existing);
@@ -509,9 +571,10 @@ function createTreeScope(
       fn(draft);
       const next = finishDraft(draft);
 
-      for (const key of Object.keys(next)) {
-        if (!(key in before))
-          throw new Error(`oinTree scope: unknown key ${key}`);
+      const nextAny = next as unknown as Record<PropertyKey, unknown>;
+      for (const key of Reflect.ownKeys(nextAny)) {
+        if (!Reflect.has(before as object, key))
+          throw new Error(`oinTree scope: unknown key ${String(key)}`);
       }
 
       const patches: OinPatch[] = [];
@@ -519,11 +582,11 @@ function createTreeScope(
 
       const applyNodeDiff = (
         parentState: TreeScopeState | TreeArrayState,
-        segment: string | number,
+        segment: PathSegment,
         node: TreeNode,
         prev: unknown,
         next: unknown,
-        relPath: PathSegment[]
+        relPath: PathSegment[],
       ): boolean => {
         if (isPlainObject(prev) && isPlainObject(next)) {
           const internal = getInternal(node);
@@ -571,7 +634,7 @@ function createTreeScope(
           const replaced = createTreeNode(
             ctx,
             [...parentState.path, segment],
-            next
+            next,
           );
           (parentState as TreeScopeState).children.set(segment, replaced);
           attachChildToScope(parentState as TreeScopeState, segment, replaced);
@@ -584,14 +647,19 @@ function createTreeScope(
           return true;
         }
 
+        if (typeof segment !== 'number')
+          throw new Error('oinTree array: invalid segment');
+        if (typeof segment !== 'number')
+          throw new Error('oinTree array: invalid segment');
         detachChildFromArray(parentState as TreeArrayState, node);
         unregisterSubtree(ctx, [...parentState.path, segment], node);
         const replaced = createTreeNode(
           ctx,
           [...parentState.path, segment],
-          next
+          next,
         );
-        (parentState as TreeArrayState).children[segment] = replaced;
+        const index = segment as number;
+        (parentState as TreeArrayState).children[index] = replaced;
         attachChildToArray(parentState as TreeArrayState, replaced);
         patches.push({
           op: 'set',
@@ -604,16 +672,16 @@ function createTreeScope(
 
       const applyScopeDiff = (
         scopeState: TreeScopeState,
-        prevObj: Record<string, unknown>,
-        nextObj: Record<string, unknown>,
-        relPath: PathSegment[]
+        prevObj: Record<PropertyKey, unknown>,
+        nextObj: Record<PropertyKey, unknown>,
+        relPath: PathSegment[],
       ): boolean => {
         let changed = false;
-        for (const key of Object.keys(nextObj)) {
-          if (!(key in prevObj))
-            throw new Error(`oinTree scope: unknown key ${key}`);
+        for (const key of Reflect.ownKeys(nextObj)) {
+          if (!Reflect.has(prevObj as object, key))
+            throw new Error(`oinTree scope: unknown key ${String(key)}`);
         }
-        for (const key of Object.keys(prevObj)) {
+        for (const key of Reflect.ownKeys(prevObj)) {
           const node = scopeState.children.get(key);
           if (!node) continue;
           const prev = prevObj[key];
@@ -664,7 +732,7 @@ function createTreeScope(
         arrayState: TreeArrayState,
         prevArr: unknown[],
         nextArr: unknown[],
-        relPath: PathSegment[]
+        relPath: PathSegment[],
       ): boolean => {
         if (prevArr.length !== nextArr.length) {
           const arrayNode = getPathNode(ctx, arrayState.path);
@@ -676,7 +744,7 @@ function createTreeScope(
             unregisterSubtree(ctx, [...arrayState.path, i], child);
           }
           arrayState.children = nextArr.map((v, index) =>
-            createTreeNode(ctx, [...arrayState.path, index], v)
+            createTreeNode(ctx, [...arrayState.path, index], v),
           );
           for (const child of arrayState.children)
             attachChildToArray(arrayState, child);
@@ -750,7 +818,7 @@ function createTreeScope(
       state.valueEpoch += 1;
       emitScopeUpdate(
         state,
-        createUpdate(baseRevision, state.revision, patches)
+        createUpdate(baseRevision, state.revision, patches),
       );
       emitScopeValue(state);
     } catch (error) {
@@ -760,7 +828,6 @@ function createTreeScope(
     }
   };
 
-  const scope: Record<string, unknown> = {};
   for (const [key, child] of state.children.entries()) scope[key] = child;
 
   Object.defineProperties(scope, {
@@ -771,7 +838,7 @@ function createTreeScope(
     [INTERNAL]: {
       value: {
         kind: 'scope',
-        getChild: (key: string) => state.children.get(key),
+        getChild: (key: PropertyKey) => state.children.get(key),
         applySet,
         getState: () => state,
       },
@@ -785,12 +852,11 @@ function createTreeScope(
 function createTreeArray(
   ctx: TreeContext,
   path: NodePath,
-  initial: unknown[]
+  initial: unknown[],
 ): OinTreeArrayUnit<unknown> {
   const state: TreeArrayState = {
-    children: initial.map((v, index) =>
-      createTreeNode(ctx, [...path, index], v)
-    ),
+    children: new Array(initial.length),
+    node: undefined as unknown as TreeNode,
     revision: 0,
     isCommitting: false,
     valueEpoch: 0,
@@ -805,17 +871,26 @@ function createTreeArray(
     path,
   };
 
-  for (const child of state.children) attachChildToArray(state, child);
-
   const snapshot = (): unknown[] => getArraySnapshot(state);
 
   const array = function (): unknown[] {
     return snapshot();
   } as unknown as OinTreeArrayUnit<unknown> & object;
-  setPathNode(ctx, path, array as unknown as TreeNode);
+  const proxy = new Proxy(array as OinTreeArrayUnit<unknown> & object, {
+    get(target, prop, receiver) {
+      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
+        return state.children[Number(prop)];
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  }) as OinTreeArrayUnit<unknown>;
+
+  state.node = proxy as unknown as TreeNode;
+  ctx.seen.set(initial as unknown as object, proxy as unknown as TreeNode);
+  setPathNode(ctx, path, proxy as unknown as TreeNode);
 
   const rebuildMapping = (): void => {
-    rebuildSubtreeMapping(state, array as unknown as TreeNode);
+    rebuildSubtreeMapping(state, proxy as unknown as TreeNode);
   };
 
   const subscribe = (fn: (v: unknown[]) => void): OinUnsubscribe => {
@@ -835,17 +910,17 @@ function createTreeArray(
   const performSplice = (
     start: number,
     deleteCount: number,
-    items: unknown[]
+    items: unknown[],
   ) => {
     const normalizedStart =
       start < 0 ? Math.max(0, state.children.length + start) : start;
     const dc = Math.max(
       0,
-      Math.min(deleteCount, state.children.length - normalizedStart)
+      Math.min(deleteCount, state.children.length - normalizedStart),
     );
 
     const removed = state.children.splice(normalizedStart, dc);
-    const removedValues = removed.map((c) => getNodeValue(c));
+    const removedValues = removed.map((c) => getNodeValue(c, new WeakMap()));
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
       detachChildFromArray(state, child);
@@ -853,7 +928,7 @@ function createTreeArray(
     }
 
     const created = items.map((v, i) =>
-      createTreeNode(ctx, [...path, normalizedStart + i], v)
+      createTreeNode(ctx, [...path, normalizedStart + i], v),
     );
     for (const child of created) attachChildToArray(state, child);
     state.children.splice(normalizedStart, 0, ...created);
@@ -866,7 +941,7 @@ function createTreeArray(
     start: number,
     deleteCount: number,
     items: unknown[],
-    options?: { emitValue?: boolean }
+    options?: { emitValue?: boolean },
   ) => {
     try {
       state.revision += 1;
@@ -881,7 +956,7 @@ function createTreeArray(
 
   const applySortOrder = (
     order: number[],
-    options?: { emitValue?: boolean }
+    options?: { emitValue?: boolean },
   ) => {
     try {
       if (order.length !== state.children.length)
@@ -901,7 +976,7 @@ function createTreeArray(
   const setIndex = (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => {
     try {
       const existing = state.children[index];
@@ -944,7 +1019,7 @@ function createTreeArray(
 
       const start = state.children.length;
       const created = items.map((v, i) =>
-        createTreeNode(ctx, [...path, start + i], v)
+        createTreeNode(ctx, [...path, start + i], v),
       );
       for (const child of created) attachChildToArray(state, child);
       state.children.push(...created);
@@ -960,7 +1035,7 @@ function createTreeArray(
       };
       emitArrayUpdate(
         state,
-        createUpdate(baseRevision, state.revision, [patch])
+        createUpdate(baseRevision, state.revision, [patch]),
       );
       state.valueEpoch += 1;
       emitArrayValue(state);
@@ -979,7 +1054,7 @@ function createTreeArray(
       const start = state.children.length - 1;
       const removed = state.children.pop();
       if (!removed) return undefined;
-      const removedValue = getNodeValue(removed);
+      const removedValue = getNodeValue(removed, new WeakMap());
       detachChildFromArray(state, removed);
       unregisterSubtree(ctx, [...path, start], removed);
       rebuildMapping();
@@ -994,7 +1069,7 @@ function createTreeArray(
       };
       emitArrayUpdate(
         state,
-        createUpdate(baseRevision, state.revision, [patch])
+        createUpdate(baseRevision, state.revision, [patch]),
       );
       state.valueEpoch += 1;
       emitArrayValue(state);
@@ -1017,7 +1092,7 @@ function createTreeArray(
       const { normalizedStart, dc, removedValues } = performSplice(
         start,
         deleteCount,
-        items
+        items,
       );
       const patch: OinPatch = {
         op: 'splice',
@@ -1029,7 +1104,7 @@ function createTreeArray(
       };
       emitArrayUpdate(
         state,
-        createUpdate(baseRevision, state.revision, [patch])
+        createUpdate(baseRevision, state.revision, [patch]),
       );
       state.valueEpoch += 1;
       emitArrayValue(state);
@@ -1049,7 +1124,7 @@ function createTreeArray(
       const decorated = state.children.map((child, index) => ({
         child,
         index,
-        value: getNodeValue(child),
+        value: getNodeValue(child, new WeakMap()),
       }));
       decorated.sort((a, b) => {
         const av = a.value;
@@ -1069,7 +1144,7 @@ function createTreeArray(
         state,
         createUpdate(baseRevision, state.revision, [
           { op: 'sort', path: [], order },
-        ])
+        ]),
       );
       state.valueEpoch += 1;
       emitArrayValue(state);
@@ -1090,16 +1165,16 @@ function createTreeArray(
 
       const applyScopeDiff = (
         scopeState: TreeScopeState,
-        prevObj: Record<string, unknown>,
-        nextObj: Record<string, unknown>,
-        relPath: PathSegment[]
+        prevObj: Record<PropertyKey, unknown>,
+        nextObj: Record<PropertyKey, unknown>,
+        relPath: PathSegment[],
       ): boolean => {
         let changed = false;
-        for (const key of Object.keys(nextObj)) {
-          if (!(key in prevObj))
-            throw new Error(`oinTree scope: unknown key ${key}`);
+        for (const key of Reflect.ownKeys(nextObj)) {
+          if (!Reflect.has(prevObj as object, key))
+            throw new Error(`oinTree scope: unknown key ${String(key)}`);
         }
-        for (const key of Object.keys(prevObj)) {
+        for (const key of Reflect.ownKeys(prevObj)) {
           const node = scopeState.children.get(key);
           if (!node) continue;
           const prev = prevObj[key];
@@ -1150,7 +1225,7 @@ function createTreeArray(
         arrayState: TreeArrayState,
         prevArr: unknown[],
         nextArr: unknown[],
-        relPath: PathSegment[]
+        relPath: PathSegment[],
       ): boolean => {
         if (prevArr.length !== nextArr.length) {
           const arrayNode = getPathNode(ctx, arrayState.path);
@@ -1162,7 +1237,7 @@ function createTreeArray(
             unregisterSubtree(ctx, [...arrayState.path, i], child);
           }
           arrayState.children = nextArr.map((v, index) =>
-            createTreeNode(ctx, [...arrayState.path, index], v)
+            createTreeNode(ctx, [...arrayState.path, index], v),
           );
           for (const child of arrayState.children)
             attachChildToArray(arrayState, child);
@@ -1229,11 +1304,11 @@ function createTreeArray(
 
       const applyNodeDiff = (
         parentState: TreeScopeState | TreeArrayState,
-        segment: string | number,
+        segment: PathSegment,
         node: TreeNode,
         prev: unknown,
         next: unknown,
-        relPath: PathSegment[]
+        relPath: PathSegment[],
       ): boolean => {
         if (isPlainObject(prev) && isPlainObject(next)) {
           const internal = getInternal(node);
@@ -1281,7 +1356,7 @@ function createTreeArray(
           const replaced = createTreeNode(
             ctx,
             [...parentState.path, segment],
-            next
+            next,
           );
           (parentState as TreeScopeState).children.set(segment, replaced);
           attachChildToScope(parentState as TreeScopeState, segment, replaced);
@@ -1294,14 +1369,17 @@ function createTreeArray(
           return true;
         }
 
+        if (typeof segment !== 'number')
+          throw new Error('oinTree array: invalid segment');
+        const index = segment as number;
         detachChildFromArray(parentState as TreeArrayState, node);
         unregisterSubtree(ctx, [...parentState.path, segment], node);
         const replaced = createTreeNode(
           ctx,
           [...parentState.path, segment],
-          next
+          next,
         );
-        (parentState as TreeArrayState).children[segment] = replaced;
+        (parentState as TreeArrayState).children[index] = replaced;
         attachChildToArray(parentState as TreeArrayState, replaced);
         patches.push({
           op: 'set',
@@ -1320,7 +1398,7 @@ function createTreeArray(
       state.revision += 1;
       emitArrayUpdate(
         state,
-        createUpdate(baseRevision, state.revision, patches)
+        createUpdate(baseRevision, state.revision, patches),
       );
       state.valueEpoch += 1;
       emitArrayValue(state);
@@ -1329,6 +1407,20 @@ function createTreeArray(
       emitError(array, error, path, 'commit');
       throw error;
     }
+  };
+
+  const reduce = <R>(
+    reducer: (acc: R, item: TreeNode, index: number) => R,
+    initialValue: R,
+  ): R => {
+    let acc = initialValue;
+    for (let i = 0; i < state.children.length; i += 1)
+      acc = reducer(acc, state.children[i], i);
+    return acc;
+  };
+
+  const iterator = function* (): Generator<TreeNode> {
+    for (const child of state.children) yield child;
   };
 
   Object.defineProperties(array, {
@@ -1340,6 +1432,8 @@ function createTreeArray(
     splice: { value: splice },
     sort: { value: sort },
     commit: { value: commit },
+    reduce: { value: reduce },
+    [Symbol.iterator]: { value: iterator },
     [INTERNAL]: {
       value: {
         kind: 'array',
@@ -1352,20 +1446,45 @@ function createTreeArray(
     },
   });
 
-  return new Proxy(array as OinTreeArrayUnit<unknown> & object, {
-    get(target, prop, receiver) {
-      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
-        return state.children[Number(prop)];
-      }
-      return Reflect.get(target, prop, receiver);
-    },
-  }) as OinTreeArrayUnit<unknown>;
+  for (let i = 0; i < initial.length; i += 1) {
+    const value = i in initial ? initial[i] : undefined;
+    const child = createTreeNode(ctx, [...path, i], value);
+    state.children[i] = child;
+    attachChildToArray(state, child);
+  }
+
+  return proxy;
 }
 
-export function oinTree<T>(initial: T): OinTreeNode<T> {
+export function oinTree<T>(
+  initial: T,
+  options?: { silent?: boolean; devtools?: boolean },
+): OinTreeNode<T> {
+  const devtools = resolveDevtoolsEnabled(options);
   const ctx: TreeContext = {
     root: createTrieNode(),
     errorListeners: new Set(),
+    devtools,
+    silent: options?.silent === true,
+    seen: new WeakMap(),
   };
   return createTreeNode(ctx, [], initial) as unknown as OinTreeNode<T>;
+}
+
+function resolveDevtoolsEnabled(options?: { devtools?: boolean }): boolean {
+  if (options?.devtools === true) return true;
+  if (options?.devtools === false) return false;
+  const flag = (globalThis as Record<PropertyKey, unknown>).__OIN_DEVTOOLS__;
+  if (flag === false) return false;
+  return isDevEnv();
+}
+
+function isDevEnv(): boolean {
+  if (typeof process !== 'undefined') {
+    const env = (
+      process as unknown as { env?: Record<string, string | undefined> }
+    ).env;
+    if (env?.NODE_ENV) return env.NODE_ENV !== 'production';
+  }
+  return true;
 }

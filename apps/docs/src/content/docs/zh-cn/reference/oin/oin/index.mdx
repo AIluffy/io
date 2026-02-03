@@ -7,8 +7,10 @@ description: "function export"
 ## 签名
 
 ```ts
-<T>(initial: T) => OinNode<T>
+<T>(initial: T, options?: { silent?: boolean }) => OinResult<T>
 ```
+
+`oin()` 对 object / array 默认 deep，等价旧 `oinTree()` / `oinDeep()`；如需浅层对象行为使用 `oinShallow()`。
 
 ## 参数
 
@@ -18,7 +20,7 @@ description: "function export"
 
 ## 返回
 
-`OinNode<T>`
+`OinResult<T>`
 
 ## 错误
 

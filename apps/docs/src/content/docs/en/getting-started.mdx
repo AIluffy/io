@@ -47,18 +47,20 @@ count(1);         // write
 count((v) => v + 1);
 ```
 
-## Deep Tree Mode
+## Deep By Default
 
-`oin()` creates a shallow scope for objects (only the first level becomes units). Use `oinTree()` / `oinDeep()` when you want nested properties to be units as well.
+`oin()` deep-processes objects and arrays by default, so nested properties can be updated as leaf units without switching APIs.
 
 ```ts
-import { oinDeep } from '@oin/store';
+import { oin } from '@oin/store';
 
-const user = oinDeep({ profile: { name: 'Ada' } });
+const user = oin({ profile: { name: 'Ada' } });
 
 user.profile.name();        // "Ada"
 user.profile.name('Grace'); // write at path ["profile","name"]
 ```
+
+If you need the legacy “shallow first-level only” behavior, use `oinShallow()`. `oinTree()` / `oinDeep()` are deprecated but still available.
 
 ## Next Steps
 

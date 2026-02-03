@@ -1,6 +1,15 @@
 export type OinUnsubscribe = () => void;
 
-export type OinPath = ReadonlyArray<string | number>;
+export type Primitive =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined;
+
+export type OinPath = ReadonlyArray<PropertyKey>;
 
 export type OinPatch =
   | {
@@ -78,13 +87,15 @@ export type OinNode<T> = T extends readonly (infer U)[]
   ? OinScope<T>
   : OinUnit<T>;
 
-export type OinTreeNode<T, MaxDepth extends number = 8> = MaxDepth extends 0
+export type OinTreeNode<T, MaxDepth extends number = 16> = MaxDepth extends 0
   ? OinUnit<T>
   : T extends readonly (infer U)[]
   ? OinTreeArrayUnit<U, PrevDepth<MaxDepth>>
   : T extends Record<string, unknown>
   ? OinTreeScope<T, PrevDepth<MaxDepth>>
   : OinUnit<T>;
+
+export type OinResult<T, MaxDepth extends number = 16> = OinTreeNode<T, MaxDepth>;
 
 export type OinTreeArrayUnit<T, MaxDepth extends number = 8> = {
   (): T[];
@@ -94,6 +105,11 @@ export type OinTreeArrayUnit<T, MaxDepth extends number = 8> = {
   splice(start: number, deleteCount: number, ...items: T[]): void;
   sort(compareFn?: (a: T, b: T) => number): void;
   commit(fn: (draft: T[]) => void): void;
+  reduce<R>(
+    reducer: (acc: R, item: OinTreeNode<T, MaxDepth>, index: number) => R,
+    initialValue: R
+  ): R;
+  [Symbol.iterator](): Iterator<OinTreeNode<T, MaxDepth>>;
   snapshot(): T[];
   subscribe(fn: (v: T[]) => void): OinUnsubscribe;
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
@@ -113,7 +129,12 @@ export type OinTreeScope<
 
 export type OinTypeInferenceMode = 'unknown' | 'error';
 
-type DepthTable = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+type DepthTable = [
+  0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+  19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+  37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+  55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
+];
 type PrevDepth<N extends number> = DepthTable[N] extends number ? DepthTable[N] : 0;
 
 type OinTypeError<Message extends string> = {
@@ -130,7 +151,7 @@ type IsArray<T> = [T] extends [readonly unknown[]] ? true : false;
 
 export type UnwrapOin<
   T,
-  MaxDepth extends number = 8,
+  MaxDepth extends number = 16,
   Mode extends OinTypeInferenceMode = 'unknown'
 > = MaxDepth extends 0
   ? TypeFailure<'UnwrapOin: exceeded MaxDepth', Mode>
@@ -142,7 +163,7 @@ export type UnwrapOin<
   ? { [K in keyof T]: UnwrapOin<T[K], PrevDepth<MaxDepth>, Mode> }
   : T;
 
-type PathSegment = string | number;
+type PathSegment = PropertyKey;
 
 type PathOfImpl<T, Depth extends number> = Depth extends 0
   ? never

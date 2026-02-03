@@ -11,8 +11,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Key Features
 
-- **Composable primitives**: `oin()` creates Unit / Scope / ArrayUnit based on the initial value.
-- **Deep tree mode**: `oinTree()` / `oinDeep()` build path-addressable deep nodes.
+- **Composable primitives**: `oin()` creates Unit / deep TreeScope / deep TreeArrayUnit based on the initial value.
+- **Shallow compatibility**: `oinShallow()` turns only the first object level into units.
+- **Deprecated API**: `oinTree()` / `oinDeep()` still work, but `oin()` is the recommended replacement.
 - **Derivations**: `formula()` (explicit deps) and `derive()` (selector-driven).
 - **Batching**: `batch()` coalesces notifications and merges updates.
 - **Adapters**: React/Vue/Svelte bindings follow the same `snapshot() + subscribe()` contract.

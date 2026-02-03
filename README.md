@@ -49,7 +49,7 @@ nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { oin, oinTree, formula } from '@oin/store';
+import { oin, oinShallow, formula } from '@oin/store';
 
 // 基础单元
 const count = oin(0);
@@ -60,12 +60,16 @@ count((v) => v + 1); // 函数式更新
 const user = oin({ name: 'Alice', age: 25 });
 user.name('Bob'); // 仅触发 name 相关订阅
 
-// 深度树形结构
-const app = oinTree({
+// 深度树形结构（默认）
+const app = oin({
   user: { profile: { name: 'Alice' } },
   items: [{ id: 1, count: 0 }],
 });
 app.items[0].count((v) => v + 1); // 精确的叶子节点更新
+
+// 仅第一层变成 Unit（兼容旧行为）
+const shallow = oinShallow({ name: 'Alice', age: 25 });
+shallow.name('Bob');
 ```
 
 ### 2. 数组操作
