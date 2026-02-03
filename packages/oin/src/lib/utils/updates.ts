@@ -8,7 +8,7 @@ type InternalUnit = {
   kind: 'unit';
   setValue: (
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   getState?: () => unknown;
 };
@@ -18,9 +18,9 @@ type InternalScope = {
   getUnit?: (key: string) => OinUnit<unknown> | undefined;
   getChild?: (key: string) => unknown;
   applySet: (
-    key: string,
+    key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   getState?: () => unknown;
 };
@@ -31,13 +31,13 @@ type InternalArray = {
   setIndex: (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean }
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   applySplice: (
     start: number,
     deleteCount: number,
     items: unknown[],
-    options?: { emitValue?: boolean }
+    options?: { emitValue?: boolean },
   ) => void;
   applySortOrder: (order: number[], options?: { emitValue?: boolean }) => void;
   getState?: () => unknown;
@@ -69,17 +69,21 @@ function newId(): string {
 export function createUpdate(
   baseRevision: number,
   revision: number,
-  patches: OinPatch[]
+  patches: OinPatch[],
 ): OinUpdate {
   return { id: newId(), baseRevision, revision, patches };
 }
 
-function pathKey(path: ReadonlyArray<string | number>): string {
+function pathKey(path: ReadonlyArray<PropertyKey>): string {
   let out = '';
   for (let i = 0; i < path.length; i += 1) {
     const seg = path[i];
     if (typeof seg === 'number') {
       out += `|n:${seg}`;
+      continue;
+    }
+    if (typeof seg === 'symbol') {
+      out += `|y:${String(seg)}`;
       continue;
     }
     const escaped = seg.replace(/([\\|:])/g, '\\$1');
@@ -152,14 +156,14 @@ export function invertUpdate(update: OinUpdate): OinUpdate {
 export function applyUpdate(
   target: unknown,
   update: OinUpdate,
-  options?: { emitUpdate?: boolean }
+  options?: { emitUpdate?: boolean },
 ): void {
   const rootInternal = getInternal(target);
   if (!rootInternal) throw new Error('applyUpdate: target is not an OIN node');
 
   const resolveNode = (
     root: unknown,
-    path: ReadonlyArray<string | number>
+    path: ReadonlyArray<PropertyKey>,
   ): unknown => {
     let current: unknown = root;
     for (const segment of path) {
@@ -168,11 +172,13 @@ export function applyUpdate(
         throw new Error('applyUpdate: path traversed into non-node');
 
       if (internal.kind === 'scope') {
-        if (typeof segment !== 'string')
+        // Allow symbol keys for scope
+        if (typeof segment !== 'string' && typeof segment !== 'symbol')
           throw new Error('applyUpdate: invalid scope path segment');
         current =
-          internal.getChild?.(segment) ??
-          internal.getUnit?.(segment) ??
+          (typeof segment === 'string'
+            ? (internal.getChild?.(segment) ?? internal.getUnit?.(segment))
+            : undefined) ??
           (current as unknown as Record<PropertyKey, unknown>)[segment];
         continue;
       }
@@ -207,11 +213,13 @@ export function applyUpdate(
         const last = patch.path[patch.path.length - 1];
         const parentNode = resolveNode(target, parentPath);
         const parentInternal = getInternal(parentNode);
-        if (!parentInternal) throw new Error('applyUpdate: invalid parent node');
+        if (!parentInternal)
+          throw new Error('applyUpdate: invalid parent node');
 
         if (parentInternal.kind === 'scope') {
-          if (typeof last !== 'string')
+          if (typeof last !== 'string' && typeof last !== 'symbol')
             throw new Error('applyUpdate: invalid scope key');
+          
           parentInternal.applySet(last, patch.next, {
             emitUpdate: false,
             emitValue: true,
@@ -261,9 +269,12 @@ export function applyUpdate(
 
   if (options?.emitUpdate) {
     const internal = getInternal(target);
-    const state = (internal as unknown as { getState?: () => unknown })?.getState?.();
-    const listeners = (state as { updateListeners?: Set<(u: OinUpdate) => void> })
-      .updateListeners;
+    const state = (
+      internal as unknown as { getState?: () => unknown }
+    )?.getState?.();
+    const listeners = (
+      state as { updateListeners?: Set<(u: OinUpdate) => void> }
+    ).updateListeners;
     if (listeners && listeners instanceof Set) notifyUpdate(listeners, update);
   }
 }

@@ -1,6 +1,10 @@
-import type { OinHistoryEntry, ReduxDevToolsImportState } from './types.js';
+import type {
+  OinHistoryEntry,
+  OinPath,
+  ReduxDevToolsImportState,
+} from './types.js';
 
-function formatPath(path: ReadonlyArray<string | number>): string {
+function formatPath(path: OinPath): string {
   if (path.length === 0) return '$';
   return '$.' + path.map((s) => (typeof s === 'number' ? `[${s}]` : String(s))).join('.');
 }

@@ -1,5 +1,9 @@
 import { diffSnapshots } from '@oin/devtools';
-import type { OinDevtools, OinHistoryEntry, OinSnapshotDiff } from '@oin/devtools';
+import type {
+  OinDevtools,
+  OinHistoryEntry,
+  OinSnapshotDiff,
+} from '@oin/devtools';
 import type { CSSProperties } from 'react';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 
@@ -16,13 +20,13 @@ function formatTimestamp(ms: number): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-function formatPath(path: ReadonlyArray<string | number>): string {
+type PatchPath = OinHistoryEntry['patchDiffs'][number]['path'];
+
+function formatPath(path: PatchPath): string {
   if (path.length === 0) return '$';
   return (
     '$.' +
-    path
-      .map((s) => (typeof s === 'number' ? `[${s}]` : String(s)))
-      .join('.')
+    path.map((s) => (typeof s === 'number' ? `[${s}]` : String(s))).join('.')
   );
 }
 
@@ -40,24 +44,32 @@ function useDevtoolsState(devtools: OinDevtools) {
   return useSyncExternalStore(
     (notify) => devtools.subscribe(() => notify()),
     () => devtools.getState(),
-    () => devtools.getState()
+    () => devtools.getState(),
   );
 }
 
 export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
   const state = useDevtoolsState(props.devtools);
   const [selected, setSelected] = useState<number>(() =>
-    Math.max(-1, Math.min(state.history.length - 1, state.cursor))
+    Math.max(-1, Math.min(state.history.length - 1, state.cursor)),
   );
 
   const selectedEntry: OinHistoryEntry | null =
-    selected >= 0 && selected < state.history.length ? state.history[selected] : null;
+    selected >= 0 && selected < state.history.length
+      ? state.history[selected]
+      : null;
 
   const snapshotDiffs: OinSnapshotDiff[] | null = useMemo(() => {
     if (!selectedEntry) return null;
-    if (selectedEntry.snapshotBefore === undefined || selectedEntry.snapshotAfter === undefined)
+    if (
+      selectedEntry.snapshotBefore === undefined ||
+      selectedEntry.snapshotAfter === undefined
+    )
       return null;
-    return diffSnapshots(selectedEntry.snapshotBefore, selectedEntry.snapshotAfter);
+    return diffSnapshots(
+      selectedEntry.snapshotBefore,
+      selectedEntry.snapshotAfter,
+    );
   }, [selectedEntry]);
 
   const headerStyle: CSSProperties = {
@@ -68,7 +80,8 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
   };
 
   const panelStyle: CSSProperties = {
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+    fontFamily:
+      'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
     fontSize: 12,
     border: '1px solid rgba(148,163,184,0.35)',
     borderRadius: 10,
@@ -83,7 +96,10 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
   return (
     <div style={panelStyle}>
       <div style={headerStyle}>
-        <button onClick={() => props.devtools.timeTravel.undo()} disabled={state.cursor < 0}>
+        <button
+          onClick={() => props.devtools.timeTravel.undo()}
+          disabled={state.cursor < 0}
+        >
           Undo
         </button>
         <button
@@ -92,10 +108,17 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
         >
           Redo
         </button>
-        <button onClick={() => (state.paused ? props.devtools.resume() : props.devtools.pause())}>
+        <button
+          onClick={() =>
+            state.paused ? props.devtools.resume() : props.devtools.pause()
+          }
+        >
           {state.paused ? 'Resume' : 'Pause'}
         </button>
-        <button onClick={() => props.devtools.clear()} disabled={state.history.length === 0}>
+        <button
+          onClick={() => props.devtools.clear()}
+          disabled={state.history.length === 0}
+        >
           Clear
         </button>
         <button
@@ -109,13 +132,18 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
         <button
           onClick={() => {
             const payload = props.devtools.export.reduxDevToolsImport();
-            downloadText('oin-redux-devtools-import.json', JSON.stringify(payload, null, 2));
+            downloadText(
+              'oin-redux-devtools-import.json',
+              JSON.stringify(payload, null, 2),
+            );
           }}
         >
           Export Redux Import
         </button>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, opacity: 0.9 }}>
+        <div
+          style={{ marginLeft: 'auto', display: 'flex', gap: 10, opacity: 0.9 }}
+        >
           <div>Cursor: {state.cursor}</div>
           <div>History: {state.history.length}</div>
           {state.perf ? (
@@ -124,7 +152,14 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 10, minHeight: 0 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '280px 1fr',
+          gap: 10,
+          minHeight: 0,
+        }}
+      >
         <div
           style={{
             border: '1px solid rgba(148,163,184,0.35)',
@@ -133,14 +168,22 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
             overflow: 'auto',
           }}
         >
-          <div style={{ padding: 8, fontWeight: 700, borderBottom: '1px solid rgba(148,163,184,0.2)' }}>
+          <div
+            style={{
+              padding: 8,
+              fontWeight: 700,
+              borderBottom: '1px solid rgba(148,163,184,0.2)',
+            }}
+          >
             Timeline
           </div>
           {state.history.map((e, idx) => {
             const active = idx === selected;
             const cursorHere = idx === state.cursor;
             const first = e.patchDiffs[0];
-            const label = first ? `${first.op} ${formatPath(first.path)}` : 'update';
+            const label = first
+              ? `${first.op} ${formatPath(first.path)}`
+              : 'update';
             return (
               <button
                 key={e.id}
@@ -166,7 +209,9 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
                   </div>
                   <div style={{ opacity: 0.7 }}>
                     {formatTimestamp(e.timestamp)}
-                    {e.perf ? ` · ${e.perf.totalMs.toFixed(2)}ms · ${e.perf.patchCount} patches` : ''}
+                    {e.perf
+                      ? ` · ${e.perf.totalMs.toFixed(2)}ms · ${e.perf.patchCount} patches`
+                      : ''}
                   </div>
                 </div>
               </button>
@@ -183,11 +228,19 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
             minHeight: 0,
           }}
         >
-          <div style={{ padding: 8, fontWeight: 700, borderBottom: '1px solid rgba(148,163,184,0.2)' }}>
+          <div
+            style={{
+              padding: 8,
+              fontWeight: 700,
+              borderBottom: '1px solid rgba(148,163,184,0.2)',
+            }}
+          >
             Details
           </div>
           {!selectedEntry ? (
-            <div style={{ padding: 10, opacity: 0.75 }}>Select an entry to inspect diffs.</div>
+            <div style={{ padding: 10, opacity: 0.75 }}>
+              Select an entry to inspect diffs.
+            </div>
           ) : (
             <div style={{ padding: 10, display: 'grid', gap: 12 }}>
               <div style={{ display: 'grid', gap: 6 }}>

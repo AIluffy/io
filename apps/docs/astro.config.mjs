@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import oinAccessPlugin from '../../tools/oin-babel-plugin/index.mjs';
+import { babel } from '@rollup/plugin-babel';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,6 +12,13 @@ export default defineConfig({
     resolve: {
       conditions: ['@org/source'],
     },
+    plugins: [
+      babel({
+        babelHelpers: 'bundled',
+        extensions: ['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx'],
+        plugins: [oinAccessPlugin],
+      }),
+    ],
   },
   integrations: [
     react(),

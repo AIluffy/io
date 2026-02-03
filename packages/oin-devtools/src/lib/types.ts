@@ -2,12 +2,12 @@ import type { OinMutationOp, OinPatch, OinUpdate } from '@oin/store';
 
 export type Unsubscribe = () => void;
 
-export type OinPath = ReadonlyArray<string | number>;
+export type OinPath = OinPatch['path'];
 
 export type OinErrorHandler = (
   error: unknown,
   path: OinPath,
-  operation: OinMutationOp
+  operation: OinMutationOp,
 ) => void;
 
 export type OinDevtoolsTarget = {

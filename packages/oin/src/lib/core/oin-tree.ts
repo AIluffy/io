@@ -10,16 +10,26 @@ import type {
 } from '../utils/types.js';
 import type { VersionedCache } from '../container/cache.js';
 
-import { cloneValue, freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
+import {
+  cloneValue,
+  freezeRootShallow,
+  snapshotValue,
+} from '../utils/snapshot.js';
 import { createDraft, finishDraft } from '../utils/cow.js';
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
 import { createUnit, isUnit } from '../units/unit.js';
 import { emitError } from '../utils/debug.js';
-import { getInternal as getAnyInternal, requireInternalOfKind } from '../utils/internal-access.js';
+import {
+  getInternal as getAnyInternal,
+  requireInternalOfKind,
+} from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 import { isPlainObject } from '../utils/plain-object.js';
-import { subscribeIndexedChild, subscribeKeyedChild } from '../container/bubbling.js';
+import {
+  subscribeIndexedChild,
+  subscribeKeyedChild,
+} from '../container/bubbling.js';
 import { readCachedByVersion } from '../container/cache.js';
 
 type PathSegment = PropertyKey;
@@ -289,17 +299,19 @@ function getScopeSnapshot(
     }
 
     const base =
-      prev && !state.dirtyStructure ? { ...prev } : ({} as Record<string, unknown>);
+      prev && !state.dirtyStructure
+        ? { ...prev }
+        : ({} as Record<string, unknown>);
     local.set(state.node as unknown as object, base);
 
     if (!prev || state.dirtyStructure) {
       for (const [key, node] of state.children.entries()) {
-        base[key] = getNodeValue(node, local);
+        (base as any)[key] = getNodeValue(node, local);
       }
     } else {
       for (const key of state.dirtyKeys) {
         const node = state.children.get(key);
-        if (node) base[key] = getNodeValue(node, local);
+        if (node) (base as any)[key] = getNodeValue(node, local);
       }
     }
 
@@ -340,7 +352,11 @@ function getArraySnapshot(
         : new Array(state.children.length);
     local.set(state.node as unknown as object, values);
 
-    if (!prev || state.dirtyStructure || prev.length !== state.children.length) {
+    if (
+      !prev ||
+      state.dirtyStructure ||
+      prev.length !== state.children.length
+    ) {
       for (let i = 0; i < state.children.length; i += 1) {
         values[i] = getNodeValue(state.children[i], local);
       }
@@ -380,7 +396,7 @@ function markDirty(
   parentState: TreeScopeState | TreeArrayState,
   segment: PropertyKey,
 ): void {
-  if (Array.isArray(parentState.children)) {
+  if ('dirtyIndices' in parentState) {
     const index =
       typeof segment === 'number'
         ? segment
@@ -409,7 +425,10 @@ function attachChildToScope(
       state.dirtyKeys.add(key);
       const baseRevision = state.revision;
       state.revision += 1;
-      emitScopeUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+      emitScopeUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, u.patches),
+      );
     },
   });
 
@@ -440,7 +459,10 @@ function attachChildToArray(state: TreeArrayState, child: TreeNode): void {
         if (index >= 0) state.dirtyIndices.add(index);
         const baseRevision = state.revision;
         state.revision += 1;
-        emitArrayUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+        emitArrayUpdate(
+          state,
+          createUpdate(baseRevision, state.revision, u.patches),
+        );
       },
     },
   );
@@ -712,39 +734,39 @@ function createTreeScope(
           const prev = prevObj[key];
           const next = nextObj[key];
 
-        if (isPlainObject(prev) && isPlainObject(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'scope') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyScopeDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitScopeValue(childState);
-            if (childChanged) markDirty(scopeState, key);
-            changed = changed || childChanged;
-            continue;
+          if (isPlainObject(prev) && isPlainObject(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'scope') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyScopeDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitScopeValue(childState);
+              if (childChanged) markDirty(scopeState, key);
+              changed = changed || childChanged;
+              continue;
+            }
           }
-        }
 
-        if (Array.isArray(prev) && Array.isArray(next)) {
-          const internal = getInternal(node);
-          if (internal?.kind === 'array') {
-            const childState = internal.getState();
-            childState.isCommitting = true;
-            const childChanged = applyArrayDiff(childState, prev, next, [
-              ...relPath,
-              key,
-            ]);
-            childState.isCommitting = false;
-            if (childChanged) emitArrayValue(childState);
-            if (childChanged) markDirty(scopeState, key);
-            changed = changed || childChanged;
-            continue;
+          if (Array.isArray(prev) && Array.isArray(next)) {
+            const internal = getInternal(node);
+            if (internal?.kind === 'array') {
+              const childState = internal.getState();
+              childState.isCommitting = true;
+              const childChanged = applyArrayDiff(childState, prev, next, [
+                ...relPath,
+                key,
+              ]);
+              childState.isCommitting = false;
+              if (childChanged) emitArrayValue(childState);
+              if (childChanged) markDirty(scopeState, key);
+              changed = changed || childChanged;
+              continue;
+            }
           }
-        }
 
           const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
             ...relPath,
