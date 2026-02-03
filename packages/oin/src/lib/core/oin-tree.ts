@@ -10,7 +10,7 @@ import type {
 } from '../utils/types.js';
 import type { VersionedCache } from '../container/cache.js';
 
-import { cloneValue, snapshotValue } from '../utils/snapshot.js';
+import { cloneValue, freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
 import { createDraft, finishDraft } from '../utils/cow.js';
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
@@ -152,6 +152,8 @@ type TreeScopeState = {
   isCommitting: boolean;
   valueEpoch: number;
   snapshotCache: VersionedCache<Record<string, unknown>>;
+  dirtyKeys: Set<PropertyKey>;
+  dirtyStructure: boolean;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<PropertyKey, OinUnsubscribe>;
@@ -167,6 +169,8 @@ type TreeArrayState = {
   isCommitting: boolean;
   valueEpoch: number;
   snapshotCache: VersionedCache<unknown[]>;
+  dirtyIndices: Set<number>;
+  dirtyStructure: boolean;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<TreeNode, OinUnsubscribe>;
@@ -274,11 +278,34 @@ function getScopeSnapshot(
     const local = cache ?? new WeakMap<object, unknown>();
     const cached = local.get(state.node as unknown as object);
     if (cached) return cached as Record<string, unknown>;
-    const plain: Record<PropertyKey, unknown> = {};
-    local.set(state.node as unknown as object, plain);
-    for (const [key, node] of state.children.entries())
-      plain[key] = getNodeValue(node, local);
-    const value = snapshotValue(plain, { owned: true }) as Record<string, unknown>;
+
+    const prev = state.snapshotCache.hasValue
+      ? (state.snapshotCache.value as Record<string, unknown>)
+      : undefined;
+
+    if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
+      local.set(state.node as unknown as object, prev);
+      return prev;
+    }
+
+    const base =
+      prev && !state.dirtyStructure ? { ...prev } : ({} as Record<string, unknown>);
+    local.set(state.node as unknown as object, base);
+
+    if (!prev || state.dirtyStructure) {
+      for (const [key, node] of state.children.entries()) {
+        base[key] = getNodeValue(node, local);
+      }
+    } else {
+      for (const key of state.dirtyKeys) {
+        const node = state.children.get(key);
+        if (node) base[key] = getNodeValue(node, local);
+      }
+    }
+
+    state.dirtyKeys.clear();
+    state.dirtyStructure = false;
+    const value = freezeRootShallow(base) as Record<string, unknown>;
     local.set(state.node as unknown as object, value);
     return value;
   });
@@ -292,11 +319,41 @@ function getArraySnapshot(
     const local = cache ?? new WeakMap<object, unknown>();
     const cached = local.get(state.node as unknown as object);
     if (cached) return cached as unknown[];
-    const values = new Array(state.children.length);
+
+    const prev = state.snapshotCache.hasValue
+      ? (state.snapshotCache.value as unknown[])
+      : undefined;
+
+    if (
+      prev &&
+      !state.dirtyStructure &&
+      state.dirtyIndices.size === 0 &&
+      prev.length === state.children.length
+    ) {
+      local.set(state.node as unknown as object, prev);
+      return prev;
+    }
+
+    const values =
+      prev && !state.dirtyStructure && prev.length === state.children.length
+        ? prev.slice()
+        : new Array(state.children.length);
     local.set(state.node as unknown as object, values);
-    for (let i = 0; i < state.children.length; i += 1)
-      values[i] = getNodeValue(state.children[i], local);
-    const frozen = snapshotValue(values, { owned: true }) as unknown[];
+
+    if (!prev || state.dirtyStructure || prev.length !== state.children.length) {
+      for (let i = 0; i < state.children.length; i += 1) {
+        values[i] = getNodeValue(state.children[i], local);
+      }
+    } else {
+      for (const index of state.dirtyIndices) {
+        if (index < 0 || index >= state.children.length) continue;
+        values[index] = getNodeValue(state.children[index], local);
+      }
+    }
+
+    state.dirtyIndices.clear();
+    state.dirtyStructure = false;
+    const frozen = freezeRootShallow(values) as unknown[];
     local.set(state.node as unknown as object, frozen);
     return frozen;
   });
@@ -319,6 +376,23 @@ function emitArrayUpdate(state: TreeArrayState, update: OinUpdate): void {
   notifyUpdate(state.updateListeners, update);
 }
 
+function markDirty(
+  parentState: TreeScopeState | TreeArrayState,
+  segment: PropertyKey,
+): void {
+  if (Array.isArray(parentState.children)) {
+    const index =
+      typeof segment === 'number'
+        ? segment
+        : typeof segment === 'string' && /^[0-9]+$/.test(segment)
+          ? Number(segment)
+          : -1;
+    if (index >= 0) parentState.dirtyIndices.add(index);
+  } else {
+    parentState.dirtyKeys.add(segment);
+  }
+}
+
 function attachChildToScope(
   state: TreeScopeState,
   key: PropertyKey,
@@ -327,10 +401,12 @@ function attachChildToScope(
   const { valueUnsub, updateUnsub } = subscribeKeyedChild(child, key, {
     onValue: () => {
       if (state.isCommitting) return;
+      state.dirtyKeys.add(key);
       state.valueEpoch += 1;
       emitScopeValue(state);
     },
     onUpdate: (u) => {
+      state.dirtyKeys.add(key);
       const baseRevision = state.revision;
       state.revision += 1;
       emitScopeUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
@@ -355,10 +431,13 @@ function attachChildToArray(state: TreeArrayState, child: TreeNode): void {
     {
       onValue: () => {
         if (state.isCommitting) return;
+        const index = state.children.indexOf(child);
+        if (index >= 0) state.dirtyIndices.add(index);
         state.valueEpoch += 1;
         emitArrayValue(state);
       },
-      onUpdate: (u) => {
+      onUpdate: (u, index) => {
+        if (index >= 0) state.dirtyIndices.add(index);
         const baseRevision = state.revision;
         state.revision += 1;
         emitArrayUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
@@ -418,6 +497,8 @@ function createTreeScope(
     isCommitting: false,
     valueEpoch: 0,
     snapshotCache: { value: undefined, version: -1, hasValue: false },
+    dirtyKeys: new Set(),
+    dirtyStructure: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -474,12 +555,19 @@ function createTreeScope(
           'oinTree scope: invalid unit internal',
         ) as unknown as UnitInternal;
         const before = internal.getValue();
+        const emitValue = options?.emitValue !== false;
         internal.setValue(next, {
           emitUpdate: false,
-          emitValue: options?.emitValue !== false,
+          emitValue,
         });
         const after = internal.getValue();
-        if (!Object.is(before, after)) state.revision += 1;
+        if (!Object.is(before, after)) {
+          state.revision += 1;
+          if (!emitValue) {
+            state.valueEpoch += 1;
+            markDirty(state, key);
+          }
+        }
         return;
       }
 
@@ -489,6 +577,7 @@ function createTreeScope(
       state.children.set(key, replaced);
       attachChildToScope(state, key, replaced);
       state.revision += 1;
+      state.dirtyKeys.add(key);
       state.valueEpoch += 1;
       if (options?.emitValue !== false) emitScopeValue(state);
     } catch (error) {
@@ -560,6 +649,7 @@ function createTreeScope(
             prev: cloneValue(prev),
             next: cloneValue(next),
           });
+          markDirty(parentState, segment);
           return true;
         }
 
@@ -622,37 +712,39 @@ function createTreeScope(
           const prev = prevObj[key];
           const next = nextObj[key];
 
-          if (isPlainObject(prev) && isPlainObject(next)) {
-            const internal = getInternal(node);
-            if (internal?.kind === 'scope') {
-              const childState = internal.getState();
-              childState.isCommitting = true;
-              const childChanged = applyScopeDiff(childState, prev, next, [
-                ...relPath,
-                key,
-              ]);
-              childState.isCommitting = false;
-              if (childChanged) emitScopeValue(childState);
-              changed = changed || childChanged;
-              continue;
-            }
+        if (isPlainObject(prev) && isPlainObject(next)) {
+          const internal = getInternal(node);
+          if (internal?.kind === 'scope') {
+            const childState = internal.getState();
+            childState.isCommitting = true;
+            const childChanged = applyScopeDiff(childState, prev, next, [
+              ...relPath,
+              key,
+            ]);
+            childState.isCommitting = false;
+            if (childChanged) emitScopeValue(childState);
+            if (childChanged) markDirty(scopeState, key);
+            changed = changed || childChanged;
+            continue;
           }
+        }
 
-          if (Array.isArray(prev) && Array.isArray(next)) {
-            const internal = getInternal(node);
-            if (internal?.kind === 'array') {
-              const childState = internal.getState();
-              childState.isCommitting = true;
-              const childChanged = applyArrayDiff(childState, prev, next, [
-                ...relPath,
-                key,
-              ]);
-              childState.isCommitting = false;
-              if (childChanged) emitArrayValue(childState);
-              changed = changed || childChanged;
-              continue;
-            }
+        if (Array.isArray(prev) && Array.isArray(next)) {
+          const internal = getInternal(node);
+          if (internal?.kind === 'array') {
+            const childState = internal.getState();
+            childState.isCommitting = true;
+            const childChanged = applyArrayDiff(childState, prev, next, [
+              ...relPath,
+              key,
+            ]);
+            childState.isCommitting = false;
+            if (childChanged) emitArrayValue(childState);
+            if (childChanged) markDirty(scopeState, key);
+            changed = changed || childChanged;
+            continue;
           }
+        }
 
           const nodeChanged = applyNodeDiff(scopeState, key, node, prev, next, [
             ...relPath,
@@ -670,6 +762,8 @@ function createTreeScope(
         relPath: PathSegment[],
       ): boolean => {
         if (prevArr.length !== nextArr.length) {
+          arrayState.dirtyStructure = true;
+          arrayState.dirtyIndices.clear();
           const arrayNode = getPathNode(ctx, arrayState.path);
           if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
 
@@ -714,6 +808,7 @@ function createTreeScope(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitScopeValue(childState);
+              if (childChanged) markDirty(arrayState, i);
               changed = changed || childChanged;
               continue;
             }
@@ -730,6 +825,7 @@ function createTreeScope(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitArrayValue(childState);
+              if (childChanged) markDirty(arrayState, i);
               changed = changed || childChanged;
               continue;
             }
@@ -796,6 +892,8 @@ function createTreeArray(
     isCommitting: false,
     valueEpoch: 0,
     snapshotCache: { value: undefined, version: -1, hasValue: false },
+    dirtyIndices: new Set(),
+    dirtyStructure: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -879,6 +977,7 @@ function createTreeArray(
     try {
       state.revision += 1;
       performSplice(start, deleteCount, items);
+      state.dirtyStructure = true;
       state.valueEpoch += 1;
       if (options?.emitValue !== false) emitArrayValue(state);
     } catch (error) {
@@ -898,6 +997,7 @@ function createTreeArray(
       state.children = order.map((oldIndex) => old[oldIndex]);
       rebuildMapping();
       state.revision += 1;
+      state.dirtyStructure = true;
       state.valueEpoch += 1;
       if (options?.emitValue !== false) emitArrayValue(state);
     } catch (error) {
@@ -921,12 +1021,19 @@ function createTreeArray(
         if (!internal || internal.kind !== 'unit')
           throw new Error('oinTree array: invalid unit internal');
         const before = internal.getValue();
+        const emitValue = options?.emitValue !== false;
         internal.setValue(next, {
           emitUpdate: false,
-          emitValue: options?.emitValue !== false,
+          emitValue,
         });
         const after = internal.getValue();
-        if (!Object.is(before, after)) state.revision += 1;
+        if (!Object.is(before, after)) {
+          state.revision += 1;
+          if (!emitValue) {
+            state.valueEpoch += 1;
+            state.dirtyIndices.add(index);
+          }
+        }
         return;
       }
 
@@ -936,6 +1043,7 @@ function createTreeArray(
       state.children[index] = replaced;
       attachChildToArray(state, replaced);
       state.revision += 1;
+      state.dirtyIndices.add(index);
       state.valueEpoch += 1;
       if (options?.emitValue !== false) emitArrayValue(state);
     } catch (error) {
@@ -949,6 +1057,7 @@ function createTreeArray(
       if (items.length === 0) return;
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
 
       const start = state.children.length;
       const created = items.map((v, i) =>
@@ -983,6 +1092,7 @@ function createTreeArray(
       if (state.children.length === 0) return undefined;
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
 
       const start = state.children.length - 1;
       const removed = state.children.pop();
@@ -1021,6 +1131,7 @@ function createTreeArray(
     try {
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
 
       const { normalizedStart, dc, removedValues } = performSplice(
         start,
@@ -1053,6 +1164,7 @@ function createTreeArray(
       if (state.children.length <= 1) return;
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
 
       const decorated = state.children.map((child, index) => ({
         child,
@@ -1124,6 +1236,7 @@ function createTreeArray(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitScopeValue(childState);
+              if (childChanged) markDirty(scopeState, key);
               changed = changed || childChanged;
               continue;
             }
@@ -1140,6 +1253,7 @@ function createTreeArray(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitArrayValue(childState);
+              if (childChanged) markDirty(scopeState, key);
               changed = changed || childChanged;
               continue;
             }
@@ -1161,6 +1275,8 @@ function createTreeArray(
         relPath: PathSegment[],
       ): boolean => {
         if (prevArr.length !== nextArr.length) {
+          arrayState.dirtyStructure = true;
+          arrayState.dirtyIndices.clear();
           const arrayNode = getPathNode(ctx, arrayState.path);
           if (arrayNode) unregisterSubtree(ctx, arrayState.path, arrayNode);
 
@@ -1205,6 +1321,7 @@ function createTreeArray(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitScopeValue(childState);
+              if (childChanged) markDirty(arrayState, i);
               changed = changed || childChanged;
               continue;
             }
@@ -1221,6 +1338,7 @@ function createTreeArray(
               ]);
               childState.isCommitting = false;
               if (childChanged) emitArrayValue(childState);
+              if (childChanged) markDirty(arrayState, i);
               changed = changed || childChanged;
               continue;
             }
@@ -1251,6 +1369,7 @@ function createTreeArray(
             const changed = applyScopeDiff(childState, prev, next, relPath);
             childState.isCommitting = false;
             if (changed) emitScopeValue(childState);
+            if (changed) markDirty(parentState, segment);
             return changed;
           }
         }
@@ -1263,6 +1382,7 @@ function createTreeArray(
             const changed = applyArrayDiff(childState, prev, next, relPath);
             childState.isCommitting = false;
             if (changed) emitArrayValue(childState);
+            if (changed) markDirty(parentState, segment);
             return changed;
           }
         }
@@ -1282,6 +1402,7 @@ function createTreeArray(
             prev,
             next,
           });
+          markDirty(parentState, segment);
           return true;
         }
 
@@ -1301,6 +1422,7 @@ function createTreeArray(
             prev,
             next,
           });
+          markDirty(parentState, segment);
           return true;
         }
 
@@ -1322,6 +1444,7 @@ function createTreeArray(
           prev,
           next,
         });
+        markDirty(parentState, segment);
         return true;
       };
 

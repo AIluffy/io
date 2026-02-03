@@ -565,3 +565,21 @@ describe('updates: replay/invert consistency', () => {
     }
   });
 });
+
+describe('snapshot reuse', () => {
+  it('reuses unchanged branches on deep updates', () => {
+    const store = oin({
+      user: { profile: { name: 'a', age: 1 } },
+      items: [{ id: 1, count: 0 }, { id: 2, count: 0 }],
+    });
+
+    const s1 = store.snapshot();
+    store.items[0].count((v) => v + 1);
+    const s2 = store.snapshot();
+
+    expect(s1).not.toBe(s2);
+    expect(s1.items).not.toBe(s2.items);
+    expect(s1.user).toBe(s2.user);
+    expect(s1.user.profile).toBe(s2.user.profile);
+  });
+});

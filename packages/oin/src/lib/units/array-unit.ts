@@ -8,7 +8,7 @@ import type {
 } from '../utils/types.js';
 import type { VersionedCache } from '../container/cache.js';
 
-import { cloneValue, snapshotValue } from '../utils/snapshot.js';
+import { cloneValue, freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
 import { createDraft, finishDraft } from '../utils/cow.js';
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
@@ -42,6 +42,8 @@ type ArrayState<T> = {
   elementUpdateUnsubs: Map<OinUnit<T>, OinUnsubscribe>;
   revision: number;
   snapshotCache: VersionedCache<T[]>;
+  dirtyIndices: Set<number>;
+  dirtyStructure: boolean;
   valueListeners: Set<(value: T[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   errorListeners: Set<OinErrorHandler>;
@@ -69,9 +71,27 @@ function emitArrayUpdate<T>(state: ArrayState<T>, update: OinUpdate): void {
 }
 
 function getArraySnapshot<T>(state: ArrayState<T>): T[] {
-  return readCachedByVersion(state.snapshotCache, state.revision, () =>
-    snapshotValue(state.units.map((u) => u()), { owned: true }),
-  );
+  return readCachedByVersion(state.snapshotCache, state.revision, () => {
+    const prev = state.snapshotCache.hasValue ? state.snapshotCache.value : undefined;
+
+    if (!prev || state.dirtyStructure) {
+      state.dirtyIndices.clear();
+      state.dirtyStructure = false;
+      return freezeRootShallow(state.units.map((u) => u()));
+    }
+
+    if (state.dirtyIndices.size === 0) {
+      return prev as T[];
+    }
+
+    const next = (prev as T[]).slice();
+    for (const index of state.dirtyIndices) {
+      if (index < 0 || index >= state.units.length) continue;
+      next[index] = state.units[index]();
+    }
+    state.dirtyIndices.clear();
+    return freezeRootShallow(next);
+  });
 }
 
 function attachElementBubbling<T>(
@@ -83,9 +103,12 @@ function attachElementBubbling<T>(
     (child) => state.units.indexOf(child as OinUnit<T>),
     {
       onValue: () => {
+        const index = state.units.indexOf(unit);
+        if (index >= 0) state.dirtyIndices.add(index);
         emitArrayValue(state);
       },
-      onUpdate: (u) => {
+      onUpdate: (u, index) => {
+        if (index >= 0) state.dirtyIndices.add(index);
         const baseRevision = state.revision;
         state.revision += 1;
         emitArrayUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
@@ -114,6 +137,8 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     elementUpdateUnsubs: new Map(),
     revision: 0,
     snapshotCache: { value: undefined, version: -1, hasValue: false },
+    dirtyIndices: new Set(),
+    dirtyStructure: false,
     valueListeners: new Set(),
     updateListeners: new Set(),
     errorListeners: new Set(),
@@ -162,6 +187,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
 
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
       const start = state.units.length;
       const created = items.map((v) => createUnit(cloneValue(v)));
       for (const unit of created) attachElementBubbling(state, unit);
@@ -190,6 +216,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
 
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
       const start = state.units.length - 1;
       const removedUnit = state.units.pop();
       if (!removedUnit) return undefined;
@@ -219,6 +246,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     try {
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
       const { normalizedStart, dc, removedValues } = performSplice(
         start,
         deleteCount,
@@ -248,6 +276,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
 
       const baseRevision = state.revision;
       state.revision += 1;
+      state.dirtyStructure = true;
       const decorated = state.units.map((unit, index) => ({
         unit,
         index,
@@ -296,6 +325,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
       state.revision += 1;
 
       if (before.length !== next.length) {
+        state.dirtyStructure = true;
         for (const u of state.units) detachElementBubbling(state, u);
         state.units = next.map((v) => createUnit(v));
         for (const u of state.units) attachElementBubbling(state, u);
@@ -306,6 +336,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
           if (Object.is(unit(), next[i])) continue;
           const internal = getUnitInternal(unit);
           internal.setValue(next[i], { emitUpdate: false, emitValue: false });
+          state.dirtyIndices.add(i);
         }
       }
 
@@ -342,6 +373,9 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
       if (!Object.is(before, after) && options?.emitUpdate === false) {
         state.revision += 1;
       }
+      if (!Object.is(before, after)) {
+        state.dirtyIndices.add(index);
+      }
     } catch (error) {
       emitError(array, error, [index], 'set');
       throw error;
@@ -355,6 +389,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
   ): void => {
     try {
       state.revision += 1;
+      state.dirtyStructure = true;
       performSplice(start, deleteCount, items);
       emitArrayValue(state);
     } catch (error) {
@@ -370,6 +405,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
       const old = state.units.slice();
       state.units = order.map((oldIndex) => old[oldIndex]);
       state.revision += 1;
+      state.dirtyStructure = true;
       emitArrayValue(state);
     } catch (error) {
       emitError(array, error, [], 'sort');
@@ -389,7 +425,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
   };
 
   const array = function () {
-    return snapshotValue(state.units.map((u) => u()), { owned: true });
+    return getArraySnapshot(state);
   } as OinArrayUnit<T>;
 
   Object.defineProperties(array, {

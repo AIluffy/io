@@ -66,6 +66,15 @@ function freezeOwned<T>(value: T): T {
   return frozen;
 }
 
+export function freezeRootShallow<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  if (isImmutableRoot(value as object)) return value;
+  Object.freeze(value);
+  markImmutableRoot(value as object);
+  return value;
+}
+
 export function cloneValue<T>(value: T): T {
   return toImmutable(value);
 }

@@ -2,6 +2,8 @@ import { bench, describe } from 'vitest';
 import { createDraft, finishDraft } from '../utils/cow.js';
 import { cloneValue, __testing } from '../utils/snapshot.js';
 
+import { oin } from '../core/oin.js';
+
 type Fixture = {
   level1: {
     level2: {
@@ -63,5 +65,26 @@ describe('clone performance', () => {
       mutateDeep(draft, i);
       before = finishDraft(draft);
     }
+  });
+});
+
+describe('snapshot perf (tree reuse)', () => {
+  bench('reuse unchanged branches', () => {
+    const store = oin({
+      user: { profile: { name: 'a', age: 1 } },
+      items: [{ id: 1, count: 0 }, { id: 2, count: 0 }],
+    });
+
+    const s1 = store.snapshot();
+    store.items[0].count((v) => v + 1);
+    const s2 = store.snapshot();
+
+    if (s1 === s2) throw new Error('expected new snapshot root');
+    if (s1.items === s2.items)
+      throw new Error('expected array container to change on child update');
+    if (s1.user !== s2.user)
+      throw new Error('expected unchanged branch to reuse');
+    if (s1.user.profile !== s2.user.profile)
+      throw new Error('expected unchanged leaf to reuse');
   });
 });
