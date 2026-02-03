@@ -1,8 +1,8 @@
-import { notifyUpdate } from './batch.js';
-import { emitError } from './debug.js';
 import type { OinPatch, OinUnit, OinUpdate } from './types.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { notifyUpdate } from './batch.js';
+import { emitError } from './debug.js';
+import { getInternal as getAnyInternal } from './internal-access.js';
 
 type InternalUnit = {
   kind: 'unit';
@@ -52,20 +52,7 @@ type Internal =
     };
 
 function getInternal(value: unknown): Internal | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object')
-    return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  const kind = (internal as { kind?: unknown }).kind;
-  if (
-    kind === 'unit' ||
-    kind === 'scope' ||
-    kind === 'array' ||
-    kind === 'derived'
-  )
-    return internal as Internal;
-  return undefined;
+  return getAnyInternal(value) as unknown as Internal | undefined;
 }
 
 function newId(): string {

@@ -4,30 +4,12 @@ import type {
   OinTreeNode,
   OinUnsubscribe,
   UnwrapOin,
-} from './types.js';
-import { computed, effect } from './signals.js';
-import { snapshotValue } from './snapshot.js';
+} from '../utils/types.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
-
-type Internal = { kind: 'array' | 'unit' | 'scope' | 'derived' };
-
-function getInternal(value: unknown): Internal | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object')
-    return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  const kind = (internal as { kind?: unknown }).kind;
-  if (
-    kind === 'array' ||
-    kind === 'unit' ||
-    kind === 'scope' ||
-    kind === 'derived'
-  )
-    return { kind };
-  return undefined;
-}
+import { computed, effect } from '../utils/signals.js';
+import { snapshotValue } from '../utils/snapshot.js';
+import { getInternal } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
 
 const proxyCache = new WeakMap<object, unknown>();
 

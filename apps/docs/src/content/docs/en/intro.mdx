@@ -12,7 +12,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## Key Features
 
 - **Composable primitives**: `oin()` creates Unit / deep TreeScope / deep TreeArrayUnit based on the initial value.
-- **Shallow compatibility**: `oinShallow()` turns only the first object level into units.
+- **Shallow mode**: `oin(value, { shallow: true })` turns only the first object level into units.
 - **Deprecated API**: `oinTree()` / `oinDeep()` still work, but `oin()` is the recommended replacement.
 - **Derivations**: `formula()` (explicit deps) and `derive()` (selector-driven).
 - **Batching**: `batch()` coalesces notifications and merges updates.

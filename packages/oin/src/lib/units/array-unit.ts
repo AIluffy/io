@@ -1,7 +1,3 @@
-import { cloneValue, snapshotValue } from './snapshot.js';
-import { createDraft, finishDraft } from './cow.js';
-import { notifyUpdate, notifyValue } from './batch.js';
-import { createUpdate } from './updates.js';
 import type {
   OinArrayUnit,
   OinErrorHandler,
@@ -9,11 +5,19 @@ import type {
   OinUnit,
   OinUnsubscribe,
   OinUpdate,
-} from './types.js';
-import { createUnit } from './unit.js';
-import { emitError } from './debug.js';
+} from '../utils/types.js';
+import type { VersionedCache } from '../container/cache.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { cloneValue, snapshotValue } from '../utils/snapshot.js';
+import { createDraft, finishDraft } from '../utils/cow.js';
+import { notifyUpdate, notifyValue } from '../utils/batch.js';
+import { createUpdate } from '../utils/updates.js';
+import { createUnit } from './unit.js';
+import { emitError } from '../utils/debug.js';
+import { requireInternalOfKind } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
+import { subscribeIndexedChild } from '../container/bubbling.js';
+import { readCachedByVersion } from '../container/cache.js';
 
 type UnitInternal<T> = {
   kind: 'unit';
@@ -25,12 +29,11 @@ type UnitInternal<T> = {
 };
 
 function getUnitInternal<T>(unit: OinUnit<T>): UnitInternal<T> {
-  const internal = (unit as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null)
-    throw new Error('ArrayUnit: missing element internal');
-  const kind = (internal as { kind?: unknown }).kind;
-  if (kind !== 'unit') throw new Error('ArrayUnit: invalid element internal');
-  return internal as UnitInternal<T>;
+  return requireInternalOfKind(
+    unit,
+    'unit',
+    'ArrayUnit: missing or invalid element internal',
+  ) as unknown as UnitInternal<T>;
 }
 
 type ArrayState<T> = {
@@ -38,9 +41,7 @@ type ArrayState<T> = {
   elementValueUnsubs: Map<OinUnit<T>, OinUnsubscribe>;
   elementUpdateUnsubs: Map<OinUnit<T>, OinUnsubscribe>;
   revision: number;
-  cachedSnapshot: T[] | undefined;
-  cachedSnapshotRevision: number;
-  hasCachedSnapshot: boolean;
+  snapshotCache: VersionedCache<T[]>;
   valueListeners: Set<(value: T[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   errorListeners: Set<OinErrorHandler>;
@@ -68,39 +69,29 @@ function emitArrayUpdate<T>(state: ArrayState<T>, update: OinUpdate): void {
 }
 
 function getArraySnapshot<T>(state: ArrayState<T>): T[] {
-  if (
-    state.hasCachedSnapshot &&
-    state.cachedSnapshotRevision === state.revision
-  )
-    return state.cachedSnapshot as T[];
-  const values = snapshotValue(state.units.map((u) => u()), { owned: true });
-  state.cachedSnapshot = values;
-  state.cachedSnapshotRevision = state.revision;
-  state.hasCachedSnapshot = true;
-  return values;
+  return readCachedByVersion(state.snapshotCache, state.revision, () =>
+    snapshotValue(state.units.map((u) => u()), { owned: true }),
+  );
 }
 
 function attachElementBubbling<T>(
   state: ArrayState<T>,
   unit: OinUnit<T>
 ): void {
-  const valueUnsub = unit.subscribe(() => {
-    emitArrayValue(state);
-  });
-  const updateUnsub = unit.subscribeUpdate((u) => {
-    const index = state.units.indexOf(unit);
-    if (index < 0) return;
-
-    const patches: OinPatch[] = u.patches.map((p) => {
-      if (p.op !== 'set' || p.path.length !== 0) return p;
-      return { ...p, path: [index] };
-    });
-
-    const baseRevision = state.revision;
-    state.revision += 1;
-    const update = createUpdate(baseRevision, state.revision, patches);
-    emitArrayUpdate(state, update);
-  });
+  const { valueUnsub, updateUnsub } = subscribeIndexedChild(
+    unit,
+    (child) => state.units.indexOf(child as OinUnit<T>),
+    {
+      onValue: () => {
+        emitArrayValue(state);
+      },
+      onUpdate: (u) => {
+        const baseRevision = state.revision;
+        state.revision += 1;
+        emitArrayUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+      },
+    },
+  );
 
   state.elementValueUnsubs.set(unit, valueUnsub);
   state.elementUpdateUnsubs.set(unit, updateUnsub);
@@ -122,9 +113,7 @@ export function createArrayUnit<T>(initial: T[]): OinArrayUnit<T> {
     elementValueUnsubs: new Map(),
     elementUpdateUnsubs: new Map(),
     revision: 0,
-    cachedSnapshot: undefined,
-    cachedSnapshotRevision: -1,
-    hasCachedSnapshot: false,
+    snapshotCache: { value: undefined, version: -1, hasValue: false },
     valueListeners: new Set(),
     updateListeners: new Set(),
     errorListeners: new Set(),

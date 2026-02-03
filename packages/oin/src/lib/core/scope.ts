@@ -1,7 +1,3 @@
-import { cloneValue, snapshotValue } from './snapshot.js';
-import { createDraft, finishDraft } from './cow.js';
-import { notifyUpdate, notifyValue } from './batch.js';
-import { createUpdate } from './updates.js';
 import type {
   OinErrorHandler,
   OinPatch,
@@ -9,11 +5,19 @@ import type {
   OinUnit,
   OinUnsubscribe,
   OinUpdate,
-} from './types.js';
-import { createUnit } from './unit.js';
-import { emitError } from './debug.js';
+} from '../utils/types.js';
+import type { VersionedCache } from '../container/cache.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { cloneValue, snapshotValue } from '../utils/snapshot.js';
+import { createDraft, finishDraft } from '../utils/cow.js';
+import { notifyUpdate, notifyValue } from '../utils/batch.js';
+import { createUpdate } from '../utils/updates.js';
+import { createUnit } from '../units/unit.js';
+import { emitError } from '../utils/debug.js';
+import { requireInternalOfKind } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
+import { subscribeKeyedChild } from '../container/bubbling.js';
+import { readCachedByVersion } from '../container/cache.js';
 
 type UnitInternal = {
   kind: 'unit';
@@ -25,20 +29,17 @@ type UnitInternal = {
 };
 
 function getUnitInternal(unit: OinUnit<unknown>): UnitInternal {
-  const internal = (unit as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null)
-    throw new Error('Scope: missing unit internal');
-  const kind = (internal as { kind?: unknown }).kind;
-  if (kind !== 'unit') throw new Error('Scope: invalid unit internal kind');
-  return internal as UnitInternal;
+  return requireInternalOfKind(
+    unit,
+    'unit',
+    'Scope: missing or invalid unit internal',
+  ) as unknown as UnitInternal;
 }
 
 type ScopeState<T extends Record<string, unknown>> = {
   units: Map<string, OinUnit<unknown>>;
   revision: number;
-  cachedSnapshot: T | undefined;
-  cachedSnapshotRevision: number;
-  hasCachedSnapshot: boolean;
+  snapshotCache: VersionedCache<T>;
   valueListeners: Set<(value: T) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<string, OinUnsubscribe>;
@@ -67,18 +68,11 @@ function emitScopeValue<T extends Record<string, unknown>>(
 function getScopeSnapshot<T extends Record<string, unknown>>(
   state: ScopeState<T>
 ): T {
-  if (
-    state.hasCachedSnapshot &&
-    state.cachedSnapshotRevision === state.revision
-  )
-    return state.cachedSnapshot as T;
-  const plain: Record<string, unknown> = {};
-  for (const [key, unit] of state.units.entries()) plain[key] = unit();
-  const value = snapshotValue(plain as T, { owned: true });
-  state.cachedSnapshot = value;
-  state.cachedSnapshotRevision = state.revision;
-  state.hasCachedSnapshot = true;
-  return value;
+  return readCachedByVersion(state.snapshotCache, state.revision, () => {
+    const plain: Record<string, unknown> = {};
+    for (const [key, unit] of state.units.entries()) plain[key] = unit();
+    return snapshotValue(plain as T, { owned: true });
+  });
 }
 
 function emitScopeUpdate<T extends Record<string, unknown>>(
@@ -88,51 +82,61 @@ function emitScopeUpdate<T extends Record<string, unknown>>(
   notifyUpdate(state.updateListeners, update);
 }
 
-export function createScope<T extends Record<string, unknown>>(
-  initial: T
-): OinScope<T> {
-  const state: ScopeState<T> = {
+function createScopeState<T extends Record<string, unknown>>(): ScopeState<T> {
+  return {
     units: new Map(),
     revision: 0,
-    cachedSnapshot: undefined,
-    cachedSnapshotRevision: -1,
-    hasCachedSnapshot: false,
+    snapshotCache: { value: undefined, version: -1, hasValue: false },
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
     childUpdateUnsubs: new Map(),
     errorListeners: new Set(),
   };
-  let isCommitting = false;
+}
 
+function initScopeUnits<T extends Record<string, unknown>>(
+  state: ScopeState<T>,
+  initial: T,
+): void {
   for (const key of Object.keys(initial) as Array<Extract<keyof T, string>>) {
     state.units.set(
       key,
-      createUnit(cloneValue(initial[key])) as OinUnit<unknown>
+      createUnit(cloneValue(initial[key])) as OinUnit<unknown>,
     );
   }
+}
 
+function attachScopeUnit<T extends Record<string, unknown>>(
+  state: ScopeState<T>,
+  key: string,
+  unit: OinUnit<unknown>,
+  isCommitting: () => boolean,
+): void {
+  const { valueUnsub, updateUnsub } = subscribeKeyedChild(unit, key, {
+    onValue: () => {
+      if (isCommitting()) return;
+      emitScopeValue(state);
+    },
+    onUpdate: (u) => {
+      const baseRevision = state.revision;
+      state.revision += 1;
+      emitScopeUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+    },
+  });
+  state.childValueUnsubs.set(key, valueUnsub);
+  state.childUpdateUnsubs.set(key, updateUnsub);
+}
+
+export function createScope<T extends Record<string, unknown>>(
+  initial: T
+): OinScope<T> {
+  const state = createScopeState<T>();
+  let isCommitting = false;
+
+  initScopeUnits(state, initial);
   for (const [key, unit] of state.units.entries()) {
-    state.childValueUnsubs.set(
-      key,
-      unit.subscribe(() => {
-        if (isCommitting) return;
-        emitScopeValue(state);
-      })
-    );
-    state.childUpdateUnsubs.set(
-      key,
-      unit.subscribeUpdate((u) => {
-        const patches: OinPatch[] = u.patches.map((p) => {
-          if (p.op !== 'set' || p.path.length !== 0) return p;
-          return { ...p, path: [key] };
-        });
-        const baseRevision = state.revision;
-        state.revision += 1;
-        const update = createUpdate(baseRevision, state.revision, patches);
-        emitScopeUpdate(state, update);
-      })
-    );
+    attachScopeUnit(state, key, unit, () => isCommitting);
   }
 
   const commit = (fn: (draft: T) => void): void => {

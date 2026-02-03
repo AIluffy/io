@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { oin } from './oin.js';
+import { oin } from '../core/oin.js';
 
 describe('oin: primitive', () => {
   it('handles string', () => {
@@ -141,3 +141,36 @@ describe('oin: object', () => {
   });
 });
 
+describe('oin: shallow', () => {
+  it('shallow-processes objects', () => {
+    const o: any = oin({ a: { b: 1 }, n: 1 }, { shallow: true });
+    expect(typeof o.a).toBe('function');
+    expect(o.a()).toEqual({ b: 1 });
+    expect(o.snapshot()).toEqual({ a: { b: 1 }, n: 1 });
+    o.a((prev: any) => ({ ...prev, b: 2 }));
+    expect(o.snapshot()).toEqual({ a: { b: 2 }, n: 1 });
+  });
+
+  it('shallow-processes arrays', () => {
+    const a: any = oin([{ n: 1 }, { n: 2 }], { shallow: true });
+    expect(typeof a[0]).toBe('function');
+    expect(a[0]()).toEqual({ n: 1 });
+    expect(a[1]()).toEqual({ n: 2 });
+    a[0]({ n: 10 });
+    expect(a.snapshot()).toEqual([{ n: 10 }, { n: 2 }]);
+  });
+
+  it('deep mode rejects non-plain objects unless silent', () => {
+    const d = new Date(0);
+    expect(() => oin(d)).toThrow(TypeError);
+    expect(() => oin(d, { silent: true })).not.toThrow();
+    const u: any = oin(d, { silent: true });
+    expect(u.snapshot()).toBeInstanceOf(Date);
+  });
+
+  it('shallow mode accepts non-plain objects without silent', () => {
+    const d = new Date(0);
+    const u: any = oin(d, { shallow: true });
+    expect(u.snapshot()).toBeInstanceOf(Date);
+  });
+});

@@ -49,7 +49,7 @@ nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { oin, oinShallow, formula } from '@oin/store';
+import { oin, formula } from '@oin/store';
 
 // 基础单元
 const count = oin(0);
@@ -67,8 +67,8 @@ const app = oin({
 });
 app.items[0].count((v) => v + 1); // 精确的叶子节点更新
 
-// 仅第一层变成 Unit（兼容旧行为）
-const shallow = oinShallow({ name: 'Alice', age: 25 });
+// 仅第一层变成 Unit
+const shallow = oin({ name: 'Alice', age: 25 }, { shallow: true });
 shallow.name('Bob');
 ```
 

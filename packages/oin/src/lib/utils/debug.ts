@@ -1,6 +1,6 @@
 import type { OinErrorHandler, OinMutationOp, OinPatch, OinPath, OinUnsubscribe, OinUpdate } from './types.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { getInternal } from './internal-access.js';
 
 type ErrorStore = {
   errorListeners: Set<OinErrorHandler>;
@@ -10,21 +10,13 @@ type InternalWithState = {
   getState?: () => unknown;
 };
 
-function getInternal(value: unknown): (InternalWithState & { kind?: unknown }) | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object') return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  return internal as InternalWithState & { kind?: unknown };
-}
-
 export function emitError(
   target: unknown,
   error: unknown,
   path: OinPath,
   operation: OinMutationOp
 ): void {
-  const internal = getInternal(target);
+  const internal = getInternal(target) as unknown as InternalWithState | undefined;
   const state = internal?.getState?.();
   if (!state || typeof state !== 'object') return;
 
@@ -37,7 +29,7 @@ export function emitError(
 }
 
 export function onError(target: unknown, fn: OinErrorHandler): OinUnsubscribe {
-  const internal = getInternal(target);
+  const internal = getInternal(target) as unknown as InternalWithState | undefined;
   const state = internal?.getState?.();
   if (!state || typeof state !== 'object')
     throw new Error('onError: target is not an OIN node');
@@ -67,4 +59,3 @@ export function onMutation(
     for (const patch of u.patches) fn(patch, patch.path, u);
   });
 }
-

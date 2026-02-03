@@ -1,35 +1,17 @@
-import { readValue, snapshotValue } from './snapshot.js';
 import type {
   OinArrayUnit,
   OinDerived,
   OinUnit,
   OinUnsubscribe,
-} from './types.js';
+} from '../utils/types.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { readValue, snapshotValue } from '../utils/snapshot.js';
+import { getInternal } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
 
 type Subscribable = {
   subscribe: (fn: (value: unknown) => void) => OinUnsubscribe;
 };
-
-type Internal = { kind: 'array' | 'unit' | 'scope' | 'derived' };
-
-function getInternal(value: unknown): Internal | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object')
-    return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  const kind = (internal as { kind?: unknown }).kind;
-  if (
-    kind === 'array' ||
-    kind === 'unit' ||
-    kind === 'scope' ||
-    kind === 'derived'
-  )
-    return { kind };
-  return undefined;
-}
 
 type FormulaDep = OinArrayUnit<unknown> | OinUnit<unknown> | { (): unknown };
 type DepArg<D> = D extends OinArrayUnit<infer U>

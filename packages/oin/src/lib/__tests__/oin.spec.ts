@@ -1,13 +1,4 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { batch } from './batch.js';
-import { onError, onMutation } from './debug.js';
-import { derive } from './derive.js';
-import { formula } from './formula.js';
-import { oin } from './oin.js';
-import { oinDeep } from './oin-deep.js';
-import { oinTree } from './oin-tree.js';
-import { Signal, computed, effect } from './signals.js';
-import { applyUpdate, invertUpdate, mergeUpdates, replay } from './updates.js';
 import type {
   OinArrayUnit,
   OinPath,
@@ -15,7 +6,17 @@ import type {
   OinTreeNode,
   OinUnit,
   OinUpdate,
-} from './types.js';
+} from '../utils/types.js';
+import { batch } from '../utils/batch.js';
+import { onError, onMutation } from '../utils/debug.js';
+import { derive } from '../core/derive.js';
+import { formula } from '../core/formula.js';
+import { oin } from '../core/oin.js';
+import { oinDeep } from '../core/oin-deep.js';
+import { oinTree } from '../core/oin-tree.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
+import { Signal, computed, effect } from '../utils/signals.js';
+import { applyUpdate, invertUpdate, mergeUpdates, replay } from '../utils/updates.js';
 
 describe('oin: unit', () => {
   it('supports get/set/functional set/reset', () => {
@@ -200,7 +201,6 @@ describe('oinTree: nested split', () => {
 
   it('supports deep path mapping via internal ctx', () => {
     const user = oinTree({ profile: { name: 'a', age: 1 } });
-    const INTERNAL = Symbol.for('@org/oin/internal');
     const rootInternal = (user as unknown as Record<PropertyKey, unknown>)[
       INTERNAL
     ] as {
@@ -398,7 +398,6 @@ describe('formula: unit-level deps and release', () => {
 
   it('subscribes and unsubscribes from deps without leaking', () => {
     const user = oinTree({ profile: { age: 1 } });
-    const INTERNAL = Symbol.for('@org/oin/internal');
     const unitInternal = (
       user.profile.age as unknown as Record<PropertyKey, unknown>
     )[INTERNAL] as {

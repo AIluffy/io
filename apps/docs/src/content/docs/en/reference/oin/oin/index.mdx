@@ -7,10 +7,10 @@ description: "function export"
 ## Signature
 
 ```ts
-<T>(initial: T, options?: { silent?: boolean }) => OinResult<T>
+<T>(initial: T, options?: { silent?: boolean; shallow?: boolean }) => OinResult<T>
 ```
 
-`oin()` deep-processes objects and arrays by default (legacy `oinTree()` / `oinDeep()` behavior). Use `oinShallow()` for legacy shallow objects.
+`oin()` deep-processes objects and arrays by default (legacy `oinTree()` / `oinDeep()` behavior). Use `oin(value, { shallow: true })` for shallow first-level only behavior.
 
 ## Parameters
 

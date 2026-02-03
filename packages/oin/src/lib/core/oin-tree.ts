@@ -1,7 +1,3 @@
-import { cloneValue, snapshotValue } from './snapshot.js';
-import { createDraft, finishDraft } from './cow.js';
-import { notifyUpdate, notifyValue } from './batch.js';
-import { createUpdate } from './updates.js';
 import type {
   OinErrorHandler,
   OinTreeArrayUnit,
@@ -11,11 +7,20 @@ import type {
   OinUnit,
   OinUnsubscribe,
   OinUpdate,
-} from './types.js';
-import { createUnit, isUnit } from './unit.js';
-import { emitError } from './debug.js';
+} from '../utils/types.js';
+import type { VersionedCache } from '../container/cache.js';
 
-const INTERNAL = Symbol.for('@org/oin/internal');
+import { cloneValue, snapshotValue } from '../utils/snapshot.js';
+import { createDraft, finishDraft } from '../utils/cow.js';
+import { notifyUpdate, notifyValue } from '../utils/batch.js';
+import { createUpdate } from '../utils/updates.js';
+import { createUnit, isUnit } from '../units/unit.js';
+import { emitError } from '../utils/debug.js';
+import { getInternal as getAnyInternal, requireInternalOfKind } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
+import { isPlainObject } from '../utils/plain-object.js';
+import { subscribeIndexedChild, subscribeKeyedChild } from '../container/bubbling.js';
+import { readCachedByVersion } from '../container/cache.js';
 
 type PathSegment = PropertyKey;
 type NodePath = readonly PathSegment[];
@@ -95,10 +100,6 @@ function deletePathNode(ctx: TreeContext, path: NodePath): void {
   }
 }
 
-const noopUnsubscribe: OinUnsubscribe = () => {
-  return undefined;
-};
-
 type UnitInternal = {
   kind: 'unit';
   getValue: () => unknown;
@@ -150,9 +151,7 @@ type TreeScopeState = {
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
-  cachedSnapshot: Record<string, unknown> | undefined;
-  cachedSnapshotEpoch: number;
-  hasCachedSnapshot: boolean;
+  snapshotCache: VersionedCache<Record<string, unknown>>;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<PropertyKey, OinUnsubscribe>;
@@ -167,9 +166,7 @@ type TreeArrayState = {
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
-  cachedSnapshot: unknown[] | undefined;
-  cachedSnapshotEpoch: number;
-  hasCachedSnapshot: boolean;
+  snapshotCache: VersionedCache<unknown[]>;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: OinUpdate) => void>;
   childValueUnsubs: Map<TreeNode, OinUnsubscribe>;
@@ -178,29 +175,8 @@ type TreeArrayState = {
   path: NodePath;
 };
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (value === null || value === undefined) return false;
-  if (typeof value !== 'object') return false;
-  if (Array.isArray(value)) return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
-}
-
 function getInternal(value: unknown): TreeInternal | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'function' && typeof value !== 'object')
-    return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  const kind = (internal as { kind?: unknown }).kind;
-  if (
-    kind === 'unit' ||
-    kind === 'scope' ||
-    kind === 'array' ||
-    kind === 'derived'
-  )
-    return internal as TreeInternal;
-  return undefined;
+  return getAnyInternal(value) as unknown as TreeInternal | undefined;
 }
 
 function registerSubtree(
@@ -294,45 +270,36 @@ function getScopeSnapshot(
   state: TreeScopeState,
   cache?: WeakMap<object, unknown>,
 ): Record<string, unknown> {
-  if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
-    return state.cachedSnapshot as Record<string, unknown>;
-  const local = cache ?? new WeakMap<object, unknown>();
-  const cached = local.get(state.node as unknown as object);
-  if (cached) return cached as Record<string, unknown>;
-  const plain: Record<PropertyKey, unknown> = {};
-  local.set(state.node as unknown as object, plain);
-  for (const [key, node] of state.children.entries())
-    plain[key] = getNodeValue(node, local);
-  const value = snapshotValue(plain, { owned: true }) as Record<
-    string,
-    unknown
-  >;
-  local.set(state.node as unknown as object, value);
-  state.cachedSnapshot = value as unknown as Record<string, unknown>;
-  state.cachedSnapshotEpoch = state.valueEpoch;
-  state.hasCachedSnapshot = true;
-  return state.cachedSnapshot;
+  return readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
+    const local = cache ?? new WeakMap<object, unknown>();
+    const cached = local.get(state.node as unknown as object);
+    if (cached) return cached as Record<string, unknown>;
+    const plain: Record<PropertyKey, unknown> = {};
+    local.set(state.node as unknown as object, plain);
+    for (const [key, node] of state.children.entries())
+      plain[key] = getNodeValue(node, local);
+    const value = snapshotValue(plain, { owned: true }) as Record<string, unknown>;
+    local.set(state.node as unknown as object, value);
+    return value;
+  });
 }
 
 function getArraySnapshot(
   state: TreeArrayState,
   cache?: WeakMap<object, unknown>,
 ): unknown[] {
-  if (state.hasCachedSnapshot && state.cachedSnapshotEpoch === state.valueEpoch)
-    return state.cachedSnapshot as unknown[];
-  const local = cache ?? new WeakMap<object, unknown>();
-  const cached = local.get(state.node as unknown as object);
-  if (cached) return cached as unknown[];
-  const values = new Array(state.children.length);
-  local.set(state.node as unknown as object, values);
-  for (let i = 0; i < state.children.length; i += 1)
-    values[i] = getNodeValue(state.children[i], local);
-  const frozen = snapshotValue(values, { owned: true }) as unknown[];
-  local.set(state.node as unknown as object, frozen);
-  state.cachedSnapshot = frozen;
-  state.cachedSnapshotEpoch = state.valueEpoch;
-  state.hasCachedSnapshot = true;
-  return frozen;
+  return readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
+    const local = cache ?? new WeakMap<object, unknown>();
+    const cached = local.get(state.node as unknown as object);
+    if (cached) return cached as unknown[];
+    const values = new Array(state.children.length);
+    local.set(state.node as unknown as object, values);
+    for (let i = 0; i < state.children.length; i += 1)
+      values[i] = getNodeValue(state.children[i], local);
+    const frozen = snapshotValue(values, { owned: true }) as unknown[];
+    local.set(state.node as unknown as object, frozen);
+    return frozen;
+  });
 }
 
 function emitScopeValue(state: TreeScopeState): void {
@@ -357,36 +324,18 @@ function attachChildToScope(
   key: PropertyKey,
   child: TreeNode,
 ): void {
-  const maybeValueSub = child as unknown as Partial<{
-    subscribe: (fn: (v: unknown) => void) => OinUnsubscribe;
-  }>;
-  const valueUnsub =
-    typeof maybeValueSub.subscribe === 'function'
-      ? maybeValueSub.subscribe(() => {
-          if (state.isCommitting) return;
-          state.valueEpoch += 1;
-          emitScopeValue(state);
-        })
-      : noopUnsubscribe;
-
-  const maybeUpdateSub = child as unknown as Partial<{
-    subscribeUpdate: (fn: (u: OinUpdate) => void) => OinUnsubscribe;
-  }>;
-  const updateUnsub =
-    typeof maybeUpdateSub.subscribeUpdate === 'function'
-      ? maybeUpdateSub.subscribeUpdate((u: OinUpdate) => {
-          const patches: OinPatch[] = u.patches.map((p) => ({
-            ...p,
-            path: [key, ...p.path],
-          }));
-          const baseRevision = state.revision;
-          state.revision += 1;
-          emitScopeUpdate(
-            state,
-            createUpdate(baseRevision, state.revision, patches),
-          );
-        })
-      : noopUnsubscribe;
+  const { valueUnsub, updateUnsub } = subscribeKeyedChild(child, key, {
+    onValue: () => {
+      if (state.isCommitting) return;
+      state.valueEpoch += 1;
+      emitScopeValue(state);
+    },
+    onUpdate: (u) => {
+      const baseRevision = state.revision;
+      state.revision += 1;
+      emitScopeUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+    },
+  });
 
   state.childValueUnsubs.set(key, valueUnsub);
   state.childUpdateUnsubs.set(key, updateUnsub);
@@ -400,38 +349,22 @@ function detachChildFromScope(state: TreeScopeState, key: PropertyKey): void {
 }
 
 function attachChildToArray(state: TreeArrayState, child: TreeNode): void {
-  const maybeValueSub = child as unknown as Partial<{
-    subscribe: (fn: (v: unknown) => void) => OinUnsubscribe;
-  }>;
-  const valueUnsub =
-    typeof maybeValueSub.subscribe === 'function'
-      ? maybeValueSub.subscribe(() => {
-          if (state.isCommitting) return;
-          state.valueEpoch += 1;
-          emitArrayValue(state);
-        })
-      : noopUnsubscribe;
-
-  const maybeUpdateSub = child as unknown as Partial<{
-    subscribeUpdate: (fn: (u: OinUpdate) => void) => OinUnsubscribe;
-  }>;
-  const updateUnsub =
-    typeof maybeUpdateSub.subscribeUpdate === 'function'
-      ? maybeUpdateSub.subscribeUpdate((u: OinUpdate) => {
-          const index = state.children.indexOf(child);
-          if (index < 0) return;
-          const patches: OinPatch[] = u.patches.map((p) => ({
-            ...p,
-            path: [index, ...p.path],
-          }));
-          const baseRevision = state.revision;
-          state.revision += 1;
-          emitArrayUpdate(
-            state,
-            createUpdate(baseRevision, state.revision, patches),
-          );
-        })
-      : noopUnsubscribe;
+  const { valueUnsub, updateUnsub } = subscribeIndexedChild(
+    child,
+    (c) => state.children.indexOf(c as TreeNode),
+    {
+      onValue: () => {
+        if (state.isCommitting) return;
+        state.valueEpoch += 1;
+        emitArrayValue(state);
+      },
+      onUpdate: (u) => {
+        const baseRevision = state.revision;
+        state.revision += 1;
+        emitArrayUpdate(state, createUpdate(baseRevision, state.revision, u.patches));
+      },
+    },
+  );
 
   state.childValueUnsubs.set(child, valueUnsub);
   state.childUpdateUnsubs.set(child, updateUnsub);
@@ -484,9 +417,7 @@ function createTreeScope(
     revision: 0,
     isCommitting: false,
     valueEpoch: 0,
-    cachedSnapshot: undefined,
-    cachedSnapshotEpoch: -1,
-    hasCachedSnapshot: false,
+    snapshotCache: { value: undefined, version: -1, hasValue: false },
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -537,9 +468,11 @@ function createTreeScope(
         throw new Error(`oinTree scope: missing key ${String(key)}`);
 
       if (isUnit(existing)) {
-        const internal = getInternal(existing);
-        if (!internal || internal.kind !== 'unit')
-          throw new Error('oinTree scope: invalid unit internal');
+        const internal = requireInternalOfKind(
+          existing,
+          'unit',
+          'oinTree scope: invalid unit internal',
+        ) as unknown as UnitInternal;
         const before = internal.getValue();
         internal.setValue(next, {
           emitUpdate: false,
@@ -615,9 +548,11 @@ function createTreeScope(
         if (Object.is(prev, next)) return false;
 
         if (isUnit(node)) {
-          const internal = getInternal(node);
-          if (!internal || internal.kind !== 'unit')
-            throw new Error('oinTree commit: invalid unit internal');
+          const internal = requireInternalOfKind(
+            node,
+            'unit',
+            'oinTree commit: invalid unit internal',
+          ) as unknown as UnitInternal;
           internal.setValue(next, { emitUpdate: false, emitValue: true });
           patches.push({
             op: 'set',
@@ -860,9 +795,7 @@ function createTreeArray(
     revision: 0,
     isCommitting: false,
     valueEpoch: 0,
-    cachedSnapshot: undefined,
-    cachedSnapshotEpoch: -1,
-    hasCachedSnapshot: false,
+    snapshotCache: { value: undefined, version: -1, hasValue: false },
     valueListeners: new Set(),
     updateListeners: new Set(),
     childValueUnsubs: new Map(),
@@ -1337,9 +1270,11 @@ function createTreeArray(
         if (Object.is(prev, next)) return false;
 
         if (isUnit(node)) {
-          const internal = getInternal(node);
-          if (!internal || internal.kind !== 'unit')
-            throw new Error('oinTree commit: invalid unit internal');
+          const internal = requireInternalOfKind(
+            node,
+            'unit',
+            'oinTree commit: invalid unit internal',
+          ) as unknown as UnitInternal;
           internal.setValue(next, { emitUpdate: false, emitValue: true });
           patches.push({
             op: 'set',

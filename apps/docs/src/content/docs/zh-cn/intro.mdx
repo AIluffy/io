@@ -12,7 +12,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## 主要特性
 
 - **可组合原语**：`oin()` 根据初始值创建 Unit / 深层 TreeScope / 深层 TreeArrayUnit。
-- **浅层兼容**：`oinShallow()` 仅把对象第一层 key 变成 Unit。
+- **浅层模式**：`oin(value, { shallow: true })` 仅把对象第一层 key 变成 Unit。
 - **弃用 API**：`oinTree()` / `oinDeep()` 仍可用，但建议迁移到 `oin()`。
 - **派生**：`formula()`（显式依赖）与 `derive()`（selector 驱动）。
 - **批处理**：`batch()` 合并通知并合并 updates。

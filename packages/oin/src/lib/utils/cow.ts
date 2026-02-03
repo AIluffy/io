@@ -10,7 +10,7 @@ type DraftState = {
 const draftToState = new WeakMap<object, DraftState>();
 const baseToDraft = new WeakMap<object, object>();
 
-const DRAFT_STATE = Symbol.for('@org/oin/draftState');
+const DRAFT_STATE = Symbol.for('@oin/store/draftState');
 
 function isDraft(value: unknown): value is object {
   if (value === null || value === undefined) return false;
@@ -98,11 +98,11 @@ function createProxy(base: object): object {
             prop === 'push' || prop === 'unshift'
               ? args.map(toImmutableIfNeeded)
               : prop === 'splice'
-              ? [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)]
-              : args;
+                ? [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)]
+                : args;
           return (method as (...a: unknown[]) => unknown).apply(
             copy,
-            immutableArgs
+            immutableArgs,
           );
         };
       }

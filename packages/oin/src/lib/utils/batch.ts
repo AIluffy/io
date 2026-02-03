@@ -1,5 +1,6 @@
-import { mergeUpdates } from './updates.js';
 import type { OinUpdate } from './types.js';
+
+import { mergeUpdates } from './updates.js';
 
 type ValueListener<T> = (value: T) => void;
 type UpdateListener = (update: OinUpdate) => void;
@@ -64,4 +65,3 @@ export function notifyUpdate(
     else pendingUpdates.set(listener, [update]);
   }
 }
-
