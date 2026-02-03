@@ -1,0 +1,20 @@
+---
+title: "OinPathValue"
+description: "type export"
+---
+
+## 签名
+
+```ts
+OinPathValue<
+  T,
+  P,
+  MaxDepth extends number = 5,
+  Mode extends OinTypeInferenceMode = 'unknown'
+>
+```
+
+## 说明
+
+- `MaxDepth` 用于限制路径推导深度，避免大型对象图的类型推导开销过高。
+- `Mode` 为高级选项：可用 `'error'` 将超深度推导转为类型错误。

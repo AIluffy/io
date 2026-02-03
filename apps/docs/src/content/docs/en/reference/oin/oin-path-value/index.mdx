@@ -1,0 +1,20 @@
+---
+title: "OinPathValue"
+description: "type export"
+---
+
+## Signature
+
+```ts
+OinPathValue<
+  T,
+  P,
+  MaxDepth extends number = 5,
+  Mode extends OinTypeInferenceMode = 'unknown'
+>
+```
+
+## Notes
+
+- `MaxDepth` limits recursion for large object graphs.
+- `Mode` is an advanced option: use `'error'` to turn depth overflows into type errors.

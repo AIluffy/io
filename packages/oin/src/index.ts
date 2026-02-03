@@ -12,6 +12,7 @@ export type {
   OinPatch,
   OinPathOf,
   OinPathValue,
+  Path,
   OinResult,
   OinScope,
   OinTreeArrayUnit,

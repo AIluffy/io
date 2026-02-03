@@ -181,24 +181,30 @@ export type OinPathOf<T, MaxDepth extends number = 5> =
   | []
   | PathOfImpl<T, MaxDepth>;
 
+export type Path<T, MaxDepth extends number = 5> = OinPathOf<T, MaxDepth>;
+
 type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer R]
   ? R
   : [];
 
 export type OinPathValue<
   T,
-  P extends ReadonlyArray<PathSegment>
-> = T extends unknown
-  ? P extends []
-    ? T
-    : P[0] extends number
-    ? T extends readonly (infer U)[]
-      ? OinPathValue<U, Tail<P>>
-      : unknown
-    : P[0] extends keyof T
-    ? OinPathValue<T[P[0]], Tail<P>>
-    : unknown
-  : never;
+  P extends ReadonlyArray<PathSegment>,
+  MaxDepth extends number = 5,
+  Mode extends OinTypeInferenceMode = 'unknown'
+> = MaxDepth extends 0
+  ? TypeFailure<'OinPathValue: exceeded MaxDepth', Mode>
+  : T extends unknown
+    ? P extends []
+      ? T
+      : P[0] extends number
+        ? T extends readonly (infer U)[]
+          ? OinPathValue<U, Tail<P>, PrevDepth<MaxDepth>, Mode>
+          : TypeFailure<'OinPathValue: invalid array path', Mode>
+        : P[0] extends keyof T
+          ? OinPathValue<T[P[0]], Tail<P>, PrevDepth<MaxDepth>, Mode>
+          : TypeFailure<'OinPathValue: invalid object path', Mode>
+    : never;
 
 export type OinErrorHandlerFor<T, MaxDepth extends number = 5> = (
   error: unknown,
