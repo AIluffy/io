@@ -120,7 +120,7 @@ effect(() => console.log(double.get()));
 import { useOin } from '@oin/react';
 
 function Counter({ count }) {
-  const value = useOin(count);
+  const value = useOin(count, { schedule: 'microtask' });
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -131,10 +131,10 @@ function Counter({ count }) {
 import { toReadable, toWritable } from '@oin/svelte';
 
 // 只读 store
-const store = toReadable(state);
+const store = toReadable(state, { schedule: 'microtask' });
 
 // 可写 store
-const writable = toWritable(unit);
+const writable = toWritable(unit, { schedule: 'microtask' });
 ```
 
 ### Vue
@@ -143,10 +143,13 @@ const writable = toWritable(unit);
 import { useOin, oinRef } from '@oin/vue';
 
 // 组合式函数
-const state = useOin(source);
+const state = useOin(source, { schedule: 'microtask' });
 
 // 双向绑定 ref
-const ref = oinRef(unit);
+const ref = oinRef(unit, { schedule: 'microtask' });
+
+// SSR 可用（不会订阅）
+const ssrState = useOin(source, { ssr: true });
 ```
 
 ## 📁 项目结构

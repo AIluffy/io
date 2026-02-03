@@ -1,10 +1,11 @@
-import { diffSnapshots } from '@oin/devtools';
 import type {
   OinDevtools,
   OinHistoryEntry,
+  OinPatchDiffTreeNode,
   OinSnapshotDiff,
 } from '@oin/devtools';
-import type { CSSProperties } from 'react';
+import { buildPatchDiffTree, diffSnapshots } from '@oin/devtools';
+import type { CSSProperties, ReactElement } from 'react';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 
 export type OinDevtoolsPanelProps = {
@@ -40,6 +41,46 @@ function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
+function renderPatchTree(
+  nodes: OinPatchDiffTreeNode[],
+  depth = 0
+): ReactElement[] {
+  return nodes.flatMap((node) => {
+    const indent = 10 + depth * 12;
+    const label =
+      node.path.length === 0
+        ? '$'
+        : node.path
+            .map((s) => (typeof s === 'number' ? `[${s}]` : String(s)))
+            .join('.');
+    const patches = node.patches ?? [];
+    const children = node.children ?? [];
+    const row = (
+      <div
+        key={`node-${label}-${depth}`}
+        style={{ paddingLeft: indent, display: 'grid', gap: 4 }}
+      >
+        <div style={{ fontWeight: 600, opacity: 0.9 }}>{label}</div>
+        {patches.length > 0 ? (
+          <div style={{ opacity: 0.85 }}>
+            {patches.map((p, i) => (
+              <div key={`${label}-${p.op}-${i}`}>
+                {p.op}
+                {p.op === 'splice'
+                  ? ` start=${p.start} delete=${p.deleteCount} items=${p.items.length}`
+                  : p.op === 'sort'
+                  ? ` order=${p.order.length}`
+                  : ''}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+    return [row, ...renderPatchTree(children, depth + 1)];
+  });
+}
+
 function useDevtoolsState(devtools: OinDevtools) {
   return useSyncExternalStore(
     (notify) => devtools.subscribe(() => notify()),
@@ -58,6 +99,13 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
     selected >= 0 && selected < state.history.length
       ? state.history[selected]
       : null;
+
+  const [patchView, setPatchView] = useState<'list' | 'tree'>('tree');
+
+  const patchTree: OinPatchDiffTreeNode[] | null = useMemo(() => {
+    if (!selectedEntry) return null;
+    return buildPatchDiffTree(selectedEntry.patchDiffs);
+  }, [selectedEntry]);
 
   const snapshotDiffs: OinSnapshotDiff[] | null = useMemo(() => {
     if (!selectedEntry) return null;
@@ -109,6 +157,14 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
           Redo
         </button>
         <button
+          onClick={() => {
+            if (selected >= 0) props.devtools.timeTravel.goTo(selected);
+          }}
+          disabled={selected < 0}
+        >
+          Go
+        </button>
+        <button
           onClick={() =>
             state.paused ? props.devtools.resume() : props.devtools.pause()
           }
@@ -140,6 +196,17 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
         >
           Export Redux Import
         </button>
+        <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span style={{ opacity: 0.8 }}>Seek</span>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, state.history.length - 1)}
+            value={Math.max(0, selected)}
+            onChange={(e) => setSelected(Number(e.target.value))}
+            disabled={state.history.length === 0}
+          />
+        </label>
 
         <div
           style={{ marginLeft: 'auto', display: 'flex', gap: 10, opacity: 0.9 }}
@@ -243,8 +310,23 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
             </div>
           ) : (
             <div style={{ padding: 10, display: 'grid', gap: 12 }}>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <div style={{ fontWeight: 700 }}>Patch diffs</div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontWeight: 700 }}>Patch diffs</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setPatchView('tree')}
+                  disabled={patchView === 'tree'}
+                >
+                  Tree
+                </button>
+                <button
+                  onClick={() => setPatchView('list')}
+                  disabled={patchView === 'list'}
+                >
+                  List
+                </button>
+              </div>
+              {patchView === 'list' ? (
                 <pre
                   style={{
                     margin: 0,
@@ -256,7 +338,21 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
                 >
                   {JSON.stringify(selectedEntry.patchDiffs, null, 2)}
                 </pre>
-              </div>
+              ) : (
+                <div
+                  style={{
+                    margin: 0,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: 'rgba(148,163,184,0.12)',
+                    display: 'grid',
+                    gap: 6,
+                  }}
+                >
+                  {patchTree ? renderPatchTree(patchTree) : null}
+                </div>
+              )}
+            </div>
 
               {snapshotDiffs ? (
                 <div style={{ display: 'grid', gap: 6 }}>

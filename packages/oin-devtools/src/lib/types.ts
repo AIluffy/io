@@ -92,6 +92,13 @@ export type OinSnapshotDiff = {
   next: unknown;
 };
 
+export type OinPatchDiffTreeNode = {
+  key: PropertyKey;
+  path: OinPath;
+  children?: OinPatchDiffTreeNode[];
+  patches?: OinPatchDiff[];
+};
+
 export type OinHistoryEntry = {
   id: string;
   timestamp: number;

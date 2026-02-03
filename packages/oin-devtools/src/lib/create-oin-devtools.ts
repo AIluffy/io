@@ -166,7 +166,7 @@ export function createOinDevtools(
   const perfRecent: OinDevtoolsPerfSample[] = [];
 
   const snapshotStrategy = options?.captureSnapshots ?? 'always';
-  const maxHistory = clampInt(options?.maxHistory ?? 200, 1, 10_000);
+  const maxHistory = clampInt(options?.maxHistory ?? 10_000, 1, 10_000);
 
   const emit = (event: OinDevtoolsEvent) => {
     for (const listener of listeners) {
