@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import starlightThemeSix from '@six-tech/starlight-theme-six';
 import oinAccessPlugin from '../../tools/oin-babel-plugin/index.mjs';
 import { babel } from '@rollup/plugin-babel';
 
@@ -23,6 +24,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
+      plugins: [starlightThemeSix({})],
       title: 'OIN Documentation',
       defaultLocale: 'en',
       locales: {

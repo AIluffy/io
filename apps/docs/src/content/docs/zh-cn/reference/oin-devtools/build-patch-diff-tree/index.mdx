@@ -1,0 +1,30 @@
+---
+title: "buildPatchDiffTree"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(patches: ReadonlyArray<OinPatchDiff>) => OinPatchDiffTreeNode[]
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| patches | `readonly OinPatchDiff[]` |
+
+## 返回
+
+`OinPatchDiffTreeNode[]`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/oin-devtools/src/lib/patch-diff-tree.ts`

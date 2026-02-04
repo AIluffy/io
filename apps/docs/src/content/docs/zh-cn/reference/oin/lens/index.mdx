@@ -1,0 +1,31 @@
+---
+title: "lens"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+<T>(root: OinTreeNode<unknown>, path: ReadonlyArray<PropertyKey>) => OinView<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| root | `OinUnit<unknown>` |
+| path | `readonly PropertyKey[]` |
+
+## 返回
+
+`OinView<T>`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/oin/src/lib/extensions/lens.ts`

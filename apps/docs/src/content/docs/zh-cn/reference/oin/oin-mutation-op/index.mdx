@@ -63,17 +63,13 @@ OinMutationOp
 | matchAll | `(regexp: RegExp) => RegExpStringIterator<RegExpExecArray>` |
 | replaceAll | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; }` |
 | at | `(index: number) => string \| undefined` |
-| __@iterator@16 | `() => StringIterator<string>` |
+| __@iterator@349 | `() => StringIterator<string>` |
 
 ## 错误
 
 - 本库未定义标准化错误码。
 - 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
 
-## 鉴权
-
-- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。
-
 ## 源码
 
-- `packages/oin/src/lib/types.ts`
+- `packages/oin/src/lib/utils/types.ts`

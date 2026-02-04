@@ -3,18 +3,18 @@ title: "OinPathValue"
 description: "type export"
 ---
 
+
 ## Signature
 
 ```ts
-OinPathValue<
-  T,
-  P,
-  MaxDepth extends number = 5,
-  Mode extends OinTypeInferenceMode = 'unknown'
->
+OinPathValue<T, P, MaxDepth, Mode>
 ```
 
-## Notes
+## Errors
 
-- `MaxDepth` limits recursion for large object graphs.
-- `Mode` is an advanced option: use `'error'` to turn depth overflows into type errors.
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/oin/src/lib/utils/types.ts`

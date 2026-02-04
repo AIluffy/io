@@ -30,6 +30,13 @@ nx affected -t test
 nx run-many -t build
 ```
 
+## Docs Site (Astro/Starlight)
+
+- Dev server: `nx run apps-docs:dev`
+- Production build: `nx run apps-docs:build`
+- Preview build: `nx run apps-docs:preview`
+- Root route should show the English homepage via `apps/docs/src/pages/index.astro` redirecting to `/en/`
+
 ### Available Projects
 
 - `@oin/store` - Core library

@@ -7,7 +7,7 @@ description: "type export"
 ## Signature
 
 ```ts
-OinTreeArrayUnit<T>
+OinTreeArrayUnit<T, MaxDepth>
 ```
 
 ## Properties
@@ -19,19 +19,17 @@ OinTreeArrayUnit<T>
 | splice | `(start: number, deleteCount: number, ...items: T[]) => void` |
 | sort | `(compareFn?: (a: T, b: T) => number) => void` |
 | commit | `(fn: (draft: T[]) => void) => void` |
+| reduce | `<R>(reducer: (acc: R, item: OinTreeNode<T, MaxDepth>, index: number) => R, initialValue: R) => R` |
 | snapshot | `() => T[]` |
 | subscribe | `(fn: (v: T[]) => void) => OinUnsubscribe` |
 | subscribeUpdate | `(fn: (u: OinUpdate) => void) => OinUnsubscribe` |
+| __@iterator@349 | `() => Iterator<OinTreeNode<T, MaxDepth>>` |
 
 ## Errors
 
 - This library does not define standardized error codes.
 - Mutations can report failures through `onError(listener)` (operation, path, value).
 
-## Authentication
-
-- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.
-
 ## Source
 
-- `packages/oin/src/lib/types.ts`
+- `packages/oin/src/lib/utils/types.ts`

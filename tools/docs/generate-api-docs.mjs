@@ -16,7 +16,6 @@ const LOCALES = [
       properties: 'Properties',
       returns: 'Returns',
       errors: 'Errors',
-      auth: 'Authentication',
       source: 'Source',
       indexTitle: 'API Reference',
       experimentalTitle: 'Experimental (@oin/store/experimental)',
@@ -25,9 +24,6 @@ const LOCALES = [
       errorsBody: [
         '- This library does not define standardized error codes.',
         '- Mutations can report failures through `onError(listener)` (operation, path, value).',
-      ].join('\n'),
-      authBody: [
-        '- Not applicable. OIN is a local TypeScript/JavaScript library and does not implement authentication.',
       ].join('\n'),
     },
   },
@@ -40,7 +36,6 @@ const LOCALES = [
       properties: '属性',
       returns: '返回',
       errors: '错误',
-      auth: '鉴权',
       source: '源码',
       indexTitle: 'API 参考',
       experimentalTitle: '实验特性（@oin/store/experimental）',
@@ -49,9 +44,6 @@ const LOCALES = [
       errorsBody: [
         '- 本库未定义标准化错误码。',
         '- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。',
-      ].join('\n'),
-      authBody: [
-        '- 不适用。OIN 是本地 TypeScript/JavaScript 库，不包含鉴权机制。',
       ].join('\n'),
     },
   },
@@ -237,10 +229,6 @@ function renderErrors(labels) {
   return `\n## ${labels.errors}\n\n${labels.errorsBody}\n`;
 }
 
-function renderAuth(labels) {
-  return `\n## ${labels.auth}\n\n${labels.authBody}\n`;
-}
-
 function renderSource(relPath, labels) {
   if (!relPath) return '';
   return `\n## ${labels.source}\n\n- \`${relPath}\`\n`;
@@ -274,7 +262,6 @@ function renderExportPage({
   }
 
   body += renderErrors(localeLabels);
-  body += renderAuth(localeLabels);
   body += renderSource(sourcePath, localeLabels);
 
   return (

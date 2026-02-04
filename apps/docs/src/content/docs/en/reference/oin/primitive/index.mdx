@@ -1,0 +1,28 @@
+---
+title: "Primitive"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+Primitive
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| toString | `(() => string) \| (() => string) \| ((radix?: number) => string) \| ((radix?: number) => string) \| (() => string)` |
+| valueOf | `(() => string) \| (() => number) \| (() => bigint) \| (() => boolean) \| (() => symbol)` |
+| toLocaleString | `(() => string) \| { (locales?: string \| string[], options?: Intl.NumberFormatOptions): string; (locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions): string; } \| ((locales?: Intl.LocalesArgument, options?: BigIntToLocaleStringOptions) => string)` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/oin/src/lib/utils/types.ts`

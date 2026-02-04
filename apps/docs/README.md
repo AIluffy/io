@@ -4,20 +4,20 @@ This is the documentation site for OIN, built with [Starlight](https://starlight
 
 ## Project Structure
 
-- `src/content/docs/`: Markdown/MDX documentation files.
+- `src/content/docs/{lang}/`: Content files (e.g., `en/`, `zh-cn/`).
 - `src/components/`: Custom Astro/React components.
 - `src/styles/`: Custom CSS.
 - `astro.config.mjs`: Starlight configuration.
 
 ## Commands
 
-All commands are run from the root of the repo (using `-w apps/docs`) or inside `apps/docs`.
+All commands are run using Nx from the root of the repo.
 
 | Command                   | Description                                 |
 | ------------------------- | ------------------------------------------- |
-| `npm run dev -w apps/docs`| Start local development server              |
-| `npm run build -w apps/docs`| Build for production                        |
-| `npm run preview -w apps/docs`| Preview the production build                |
+| `nx run apps-docs:dev`    | Start local development server              |
+| `nx run apps-docs:build`  | Build for production                        |
+| `nx run apps-docs:preview`| Preview the production build                |
 
 ## Adding Content
 
