@@ -2,7 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest';
 
 import { derived } from '../core/derived.js';
 import { oin } from '../core/oin.js';
-import { computed, state } from '../../experimental.js';
+import { computed, state } from '../utils/signals.js';
 import type { OinDerived, OinPathOf, OinPathValue, Path } from '../utils/types.js';
 
 describe('derived: type overloads', () => {
@@ -25,7 +25,7 @@ describe('derived: type overloads', () => {
   });
 });
 
-describe('experimental signals: types', () => {
+describe('signals: types', () => {
   it('infers state/computed output types', () => {
     const s = state(1);
     const c = computed(() => s.get() + 1);

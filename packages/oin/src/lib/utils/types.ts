@@ -192,11 +192,11 @@ export type OinPathValue<
   P extends ReadonlyArray<PathSegment>,
   MaxDepth extends number = 5,
   Mode extends OinTypeInferenceMode = 'unknown'
-> = MaxDepth extends 0
-  ? TypeFailure<'OinPathValue: exceeded MaxDepth', Mode>
-  : T extends unknown
-    ? P extends []
-      ? T
+> = T extends unknown
+  ? P extends []
+    ? T
+    : MaxDepth extends 0
+      ? TypeFailure<'OinPathValue: exceeded MaxDepth', Mode>
       : P[0] extends number
         ? T extends readonly (infer U)[]
           ? OinPathValue<U, Tail<P>, PrevDepth<MaxDepth>, Mode>
@@ -204,7 +204,7 @@ export type OinPathValue<
         : P[0] extends keyof T
           ? OinPathValue<T[P[0]], Tail<P>, PrevDepth<MaxDepth>, Mode>
           : TypeFailure<'OinPathValue: invalid object path', Mode>
-    : never;
+  : never;
 
 export type OinErrorHandlerFor<T, MaxDepth extends number = 5> = (
   error: unknown,

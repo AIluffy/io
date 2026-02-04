@@ -9,11 +9,9 @@
 本仓库包含以下 6 个包：
 
 - **核心包**
-
   - `@oin/store` - 细粒度响应式状态管理核心库
 
 - **框架集成包**
-
   - `@oin/react` - React 集成（Hooks）
   - `@oin/svelte` - Svelte 集成（Stores）
   - `@oin/vue` - Vue 集成（Refs）
@@ -102,16 +100,6 @@ replay(newState, updates);
 applyUpdate(state, invertUpdate(update));
 ```
 
-### 5. TC39 信号兼容
-
-```typescript
-import { Signal, computed, effect } from '@oin/store/experimental';
-
-const count = new Signal.State(1);
-const double = computed(() => count.get() * 2);
-effect(() => console.log(double.get()));
-```
-
 ## 🔧 框架集成
 
 ### React
@@ -120,7 +108,7 @@ effect(() => console.log(double.get()));
 import { useOin } from '@oin/react';
 
 function Counter({ count }) {
-  const value = useOin(count, { schedule: 'microtask' });
+  const value = useOin(count);
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -131,10 +119,10 @@ function Counter({ count }) {
 import { toReadable, toWritable } from '@oin/svelte';
 
 // 只读 store
-const store = toReadable(state, { schedule: 'microtask' });
+const store = toReadable(state);
 
 // 可写 store
-const writable = toWritable(unit, { schedule: 'microtask' });
+const writable = toWritable(unit);
 ```
 
 ### Vue
@@ -143,13 +131,10 @@ const writable = toWritable(unit, { schedule: 'microtask' });
 import { useOin, oinRef } from '@oin/vue';
 
 // 组合式函数
-const state = useOin(source, { schedule: 'microtask' });
+const state = useOin(source);
 
 // 双向绑定 ref
-const ref = oinRef(unit, { schedule: 'microtask' });
-
-// SSR 可用（不会订阅）
-const ssrState = useOin(source, { ssr: true });
+const ref = oinRef(unit);
 ```
 
 ## 📁 项目结构

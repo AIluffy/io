@@ -62,22 +62,6 @@ user.profile.name('Grace'); // write at path ["profile","name"]
 
 If you need “shallow first-level only” behavior, use `oin(value, { shallow: true })`.
 
-## Adapter Options
-
-All framework adapters accept optional scheduling options to align update timing:
-
-```ts
-type Options = {
-  schedule?: 'sync' | 'microtask' | 'animationFrame';
-  ssr?: boolean; // when true, no subscription is registered
-};
-```
-
-Defaults:
-
-- `schedule`: `microtask`
-- `ssr`: auto-detected (no subscriptions on the server)
-
 ## Next Steps
 
 - Browse the full API reference under Reference in the sidebar.

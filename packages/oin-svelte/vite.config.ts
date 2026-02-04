@@ -6,6 +6,7 @@ export default defineConfig(() => ({
   plugins: [],
   test: {
     name: '@org/oin-svelte',
+    passWithNoTests: true,
     watch: false,
     globals: true,
     environment: 'node',

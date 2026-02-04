@@ -1,0 +1,21 @@
+---
+title: "devtools"
+description: "Behavior: attach devtools instance"
+---
+
+## Signature
+
+```ts
+devtools<T>(options: {
+  target: unknown;
+  create: (target: unknown, options?: unknown) => unknown;
+  options?: unknown;
+  key?: string;
+}): OinBehavior<T>
+```
+
+## Notes
+
+- `create` is typically `createOinDevtools` from `@oin/devtools`.
+- The created instance is attached to `view.extensions[key]` (default `devtools`).
+

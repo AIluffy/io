@@ -69,7 +69,9 @@ describe('oin: array', () => {
   });
 
   it('handles sparse arrays', () => {
-    const input = [1, , 3] as unknown[];
+    const input = Array(3) as unknown[];
+    input[0] = 1;
+    input[2] = 3;
     const a = oin(input);
     expect(a.snapshot()).toEqual([1, undefined, 3]);
     expect(a[1]()).toBeUndefined();

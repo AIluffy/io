@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Ref, ShallowRef } from 'vue';
 import { effectScope } from 'vue';
 import { oin } from '@oin/store';
 import { oinRef, useOin } from './index.js';
@@ -9,44 +10,35 @@ describe('@org/oin-vue', () => {
     expect(typeof oinRef).toBe('function');
   });
 
-  it('supports scheduled updates', () => {
+  it('supports updates', async () => {
     const scope = effectScope();
     let output = 0;
+    let state: ShallowRef<number> | undefined;
     scope.run(() => {
       const count = oin(0);
-      const state = useOin(count, { schedule: 'sync' });
-      expect(state.value).toBe(0);
+      state = useOin(count);
+      expect(state?.value).toBe(0);
       count(2);
-      output = state.value;
     });
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    output = state?.value ?? 0;
     scope.stop();
     expect(output).toBe(2);
   });
 
-  it('supports custom ref scheduling', () => {
+  it('supports custom ref updates', async () => {
     const scope = effectScope();
     let output = 0;
+    let ref: Ref<number> | undefined;
     scope.run(() => {
       const count = oin(0);
-      const ref = oinRef(count, { schedule: 'sync' });
-      expect(ref.value).toBe(0);
+      ref = oinRef(count);
+      expect(ref?.value).toBe(0);
       count(3);
-      output = ref.value;
     });
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    output = ref?.value ?? 0;
     scope.stop();
     expect(output).toBe(3);
-  });
-
-  it('respects ssr option', () => {
-    const scope = effectScope();
-    let output = 0;
-    scope.run(() => {
-      const count = oin(0);
-      const state = useOin(count, { ssr: true });
-      count(1);
-      output = state.value;
-    });
-    scope.stop();
-    expect(output).toBe(0);
   });
 });

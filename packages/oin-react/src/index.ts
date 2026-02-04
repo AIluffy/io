@@ -1,3 +1,4 @@
+import { isServerEnv, scheduleTask } from '@oin/store';
 import { useSyncExternalStore } from 'react';
 
 type OinSource<T> = {
@@ -5,52 +6,16 @@ type OinSource<T> = {
   subscribe(fn: (v: T) => void): () => void;
 };
 
-type OinSchedule = 'sync' | 'microtask' | 'animationFrame';
-
-export type OinReactOptions = {
-  schedule?: OinSchedule;
-  ssr?: boolean;
-};
-
-type OinGlobal = {
-  window?: unknown;
-  document?: unknown;
-  requestAnimationFrame?: (cb: () => void) => number;
-};
-
-const oinGlobal: OinGlobal | undefined =
-  typeof globalThis === 'undefined'
-    ? undefined
-    : (globalThis as unknown as OinGlobal);
-
-const isServerEnv = !oinGlobal?.window && !oinGlobal?.document;
-
-function scheduleTask(kind: OinSchedule, fn: () => void): void {
-  if (kind === 'sync') {
-    fn();
-    return;
-  }
-  const raf = oinGlobal?.requestAnimationFrame;
-  if (kind === 'animationFrame' && typeof raf === 'function') {
-    raf(() => fn());
-    return;
-  }
-  queueMicrotask(fn);
-}
-
 function createSubscriber<T>(
   source: OinSource<T>,
-  options?: OinReactOptions,
 ): (onStoreChange: () => void) => () => void {
-  const schedule = options?.schedule ?? 'microtask';
-  const ssr = options?.ssr ?? isServerEnv;
-  if (ssr) return () => () => undefined;
+  if (isServerEnv) return () => () => undefined;
   return (onStoreChange) => {
     let pending = false;
     const scheduleNotify = () => {
       if (pending) return;
       pending = true;
-      scheduleTask(schedule, () => {
+      scheduleTask('microtask', () => {
         pending = false;
         onStoreChange();
       });
@@ -63,9 +28,9 @@ function createSubscriber<T>(
   };
 }
 
-export function useOin<T>(source: OinSource<T>, options?: OinReactOptions): T {
+export function useOin<T>(source: OinSource<T>): T {
   return useSyncExternalStore(
-    createSubscriber(source, options),
+    createSubscriber(source),
     () => source.snapshot(),
     () => source.snapshot(),
   );

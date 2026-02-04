@@ -18,6 +18,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
+    "@oin/store": "*",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
