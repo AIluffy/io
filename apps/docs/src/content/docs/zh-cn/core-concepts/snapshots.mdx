@@ -1,0 +1,34 @@
+---
+title: 快照
+description: 读取冻结快照，安全共享。
+sidebar:
+  order: 3
+---
+
+## 默认冻结
+
+任何对象/数组读取都会返回冻结快照，避免误修改。
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ items: ['a', 'b'] });
+const snapshot = state.snapshot();
+
+Object.isFrozen(snapshot); // true
+```
+
+## snapshot API
+
+```ts
+const count = oin(0);
+
+count.snapshot();
+```
+
+同一版本内快照具有稳定引用，适合缓存与渲染优化。
+
+## 下一步
+
+- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 查看 [集成](/zh-cn/integrations/vanilla/)。

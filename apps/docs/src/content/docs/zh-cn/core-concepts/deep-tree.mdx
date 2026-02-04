@@ -1,0 +1,46 @@
+---
+title: 深层 Tree
+description: 任意深度的路径都是 Unit。
+sidebar:
+  order: 2
+---
+
+## 默认深层
+
+`oin()` 会递归处理对象与数组，深层路径可直接读写。
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ user: { profile: { name: 'Ada' } } });
+
+state.user.profile.name();
+state.user.profile.name('Grace');
+```
+
+## 浅层模式
+
+仅将第一层转为 Unit：
+
+```ts
+const state = oin({ user: { name: 'Ada' } }, { shallow: true });
+
+state.user(); // 返回普通对象
+state.user({ name: 'Grace' });
+```
+
+## 使用 lens
+
+```ts
+import { lens, oin } from '@oin/store';
+
+const store = oin({ settings: { theme: 'light' } });
+const theme = lens<string>(store, ['settings', 'theme']);
+
+theme('dark');
+```
+
+## 下一步
+
+- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 学习 [Derived](/zh-cn/guides/derived/)。

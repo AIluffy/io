@@ -1,0 +1,48 @@
+---
+title: Deep Tree
+description: Nested state is addressable at any depth.
+sidebar:
+  order: 2
+---
+
+## Deep by default
+
+`oin()` walks objects and arrays and converts nested paths into Units. You can update deep values without switching APIs.
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ user: { profile: { name: 'Ada' } } });
+
+state.user.profile.name();
+state.user.profile.name('Grace');
+```
+
+## Shallow mode
+
+If you only want the first level as Units, use `shallow: true`.
+
+```ts
+const state = oin({ user: { name: 'Ada' } }, { shallow: true });
+
+state.user(); // returns the plain object
+state.user({ name: 'Grace' });
+```
+
+## Lens for explicit paths
+
+Use `lens` to build a view for a specific path.
+
+```ts
+import { lens, oin } from '@oin/store';
+
+const store = oin({ settings: { theme: 'light' } });
+const theme = lens<string>(store, ['settings', 'theme']);
+
+theme('dark');
+```
+
+## Next steps
+
+- See how updates are logged in [Update Log](/en/core-concepts/update-log/).
+- Explore derived values in [Guides: Derived](/en/guides/derived/).

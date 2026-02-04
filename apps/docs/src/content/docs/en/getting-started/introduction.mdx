@@ -1,0 +1,32 @@
+---
+title: Introduction
+description: What OIN is and how to think about it.
+sidebar:
+  order: 1
+---
+
+OIN is a TypeScript state library built around small, composable primitives and an explicit update log. The API favors predictable reads, traceable writes, and easy integration across frameworks.
+
+## Mental model
+
+- **Unit**: a function-like cell. Call it to read, call it with a value (or updater) to write.
+- **Scope**: an object of Units that can be updated together.
+- **Tree**: deep structures where every nested path is addressable as a Unit.
+- **Update log**: every write creates patches you can subscribe to, replay, or invert.
+
+## What OIN optimizes for
+
+- **Deep updates without ceremony**: update nested paths directly (`state.user.name('Ada')`).
+- **Snapshot safety**: reads return frozen snapshots to prevent accidental mutation.
+- **Explicit change tracking**: updates are structured and replayable.
+- **Adapter-friendly**: `snapshot() + subscribe()` works consistently everywhere.
+
+:::note
+If you already know Zustand, think of OIN as “stores are trees of units” and “updates are first-class.” The migration guide maps the patterns side-by-side.
+:::
+
+## Next steps
+
+- Start with the [Quick Start](/en/getting-started/quick-start/).
+- Learn the building blocks in [Core Concepts](/en/core-concepts/units-scopes/).
+- Explore [Integrations](/en/integrations/vanilla/) for framework usage.

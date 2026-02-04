@@ -1,0 +1,80 @@
+---
+title: 从 Zustand 迁移
+description: 常见模式的对应关系。
+sidebar:
+  order: 1
+---
+
+本指南将常见 Zustand 模式映射到 OIN。目标是语义对齐，而不是完全一一对应。
+
+## 创建 store
+
+Zustand：
+
+```ts
+const useStore = create((set) => ({
+  count: 0,
+  inc: () => set((s) => ({ count: s.count + 1 })),
+}));
+```
+
+OIN：
+
+```ts
+import { oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const inc = () => store.count((v) => v + 1);
+```
+
+## 选择器
+
+Zustand 选择器：
+
+```ts
+const count = useStore((s) => s.count);
+```
+
+OIN 选择器（derived）：
+
+```ts
+import { derived } from '@oin/store';
+
+const count = derived(store, (s) => s.count);
+```
+
+需要路径聚焦时可使用 `lens`：
+
+```ts
+import { lens } from '@oin/store';
+
+const userName = lens<string>(store, ['user', 'name']);
+```
+
+## 中间件 → 行为扩展
+
+```ts
+import { persist, devtools, withBehaviors } from '@oin/store/behavior';
+import { createOinDevtools } from '@oin/devtools';
+
+const view = withBehaviors(store, [
+  persist({ key: 'store' }),
+  devtools({ target: store, create: createOinDevtools }),
+]);
+```
+
+## React 使用方式
+
+```tsx
+import { useOin } from '@oin/react';
+
+function Counter() {
+  const value = useOin(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## 下一步
+
+- 了解 [介绍](/zh-cn/getting-started/introduction/)。
+- 查看 [行为扩展](/zh-cn/behaviors/overview/)。

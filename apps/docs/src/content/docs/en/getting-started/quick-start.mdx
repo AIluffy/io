@@ -1,0 +1,100 @@
+---
+title: Quick Start
+description: Install OIN and build your first state in minutes.
+sidebar:
+  order: 2
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Install
+
+<Steps>
+
+1. Install the core package:
+
+   ```bash
+   npm install @oin/store
+   ```
+
+2. Add an adapter (optional):
+
+   ```bash
+   npm install @oin/react
+   ```
+
+</Steps>
+
+## Create state
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+count(); // read
+count(1); // write
+count((v) => v + 1); // update
+```
+
+## Use in your framework
+
+<Tabs>
+  <TabItem label="Core">
+    ```ts
+    import { oin, batch } from '@oin/store';
+
+    const store = oin({ count: 0, user: { name: 'Ada' } });
+
+    store.count();
+    store.user.name('Grace');
+
+    batch(() => {
+      store.count((v) => v + 1);
+      store.count((v) => v + 1);
+    });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { oin } from '@oin/store';
+    import { useOin } from '@oin/react';
+
+    const count = oin(0);
+
+    export function Counter() {
+      const value = useOin(count);
+      return <button onClick={() => count((v) => v + 1)}>{value}</button>;
+    }
+    ```
+  </TabItem>
+  <TabItem label="Vue">
+    ```ts
+    import { oin } from '@oin/store';
+    import { useOin } from '@oin/vue';
+
+    const count = oin(0);
+
+    export function useCounter() {
+      const state = useOin(count);
+      const inc = () => count((v) => v + 1);
+      return { state, inc };
+    }
+    ```
+  </TabItem>
+  <TabItem label="Svelte">
+    ```ts
+    import { oin } from '@oin/store';
+    import { toWritable } from '@oin/svelte';
+
+    const count = oin(0);
+    export const countStore = toWritable(count);
+    ```
+  </TabItem>
+</Tabs>
+
+## Next steps
+
+- Learn the structure of Units and Scopes in [Core Concepts](/en/core-concepts/units-scopes/).
+- Add behavior layers in [Behaviors](/en/behaviors/overview/).
+- Read the auto-generated [API Reference](/en/reference/).

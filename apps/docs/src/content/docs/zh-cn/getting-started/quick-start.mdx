@@ -1,0 +1,100 @@
+---
+title: 快速开始
+description: 安装 OIN 并完成第一个状态。
+sidebar:
+  order: 2
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 安装
+
+<Steps>
+
+1. 安装核心包：
+
+   ```bash
+   npm install @oin/store
+   ```
+
+2. 安装框架适配（可选）：
+
+   ```bash
+   npm install @oin/react
+   ```
+
+</Steps>
+
+## 创建状态
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+count(); // 读取
+count(1); // 写入
+count((v) => v + 1); // 更新
+```
+
+## 在框架中使用
+
+<Tabs>
+  <TabItem label="Core">
+    ```ts
+    import { oin, batch } from '@oin/store';
+
+    const store = oin({ count: 0, user: { name: 'Ada' } });
+
+    store.count();
+    store.user.name('Grace');
+
+    batch(() => {
+      store.count((v) => v + 1);
+      store.count((v) => v + 1);
+    });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { oin } from '@oin/store';
+    import { useOin } from '@oin/react';
+
+    const count = oin(0);
+
+    export function Counter() {
+      const value = useOin(count);
+      return <button onClick={() => count((v) => v + 1)}>{value}</button>;
+    }
+    ```
+  </TabItem>
+  <TabItem label="Vue">
+    ```ts
+    import { oin } from '@oin/store';
+    import { useOin } from '@oin/vue';
+
+    const count = oin(0);
+
+    export function useCounter() {
+      const state = useOin(count);
+      const inc = () => count((v) => v + 1);
+      return { state, inc };
+    }
+    ```
+  </TabItem>
+  <TabItem label="Svelte">
+    ```ts
+    import { oin } from '@oin/store';
+    import { toWritable } from '@oin/svelte';
+
+    const count = oin(0);
+    export const countStore = toWritable(count);
+    ```
+  </TabItem>
+</Tabs>
+
+## 下一步
+
+- 了解 [核心概念](/zh-cn/core-concepts/units-scopes/)。
+- 查看 [行为扩展](/zh-cn/behaviors/overview/)。
+- 阅读自动生成的 [API 参考](/zh-cn/reference/)。

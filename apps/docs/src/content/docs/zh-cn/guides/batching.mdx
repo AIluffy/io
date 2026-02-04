@@ -1,0 +1,30 @@
+---
+title: 批处理
+description: 多次写入合并为一次更新。
+sidebar:
+  order: 2
+---
+
+## 为什么批处理
+
+批处理会合并通知与 patch，减少渲染抖动，DevTools 记录也更清晰。
+
+```ts
+import { batch, oin } from '@oin/store';
+
+const store = oin({ count: 0, name: 'Ada' });
+
+batch(() => {
+  store.count((v) => v + 1);
+  store.name('Grace');
+});
+```
+
+## 嵌套批处理
+
+批处理可嵌套，只有最外层结束时才会触发通知。
+
+## 下一步
+
+- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 在应用中使用 [集成](/zh-cn/integrations/vanilla/)。

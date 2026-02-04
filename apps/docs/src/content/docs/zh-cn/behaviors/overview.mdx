@@ -1,0 +1,34 @@
+---
+title: 行为扩展概览
+description: 在不改变状态结构的前提下组合读/写/订阅。
+sidebar:
+  order: 1
+---
+
+行为扩展会包装视图的 `get/set/subscribe`，不改变原始 Unit 或 Tree。这样就能方便地添加持久化、调度或工具能力。
+
+```ts
+import { oin } from '@oin/store';
+import { persist, schedule, withBehaviors } from '@oin/store/behavior';
+
+const count = oin(0);
+
+const view = withBehaviors(count, [
+  schedule('microtask'),
+  persist({ key: 'count' }),
+]);
+
+view.subscribe((v) => console.log(v));
+view(1);
+```
+
+## 常见行为
+
+- **Persist**：写入时同步到存储。
+- **Schedule**：控制订阅触发时机。
+- **DevTools**：附加调试工具实例。
+
+## 下一步
+
+- 了解 [Persist](/zh-cn/behaviors/persist/) 与 [Schedule](/zh-cn/behaviors/schedule/)。
+- 使用 [DevTools](/zh-cn/behaviors/devtools/)。

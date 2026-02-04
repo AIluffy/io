@@ -1,0 +1,29 @@
+---
+title: Svelte
+description: 将 OIN Unit 适配为 Svelte store。
+sidebar:
+  order: 4
+---
+
+## toReadable
+
+```ts
+import { oin } from '@oin/store';
+import { toReadable } from '@oin/svelte';
+
+const count = oin(0);
+export const countReadable = toReadable(count);
+```
+
+## toWritable
+
+```ts
+import { toWritable } from '@oin/svelte';
+
+export const countWritable = toWritable(count);
+```
+
+## 下一步
+
+- 查看 [React 集成](/zh-cn/integrations/react/)。
+- 阅读 [行为扩展概览](/zh-cn/behaviors/overview/)。

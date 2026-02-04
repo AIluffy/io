@@ -1,0 +1,54 @@
+---
+title: 派生值
+description: 从 Unit 或树计算派生结果。
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 显式依赖
+
+```ts
+import { derived, oin } from '@oin/store';
+
+const count = oin(1);
+const doubled = derived([count], (value) => value * 2);
+
+doubled(); // 2
+```
+
+## 树选择器
+
+```ts
+const store = oin({ pricing: { price: 10, tax: 2 } });
+
+const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
+```
+
+## 计算函数
+
+```ts
+const combined = derived(() => count() + doubled());
+```
+
+<Tabs>
+  <TabItem label="读取">
+    ```ts
+    total();
+    total.snapshot();
+    ```
+  </TabItem>
+  <TabItem label="订阅">
+    ```ts
+    const unsub = total.subscribe((value) => {
+      console.log(value);
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+## 下一步
+
+- 查看 [批处理](/zh-cn/guides/batching/)。
+- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。

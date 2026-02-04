@@ -1,0 +1,34 @@
+---
+title: Behaviors Overview
+description: Compose read/write/subscribe behavior without changing state.
+sidebar:
+  order: 1
+---
+
+Behaviors wrap a view’s `get/set/subscribe` without changing the underlying Unit or tree. This makes it easy to add persistence, scheduling, or tooling.
+
+```ts
+import { oin } from '@oin/store';
+import { persist, schedule, withBehaviors } from '@oin/store/behavior';
+
+const count = oin(0);
+
+const view = withBehaviors(count, [
+  schedule('microtask'),
+  persist({ key: 'count' }),
+]);
+
+view.subscribe((v) => console.log(v));
+view(1); // read/write like the original Unit
+```
+
+## Behavior types
+
+- **Persist**: write-through to storage.
+- **Schedule**: debounce subscriber notifications.
+- **DevTools**: attach tooling instances.
+
+## Next steps
+
+- Learn [Persist](/en/behaviors/persist/) and [Schedule](/en/behaviors/schedule/).
+- Attach tooling via [DevTools](/en/behaviors/devtools/).

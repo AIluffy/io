@@ -1,0 +1,65 @@
+---
+title: Update Log
+description: Every change produces structured patches.
+sidebar:
+  order: 4
+---
+
+## Patch and Update
+
+OIN records writes as patches (set/splice/sort) and groups them into updates. Updates can be merged, inverted, or replayed.
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+const unsub = count.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+count(1);
+unsub();
+```
+
+## onMutation and onError
+
+Use the debug helpers for cross-cutting observability.
+
+```ts
+import { onMutation, onError, oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+
+const stop = onMutation(store, (patch, path) => {
+  console.log(path, patch.op, patch.next);
+});
+
+const stopError = onError(store, (error, path, op) => {
+  console.error('failed', op, path, error);
+});
+```
+
+## Update utilities
+
+```ts
+import { applyUpdate, invertUpdate, mergeUpdates, oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const updates = [];
+const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+store.count(1);
+store.count(2);
+unsub();
+
+const merged = mergeUpdates(updates[0], updates[1]);
+const inverted = invertUpdate(merged);
+
+applyUpdate(store, inverted);
+```
+
+## Next steps
+
+- Try time-travel with [DevTools](/en/behaviors/devtools/).
+- Learn how to batch writes in [Guides: Batching](/en/guides/batching/).

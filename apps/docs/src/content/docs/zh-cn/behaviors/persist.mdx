@@ -1,0 +1,49 @@
+---
+title: Persist
+description: 使用行为扩展持久化状态。
+sidebar:
+  order: 2
+---
+
+## 基础用法
+
+```ts
+import { oin } from '@oin/store';
+import { persist, withBehaviors } from '@oin/store/behavior';
+
+const count = oin(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+默认会优先使用 `localStorage`（若可用）。
+
+## 自定义存储
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+## 序列化
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## 下一步
+
+- 使用 [Schedule](/zh-cn/behaviors/schedule/)。
+- 查看 [行为扩展概览](/zh-cn/behaviors/overview/)。

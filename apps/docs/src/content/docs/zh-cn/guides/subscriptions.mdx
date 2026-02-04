@@ -1,0 +1,42 @@
+---
+title: 订阅
+description: 监听值变化或结构化更新。
+sidebar:
+  order: 3
+---
+
+## 值订阅
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+const unsub = count.subscribe((value) => {
+  console.log('value', value);
+});
+
+count(1);
+unsub();
+```
+
+## 更新订阅
+
+`subscribeUpdate` 提供结构化 patch 信息。
+
+```ts
+const unsubUpdate = count.subscribeUpdate((update) => {
+  for (const patch of update.patches) {
+    console.log(patch.op, patch.path, patch.next);
+  }
+});
+```
+
+## Scope/Tree 冒泡
+
+订阅会向上冒泡，在根节点订阅即可捕获深层变化。
+
+## 下一步
+
+- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 使用 [DevTools](/zh-cn/behaviors/devtools/)。

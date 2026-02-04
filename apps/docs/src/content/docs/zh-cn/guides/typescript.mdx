@@ -1,0 +1,49 @@
+---
+title: TypeScript
+description: 路径与节点的强类型支持。
+sidebar:
+  order: 5
+---
+
+## Unit 类型
+
+```ts
+import type { OinUnit } from '@oin/store';
+import { oin } from '@oin/store';
+
+const count: OinUnit<number> = oin(0);
+```
+
+## 树形类型
+
+`oin()` 会保留嵌套结构类型。
+
+```ts
+const store = oin({ user: { name: 'Ada', age: 36 } });
+store.user.name();
+```
+
+## Path 工具类型
+
+```ts
+import type { OinPathOf, OinPathValue } from '@oin/store';
+
+type Store = { user: { profile: { name: string } } };
+
+type NamePath = OinPathOf<Store>;
+
+type NameValue = OinPathValue<Store, ['user', 'profile', 'name']>;
+```
+
+## Unwrap 工具类型
+
+```ts
+import type { UnwrapOin } from '@oin/store';
+
+type Shape = UnwrapOin<ReturnType<typeof oin>>;
+```
+
+## 下一步
+
+- 阅读 [行为扩展](/zh-cn/behaviors/overview/)。
+- 查看 [集成](/zh-cn/integrations/react/)。

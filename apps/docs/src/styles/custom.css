@@ -1,27 +1,66 @@
 :root {
-	--sl-color-accent-low: #e8f3ff;
-	--sl-color-accent: #0060df;
-	--sl-color-accent-high: #003eaa;
-	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #eceef2;
-	--sl-color-gray-2: #c4c9d6;
-	--sl-color-gray-3: #8f97a3;
-	--sl-color-gray-4: #5d6470;
-	--sl-color-gray-5: #383e4a;
-	--sl-color-gray-6: #252932;
-	--sl-color-black: #15171c;
+	--radius: 0.75rem;
+	--primary: #2563eb;
+	--sl-color-accent: #2563eb;
+	--sl-color-accent-high: #1e40af;
+	--sl-color-accent-low: #dbeafe;
+	--code-background: #f5f7ff;
+	--sl-color-bg-inline-code: #eef2ff;
+	--sl-color-text-accent: var(--primary);
+	--sl-color-banner-text: #0b1220;
+	--sl-color-blue: #2563eb;
+	--sl-color-blue-low: #dbeafe;
+	--sl-color-blue-high: #1e3a8a;
 }
 
 [data-theme='dark'] {
-	--sl-color-accent-low: #1e2837;
-	--sl-color-accent: #3b82f6;
-	--sl-color-accent-high: #60a5fa;
-	--sl-color-white: #15171c;
-	--sl-color-gray-1: #252932;
-	--sl-color-gray-2: #383e4a;
-	--sl-color-gray-3: #5d6470;
-	--sl-color-gray-4: #8f97a3;
-	--sl-color-gray-5: #c4c9d6;
-	--sl-color-gray-6: #eceef2;
-	--sl-color-black: #ffffff;
+	--primary: #60a5fa;
+	--sl-color-accent: #60a5fa;
+	--sl-color-accent-high: #93c5fd;
+	--sl-color-accent-low: #1e3a8a;
+	--code-background: #0f172a;
+	--sl-color-bg-inline-code: #1e293b;
+	--sl-color-banner-text: #bfdbfe;
+	--sl-color-blue: #60a5fa;
+	--sl-color-blue-low: #1e293b;
+	--sl-color-blue-high: #93c5fd;
+}
+
+.sl-markdown-content :is(h1, h2, h3) {
+	letter-spacing: -0.02em;
+}
+
+.sl-markdown-content :is(pre, code) {
+	font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+.sl-markdown-content .sl-link-button {
+	border-radius: calc(var(--radius) + 4px);
+}
+
+.layout {
+	background-image: radial-gradient(
+			circle at 20% 20%,
+			color-mix(in oklab, var(--sl-color-accent) 12%, transparent),
+			transparent 45%
+		),
+		radial-gradient(
+			circle at 80% 0%,
+			color-mix(in oklab, var(--sl-color-accent) 10%, transparent),
+			transparent 40%
+		);
+}
+
+.sl-markdown-content .card {
+	border-radius: calc(var(--radius) + 8px);
+	box-shadow: 0 18px 45px color-mix(in oklab, var(--border) 25%, transparent);
+}
+
+.starlight-aside {
+	border-radius: calc(var(--radius) + 6px);
+	box-shadow: 0 1px 0 color-mix(in oklab, var(--border) 40%, transparent);
+}
+
+.starlight-aside__title {
+	font-weight: 600;
 }

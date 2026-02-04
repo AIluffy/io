@@ -1,0 +1,49 @@
+---
+title: Persist
+description: Persist state to storage with a behavior layer.
+sidebar:
+  order: 2
+---
+
+## Basic usage
+
+```ts
+import { oin } from '@oin/store';
+import { persist, withBehaviors } from '@oin/store/behavior';
+
+const count = oin(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+By default, `persist` uses `localStorage` when available.
+
+## Custom storage
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+## Serialization
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## Next steps
+
+- Add update scheduling in [Schedule](/en/behaviors/schedule/).
+- Combine behaviors in [Overview](/en/behaviors/overview/).

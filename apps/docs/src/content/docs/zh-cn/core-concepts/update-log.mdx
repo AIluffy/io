@@ -1,0 +1,65 @@
+---
+title: 更新日志
+description: 每次写入都会生成结构化 patch。
+sidebar:
+  order: 4
+---
+
+## Patch 与 Update
+
+OIN 会将写入记录为 patch（set/splice/sort），并聚合为 update。update 可合并、可回放、可逆。
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+const unsub = count.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+count(1);
+unsub();
+```
+
+## onMutation 与 onError
+
+使用调试辅助函数观察变更和错误。
+
+```ts
+import { onMutation, onError, oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+
+const stop = onMutation(store, (patch, path) => {
+  console.log(path, patch.op, patch.next);
+});
+
+const stopError = onError(store, (error, path, op) => {
+  console.error('failed', op, path, error);
+});
+```
+
+## Update 工具函数
+
+```ts
+import { applyUpdate, invertUpdate, mergeUpdates, oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const updates = [];
+const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+store.count(1);
+store.count(2);
+unsub();
+
+const merged = mergeUpdates(updates[0], updates[1]);
+const inverted = invertUpdate(merged);
+
+applyUpdate(store, inverted);
+```
+
+## 下一步
+
+- 了解 [DevTools](/zh-cn/behaviors/devtools/)。
+- 学习 [批处理](/zh-cn/guides/batching/)。

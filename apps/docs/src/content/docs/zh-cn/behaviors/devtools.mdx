@@ -1,0 +1,72 @@
+---
+title: DevTools
+description: 时间旅行、diff 与导出能力。
+sidebar:
+  order: 4
+---
+
+## 1) 初始化
+
+```ts
+import { oin } from '@oin/store';
+import { createOinDevtools } from '@oin/devtools';
+
+const store = oin({ counter: 0, user: { name: 'Ada' } });
+
+const devtools = createOinDevtools(store, {
+  name: 'OIN Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## 2) React 面板
+
+```tsx
+import { createOinDevtools } from '@oin/devtools';
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@oin/devtools-react';
+
+export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
+  return (
+    <OinDevtoolsErrorBoundary>
+      <OinDevtoolsPanel devtools={devtools} height={420} />
+    </OinDevtoolsErrorBoundary>
+  );
+}
+```
+
+## 3) 时间旅行
+
+- `devtools.timeTravel.undo()` 应用反向 update
+- `devtools.timeTravel.redo()` 重放 update
+- `devtools.timeTravel.goTo(index)` 跳转
+
+## 4) Diff
+
+- **Patch diff**：来自 `update.patches`
+- **Snapshot diff**：`captureSnapshots: 'always'` 时可用
+
+## 5) 导出
+
+```ts
+const json = devtools.export.json();
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## 行为扩展集成
+
+```ts
+import { devtools, withBehaviors } from '@oin/store/behavior';
+import { createOinDevtools } from '@oin/devtools';
+import { oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const view = withBehaviors(store, [devtools({ target: store, create: createOinDevtools })]);
+const dt = view.extensions?.devtools;
+```
+
+## 下一步
+
+- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 在 [Playground](/zh-cn/guides/playground/) 中体验。

@@ -1,0 +1,29 @@
+---
+title: Svelte
+description: Svelte stores from OIN Units.
+sidebar:
+  order: 4
+---
+
+## toReadable
+
+```ts
+import { oin } from '@oin/store';
+import { toReadable } from '@oin/svelte';
+
+const count = oin(0);
+export const countReadable = toReadable(count);
+```
+
+## toWritable
+
+```ts
+import { toWritable } from '@oin/svelte';
+
+export const countWritable = toWritable(count);
+```
+
+## Next steps
+
+- Explore adapters in [Integrations: React](/en/integrations/react/).
+- Use behaviors in [Behaviors: Overview](/en/behaviors/overview/).

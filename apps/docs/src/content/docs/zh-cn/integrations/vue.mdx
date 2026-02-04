@@ -1,0 +1,38 @@
+---
+title: Vue
+description: Vue Composition API 适配。
+sidebar:
+  order: 3
+---
+
+## useOin
+
+```ts
+import { oin } from '@oin/store';
+import { useOin } from '@oin/vue';
+
+const count = oin(0);
+
+export function useCounter() {
+  const state = useOin(count);
+  const inc = () => count((v) => v + 1);
+  return { state, inc };
+}
+```
+
+## oinRef
+
+`oinRef` 将 Unit 适配成 Vue `ref`。
+
+```ts
+import { oin } from '@oin/store';
+import { oinRef } from '@oin/vue';
+
+const count = oin(0);
+const countRef = oinRef(count);
+```
+
+## 下一步
+
+- 查看 [Vanilla JS](/zh-cn/integrations/vanilla/)。
+- 使用 [DevTools](/zh-cn/behaviors/devtools/)。

@@ -1,0 +1,84 @@
+---
+title: From Zustand
+description: Map common Zustand patterns to OIN.
+sidebar:
+  order: 1
+---
+
+This guide maps popular Zustand patterns to OIN equivalents. The goal is clarity, not a 1:1 API match.
+
+## Store creation
+
+Zustand:
+
+```ts
+const useStore = create((set) => ({
+  count: 0,
+  inc: () => set((s) => ({ count: s.count + 1 })),
+}));
+```
+
+OIN:
+
+```ts
+import { oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const inc = () => store.count((v) => v + 1);
+```
+
+## Selectors
+
+Zustand selector:
+
+```ts
+const count = useStore((s) => s.count);
+```
+
+OIN selector via derived:
+
+```ts
+import { derived } from '@oin/store';
+
+const count = derived(store, (s) => s.count);
+```
+
+For path-focused access, use `lens`:
+
+```ts
+import { lens } from '@oin/store';
+
+const userName = lens<string>(store, ['user', 'name']);
+```
+
+## Middleware → Behaviors
+
+Zustand middlewares like `persist` and `devtools` map to OIN behaviors.
+
+```ts
+import { persist, devtools, withBehaviors } from '@oin/store/behavior';
+import { createOinDevtools } from '@oin/devtools';
+
+const view = withBehaviors(store, [
+  persist({ key: 'store' }),
+  devtools({ target: store, create: createOinDevtools }),
+]);
+```
+
+## React usage
+
+Zustand `useStore` becomes `useOin`:
+
+```tsx
+import { useOin } from '@oin/react';
+
+function Counter() {
+  const value = useOin(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## Next steps
+
+- Learn the OIN mental model in [Introduction](/en/getting-started/introduction/).
+- Explore behaviors in [Behaviors](/en/behaviors/overview/).

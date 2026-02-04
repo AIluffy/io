@@ -1,0 +1,51 @@
+---
+title: TypeScript
+description: Strong typing for paths, nodes, and derived values.
+sidebar:
+  order: 5
+---
+
+## Typed Units
+
+```ts
+import type { OinUnit } from '@oin/store';
+import { oin } from '@oin/store';
+
+const count: OinUnit<number> = oin(0);
+```
+
+## Typed trees
+
+`oin()` preserves nested shapes, so property access is strongly typed.
+
+```ts
+const store = oin({ user: { name: 'Ada', age: 36 } });
+store.user.name();
+```
+
+## Path helpers
+
+Use path helpers for utilities and adapters.
+
+```ts
+import type { OinPathOf, OinPathValue } from '@oin/store';
+
+type Store = { user: { profile: { name: string } } };
+
+type NamePath = OinPathOf<Store>; // ['user', 'profile', 'name'] | ...
+
+type NameValue = OinPathValue<Store, ['user', 'profile', 'name']>; // string
+```
+
+## Unwrap helpers
+
+```ts
+import type { UnwrapOin } from '@oin/store';
+
+type Shape = UnwrapOin<ReturnType<typeof oin>>;
+```
+
+## Next steps
+
+- Learn how to compose behavior layers in [Behaviors](/en/behaviors/overview/).
+- See framework bindings in [Integrations](/en/integrations/react/).

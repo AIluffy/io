@@ -1,0 +1,42 @@
+---
+title: Subscriptions
+description: Listen to values or structured updates.
+sidebar:
+  order: 3
+---
+
+## Value subscriptions
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+const unsub = count.subscribe((value) => {
+  console.log('value', value);
+});
+
+count(1);
+unsub();
+```
+
+## Update subscriptions
+
+`subscribeUpdate` gives you structured patches.
+
+```ts
+const unsubUpdate = count.subscribeUpdate((update) => {
+  for (const patch of update.patches) {
+    console.log(patch.op, patch.path, patch.next);
+  }
+});
+```
+
+## Scope and tree bubbling
+
+Subscriptions bubble through tree nodes, so subscribing at the root will capture nested changes.
+
+## Next steps
+
+- Learn debugging hooks in [Update Log](/en/core-concepts/update-log/).
+- Time-travel with [DevTools](/en/behaviors/devtools/).

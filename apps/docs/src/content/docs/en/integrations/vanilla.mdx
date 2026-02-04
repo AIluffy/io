@@ -1,0 +1,40 @@
+---
+title: Vanilla JS
+description: Use OIN without a framework.
+sidebar:
+  order: 1
+---
+
+## Read and write
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ count: 0 });
+
+state.count();
+state.count((v) => v + 1);
+```
+
+## Subscribe
+
+```ts
+const unsub = state.subscribe((snapshot) => {
+  console.log('snapshot', snapshot);
+});
+
+const unsubUpdates = state.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+});
+```
+
+## Use snapshots
+
+```ts
+const snapshot = state.snapshot();
+```
+
+## Next steps
+
+- Use the React hook in [Integrations: React](/en/integrations/react/).
+- Add debugging via [DevTools](/en/behaviors/devtools/).

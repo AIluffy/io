@@ -1,0 +1,32 @@
+---
+title: 介绍
+description: OIN 是什么，以及如何理解它。
+sidebar:
+  order: 1
+---
+
+OIN 是一个 TypeScript 状态库，核心是少量可组合原语与显式的更新日志。它强调可预测读取、可追踪写入，以及跨框架的一致集成方式。
+
+## 心智模型
+
+- **Unit**：函数式单元，调用读取，传值写入。
+- **Scope**：由多个 Unit 组成的对象，可成组更新。
+- **Tree**：深层结构，每个路径都是 Unit。
+- **Update log**：每次写入都会生成可订阅的 patch。
+
+## OIN 关注点
+
+- **深层更新零样板**：`state.user.name('Ada')` 直接写。
+- **快照安全**：读取返回冻结快照，避免误修改。
+- **显式变更记录**：patch 可回放、可合并。
+- **适配一致**：`snapshot() + subscribe()` 统一在各框架使用。
+
+:::note
+如果你熟悉 Zustand，可以把 OIN 理解为“树形 Unit”+“更新日志一等公民”。迁移指南给出一一映射。
+:::
+
+## 下一步
+
+- 进入 [快速开始](/zh-cn/getting-started/quick-start/)。
+- 阅读 [核心概念](/zh-cn/core-concepts/units-scopes/)。
+- 查看 [集成](/zh-cn/integrations/vanilla/)。

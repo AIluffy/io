@@ -1,0 +1,59 @@
+---
+title: Testing
+description: Test OIN stores with snapshots and updates.
+sidebar:
+  order: 4
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Prefer snapshot assertions
+
+Snapshots are frozen and stable within a revision, so they are ideal for tests.
+
+```ts
+import { expect, it } from 'vitest';
+import { oin } from '@oin/store';
+
+it('updates count', () => {
+  const count = oin(0);
+  count((v) => v + 1);
+  expect(count.snapshot()).toBe(1);
+});
+```
+
+## Assert patches
+
+Use `subscribeUpdate` to inspect the exact patches produced by an action.
+
+```ts
+it('emits update patches', () => {
+  const count = oin(0);
+  const patches = [] as string[];
+  const unsub = count.subscribeUpdate((u) => {
+    patches.push(u.patches[0].op);
+  });
+
+  count(1);
+  unsub();
+
+  expect(patches).toEqual(['set']);
+});
+```
+
+<Tabs>
+  <TabItem label="Arrange">
+    Use plain functions to wrap mutations so you can reuse them in tests and app code.
+  </TabItem>
+  <TabItem label="Act">
+    Call those functions and assert on snapshots or patches.
+  </TabItem>
+  <TabItem label="Assert">
+    Compare snapshots or patch sequences to expected values.
+  </TabItem>
+</Tabs>
+
+## Next steps
+
+- Learn advanced typing in [TypeScript](/en/guides/typescript/).
+- Explore the [Playground](/en/guides/playground/).

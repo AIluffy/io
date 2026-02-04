@@ -1,0 +1,62 @@
+---
+title: Unit 与 Scope
+description: 状态读写的核心原语。
+sidebar:
+  order: 1
+---
+
+## Unit
+
+Unit 是函数式单元：调用读取，传值写入。
+
+```ts
+import { oin } from '@oin/store';
+
+const count = oin(0);
+
+count(); // 0
+count(1); // 写入
+count((v) => v + 1); // 更新
+```
+
+Unit 暴露以下能力：
+
+- `subscribe(fn)` 订阅值变化
+- `subscribeUpdate(fn)` 订阅更新记录
+- `snapshot()` 获取冻结快照
+
+## Scope
+
+当 `oin` 接收对象时，会生成 Scope，每个 key 都是 Unit。
+
+```ts
+const user = oin({ name: 'Ada', age: 36 });
+
+user.name();
+user.age(37);
+```
+
+Scope 支持 `commit` 进行成组更新：
+
+```ts
+user.commit((draft) => {
+  draft.name = 'Grace';
+  draft.age = 37;
+});
+```
+
+## ArrayUnit
+
+数组同样是 Unit，可以直接操作并产生更新。
+
+```ts
+const todos = oin([{ id: 'a', title: 'Ship', done: false }]);
+
+todos.push({ id: 'b', title: 'Document', done: false });
+todos[0].done(true);
+```
+
+## 下一步
+
+- 了解 [深层 Tree](/zh-cn/core-concepts/deep-tree/)。
+- 阅读 [快照](/zh-cn/core-concepts/snapshots/)。

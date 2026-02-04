@@ -1,0 +1,40 @@
+---
+title: React
+description: 使用 `useOin` Hook 接入 React。
+sidebar:
+  order: 2
+---
+
+## useOin
+
+```tsx
+import { oin } from '@oin/store';
+import { useOin } from '@oin/react';
+
+const count = oin(0);
+
+export function Counter() {
+  const value = useOin(count);
+  return <button onClick={() => count((v) => v + 1)}>{value}</button>;
+}
+```
+
+## Derived in React
+
+```tsx
+import { derived, oin } from '@oin/store';
+import { useOin } from '@oin/react';
+
+const store = oin({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useOin(doubled);
+  return <span>{value}</span>;
+}
+```
+
+## 下一步
+
+- 了解 [Persist](/zh-cn/behaviors/persist/)。
+- 阅读 [TypeScript](/zh-cn/guides/typescript/)。

@@ -1,14 +1,14 @@
 ---
 title: Welcome to OIN
-description: The core & framework adaptation package.
+description: Reactive state primitives with deep signal support.
 template: splash
 hero:
-  tagline: Reactive state management with deep signal support.
+  tagline: Predictable state with deep updates, frozen snapshots, and explicit update logs.
   image:
     file: ../../../assets/houston.webp
   actions:
     - text: Get Started
-      link: /en/intro/
+      link: /en/getting-started/quick-start/
       icon: right-arrow
       variant: primary
     - text: View on GitHub
@@ -19,19 +19,44 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next Steps
+## Quick Start
+
+```ts
+import { oin, batch } from '@oin/store';
+
+const store = oin({ count: 0, user: { name: 'Ada' } });
+
+store.count();
+store.user.name('Grace');
+
+batch(() => {
+  store.count((v) => v + 1);
+  store.count((v) => v + 1);
+});
+```
+
+## Why OIN
 
 <CardGrid stagger>
-	<Card title="Signals" icon="pencil">
-		Learn about OIN's fine-grained reactivity system.
+	<Card title="Deep tree updates" icon="open-book">
+		Address nested paths directly without changing APIs.
 	</Card>
-	<Card title="Batching" icon="add-document">
-		Understand how updates are optimized.
+	<Card title="Snapshot safety" icon="approve-check-circle">
+		Reads return frozen snapshots for predictable sharing.
 	</Card>
-	<Card title="Frameworks" icon="setting">
-		Integrate with React, Vue, and Svelte.
+	<Card title="Structured updates" icon="add-document">
+		Every write is logged as patches you can replay.
 	</Card>
-	<Card title="Deep Reactivity" icon="open-book">
-		Manage complex nested state with ease.
+	<Card title="Adapters" icon="setting">
+		React, Vue, and Svelte adapters share the same contract.
 	</Card>
 </CardGrid>
+
+## Explore
+
+- [Getting Started](/en/getting-started/introduction/)
+- [Core Concepts](/en/core-concepts/units-scopes/)
+- [Guides](/en/guides/derived/)
+- [Behaviors](/en/behaviors/overview/)
+- [Integrations](/en/integrations/vanilla/)
+- [Migrations](/en/migrations/from-zustand/)

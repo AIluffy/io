@@ -1,0 +1,36 @@
+---
+title: Snapshots
+description: Read frozen values that are safe to share.
+sidebar:
+  order: 3
+---
+
+## Frozen by default
+
+Any read that returns an object or array is frozen. This prevents accidental in-place mutation and makes comparisons safer.
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ items: ['a', 'b'] });
+const snapshot = state.snapshot();
+
+Object.isFrozen(snapshot); // true
+```
+
+## Snapshot API
+
+Every Unit and Scope exposes `snapshot()`.
+
+```ts
+const count = oin(0);
+
+count.snapshot();
+```
+
+Snapshots are **referentially stable** within the same revision, which is helpful for memoization and UI rendering.
+
+## Next steps
+
+- Learn about update metadata in [Update Log](/en/core-concepts/update-log/).
+- See framework usage in [Integrations](/en/integrations/vanilla/).

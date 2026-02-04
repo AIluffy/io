@@ -1,0 +1,74 @@
+---
+title: DevTools
+description: Time-travel, diffs, and export for OIN updates.
+sidebar:
+  order: 4
+---
+
+## 1) Setup
+
+```ts
+import { oin } from '@oin/store';
+import { createOinDevtools } from '@oin/devtools';
+
+const store = oin({ counter: 0, user: { name: 'Ada' } });
+
+const devtools = createOinDevtools(store, {
+  name: 'OIN Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## 2) UI panel (React)
+
+```tsx
+import { createOinDevtools } from '@oin/devtools';
+import { OinDevtoolsPanel, OinDevtoolsErrorBoundary } from '@oin/devtools-react';
+
+export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createOinDevtools> }) {
+  return (
+    <OinDevtoolsErrorBoundary>
+      <OinDevtoolsPanel devtools={devtools} height={420} />
+    </OinDevtoolsErrorBoundary>
+  );
+}
+```
+
+## 3) Time travel
+
+- `devtools.timeTravel.undo()` applies the inverted update.
+- `devtools.timeTravel.redo()` replays the update.
+- `devtools.timeTravel.goTo(index)` jumps to a cursor.
+
+## 4) Diffs
+
+- **Patch diff**: derived from `update.patches`.
+- **Snapshot diff**: available when `captureSnapshots: 'always'`.
+
+## 5) Export
+
+```ts
+const json = devtools.export.json();
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## Behavior integration
+
+Attach DevTools to a view via behaviors if you want it discoverable on the node itself:
+
+```ts
+import { devtools, withBehaviors } from '@oin/store/behavior';
+import { createOinDevtools } from '@oin/devtools';
+import { oin } from '@oin/store';
+
+const store = oin({ count: 0 });
+const view = withBehaviors(store, [devtools({ target: store, create: createOinDevtools })]);
+const dt = view.extensions?.devtools;
+```
+
+## Next steps
+
+- See update structure in [Update Log](/en/core-concepts/update-log/).
+- Try it live in the [Playground](/en/guides/playground/).

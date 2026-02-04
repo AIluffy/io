@@ -1,0 +1,40 @@
+---
+title: Vanilla JS
+description: 不依赖框架使用 OIN。
+sidebar:
+  order: 1
+---
+
+## 读写
+
+```ts
+import { oin } from '@oin/store';
+
+const state = oin({ count: 0 });
+
+state.count();
+state.count((v) => v + 1);
+```
+
+## 订阅
+
+```ts
+const unsub = state.subscribe((snapshot) => {
+  console.log('snapshot', snapshot);
+});
+
+const unsubUpdates = state.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+});
+```
+
+## 快照
+
+```ts
+const snapshot = state.snapshot();
+```
+
+## 下一步
+
+- 使用 [React 集成](/zh-cn/integrations/react/)。
+- 添加 [DevTools](/zh-cn/behaviors/devtools/)。
