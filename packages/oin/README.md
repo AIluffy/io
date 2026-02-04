@@ -12,7 +12,8 @@ OIN 核心状态库：Unit / ArrayUnit / Scope / Derived / Snapshot，并支持�
 本包提供最小行为扩展层，支持对读/写/订阅行为进行组合增强。
 
 ```ts
-import { oin, withBehaviors, schedule, persist } from '@oin/store';
+import { oin } from '@oin/store';
+import { withBehaviors, schedule, persist } from '@oin/store/behavior';
 
 const count = oin(0);
 const view = withBehaviors(count, [
@@ -38,7 +39,8 @@ DevTools 示例（按需引入）：
 
 ```ts
 import { createOinDevtools } from '@oin/devtools';
-import { devtools, withBehaviors } from '@oin/store';
+import { oin } from '@oin/store';
+import { devtools, withBehaviors } from '@oin/store/behavior';
 
 const count = oin(0);
 const view = withBehaviors(count, [

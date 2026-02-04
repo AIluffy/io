@@ -15,7 +15,7 @@
   <rect x="40" y="40" width="340" height="200" class="box" />
   <text x="70" y="78" class="title">Data Model</text>
   <text x="70" y="110" class="text">Unit • Scope • ArrayUnit</text>
-  <text x="70" y="134" class="text">TreeNode (oinTree / oinDeep)</text>
+  <text x="70" y="134" class="text">TreeNode (oinTree / oin)</text>
   <text x="70" y="170" class="muted">Frozen snapshots, subscribe, commit</text>
 
   <rect x="430" y="40" width="340" height="200" class="box" />

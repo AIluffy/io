@@ -8,7 +8,7 @@ description: "Behavior extensions for OIN"
 OIN exposes a minimal behavior layer to enhance read/write/subscribe without modifying core state nodes.
 
 ```ts
-import { withBehaviors, schedule, persist } from '@oin/store';
+import { withBehaviors, schedule, persist } from '@oin/store/behavior';
 
 const view = withBehaviors(count, [
   schedule('microtask'),
@@ -23,9 +23,12 @@ When the input is a tree node, the returned view preserves deep access (e.g. `vi
 
 ## Exports
 
+From `@oin/store`:
 - `fromOin`
-- `withBehaviors`
 - `lens`
+
+From `@oin/store/behavior`:
+- `withBehaviors`
 - `schedule`
 - `persist`
 - `devtools`

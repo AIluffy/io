@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { oinDeep } from '@oin/store';
+import { oin } from '@oin/store';
 import { createOinDevtools } from './create-oin-devtools.js';
 
 describe('oin-devtools: createOinDevtools', () => {
   it('records updates and snapshots', () => {
-    const store = oinDeep({ count: 0, user: { name: 'a' } });
+    const store = oin({ count: 0, user: { name: 'a' } });
     const devtools = createOinDevtools(store, { captureSnapshots: 'always' });
 
     store.count(1);
@@ -18,7 +18,7 @@ describe('oin-devtools: createOinDevtools', () => {
   });
 
   it('supports undo/redo', () => {
-    const store = oinDeep({ count: 0, user: { name: 'a' } });
+    const store = oin({ count: 0, user: { name: 'a' } });
     const devtools = createOinDevtools(store, { captureSnapshots: 'always' });
 
     store.count(1);
@@ -33,7 +33,7 @@ describe('oin-devtools: createOinDevtools', () => {
   });
 
   it('truncates future history after time-travel', () => {
-    const store = oinDeep({ count: 0, user: { name: 'a' } });
+    const store = oin({ count: 0, user: { name: 'a' } });
     const devtools = createOinDevtools(store, { captureSnapshots: 'always' });
 
     store.count(1);
@@ -50,7 +50,7 @@ describe('oin-devtools: createOinDevtools', () => {
   });
 
   it('exports JSON and Redux DevTools import state', () => {
-    const store = oinDeep({ count: 0 });
+    const store = oin({ count: 0 });
     const devtools = createOinDevtools(store, { captureSnapshots: 'always' });
     store.count(1);
 
@@ -65,7 +65,7 @@ describe('oin-devtools: createOinDevtools', () => {
   });
 
   it('isolates listener failures', () => {
-    const store = oinDeep({ count: 0 });
+    const store = oin({ count: 0 });
     const devtools = createOinDevtools(store, { captureSnapshots: 'always' });
     devtools.subscribe(() => {
       throw new Error('listener boom');

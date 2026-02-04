@@ -10,7 +10,8 @@ sidebar:
 Extensions are behaviors that wrap a view’s `get/set/subscribe` without changing core OIN nodes.
 
 ```ts
-import { oin, withBehaviors, schedule, persist } from '@oin/store';
+import { oin } from '@oin/store';
+import { withBehaviors, schedule, persist } from '@oin/store/behavior';
 
 const count = oin(0);
 const view = withBehaviors(count, [
@@ -25,7 +26,8 @@ view(1); // view() reads, view(next) writes
 ## Full composition example
 
 ```ts
-import { oin, withBehaviors, lens, schedule, persist, devtools } from '@oin/store';
+import { oin, lens } from '@oin/store';
+import { withBehaviors, schedule, persist, devtools } from '@oin/store/behavior';
 import { createOinDevtools } from '@oin/devtools';
 
 const state = oin({

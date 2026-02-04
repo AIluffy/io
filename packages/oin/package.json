@@ -7,6 +7,11 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
+    "./behavior": {
+      "types": "./dist/behavior.d.ts",
+      "import": "./dist/behavior.js",
+      "default": "./dist/behavior.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",

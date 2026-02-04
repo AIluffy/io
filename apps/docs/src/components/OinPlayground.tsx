@@ -1,4 +1,4 @@
-import { batch, oinDeep } from '../../../../packages/oin/src/index';
+import { batch, oin } from '../../../../packages/oin/src/index';
 import { createOinDevtools } from '../../../../packages/oin-devtools/src/index';
 import {
   OinDevtoolsErrorBoundary,
@@ -9,7 +9,7 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react';
 export function OinPlayground() {
   const store = useMemo(
     () =>
-      oinDeep<{
+      oin<{
         counter: number;
         user: { name: string };
         todos: Array<{ id: string; title: string; done: boolean }>;
