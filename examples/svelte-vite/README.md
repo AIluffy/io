@@ -9,5 +9,6 @@ npm run dev
 
 ## What it demonstrates
 
-- `@oin/store`: `oin()` creates a Unit
-- `@oin/svelte`: `toWritable(unit)` converts a Unit into a Svelte store
+- Standard Todo demo (add / toggle / remove / filter)
+- `@oin/store`: tree nodes for object + array state
+- `@oin/svelte`: `toReadable(source)` bridges `snapshot() + subscribe()`

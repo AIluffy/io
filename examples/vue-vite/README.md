@@ -9,5 +9,6 @@ npm run dev
 
 ## What it demonstrates
 
-- `@oin/store`: `oin()` creates a Unit
-- `@oin/vue`: `oinRef(unit)` turns a Unit into a Vue `Ref`
+- Standard Todo demo (add / toggle / remove / filter)
+- `@oin/store`: tree nodes for object + array state
+- `@oin/vue`: `useOin(source)` bridges `snapshot() + subscribe()`
