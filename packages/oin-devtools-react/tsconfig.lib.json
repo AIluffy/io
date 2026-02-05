@@ -28,6 +28,9 @@
   ],
   "references": [
     {
+      "path": "../oin/tsconfig.lib.json"
+    },
+    {
       "path": "../oin-devtools/tsconfig.lib.json"
     }
   ]

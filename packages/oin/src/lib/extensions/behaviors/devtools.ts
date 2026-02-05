@@ -15,9 +15,18 @@ export function devtools<T>(config: DevtoolsBehaviorOptions): OinBehavior<T> {
     const key = config.key ?? 'devtools';
     const extensions: OinViewExtensions = { ...(view.extensions ?? {}) };
     extensions[key] = instance;
+    const prevDestroy = view.destroy;
+    const destroy = () => {
+      const maybeDestroy = instance as { destroy?: unknown };
+      if (typeof maybeDestroy.destroy === 'function') {
+        maybeDestroy.destroy();
+      }
+      prevDestroy?.();
+    };
     return {
       ...view,
       extensions,
+      destroy,
     };
   };
 }

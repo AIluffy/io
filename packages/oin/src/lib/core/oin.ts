@@ -1,8 +1,6 @@
 import type { OinNode, OinResult } from '../utils/types.js';
 
-import { createArrayUnit } from '../units/array-unit.js';
 import { oinTree } from './oin-tree.js';
-import { createScope } from './scope.js';
 import { createUnit } from '../units/unit.js';
 import { isPlainObject } from '../utils/plain-object.js';
 
@@ -37,9 +35,9 @@ export function oin<T>(
 export function oin(target: unknown, options?: OinOptions): unknown {
   if (options?.shallow === true) {
     if (Array.isArray(target))
-      return createArrayUnit(target) as unknown as OinNode<unknown>;
+      return oinTree(target, { maxDepth: 1 }) as unknown as OinNode<unknown>;
     if (isPlainObject(target))
-      return createScope(target) as unknown as OinNode<unknown>;
+      return oinTree(target, { maxDepth: 1 }) as unknown as OinNode<unknown>;
     return createUnit(target) as unknown as OinNode<unknown>;
   }
 

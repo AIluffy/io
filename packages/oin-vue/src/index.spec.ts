@@ -41,4 +41,30 @@ describe('@org/oin-vue', () => {
     scope.stop();
     expect(output).toBe(3);
   });
+
+  it('supports sync schedule in useOin', () => {
+    const scope = effectScope();
+    let state: ShallowRef<number> | undefined;
+    scope.run(() => {
+      const count = oin(0);
+      state = useOin(count, { schedule: 'sync' });
+      count(5);
+      expect(state?.value).toBe(5);
+    });
+    scope.stop();
+  });
+
+  it('supports microtask schedule in oinRef', async () => {
+    const scope = effectScope();
+    let ref: Ref<number> | undefined;
+    scope.run(() => {
+      const count = oin(0);
+      ref = oinRef(count, { schedule: 'microtask' });
+      count(7);
+      expect(ref?.value).toBe(0);
+    });
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(ref?.value).toBe(7);
+    scope.stop();
+  });
 });

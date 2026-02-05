@@ -10,6 +10,11 @@ description: "type export"
 OinTreeArrayUnit<T, MaxDepth>
 ```
 
+## Notes
+
+- Used for deep arrays (MaxDepth > 1); `OinArrayUnit` is the shallow alias.
+- `commit` updates array contents via draft diffs.
+
 ## Properties
 
 | Name | Type |

@@ -1,10 +1,10 @@
-import { batch, oin } from '../../../../packages/oin/src/index';
-import { createOinDevtools } from '../../../../packages/oin-devtools/src/index';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { createOinDevtools } from '@oin/devtools';
 import {
   OinDevtoolsErrorBoundary,
   OinDevtoolsPanel,
-} from '../../../../packages/oin-devtools-react/src/index';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+} from '@oin/devtools-react';
+import { batch, oin } from '@oin/store';
 
 export function OinPlayground() {
   const store = useMemo(
@@ -18,13 +18,13 @@ export function OinPlayground() {
         user: { name: 'Ada' },
         todos: [{ id: 'a', title: 'Learn OIN', done: false }],
       }),
-    []
+    [],
   );
 
   const snapshot = useSyncExternalStore(
     store.subscribe,
     store.snapshot,
-    store.snapshot
+    store.snapshot,
   );
   const devtools = useMemo(
     () =>
@@ -35,7 +35,7 @@ export function OinPlayground() {
         reduxDevTools: { enabled: true, name: 'OIN Playground' },
         perf: { enabled: true, windowSize: 60, sampleRate: 1 },
       }),
-    [store]
+    [store],
   );
 
   useEffect(() => {

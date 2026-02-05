@@ -175,4 +175,44 @@ describe('oin: shallow', () => {
     const u: any = oin(d, { shallow: true });
     expect(u.snapshot()).toBeInstanceOf(Date);
   });
+
+  it('shallow mode includes non-enumerable properties', () => {
+    const input: any = {};
+    Object.defineProperty(input, 'hidden', {
+      value: { n: 1 },
+      enumerable: false,
+      configurable: true,
+    });
+    const o: any = oin(input, { shallow: true });
+    expect(Reflect.ownKeys(o)).toContain('hidden');
+    expect(o.hidden()).toEqual({ n: 1 });
+    expect(Reflect.ownKeys(o.snapshot())).toContain('hidden');
+  });
+
+  it('shallow mode includes symbol keys', () => {
+    const k = Symbol('k');
+    const input: any = { [k]: { n: 1 } };
+    const o: any = oin(input, { shallow: true });
+    expect(Reflect.ownKeys(o)).toContain(k);
+    expect(o[k]()).toEqual({ n: 1 });
+    expect(Reflect.ownKeys(o.snapshot())).toContain(k);
+  });
+
+  it('shallow commit rejects unknown keys', () => {
+    const o: any = oin({ a: 1 }, { shallow: true });
+    expect(() => {
+      o.commit((draft: any) => {
+        draft.b = 2;
+      });
+    }).toThrow(/unknown key/);
+  });
+
+  it('shallow array commit applies draft changes', () => {
+    const a: any = oin([1, 2, 3], { shallow: true });
+    a.commit((draft: number[]) => {
+      draft[1] = 10;
+      draft.push(4);
+    });
+    expect(a.snapshot()).toEqual([1, 10, 3, 4]);
+  });
 });

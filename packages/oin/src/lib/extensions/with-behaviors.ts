@@ -72,12 +72,13 @@ function createCallableView<T, N extends object>(
     view.set(args[0] as T | ((prev: T) => T));
   };
 
-  const overrides = new Map<PropertyKey, unknown>([
+  const overrides = new Map<string | symbol, unknown>([
     ['get', view.get],
     ['set', view.set],
     ['subscribe', view.subscribe],
     ['snapshot', view.snapshot],
     ['extensions', view.extensions],
+    ['destroy', view.destroy],
   ]);
 
   return new Proxy(fn as OinLike<T> & OinCallableView<T>, {
@@ -86,7 +87,43 @@ function createCallableView<T, N extends object>(
     },
     get(_target, prop, receiver) {
       if (overrides.has(prop)) return overrides.get(prop);
-      return Reflect.get(node as object, prop, receiver);
+      if (Reflect.has(node as object, prop))
+        return Reflect.get(node as object, prop, receiver);
+      return Reflect.get(fn as object, prop, receiver);
+    },
+    has(_target, prop) {
+      if (overrides.has(prop)) return overrides.get(prop) !== undefined;
+      return (
+        Reflect.has(node as object, prop) || Reflect.has(fn as object, prop)
+      );
+    },
+    ownKeys(_target) {
+      const keys = new Set<string | symbol>([
+        ...Reflect.ownKeys(fn as object),
+        ...Reflect.ownKeys(node as object),
+      ]);
+      for (const [key, value] of overrides.entries()) {
+        if (value !== undefined) keys.add(key);
+      }
+      return Array.from(keys);
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      const targetDesc = Object.getOwnPropertyDescriptor(fn as object, prop);
+      if (targetDesc && targetDesc.configurable === false) return targetDesc;
+
+      if (overrides.has(prop)) {
+        const value = overrides.get(prop);
+        if (value === undefined) return undefined;
+        return {
+          configurable: true,
+          enumerable: false,
+          writable: false,
+          value,
+        };
+      }
+      const nodeDesc = Object.getOwnPropertyDescriptor(node as object, prop);
+      if (nodeDesc) return nodeDesc;
+      return targetDesc;
     },
   }) as N & OinCallableView<T>;
 }

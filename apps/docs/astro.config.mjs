@@ -2,9 +2,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
-import starlightThemeSix from '@six-tech/starlight-theme-six';
-import oinAccessPlugin from '../../tools/oin-babel-plugin/index.mjs';
-import { babel } from '@rollup/plugin-babel';
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,57 +10,11 @@ export default defineConfig({
     resolve: {
       conditions: ['@org/source'],
     },
-    plugins: [
-      babel({
-        babelHelpers: 'bundled',
-        extensions: ['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx'],
-        plugins: [oinAccessPlugin],
-      }),
-    ],
   },
   integrations: [
     react(),
     starlight({
-      plugins: [
-        // starlightThemeSix({
-        //   navLinks: [
-        //     {
-        //       label: { en: 'Getting Started', 'zh-cn': '入门' },
-        //       link: '/getting-started/introduction/',
-        //     },
-        //     {
-        //       label: { en: 'Core Concepts', 'zh-cn': '核心概念' },
-        //       link: '/core-concepts/units-scopes/',
-        //     },
-        //     {
-        //       label: { en: 'Guides', 'zh-cn': '指南' },
-        //       link: '/guides/derived/',
-        //     },
-        //     {
-        //       label: { en: 'Behaviors', 'zh-cn': '行为扩展' },
-        //       link: '/behaviors/overview/',
-        //     },
-        //     {
-        //       label: { en: 'Integrations', 'zh-cn': '集成' },
-        //       link: '/integrations/vanilla/',
-        //     },
-        //     {
-        //       label: { en: 'Migrations', 'zh-cn': '迁移' },
-        //       link: '/migrations/from-zustand/',
-        //     },
-        //     {
-        //       label: { en: 'Reference', 'zh-cn': '参考' },
-        //       link: '/reference/',
-        //     },
-        //     {
-        //       label: { en: 'Maintenance', 'zh-cn': '维护' },
-        //       link: '/maintenance/',
-        //     },
-        //   ],
-        //   footerText:
-        //     'OIN — Reactive state primitives with deep signal support. Built with Astro Starlight.',
-        // }),
-      ],
+      plugins: [],
       title: 'OIN Documentation',
       description: 'Reactive state management with deep signal support.',
       logo: {

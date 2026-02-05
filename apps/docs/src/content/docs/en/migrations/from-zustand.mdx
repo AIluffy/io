@@ -27,6 +27,9 @@ const store = oin({ count: 0 });
 const inc = () => store.count((v) => v + 1);
 ```
 
+If you prefer “shallow” shape-only stores, use `shallow: true`. Shallow mode
+limits depth to 1 and rejects unknown keys in `commit`.
+
 ## Selectors
 
 Zustand selector:

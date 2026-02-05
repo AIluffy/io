@@ -65,9 +65,10 @@ const app = oin({
 });
 app.items[0].count((v) => v + 1); // 精确的叶子节点更新
 
-// 仅第一层变成 Unit
+// 仅第一层变成 Unit（同一 Tree 引擎，深度限制为 1）
 const shallow = oin({ name: 'Alice', age: 25 }, { shallow: true });
 shallow.name('Bob');
+// shallow.commit(...) 不允许新增未知 key
 ```
 
 ### 2. 数组操作

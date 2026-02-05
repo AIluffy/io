@@ -16,7 +16,9 @@ function deepClone<T>(value: T): T {
   if (typeof maybeStructuredClone === 'function') {
     return (maybeStructuredClone as (v: unknown) => unknown)(value) as T;
   }
-  return JSON.parse(JSON.stringify(value)) as T;
+  throw new Error(
+    'OIN snapshot: structuredClone is required in this environment',
+  );
 }
 
 function toImmutable<T>(value: T): T {
@@ -38,18 +40,20 @@ export function deepFreeze<T>(value: T): T {
   const walk = (current: unknown): void => {
     if (current === null || current === undefined) return;
     if (typeof current !== 'object') return;
-    if (visited.has(current as object)) return;
-    visited.add(current as object);
+    const obj = current as object;
+    if (visited.has(obj)) return;
+    visited.add(obj);
 
-    Object.freeze(current);
+    Object.freeze(obj);
 
-    if (Array.isArray(current)) {
-      for (const item of current) walk(item);
-      return;
+    if (Array.isArray(obj)) {
+      for (const item of obj) walk(item);
     }
 
-    for (const key of Object.keys(current as object)) {
-      walk((current as Record<string, unknown>)[key]);
+    for (const key of Reflect.ownKeys(obj)) {
+      const desc = Object.getOwnPropertyDescriptor(obj, key);
+      if (!desc) continue;
+      if ('value' in desc) walk(desc.value);
     }
   };
 

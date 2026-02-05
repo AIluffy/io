@@ -27,7 +27,8 @@ Units expose:
 
 ## Scope
 
-When you pass an object to `oin`, you get a Scope with Units for each key.
+When you pass an object to `oin`, you get a Scope with Units for each key. Scopes
+are produced by the same tree engine used for deep structures.
 
 ```ts
 const user = oin({ name: 'Ada', age: 36 });
@@ -36,7 +37,8 @@ user.name();
 user.age(37);
 ```
 
-Scopes also support grouped updates with `commit`:
+Scopes also support grouped updates with `commit` (unknown keys are rejected to
+keep the shape stable):
 
 ```ts
 user.commit((draft) => {
@@ -45,9 +47,10 @@ user.commit((draft) => {
 });
 ```
 
-## ArrayUnit
+## Array Nodes
 
-Arrays are first-class. Mutating helpers emit updates and keep paths stable.
+Arrays are first-class. Mutating helpers emit updates and keep paths stable. They
+share the same runtime as deep tree arrays.
 
 ```ts
 const todos = oin([{ id: 'a', title: 'Ship', done: false }]);

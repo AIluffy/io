@@ -21,6 +21,11 @@ description: "function export"
 
 `OinNode<T>`
 
+## Notes
+
+- `shallow: true` limits depth to 1 using the same tree engine as deep mode.
+- In shallow mode, `commit` rejects unknown keys to keep the shape stable.
+
 ## Errors
 
 - This library does not define standardized error codes.

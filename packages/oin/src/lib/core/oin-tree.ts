@@ -22,6 +22,7 @@ import { createUnit, isUnit } from '../units/unit.js';
 import { emitError } from '../utils/debug.js';
 import {
   getInternal as getAnyInternal,
+  registerInternal,
   requireInternalOfKind,
 } from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
@@ -49,6 +50,7 @@ type TreeContext = {
   errorListeners: Set<OinErrorHandler>;
   devtools: boolean;
   silent: boolean;
+  maxDepth?: number;
   seen: WeakMap<object, TreeNode>;
 };
 
@@ -483,6 +485,11 @@ function createTreeNode(
   path: NodePath,
   initial: unknown,
 ): TreeNode {
+  if (typeof ctx.maxDepth === 'number' && path.length >= ctx.maxDepth) {
+    const unit = createUnit(cloneValue(initial)) as unknown as TreeNode;
+    registerSubtree(ctx, path, unit);
+    return unit;
+  }
   if (initial !== null && typeof initial === 'object') {
     const existing = ctx.seen.get(initial as object);
     if (existing) {
@@ -883,20 +890,24 @@ function createTreeScope(
 
   for (const [key, child] of state.children.entries()) scope[key] = child;
 
+  const internal: TreeInternal = {
+    kind: 'scope',
+    getChild: (key: PropertyKey) => state.children.get(key),
+    applySet,
+    getState: () => state,
+  };
+
   Object.defineProperties(scope, {
     commit: { value: commit },
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     subscribeUpdate: { value: subscribeUpdate },
     [INTERNAL]: {
-      value: {
-        kind: 'scope',
-        getChild: (key: PropertyKey) => state.children.get(key),
-        applySet,
-        getState: () => state,
-      },
+      value: internal,
     },
   });
+
+  registerInternal(scope as unknown as object, internal);
 
   setPathNode(ctx, path, scope as unknown as TreeNode);
   return scope as unknown as OinTreeScope<Record<string, unknown>>;
@@ -1224,8 +1235,9 @@ function createTreeArray(
   const commit = (fn: (draft: unknown[]) => void): void => {
     try {
       const before = snapshot();
-      const draft = cloneValue(before);
+      const draft = createDraft(before);
       fn(draft);
+      const next = finishDraft(draft);
 
       const baseRevision = state.revision;
       const patches: OinPatch[] = [];
@@ -1471,7 +1483,7 @@ function createTreeArray(
       };
 
       state.isCommitting = true;
-      const changed = applyArrayDiff(state, before, draft as unknown[], []);
+      const changed = applyArrayDiff(state, before, next as unknown[], []);
       state.isCommitting = false;
 
       if (!changed) return;
@@ -1503,6 +1515,15 @@ function createTreeArray(
     for (const child of state.children) yield child;
   };
 
+  const internal: TreeInternal = {
+    kind: 'array',
+    getChild: (index: number) => state.children[index],
+    setIndex,
+    applySplice,
+    applySortOrder,
+    getState: () => state,
+  };
+
   Object.defineProperties(array, {
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
@@ -1515,14 +1536,7 @@ function createTreeArray(
     reduce: { value: reduce },
     [Symbol.iterator]: { value: iterator },
     [INTERNAL]: {
-      value: {
-        kind: 'array',
-        getChild: (index: number) => state.children[index],
-        setIndex,
-        applySplice,
-        applySortOrder,
-        getState: () => state,
-      },
+      value: internal,
     },
   });
 
@@ -1533,12 +1547,15 @@ function createTreeArray(
     attachChildToArray(state, child);
   }
 
+  registerInternal(array as unknown as object, internal);
+  registerInternal(proxy as unknown as object, internal);
+
   return proxy;
 }
 
 export function oinTree<T>(
   initial: T,
-  options?: { silent?: boolean; devtools?: boolean },
+  options?: { silent?: boolean; devtools?: boolean; maxDepth?: number },
 ): OinTreeNode<T> {
   const devtools = resolveDevtoolsEnabled(options);
   const ctx: TreeContext = {
@@ -1546,6 +1563,7 @@ export function oinTree<T>(
     errorListeners: new Set(),
     devtools,
     silent: options?.silent === true,
+    maxDepth: options?.maxDepth,
     seen: new WeakMap(),
   };
   return createTreeNode(ctx, [], initial) as unknown as OinTreeNode<T>;

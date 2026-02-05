@@ -15,8 +15,8 @@ type InternalUnit = {
 
 type InternalScope = {
   kind: 'scope';
-  getUnit?: (key: string) => OinUnit<unknown> | undefined;
-  getChild?: (key: string) => unknown;
+  getUnit?: (key: PropertyKey) => OinUnit<unknown> | undefined;
+  getChild?: (key: PropertyKey) => unknown;
   applySet: (
     key: PropertyKey,
     next: unknown,

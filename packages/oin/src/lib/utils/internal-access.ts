@@ -1,18 +1,17 @@
-import { INTERNAL } from './internal-symbol.js';
-
 export type InternalKind = 'unit' | 'scope' | 'array' | 'derived';
 
 export type OinInternal = { kind: InternalKind } & Record<string, unknown>;
 
+const INTERNAL_REGISTRY = new WeakMap<object, OinInternal>();
+
+export function registerInternal(target: object, internal: OinInternal): void {
+  INTERNAL_REGISTRY.set(target, internal);
+}
+
 export function getInternal(value: unknown): OinInternal | undefined {
   if (value === null || value === undefined) return undefined;
   if (typeof value !== 'function' && typeof value !== 'object') return undefined;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return undefined;
-  const kind = (internal as { kind?: unknown }).kind;
-  if (kind !== 'unit' && kind !== 'scope' && kind !== 'array' && kind !== 'derived')
-    return undefined;
-  return internal as OinInternal;
+  return INTERNAL_REGISTRY.get(value as object);
 }
 
 export function requireInternal(value: unknown, errorMessage: string): OinInternal {

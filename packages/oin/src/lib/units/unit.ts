@@ -1,3 +1,9 @@
+import { notifyUpdate, notifyValue } from '../utils/batch.js';
+import { emitError } from '../utils/debug.js';
+import { getInternal, registerInternal } from '../utils/internal-access.js';
+import { INTERNAL } from '../utils/internal-symbol.js';
+import { trackRead } from '../utils/signals.js';
+import { cloneValue, readValue } from '../utils/snapshot.js';
 import type {
   OinErrorHandler,
   OinPatch,
@@ -5,13 +11,7 @@ import type {
   OinUnsubscribe,
   OinUpdate,
 } from '../utils/types.js';
-
-import { cloneValue, readValue } from '../utils/snapshot.js';
-import { notifyUpdate, notifyValue } from '../utils/batch.js';
-import { trackRead } from '../utils/signals.js';
 import { createUpdate } from '../utils/updates.js';
-import { emitError } from '../utils/debug.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
 
 type UnitState<T> = {
   initial: T;
@@ -150,27 +150,29 @@ export function createUnit<T>(initial: T): OinUnit<T> {
     }
   };
 
+  const internal: UnitInternal<T> = {
+    kind: 'unit',
+    setValue,
+    getValue: () => state.value,
+    getState: () => state,
+  };
+
   Object.defineProperties(unit, {
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     subscribeUpdate: { value: subscribeUpdate },
     reset: { value: reset },
     [INTERNAL]: {
-      value: {
-        kind: 'unit',
-        setValue,
-        getValue: () => state.value,
-        getState: () => state,
-      } satisfies UnitInternal<T>,
+      value: internal satisfies UnitInternal<T>,
     },
   });
+
+  registerInternal(unitFn as unknown as object, internal);
 
   return unitFn;
 }
 
 export function isUnit(value: unknown): value is OinUnit<unknown> {
-  if (typeof value !== 'function') return false;
-  const internal = (value as unknown as Record<PropertyKey, unknown>)[INTERNAL];
-  if (typeof internal !== 'object' || internal === null) return false;
-  return (internal as { kind?: unknown }).kind === 'unit';
+  const internal = getInternal(value);
+  return internal?.kind === 'unit';
 }

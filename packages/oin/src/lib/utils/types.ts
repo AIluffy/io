@@ -54,33 +54,6 @@ export type OinDerived<T> = {
   subscribe(fn: (v: T) => void): OinUnsubscribe;
 };
 
-export type OinArrayUnit<T> = {
-  (): T[];
-  [i: number]: OinUnit<T>;
-  push(...items: T[]): void;
-  pop(): T | undefined;
-  splice(start: number, deleteCount: number, ...items: T[]): void;
-  sort(compareFn?: (a: T, b: T) => number): void;
-  commit(fn: (draft: T[]) => void): void;
-  reduce<R>(
-    reducer: (acc: R, item: OinUnit<T>, index: number) => R,
-    initialValue: R
-  ): R;
-  [Symbol.iterator](): Iterator<OinUnit<T>>;
-  snapshot(): T[];
-  subscribe(fn: (v: T[]) => void): OinUnsubscribe;
-  subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
-};
-
-export type OinScope<T extends Record<string, unknown>> = {
-  [K in keyof T]: OinUnit<T[K]>;
-} & {
-  commit(fn: (draft: T) => void): void;
-  snapshot(): T;
-  subscribe(fn: (v: T) => void): OinUnsubscribe;
-  subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
-};
-
 export type OinNode<T> = T extends readonly (infer U)[]
   ? OinArrayUnit<U>
   : T extends Record<string, unknown>
@@ -115,6 +88,8 @@ export type OinTreeArrayUnit<T, MaxDepth extends number = 8> = {
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
 };
 
+export type OinArrayUnit<T> = OinTreeArrayUnit<T, 1>;
+
 export type OinTreeScope<
   T extends Record<string, unknown>,
   MaxDepth extends number = 8
@@ -126,6 +101,8 @@ export type OinTreeScope<
   subscribe(fn: (v: T) => void): OinUnsubscribe;
   subscribeUpdate(fn: (u: OinUpdate) => void): OinUnsubscribe;
 };
+
+export type OinScope<T extends Record<string, unknown>> = OinTreeScope<T, 1>;
 
 export type OinTypeInferenceMode = 'unknown' | 'error';
 

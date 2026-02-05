@@ -21,6 +21,11 @@ description: "function export"
 
 `OinNode<T>`
 
+## 说明
+
+- `shallow: true` 仅保留第一层（内部仍使用同一 Tree 引擎）。
+- 浅层模式下 `commit` 不允许新增未知 key，以保持结构稳定。
+
 ## 错误
 
 - 本库未定义标准化错误码。

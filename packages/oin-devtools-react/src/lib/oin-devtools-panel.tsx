@@ -6,7 +6,7 @@ import type {
 } from '@oin/devtools';
 import { buildPatchDiffTree, diffSnapshots } from '@oin/devtools';
 import type { CSSProperties, ReactElement } from 'react';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 export type OinDevtoolsPanelProps = {
   devtools: OinDevtools;
@@ -43,7 +43,7 @@ function downloadText(filename: string, text: string) {
 
 function renderPatchTree(
   nodes: OinPatchDiffTreeNode[],
-  depth = 0
+  depth = 0,
 ): ReactElement[] {
   return nodes.flatMap((node) => {
     const indent = 10 + depth * 12;
@@ -69,8 +69,8 @@ function renderPatchTree(
                 {p.op === 'splice'
                   ? ` start=${p.start} delete=${p.deleteCount} items=${p.items.length}`
                   : p.op === 'sort'
-                  ? ` order=${p.order.length}`
-                  : ''}
+                    ? ` order=${p.order.length}`
+                    : ''}
               </div>
             ))}
           </div>
@@ -82,10 +82,39 @@ function renderPatchTree(
 }
 
 function useDevtoolsState(devtools: OinDevtools) {
+  const cacheRef = useRef<{
+    key: string;
+    state: ReturnType<OinDevtools['getState']>;
+  } | null>(null);
+
+  const getSnapshot = () => {
+    const state = devtools.getState();
+    const perf = state.perf;
+    const key = [
+      state.enabled ? 1 : 0,
+      state.paused ? 1 : 0,
+      state.cursor,
+      state.history.length,
+      state.errors.length,
+      perf?.recent.length ?? 0,
+      perf?.summary.avgTotalMs ?? '',
+      perf?.summary.maxTotalMs ?? '',
+      perf?.summary.avgSnapshotMs ?? '',
+      perf?.summary.maxSnapshotMs ?? '',
+      perf?.summary.avgDiffMs ?? '',
+      perf?.summary.maxDiffMs ?? '',
+    ].join('|');
+
+    const cached = cacheRef.current;
+    if (cached?.key === key) return cached.state;
+    cacheRef.current = { key, state };
+    return state;
+  };
+
   return useSyncExternalStore(
     (notify) => devtools.subscribe(() => notify()),
-    () => devtools.getState(),
-    () => devtools.getState(),
+    getSnapshot,
+    getSnapshot,
   );
 }
 
@@ -310,49 +339,49 @@ export function OinDevtoolsPanel(props: OinDevtoolsPanelProps) {
             </div>
           ) : (
             <div style={{ padding: 10, display: 'grid', gap: 12 }}>
-            <div style={{ display: 'grid', gap: 6 }}>
-              <div style={{ fontWeight: 700 }}>Patch diffs</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => setPatchView('tree')}
-                  disabled={patchView === 'tree'}
-                >
-                  Tree
-                </button>
-                <button
-                  onClick={() => setPatchView('list')}
-                  disabled={patchView === 'list'}
-                >
-                  List
-                </button>
-              </div>
-              {patchView === 'list' ? (
-                <pre
-                  style={{
-                    margin: 0,
-                    padding: 10,
-                    borderRadius: 8,
-                    background: 'rgba(148,163,184,0.12)',
-                    overflowX: 'auto',
-                  }}
-                >
-                  {JSON.stringify(selectedEntry.patchDiffs, null, 2)}
-                </pre>
-              ) : (
-                <div
-                  style={{
-                    margin: 0,
-                    padding: 10,
-                    borderRadius: 8,
-                    background: 'rgba(148,163,184,0.12)',
-                    display: 'grid',
-                    gap: 6,
-                  }}
-                >
-                  {patchTree ? renderPatchTree(patchTree) : null}
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontWeight: 700 }}>Patch diffs</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setPatchView('tree')}
+                    disabled={patchView === 'tree'}
+                  >
+                    Tree
+                  </button>
+                  <button
+                    onClick={() => setPatchView('list')}
+                    disabled={patchView === 'list'}
+                  >
+                    List
+                  </button>
                 </div>
-              )}
-            </div>
+                {patchView === 'list' ? (
+                  <pre
+                    style={{
+                      margin: 0,
+                      padding: 10,
+                      borderRadius: 8,
+                      background: 'rgba(148,163,184,0.12)',
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {JSON.stringify(selectedEntry.patchDiffs, null, 2)}
+                  </pre>
+                ) : (
+                  <div
+                    style={{
+                      margin: 0,
+                      padding: 10,
+                      borderRadius: 8,
+                      background: 'rgba(148,163,184,0.12)',
+                      display: 'grid',
+                      gap: 6,
+                    }}
+                  >
+                    {patchTree ? renderPatchTree(patchTree) : null}
+                  </div>
+                )}
+              </div>
 
               {snapshotDiffs ? (
                 <div style={{ display: 'grid', gap: 6 }}>

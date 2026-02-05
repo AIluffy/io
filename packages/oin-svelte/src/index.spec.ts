@@ -19,4 +19,26 @@ describe('@org/oin-svelte', () => {
     );
     expect(typeof readable.subscribe).toBe('function');
   });
+
+  it('supports sync schedule for readable stores', () => {
+    const unit = oin(0);
+    const readable = toReadable(unit, { schedule: 'sync' });
+    const seen: number[] = [];
+    const unsub = readable.subscribe((v) => seen.push(v));
+    unit(2);
+    unsub();
+    expect(seen).toEqual([0, 2]);
+  });
+
+  it('supports microtask schedule for writable stores', async () => {
+    const unit = oin(0);
+    const writable = toWritable(unit, { schedule: 'microtask' });
+    const seen: number[] = [];
+    const unsub = writable.subscribe((v) => seen.push(v));
+    writable.set(1);
+    expect(seen).toEqual([0]);
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    unsub();
+    expect(seen).toEqual([0, 1]);
+  });
 });

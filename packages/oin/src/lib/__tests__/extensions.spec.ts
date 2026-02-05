@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { derived } from '../core/derived.js';
 import { oin } from '../core/oin.js';
 import { withBehaviors } from '../extensions/with-behaviors.js';
 import { schedule } from '../extensions/behaviors/schedule.js';
@@ -46,10 +47,32 @@ describe('extensions: behaviors', () => {
     expect(view.extensions?.devtools).toBe(fake);
   });
 
+  it('forwards destroy to devtools instance', () => {
+    const unit = oin(0);
+    const destroy = vi.fn();
+    const view = withBehaviors(unit, [
+      devtools({ target: unit, create: () => ({ destroy }) }),
+    ]);
+    view.destroy?.();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
   it('preserves deep access on tree nodes', () => {
     const state = oin({ user: { age: 1 } });
     const view = withBehaviors(state, [schedule('sync')]);
     view.user.age(2);
     expect(view.user.age()).toBe(2);
+  });
+
+  it('reflects view methods without exposing read-only setters', () => {
+    const unit = oin(1);
+    const view = withBehaviors(unit, [schedule('sync')]);
+    expect('get' in view).toBe(true);
+    expect('set' in view).toBe(true);
+    expect(Reflect.ownKeys(view)).toContain('get');
+
+    const readOnly = derived(() => unit());
+    const roView = withBehaviors(readOnly, [schedule('sync')]);
+    expect('set' in roView).toBe(false);
   });
 });

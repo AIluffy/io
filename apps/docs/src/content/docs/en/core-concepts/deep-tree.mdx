@@ -20,7 +20,8 @@ state.user.profile.name('Grace');
 
 ## Shallow mode
 
-If you only want the first level as Units, use `shallow: true`.
+If you only want the first level as Units, use `shallow: true` (shallow uses the
+same tree engine with depth limited to 1).
 
 ```ts
 const state = oin({ user: { name: 'Ada' } }, { shallow: true });
@@ -28,6 +29,8 @@ const state = oin({ user: { name: 'Ada' } }, { shallow: true });
 state.user(); // returns the plain object
 state.user({ name: 'Grace' });
 ```
+
+`commit` in shallow mode rejects unknown keys to keep the shape stable.
 
 ## Lens for explicit paths
 

@@ -10,7 +10,7 @@ import type {
 
 import { computed, effect } from '../utils/signals.js';
 import { readValue, snapshotValue } from '../utils/snapshot.js';
-import { getInternal } from '../utils/internal-access.js';
+import { getInternal, registerInternal } from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 
 type Subscribable = {
@@ -115,11 +115,15 @@ function createDerivedFromComputed<T>(c: { get(): T }): OinDerived<T> {
     };
   };
 
+  const internal: { kind: 'derived' } = { kind: 'derived' };
+
   Object.defineProperties(derived, {
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
-    [INTERNAL]: { value: { kind: 'derived' } },
+    [INTERNAL]: { value: internal },
   });
+
+  registerInternal(derived as unknown as object, internal);
 
   return derived;
 }
@@ -195,11 +199,15 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     };
   };
 
+  const internal: { kind: 'derived' } = { kind: 'derived' };
+
   Object.defineProperties(derived, {
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
-    [INTERNAL]: { value: { kind: 'derived' } },
+    [INTERNAL]: { value: internal },
   });
+
+  registerInternal(derived as unknown as object, internal);
 
   return derived;
 }

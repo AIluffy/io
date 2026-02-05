@@ -6,6 +6,7 @@ export type OinView<T> = {
   subscribe(fn: (v: T) => void): () => void;
   snapshot?(): T;
   extensions?: OinViewExtensions;
+  destroy?(): void;
 };
 
 export type OinCallableView<T> = OinView<T> & {

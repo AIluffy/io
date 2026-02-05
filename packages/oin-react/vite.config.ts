@@ -10,6 +10,7 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     environment: 'node',
+    setupFiles: ['src/vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
