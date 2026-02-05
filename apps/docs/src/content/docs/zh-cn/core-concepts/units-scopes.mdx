@@ -27,8 +27,7 @@ Unit 暴露以下能力：
 
 ## Scope
 
-当 `io` 接收对象时，会生成 Scope，每个 key 都是 Unit。Scope 与深层 Tree
-共享同一运行时实现。
+当 `io` 接收对象时，会生成 Scope：每个 key 都对应一个 Unit。Scope 与深层 Tree 共享同一运行时实现。
 
 ```ts
 const user = io({ name: 'Ada', age: 36 });
@@ -46,9 +45,9 @@ user.commit((draft) => {
 });
 ```
 
-## Array 节点
+## 数组节点
 
-数组同样是 Unit，可以直接操作并产生更新，且与深层 Tree 共享实现。
+数组同样是 Unit，可以直接操作并产生更新，也与深层 Tree 共享实现。
 
 ```ts
 const todos = io([{ id: 'a', title: 'Ship', done: false }]);

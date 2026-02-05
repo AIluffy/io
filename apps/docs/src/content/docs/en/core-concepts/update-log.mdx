@@ -7,7 +7,7 @@ sidebar:
 
 ## Patch and Update
 
-IO records writes as patches (set/splice/sort) and groups them into updates. Updates can be merged, inverted, or replayed.
+IO records each write as a `patch` (`set` / `splice` / `sort`) and groups patches into an `update`. Updates can be merged, inverted, or replayed.
 
 ```ts
 import { io } from 'io-store';

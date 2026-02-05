@@ -5,14 +5,14 @@ sidebar:
   order: 1
 ---
 
-IO is a TypeScript state library built around small, composable primitives and an explicit update log. The API favors predictable reads, traceable writes, and easy integration across frameworks.
+IO is a TypeScript state library built around small, composable primitives and an explicit Update Log. The API favors predictable reads, traceable writes, and easy integration across frameworks.
 
 ## Mental model
 
 - **Unit**: a function-like cell. Call it to read, call it with a value (or updater) to write.
 - **Scope**: an object of Units that can be updated together.
 - **Tree**: deep structures where every nested path is addressable as a Unit.
-- **Update log**: every write creates patches you can subscribe to, replay, or invert.
+- **Update Log**: every write creates patches you can subscribe to, replay, or invert.
 
 ## What IO optimizes for
 

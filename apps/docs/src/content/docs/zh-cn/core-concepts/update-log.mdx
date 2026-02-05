@@ -7,7 +7,7 @@ sidebar:
 
 ## Patch 与 Update
 
-IO 会将写入记录为 patch（set/splice/sort），并聚合为 update。update 可合并、可回放、可逆。
+IO 会将每次写入记录为 `patch`（`set` / `splice` / `sort`），并聚合为 `update`。`update` 可合并、可回放，也可通过反向 `update` 实现撤销。
 
 ```ts
 import { io } from 'io-store';
@@ -24,7 +24,7 @@ unsub();
 
 ## onMutation 与 onError
 
-使用调试辅助函数观察变更和错误。
+用调试辅助函数观察变更与错误。
 
 ```ts
 import { onMutation, onError, io } from 'io-store';

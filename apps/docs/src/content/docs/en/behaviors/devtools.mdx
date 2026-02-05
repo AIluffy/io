@@ -5,7 +5,7 @@ sidebar:
   order: 4
 ---
 
-## 1) Setup
+## Setup
 
 ```ts
 import { io } from 'io-store';
@@ -21,7 +21,7 @@ const devtools = createIoDevtools(store, {
 });
 ```
 
-## 2) UI panel (React)
+## UI panel (React)
 
 ```tsx
 import { createIoDevtools } from 'io-devtools';
@@ -36,18 +36,18 @@ export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createI
 }
 ```
 
-## 3) Time travel
+## Time travel
 
-- `devtools.timeTravel.undo()` applies the inverted update.
-- `devtools.timeTravel.redo()` replays the update.
+- `devtools.timeTravel.undo()` applies the inverted `update`.
+- `devtools.timeTravel.redo()` replays the `update`.
 - `devtools.timeTravel.goTo(index)` jumps to a cursor.
 
-## 4) Diffs
+## Diffs
 
 - **Patch diff**: derived from `update.patches`.
 - **Snapshot diff**: available when `captureSnapshots: 'always'`.
 
-## 5) Export
+## Export
 
 ```ts
 const json = devtools.export.json();
@@ -56,7 +56,7 @@ const reduxImportState = devtools.export.reduxDevToolsImport();
 
 ## Behavior integration
 
-Attach DevTools to a view via behaviors if you want it discoverable on the node itself:
+To expose DevTools on the view node, attach it via behaviors:
 
 ```ts
 import { devtools, withBehaviors } from 'io-store/behavior';

@@ -5,7 +5,7 @@ sidebar:
   order: 4
 ---
 
-## 1) 初始化
+## 初始化
 
 ```ts
 import { io } from 'io-store';
@@ -21,7 +21,7 @@ const devtools = createIoDevtools(store, {
 });
 ```
 
-## 2) React 面板
+## 接入 React 面板
 
 ```tsx
 import { createIoDevtools } from 'io-devtools';
@@ -36,18 +36,18 @@ export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createI
 }
 ```
 
-## 3) 时间旅行
+## 时间旅行
 
-- `devtools.timeTravel.undo()` 应用反向 update
-- `devtools.timeTravel.redo()` 重放 update
+- `devtools.timeTravel.undo()` 应用反向 `update`
+- `devtools.timeTravel.redo()` 重放 `update`
 - `devtools.timeTravel.goTo(index)` 跳转
 
-## 4) Diff
+## Diff
 
 - **Patch diff**：来自 `update.patches`
 - **Snapshot diff**：`captureSnapshots: 'always'` 时可用
 
-## 5) 导出
+## 导出
 
 ```ts
 const json = devtools.export.json();

@@ -27,8 +27,7 @@ Units expose:
 
 ## Scope
 
-When you pass an object to `io`, you get a Scope with Units for each key. Scopes
-are produced by the same tree engine used for deep structures.
+When you pass an object to `io`, you get a Scope with Units for each key. Scopes are produced by the same tree engine used for deep structures.
 
 ```ts
 const user = io({ name: 'Ada', age: 36 });
@@ -37,8 +36,7 @@ user.name();
 user.age(37);
 ```
 
-Scopes also support grouped updates with `commit` (unknown keys are rejected to
-keep the shape stable):
+Scopes also support grouped updates with `commit` (unknown keys are rejected to keep the shape stable):
 
 ```ts
 user.commit((draft) => {
@@ -49,8 +47,7 @@ user.commit((draft) => {
 
 ## Array Nodes
 
-Arrays are first-class. Mutating helpers emit updates and keep paths stable. They
-share the same runtime as deep tree arrays.
+Arrays are first-class. Mutating helpers emit updates and keep paths stable. They share the same runtime as deep tree arrays.
 
 ```ts
 const todos = io([{ id: 'a', title: 'Ship', done: false }]);
