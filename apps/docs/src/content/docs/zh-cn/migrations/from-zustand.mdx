@@ -46,12 +46,12 @@ import { derived } from 'io-store';
 const count = derived(store, (s) => s.count);
 ```
 
-需要路径聚焦时可使用 `lens`：
+需要路径聚焦时可使用 `focus`：
 
 ```ts
-import { lens } from 'io-store';
+import { focus } from 'io-store';
 
-const userName = lens<string>(store, ['user', 'name']);
+const userName = focus<string>(store, ['user', 'name']);
 ```
 
 ## 中间件 → 行为扩展

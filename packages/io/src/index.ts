@@ -5,7 +5,7 @@ export { isServerEnv } from './lib/utils/env.js';
 export { scheduleTask } from './lib/utils/schedule.js';
 export { onError, onMutation } from './lib/utils/debug.js';
 export { fromIo } from './lib/extensions/from-io.js';
-export { lens } from './lib/extensions/lens.js';
+export { focus } from './lib/extensions/focus.js';
 export type {
   IoArrayUnit,
   IoDerived,

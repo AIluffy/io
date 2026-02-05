@@ -31,13 +31,13 @@ state.user({ name: 'Grace' });
 
 浅层模式下的 `commit` 不允许新增未知 key，以保持结构稳定。
 
-## 使用 lens
+## 使用 focus
 
 ```ts
-import { lens, io } from 'io-store';
+import { focus, io } from 'io-store';
 
 const store = io({ settings: { theme: 'light' } });
-const theme = lens<string>(store, ['settings', 'theme']);
+const theme = focus<string>(store, ['settings', 'theme']);
 
 theme('dark');
 ```

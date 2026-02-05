@@ -32,15 +32,15 @@ state.user({ name: 'Grace' });
 
 `commit` in shallow mode rejects unknown keys to keep the shape stable.
 
-## Lens for explicit paths
+## Focus for explicit paths
 
-Use `lens` to build a view for a specific path.
+Use `focus` to build a view for a specific path.
 
 ```ts
-import { lens, io } from 'io-store';
+import { focus, io } from 'io-store';
 
 const store = io({ settings: { theme: 'light' } });
-const theme = lens<string>(store, ['settings', 'theme']);
+const theme = focus<string>(store, ['settings', 'theme']);
 
 theme('dark');
 ```

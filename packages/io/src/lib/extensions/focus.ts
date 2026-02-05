@@ -24,7 +24,7 @@ function isNumericString(value: PropertyKey): value is string {
   return typeof value === 'string' && /^[0-9]+$/.test(value);
 }
 
-export function lens<T>(
+export function focus<T>(
   root: IoTreeNode<unknown>,
   path: ReadonlyArray<PropertyKey>
 ): IoView<T> {
@@ -33,12 +33,12 @@ export function lens<T>(
     const segment = path[i];
     const internal = getInternal(node);
     if (!internal)
-      throw new Error(`lens: path traversed into non-node at ${formatPath(path.slice(0, i))}`);
+      throw new Error(`focus: path traversed into non-node at ${formatPath(path.slice(0, i))}`);
 
     if (internal.kind === 'scope') {
       if (typeof segment !== 'string' && typeof segment !== 'symbol') {
         throw new Error(
-          `lens: invalid scope key at ${formatPath(path.slice(0, i + 1))}`,
+          `focus: invalid scope key at ${formatPath(path.slice(0, i + 1))}`,
         );
       }
       node = (node as Record<PropertyKey, unknown>)[segment];
@@ -48,7 +48,7 @@ export function lens<T>(
     if (internal.kind === 'array') {
       if (typeof segment !== 'number' && !isNumericString(segment)) {
         throw new Error(
-          `lens: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
+          `focus: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
         );
       }
       node = (node as Record<PropertyKey, unknown>)[segment];
@@ -56,13 +56,13 @@ export function lens<T>(
     }
 
     throw new Error(
-      `lens: path traversed into leaf at ${formatPath(path.slice(0, i))}`,
+      `focus: path traversed into leaf at ${formatPath(path.slice(0, i))}`,
     );
   }
 
   const internal = getInternal(node);
   if (!internal)
-    throw new Error(`lens: target is not a node at ${formatPath(path)}`);
+    throw new Error(`focus: target is not a node at ${formatPath(path)}`);
 
   if (internal.kind === 'unit') {
     const unit = node as CallableNode<T>;
@@ -90,7 +90,7 @@ export function lens<T>(
       typeof readable.subscribe !== 'function'
     ) {
       throw new Error(
-        `lens: target is not readable at ${formatPath(path)}`,
+        `focus: target is not readable at ${formatPath(path)}`,
       );
     }
     return {
@@ -100,5 +100,5 @@ export function lens<T>(
     };
   }
 
-  throw new Error(`lens: unsupported target at ${formatPath(path)}`);
+  throw new Error(`focus: unsupported target at ${formatPath(path)}`);
 }

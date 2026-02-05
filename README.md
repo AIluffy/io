@@ -155,9 +155,9 @@ const ref = ioRef(unit);
 
 本项目使用标签强制模块边界：
 
-| 包                    | 标签                       | 可依赖的包           |
-| --------------------- | -------------------------- | -------------------- |
-| `io-store`          | `scope:io`                | 无（基础库）         |
+| 包                  | 标签                      | 可依赖的包          |
+| ------------------- | ------------------------- | ------------------- |
+| `io-store`          | `scope:io`                | 无（基础库）        |
 | `io-react`          | `scope:io-react`          | `scope:io`          |
 | `io-svelte`         | `scope:io-svelte`         | `scope:io`          |
 | `io-vue`            | `scope:io-vue`            | `scope:io`          |

@@ -1,29 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { applyUpdate } from '../utils/updates.js';
 import { deepFreeze } from '../utils/snapshot.js';
-import { lens } from '../extensions/lens.js';
+import { focus } from '../extensions/focus.js';
 import { io } from '../core/io.js';
 
 function nextTick(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
 }
 
-describe('edge cases: lens', () => {
+describe('edge cases: focus', () => {
   it('throws on invalid array path segments', () => {
     const store = io({ list: [1, 2, 3] });
-    expect(() => lens<number>(store, ['list', 'oops'])).toThrow(
+    expect(() => focus<number>(store, ['list', 'oops'])).toThrow(
       /invalid array index/,
     );
   });
 
   it('throws when traversing past a leaf', () => {
     const store = io({ a: 1 });
-    expect(() => lens<number>(store, ['a', 'b'])).toThrow(/leaf/);
+    expect(() => focus<number>(store, ['a', 'b'])).toThrow(/leaf/);
   });
 
   it('returns a read-only view for scope/array nodes', () => {
     const store = io({ list: [{ n: 1 }] });
-    const view = lens<unknown[]>(store, ['list']);
+    const view = focus<unknown[]>(store, ['list']);
     expect(view.get()).toEqual([{ n: 1 }]);
     expect(view.set).toBeUndefined();
   });

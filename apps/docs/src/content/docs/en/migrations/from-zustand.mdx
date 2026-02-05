@@ -46,12 +46,12 @@ import { derived } from 'io-store';
 const count = derived(store, (s) => s.count);
 ```
 
-For path-focused access, use `lens`:
+For path-focused access, use `focus`:
 
 ```ts
-import { lens } from 'io-store';
+import { focus } from 'io-store';
 
-const userName = lens<string>(store, ['user', 'name']);
+const userName = focus<string>(store, ['user', 'name']);
 ```
 
 ## Middleware → Behaviors
