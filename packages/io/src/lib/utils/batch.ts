@@ -1,6 +1,6 @@
 import type { IoUpdate } from './types.js';
 
-import { mergeUpdates } from './updates.js';
+import { mergeUpdates } from './update-merge.js';
 
 type ValueListener<T> = (value: T) => void;
 type UpdateListener = (update: IoUpdate) => void;
