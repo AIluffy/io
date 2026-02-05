@@ -1,0 +1,28 @@
+---
+title: "IoResult"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoResult<T, MaxDepth>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| snapshot | `(() => T) \| (() => unknown[]) \| (() => T)` |
+| subscribe | `((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
+| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

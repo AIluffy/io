@@ -7,12 +7,12 @@ sidebar:
 
 ## Deep by default
 
-`oin()` walks objects and arrays and converts nested paths into Units. You can update deep values without switching APIs.
+`io()` walks objects and arrays and converts nested paths into Units. You can update deep values without switching APIs.
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const state = oin({ user: { profile: { name: 'Ada' } } });
+const state = io({ user: { profile: { name: 'Ada' } } });
 
 state.user.profile.name();
 state.user.profile.name('Grace');
@@ -24,7 +24,7 @@ If you only want the first level as Units, use `shallow: true` (shallow uses the
 same tree engine with depth limited to 1).
 
 ```ts
-const state = oin({ user: { name: 'Ada' } }, { shallow: true });
+const state = io({ user: { name: 'Ada' } }, { shallow: true });
 
 state.user(); // returns the plain object
 state.user({ name: 'Grace' });
@@ -37,9 +37,9 @@ state.user({ name: 'Grace' });
 Use `lens` to build a view for a specific path.
 
 ```ts
-import { lens, oin } from '@oin/store';
+import { lens, io } from 'io-store';
 
-const store = oin({ settings: { theme: 'light' } });
+const store = io({ settings: { theme: 'light' } });
 const theme = lens<string>(store, ['settings', 'theme']);
 
 theme('dark');

@@ -10,9 +10,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## 显式依赖
 
 ```ts
-import { derived, oin } from '@oin/store';
+import { derived, io } from 'io-store';
 
-const count = oin(1);
+const count = io(1);
 const doubled = derived([count], (value) => value * 2);
 
 doubled(); // 2
@@ -21,7 +21,7 @@ doubled(); // 2
 ## 树选择器
 
 ```ts
-const store = oin({ pricing: { price: 10, tax: 2 } });
+const store = io({ pricing: { price: 10, tax: 2 } });
 
 const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
 ```

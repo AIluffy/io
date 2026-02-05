@@ -1,0 +1,30 @@
+---
+title: "buildPatchDiffTree"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+(patches: ReadonlyArray<IoPatchDiff>) => IoPatchDiffTreeNode[]
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| patches | `readonly IoPatchDiff[]` |
+
+## Returns
+
+`IoPatchDiffTreeNode[]`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io-devtools/src/lib/patch-diff-tree.ts`

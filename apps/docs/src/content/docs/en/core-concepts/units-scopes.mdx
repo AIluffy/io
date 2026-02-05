@@ -10,9 +10,9 @@ sidebar:
 A Unit is a function-like cell. Call it to read, call it with a value (or updater) to write.
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const count = oin(0);
+const count = io(0);
 
 count(); // 0
 count(1); // write
@@ -27,11 +27,11 @@ Units expose:
 
 ## Scope
 
-When you pass an object to `oin`, you get a Scope with Units for each key. Scopes
+When you pass an object to `io`, you get a Scope with Units for each key. Scopes
 are produced by the same tree engine used for deep structures.
 
 ```ts
-const user = oin({ name: 'Ada', age: 36 });
+const user = io({ name: 'Ada', age: 36 });
 
 user.name();
 user.age(37);
@@ -53,7 +53,7 @@ Arrays are first-class. Mutating helpers emit updates and keep paths stable. The
 share the same runtime as deep tree arrays.
 
 ```ts
-const todos = oin([{ id: 'a', title: 'Ship', done: false }]);
+const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 
 todos.push({ id: 'b', title: 'Document', done: false });
 todos[0].done(true);

@@ -8,39 +8,39 @@ sidebar:
 ## Unit 类型
 
 ```ts
-import type { OinUnit } from '@oin/store';
-import { oin } from '@oin/store';
+import type { IoUnit } from 'io-store';
+import { io } from 'io-store';
 
-const count: OinUnit<number> = oin(0);
+const count: IoUnit<number> = io(0);
 ```
 
 ## 树形类型
 
-`oin()` 会保留嵌套结构类型。
+`io()` 会保留嵌套结构类型。
 
 ```ts
-const store = oin({ user: { name: 'Ada', age: 36 } });
+const store = io({ user: { name: 'Ada', age: 36 } });
 store.user.name();
 ```
 
 ## Path 工具类型
 
 ```ts
-import type { OinPathOf, OinPathValue } from '@oin/store';
+import type { IoPathOf, IoPathValue } from 'io-store';
 
 type Store = { user: { profile: { name: string } } };
 
-type NamePath = OinPathOf<Store>;
+type NamePath = IoPathOf<Store>;
 
-type NameValue = OinPathValue<Store, ['user', 'profile', 'name']>;
+type NameValue = IoPathValue<Store, ['user', 'profile', 'name']>;
 ```
 
 ## Unwrap 工具类型
 
 ```ts
-import type { UnwrapOin } from '@oin/store';
+import type { UnwrapIo } from 'io-store';
 
-type Shape = UnwrapOin<ReturnType<typeof oin>>;
+type Shape = UnwrapIo<ReturnType<typeof io>>;
 ```
 
 ## 下一步

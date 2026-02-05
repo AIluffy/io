@@ -1,11 +1,11 @@
 ---
 title: From Zustand
-description: Map common Zustand patterns to OIN.
+description: Map common Zustand patterns to IO.
 sidebar:
   order: 1
 ---
 
-This guide maps popular Zustand patterns to OIN equivalents. The goal is clarity, not a 1:1 API match.
+This guide maps popular Zustand patterns to IO equivalents. The goal is clarity, not a 1:1 API match.
 
 ## Store creation
 
@@ -18,12 +18,12 @@ const useStore = create((set) => ({
 }));
 ```
 
-OIN:
+IO:
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const store = oin({ count: 0 });
+const store = io({ count: 0 });
 const inc = () => store.count((v) => v + 1);
 ```
 
@@ -38,10 +38,10 @@ Zustand selector:
 const count = useStore((s) => s.count);
 ```
 
-OIN selector via derived:
+IO selector via derived:
 
 ```ts
-import { derived } from '@oin/store';
+import { derived } from 'io-store';
 
 const count = derived(store, (s) => s.count);
 ```
@@ -49,39 +49,39 @@ const count = derived(store, (s) => s.count);
 For path-focused access, use `lens`:
 
 ```ts
-import { lens } from '@oin/store';
+import { lens } from 'io-store';
 
 const userName = lens<string>(store, ['user', 'name']);
 ```
 
 ## Middleware → Behaviors
 
-Zustand middlewares like `persist` and `devtools` map to OIN behaviors.
+Zustand middlewares like `persist` and `devtools` map to IO behaviors.
 
 ```ts
-import { persist, devtools, withBehaviors } from '@oin/store/behavior';
-import { createOinDevtools } from '@oin/devtools';
+import { persist, devtools, withBehaviors } from 'io-store/behavior';
+import { createIoDevtools } from 'io-devtools';
 
 const view = withBehaviors(store, [
   persist({ key: 'store' }),
-  devtools({ target: store, create: createOinDevtools }),
+  devtools({ target: store, create: createIoDevtools }),
 ]);
 ```
 
 ## React usage
 
-Zustand `useStore` becomes `useOin`:
+Zustand `useStore` becomes `useIo`:
 
 ```tsx
-import { useOin } from '@oin/react';
+import { useIo } from 'io-react';
 
 function Counter() {
-  const value = useOin(store.count);
+  const value = useIo(store.count);
   return <button onClick={inc}>{value}</button>;
 }
 ```
 
 ## Next steps
 
-- Learn the OIN mental model in [Introduction](/en/getting-started/introduction/).
+- Learn the IO mental model in [Introduction](/en/getting-started/introduction/).
 - Explore behaviors in [Behaviors](/en/behaviors/overview/).

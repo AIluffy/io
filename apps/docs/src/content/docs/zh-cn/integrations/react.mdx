@@ -1,20 +1,20 @@
 ---
 title: React
-description: 使用 `useOin` Hook 接入 React。
+description: 使用 `useIo` Hook 接入 React。
 sidebar:
   order: 2
 ---
 
-## useOin
+## useIo
 
 ```tsx
-import { oin } from '@oin/store';
-import { useOin } from '@oin/react';
+import { io } from 'io-store';
+import { useIo } from 'io-react';
 
-const count = oin(0);
+const count = io(0);
 
 export function Counter() {
-  const value = useOin(count);
+  const value = useIo(count);
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -22,14 +22,14 @@ export function Counter() {
 ## Derived in React
 
 ```tsx
-import { derived, oin } from '@oin/store';
-import { useOin } from '@oin/react';
+import { derived, io } from 'io-store';
+import { useIo } from 'io-react';
 
-const store = oin({ count: 0 });
+const store = io({ count: 0 });
 const doubled = derived([store.count], (value) => value * 2);
 
 export function Summary() {
-  const value = useOin(doubled);
+  const value = useIo(doubled);
   return <span>{value}</span>;
 }
 ```

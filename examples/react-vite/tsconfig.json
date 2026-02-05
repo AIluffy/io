@@ -13,10 +13,10 @@
   "include": ["src"],
   "references": [
     {
-      "path": "../../packages/oin-react"
+      "path": "../../packages/io-react"
     },
     {
-      "path": "../../packages/oin"
+      "path": "../../packages/io"
     }
   ]
 }

@@ -8,10 +8,10 @@ sidebar:
 Behaviors wrap a view’s `get/set/subscribe` without changing the underlying Unit or tree. This makes it easy to add persistence, scheduling, or tooling.
 
 ```ts
-import { oin } from '@oin/store';
-import { persist, schedule, withBehaviors } from '@oin/store/behavior';
+import { io } from 'io-store';
+import { persist, schedule, withBehaviors } from 'io-store/behavior';
 
-const count = oin(0);
+const count = io(0);
 
 const view = withBehaviors(count, [
   schedule('microtask'),

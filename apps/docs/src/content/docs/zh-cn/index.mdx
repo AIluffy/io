@@ -1,5 +1,5 @@
 ---
-title: 欢迎使用 OIN
+title: 欢迎使用 IO
 description: 具有深度信号支持的响应式状态管理。
 template: splash
 hero:
@@ -12,7 +12,7 @@ hero:
       icon: right-arrow
       variant: primary
     - text: 查看 GitHub
-      link: https://github.com/oin-js/oin
+      link: https://github.com/io-js/io
       icon: external
       variant: minimal
 ---
@@ -22,9 +22,9 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 ## 快速开始
 
 ```ts
-import { oin, batch } from '@oin/store';
+import { io, batch } from 'io-store';
 
-const store = oin({ count: 0, user: { name: 'Ada' } });
+const store = io({ count: 0, user: { name: 'Ada' } });
 
 store.count();
 store.user.name('Grace');
@@ -35,7 +35,7 @@ batch(() => {
 });
 ```
 
-## 为什么选择 OIN
+## 为什么选择 IO
 
 <CardGrid stagger>
 	<Card title="深层更新" icon="open-book">

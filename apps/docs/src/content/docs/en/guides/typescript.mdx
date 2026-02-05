@@ -8,18 +8,18 @@ sidebar:
 ## Typed Units
 
 ```ts
-import type { OinUnit } from '@oin/store';
-import { oin } from '@oin/store';
+import type { IoUnit } from 'io-store';
+import { io } from 'io-store';
 
-const count: OinUnit<number> = oin(0);
+const count: IoUnit<number> = io(0);
 ```
 
 ## Typed trees
 
-`oin()` preserves nested shapes, so property access is strongly typed.
+`io()` preserves nested shapes, so property access is strongly typed.
 
 ```ts
-const store = oin({ user: { name: 'Ada', age: 36 } });
+const store = io({ user: { name: 'Ada', age: 36 } });
 store.user.name();
 ```
 
@@ -28,21 +28,21 @@ store.user.name();
 Use path helpers for utilities and adapters.
 
 ```ts
-import type { OinPathOf, OinPathValue } from '@oin/store';
+import type { IoPathOf, IoPathValue } from 'io-store';
 
 type Store = { user: { profile: { name: string } } };
 
-type NamePath = OinPathOf<Store>; // ['user', 'profile', 'name'] | ...
+type NamePath = IoPathOf<Store>; // ['user', 'profile', 'name'] | ...
 
-type NameValue = OinPathValue<Store, ['user', 'profile', 'name']>; // string
+type NameValue = IoPathValue<Store, ['user', 'profile', 'name']>; // string
 ```
 
 ## Unwrap helpers
 
 ```ts
-import type { UnwrapOin } from '@oin/store';
+import type { UnwrapIo } from 'io-store';
 
-type Shape = UnwrapOin<ReturnType<typeof oin>>;
+type Shape = UnwrapIo<ReturnType<typeof io>>;
 ```
 
 ## Next steps

@@ -21,11 +21,11 @@ function parseCheckTimeMs(output) {
 function runOnce({ width, depth }) {
   const typeStr = buildNestedType(width, depth);
   const ts = `
-import type { UnwrapOin, OinPathOf } from '@oin/store';
+import type { UnwrapIo, IoPathOf } from 'io-store';
 
 type State = ${typeStr};
-type Unwrapped = UnwrapOin<State>;
-type Paths = OinPathOf<State>;
+type Unwrapped = UnwrapIo<State>;
+type Paths = IoPathOf<State>;
 
 type _ForceUnwrap = Unwrapped extends unknown ? 1 : 2;
 type _ForcePaths = Paths extends unknown ? 1 : 2;
@@ -37,7 +37,7 @@ export {};
 }
 
 async function main() {
-  const tmp = await mkdtemp(path.join(os.tmpdir(), 'oin-type-infer-'));
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'io-type-infer-'));
   try {
     const cases = [
       { width: 8, depth: 6 },

@@ -1,6 +1,6 @@
-# OIN Documentation
+# IO Documentation
 
-This is the documentation site for OIN, built with [Starlight](https://starlight.astro.build/).
+This is the documentation site for IO, built with [Starlight](https://starlight.astro.build/).
 
 ## Project Structure
 

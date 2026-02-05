@@ -1,6 +1,6 @@
 ---
 title: Testing
-description: Test OIN stores with snapshots and updates.
+description: Test IO stores with snapshots and updates.
 sidebar:
   order: 4
 ---
@@ -13,10 +13,10 @@ Snapshots are frozen and stable within a revision, so they are ideal for tests.
 
 ```ts
 import { expect, it } from 'vitest';
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
 it('updates count', () => {
-  const count = oin(0);
+  const count = io(0);
   count((v) => v + 1);
   expect(count.snapshot()).toBe(1);
 });
@@ -28,7 +28,7 @@ Use `subscribeUpdate` to inspect the exact patches produced by an action.
 
 ```ts
 it('emits update patches', () => {
-  const count = oin(0);
+  const count = io(0);
   const patches = [] as string[];
   const unsub = count.subscribeUpdate((u) => {
     patches.push(u.patches[0].op);

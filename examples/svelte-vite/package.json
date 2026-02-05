@@ -1,5 +1,5 @@
 {
-  "name": "oin-example-svelte-vite",
+  "name": "io-example-svelte-vite",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@oin/store": "*",
-    "@oin/svelte": "*",
+    "io-store": "*",
+    "io-svelte": "*",
     "svelte": "^5.49.1"
   },
   "devDependencies": {

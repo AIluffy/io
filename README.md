@@ -1,4 +1,4 @@
-# Oin - 细粒度响应式状态管理库
+# Io - 细粒度响应式状态管理库
 
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 
@@ -9,16 +9,16 @@
 本仓库包含以下 6 个包：
 
 - **核心包**
-  - `@oin/store` - 细粒度响应式状态管理核心库
+  - `io-store` - 细粒度响应式状态管理核心库
 
 - **框架集成包**
-  - `@oin/react` - React 集成（Hooks）
-  - `@oin/svelte` - Svelte 集成（Stores）
-  - `@oin/vue` - Vue 集成（Refs）
+  - `io-react` - React 集成（Hooks）
+  - `io-svelte` - Svelte 集成（Stores）
+  - `io-vue` - Vue 集成（Refs）
 
 - **DevTools**
-  - `@oin/devtools` - 运行时观察与导出能力
-  - `@oin/devtools-react` - React 面板组件
+  - `io-devtools` - 运行时观察与导出能力
+  - `io-devtools-react` - React 面板组件
 
 ## 🚀 快速开始
 
@@ -47,26 +47,26 @@ nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { derived, oin } from '@oin/store';
+import { derived, io } from 'io-store';
 
 // 基础单元
-const count = oin(0);
+const count = io(0);
 count(10); // 设置值
 count((v) => v + 1); // 函数式更新
 
 // 对象作用域
-const user = oin({ name: 'Alice', age: 25 });
+const user = io({ name: 'Alice', age: 25 });
 user.name('Bob'); // 仅触发 name 相关订阅
 
 // 深度树形结构（默认）
-const app = oin({
+const app = io({
   user: { profile: { name: 'Alice' } },
   items: [{ id: 1, count: 0 }],
 });
 app.items[0].count((v) => v + 1); // 精确的叶子节点更新
 
 // 仅第一层变成 Unit（同一 Tree 引擎，深度限制为 1）
-const shallow = oin({ name: 'Alice', age: 25 }, { shallow: true });
+const shallow = io({ name: 'Alice', age: 25 }, { shallow: true });
 shallow.name('Bob');
 // shallow.commit(...) 不允许新增未知 key
 ```
@@ -74,7 +74,7 @@ shallow.name('Bob');
 ### 2. 数组操作
 
 ```typescript
-const list = oin([1, 2, 3]);
+const list = io([1, 2, 3]);
 list.push(4);
 list.splice(1, 1, 9);
 list.sort((a, b) => a - b);
@@ -89,9 +89,9 @@ const double = derived([count], (c) => c * 2);
 ### 4. 更新历史与回放
 
 ```typescript
-import { applyUpdate, invertUpdate, replay } from '@oin/store';
+import { applyUpdate, invertUpdate, replay } from 'io-store';
 
-const updates: OinUpdate[] = [];
+const updates: IoUpdate[] = [];
 state.subscribeUpdate((u) => updates.push(u));
 
 // 回放更新
@@ -106,10 +106,10 @@ applyUpdate(state, invertUpdate(update));
 ### React
 
 ```typescript
-import { useOin } from '@oin/react';
+import { useIo } from 'io-react';
 
 function Counter({ count }) {
-  const value = useOin(count);
+  const value = useIo(count);
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -117,7 +117,7 @@ function Counter({ count }) {
 ### Svelte
 
 ```typescript
-import { toReadable, toWritable } from '@oin/svelte';
+import { toReadable, toWritable } from 'io-svelte';
 
 // 只读 store
 const store = toReadable(state);
@@ -129,23 +129,23 @@ const writable = toWritable(unit);
 ### Vue
 
 ```typescript
-import { useOin, oinRef } from '@oin/vue';
+import { useIo, ioRef } from 'io-vue';
 
 // 组合式函数
-const state = useOin(source);
+const state = useIo(source);
 
 // 双向绑定 ref
-const ref = oinRef(unit);
+const ref = ioRef(unit);
 ```
 
 ## 📁 项目结构
 
 ```
 ├── packages/
-│   ├── oin/           [scope:oin]       核心响应式库
-│   ├── oin-react/     [scope:oin-react] React 集成
-│   ├── oin-svelte/    [scope:oin-svelte] Svelte 集成
-│   └── oin-vue/       [scope:oin-vue]   Vue 集成
+│   ├── io/           [scope:io]       核心响应式库
+│   ├── io-react/     [scope:io-react] React 集成
+│   ├── io-svelte/    [scope:io-svelte] Svelte 集成
+│   └── io-vue/       [scope:io-vue]   Vue 集成
 ├── nx.json            - Nx 配置
 ├── tsconfig.json      - TypeScript 配置
 └── eslint.config.mjs  - ESLint 模块边界规则
@@ -157,12 +157,12 @@ const ref = oinRef(unit);
 
 | 包                    | 标签                       | 可依赖的包           |
 | --------------------- | -------------------------- | -------------------- |
-| `@oin/store`          | `scope:oin`                | 无（基础库）         |
-| `@oin/react`          | `scope:oin-react`          | `scope:oin`          |
-| `@oin/svelte`         | `scope:oin-svelte`         | `scope:oin`          |
-| `@oin/vue`            | `scope:oin-vue`            | `scope:oin`          |
-| `@oin/devtools`       | `scope:oin-devtools`       | `scope:oin`          |
-| `@oin/devtools-react` | `scope:oin-devtools-react` | `scope:oin-devtools` |
+| `io-store`          | `scope:io`                | 无（基础库）         |
+| `io-react`          | `scope:io-react`          | `scope:io`          |
+| `io-svelte`         | `scope:io-svelte`         | `scope:io`          |
+| `io-vue`            | `scope:io-vue`            | `scope:io`          |
+| `io-devtools`       | `scope:io-devtools`       | `scope:io`          |
+| `io-devtools-react` | `scope:io-devtools-react` | `scope:io-devtools` |
 
 ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
@@ -172,12 +172,12 @@ ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 # 项目探索
 nx graph                                    # 交互式依赖图
 nx list                                     # 列出已安装插件
-nx show project @oin/store --web                  # 查看项目详情
+nx show project io-store --web                  # 查看项目详情
 
 # 开发
-nx build @oin/store                               # 构建特定包
-nx test @oin/store                                # 测试特定包
-nx lint @oin/react                          # 检查特定包
+nx build io-store                               # 构建特定包
+nx test io-store                                # 测试特定包
+nx lint io-react                          # 检查特定包
 
 # 批量任务
 nx run-many -t build                       # 构建所有项目
@@ -189,15 +189,69 @@ nx release --dry-run                       # 预览发布变更
 nx release                                 # 创建新发布
 ```
 
-## 🧪 测试模块边界
+## 📦 发布流程
 
-尝试在 `@oin/react` 中导入 `@oin/svelte`：
+本仓库使用 `nx release` 统一管理多包版本、变更日志和发布。
 
-```typescript
-import { toReadable } from '@oin/svelte'; // 错误！
+发布前检查（本地）：
+
+```bash
+git status --porcelain
+nx run-many -t lint test typecheck build
 ```
 
-运行 `nx lint @oin/react` 会报错：违反模块边界规则。
+本地发布（手动）：
+
+```bash
+nx release --dry-run        # 预览
+nx release patch            # 实际发布，示例为 patch
+```
+
+只生成版本/变更日志、不发布：
+
+```bash
+nx release patch --skip-publish
+```
+
+仅发布已有版本（例如已完成版本/打 tag）：
+
+```bash
+nx release publish --access public
+```
+
+本地 Verdaccio 验证发布：
+
+```bash
+# 启动本地 registry
+nx run io-source:local-registry
+
+# 发布到本地 registry
+nx release publish --registry http://localhost:4873 --tag next --access public
+
+# 在示例项目中验证安装（示例）
+npm i io-store@next --registry http://localhost:4873
+```
+
+CI 发布（GitHub Actions）：
+
+```text
+.github/workflows/release.yml   # 生成 Release PR
+.github/workflows/publish.yml   # 合并到 main 后自动发布
+```
+
+1. 在 GitHub Secrets 中设置 `NPM_TOKEN`。
+2. 通过 Actions -> Release PR 手动触发，输入 `specifier`（如 `patch`/`minor`/`major`/`1.2.3`）。
+3. 合并 Release PR 到 `main` 后，`Publish` workflow 会自动发包。
+
+## 🧪 测试模块边界
+
+尝试在 `io-react` 中导入 `io-svelte`：
+
+```typescript
+import { toReadable } from 'io-svelte'; // 错误！
+```
+
+运行 `nx lint io-react` 会报错：违反模块边界规则。
 
 ## 🔗 了解更多
 

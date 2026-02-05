@@ -13,10 +13,10 @@
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
   "references": [
     {
-      "path": "../../packages/oin-vue"
+      "path": "../../packages/io-vue"
     },
     {
-      "path": "../../packages/oin"
+      "path": "../../packages/io"
     }
   ]
 }

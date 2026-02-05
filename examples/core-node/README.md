@@ -9,7 +9,7 @@ npm run start
 
 ## What it demonstrates
 
-- `oin()` deep tree nodes
+- `io()` deep tree nodes
 - `subscribeUpdate()` update recording
 - `batch()` coalescing updates
 - `mergeUpdates()` + `invertUpdate()` + `replay()` for rollback

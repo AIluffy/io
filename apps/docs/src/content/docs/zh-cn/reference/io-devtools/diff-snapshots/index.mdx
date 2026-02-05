@@ -1,0 +1,32 @@
+---
+title: "diffSnapshots"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(prev: unknown, next: unknown, options?: DiffOptions) => IoSnapshotDiff[]
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| prev | `unknown` |
+| next | `unknown` |
+| options | `DiffOptions` |
+
+## 返回
+
+`IoSnapshotDiff[]`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/diff-snapshots.ts`

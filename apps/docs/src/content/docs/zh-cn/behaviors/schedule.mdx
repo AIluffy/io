@@ -10,10 +10,10 @@ sidebar:
 通过 schedule 行为延迟订阅通知，降低渲染抖动。
 
 ```ts
-import { oin } from '@oin/store';
-import { schedule, withBehaviors } from '@oin/store/behavior';
+import { io } from 'io-store';
+import { schedule, withBehaviors } from 'io-store/behavior';
 
-const count = oin(0);
+const count = io(0);
 const view = withBehaviors(count, [schedule('microtask')]);
 
 view.subscribe((value) => {

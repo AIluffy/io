@@ -1,0 +1,29 @@
+---
+title: "IoPatchDiffTreeNode"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoPatchDiffTreeNode
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `PropertyKey` |
+| path | `IoPath` |
+| children | `IoPatchDiffTreeNode[]` |
+| patches | `IoPatchDiff[]` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

@@ -1,0 +1,118 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.detect.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect version bump
+        id: detect
+        run: |
+          node <<'NODE'
+          const { execSync } = require('node:child_process');
+          const fs = require('node:fs');
+
+          const output = process.env.GITHUB_OUTPUT;
+          if (!output) {
+            process.exit(0);
+          }
+
+          try {
+            execSync('git rev-parse --verify HEAD^1');
+          } catch {
+            process.exit(0);
+          }
+
+          const diff = execSync('git diff --name-only HEAD^1 HEAD')
+            .toString()
+            .trim()
+            .split('\n')
+            .filter(Boolean);
+          const pkgFiles = diff.filter((f) => /^packages\/[^/]+\/package\.json$/.test(f));
+          if (!pkgFiles.length) {
+            process.exit(0);
+          }
+
+          let changed = false;
+          for (const file of pkgFiles) {
+            const before = JSON.parse(execSync(`git show HEAD^1:${file}`).toString()).version;
+            const after = JSON.parse(execSync(`git show HEAD:${file}`).toString()).version;
+            if (before !== after) {
+              changed = true;
+              break;
+            }
+          }
+
+          if (changed) {
+            fs.appendFileSync(output, 'should_publish=true\n');
+          }
+          NODE
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.should_publish == 'true'
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+        if: steps.detect.outputs.should_publish == 'true'
+
+      - run: npx nx run-many -t build
+        if: steps.detect.outputs.should_publish == 'true'
+
+      - name: Publish to npm
+        if: steps.detect.outputs.should_publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          npx nx release publish --access public
+
+  docs:
+    needs: publish
+    if: needs.publish.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate API Reference
+        run: npx nx run apps-docs:generate-api
+
+      - name: Build Docs
+        run: npx nx run apps-docs:build
+        env:
+          ASTRO_TELEMETRY_DISABLED: 1
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./apps/docs/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

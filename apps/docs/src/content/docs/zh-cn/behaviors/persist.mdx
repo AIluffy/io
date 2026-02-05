@@ -8,10 +8,10 @@ sidebar:
 ## 基础用法
 
 ```ts
-import { oin } from '@oin/store';
-import { persist, withBehaviors } from '@oin/store/behavior';
+import { io } from 'io-store';
+import { persist, withBehaviors } from 'io-store/behavior';
 
-const count = oin(0);
+const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);
 ```
 

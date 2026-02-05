@@ -10,9 +10,9 @@ sidebar:
 Unit 是函数式单元：调用读取，传值写入。
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const count = oin(0);
+const count = io(0);
 
 count(); // 0
 count(1); // 写入
@@ -27,11 +27,11 @@ Unit 暴露以下能力：
 
 ## Scope
 
-当 `oin` 接收对象时，会生成 Scope，每个 key 都是 Unit。Scope 与深层 Tree
+当 `io` 接收对象时，会生成 Scope，每个 key 都是 Unit。Scope 与深层 Tree
 共享同一运行时实现。
 
 ```ts
-const user = oin({ name: 'Ada', age: 36 });
+const user = io({ name: 'Ada', age: 36 });
 
 user.name();
 user.age(37);
@@ -51,7 +51,7 @@ user.commit((draft) => {
 数组同样是 Unit，可以直接操作并产生更新，且与深层 Tree 共享实现。
 
 ```ts
-const todos = oin([{ id: 'a', title: 'Ship', done: false }]);
+const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 
 todos.push({ id: 'b', title: 'Document', done: false });
 todos[0].done(true);

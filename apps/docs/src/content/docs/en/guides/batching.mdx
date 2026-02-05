@@ -10,9 +10,9 @@ sidebar:
 Batching coalesces notifications and merges patches into a single update, which is great for UI performance and DevTools history.
 
 ```ts
-import { batch, oin } from '@oin/store';
+import { batch, io } from 'io-store';
 
-const store = oin({ count: 0, name: 'Ada' });
+const store = io({ count: 0, name: 'Ada' });
 
 batch(() => {
   store.count((v) => v + 1);
@@ -22,7 +22,7 @@ batch(() => {
 
 ## Nested batches
 
-Batches can be nested. OIN only flushes once at the outer boundary.
+Batches can be nested. IO only flushes once at the outer boundary.
 
 ## Next steps
 

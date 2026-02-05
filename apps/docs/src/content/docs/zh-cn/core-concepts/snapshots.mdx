@@ -10,9 +10,9 @@ sidebar:
 任何对象/数组读取都会返回冻结快照，避免误修改。
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const state = oin({ items: ['a', 'b'] });
+const state = io({ items: ['a', 'b'] });
 const snapshot = state.snapshot();
 
 Object.isFrozen(snapshot); // true
@@ -21,7 +21,7 @@ Object.isFrozen(snapshot); // true
 ## snapshot API
 
 ```ts
-const count = oin(0);
+const count = io(0);
 
 count.snapshot();
 ```

@@ -1,0 +1,31 @@
+---
+title: "onMutation"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(target: unknown, fn: (patch: IoPatch, path: IoPath, update: IoUpdate) => void) => IoUnsubscribe
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| fn | `(patch: IoPatch, path: IoPath, update: IoUpdate) => void` |
+
+## 返回
+
+`IoUnsubscribe`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/debug.ts`

@@ -4,22 +4,22 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/oin-svelte"
+      "path": "./packages/io"
     },
     {
-      "path": "./packages/oin-react"
+      "path": "./packages/io-devtools-react"
     },
     {
-      "path": "./packages/oin-vue"
+      "path": "./packages/io-devtools"
     },
     {
-      "path": "./packages/oin"
+      "path": "./packages/io-svelte"
     },
     {
-      "path": "./packages/oin-devtools-react"
+      "path": "./packages/io-react"
     },
     {
-      "path": "./packages/oin-devtools"
+      "path": "./packages/io-vue"
     }
   ]
 }

@@ -1,12 +1,12 @@
 <script>
-  import { oin } from '@oin/store';
-  import { toReadable } from '@oin/svelte';
+  import { io } from 'io-store';
+  import { toReadable } from 'io-svelte';
 
-  const store = oin({
+  const store = io({
     draft: '',
     filter: 'all',
     todos: [
-      { id: '1', title: 'Learn OIN', done: false },
+      { id: '1', title: 'Learn IO', done: false },
       { id: '2', title: 'Ship a demo', done: true },
     ],
   });
@@ -48,7 +48,7 @@
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-            OIN + Svelte
+            IO + Svelte
           </p>
           <h1 class="mt-2 text-2xl font-semibold text-slate-900">Todo List</h1>
         </div>

@@ -10,9 +10,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@oin/devtools": "*",
-    "@oin/devtools-react": "*",
-    "@oin/store": "*",
+    "io-devtools": "*",
+    "io-devtools-react": "*",
+    "io-store": "*",
     "@astrojs/react": "^4.4.2",
     "@astrojs/starlight": "^0.37.5",
     "@six-tech/starlight-theme-six": "^1.0.16",
@@ -24,5 +24,16 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sharp": "^0.34.5"
+  },
+  "nx": {
+    "targets": {
+      "generate-api": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/docs/generate-api-docs.mjs",
+          "cwd": "{workspaceRoot}"
+        }
+      }
+    }
   }
 }

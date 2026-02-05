@@ -1,11 +1,11 @@
 {
-  "name": "oin-example-core-node",
+  "name": "io-example-core-node",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node index.mjs"
   },
   "dependencies": {
-    "@oin/store": "*"
+    "io-store": "*"
   }
 }

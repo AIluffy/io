@@ -52,7 +52,20 @@
     }
   ],
   "release": {
-    "projects": ["!@oin/*"],
+    "projects": [
+      "io-store",
+      "io-react",
+      "io-vue",
+      "io-svelte",
+      "io-devtools",
+      "io-devtools-react"
+    ],
+    "git": {
+      "commit": true,
+      "tag": true,
+      "push": true,
+      "commitMessage": "chore(release): publish {version}"
+    },
     "version": {
       "preVersionCommand": "npx nx run-many -t build"
     }

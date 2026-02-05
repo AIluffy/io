@@ -5,31 +5,31 @@ sidebar:
   order: 3
 ---
 
-## useOin
+## useIo
 
 ```ts
-import { oin } from '@oin/store';
-import { useOin } from '@oin/vue';
+import { io } from 'io-store';
+import { useIo } from 'io-vue';
 
-const count = oin(0);
+const count = io(0);
 
 export function useCounter() {
-  const state = useOin(count);
+  const state = useIo(count);
   const inc = () => count((v) => v + 1);
   return { state, inc };
 }
 ```
 
-## oinRef
+## ioRef
 
-`oinRef` 将 Unit 适配成 Vue `ref`。
+`ioRef` 将 Unit 适配成 Vue `ref`。
 
 ```ts
-import { oin } from '@oin/store';
-import { oinRef } from '@oin/vue';
+import { io } from 'io-store';
+import { ioRef } from 'io-vue';
 
-const count = oin(0);
-const countRef = oinRef(count);
+const count = io(0);
+const countRef = ioRef(count);
 ```
 
 ## 下一步

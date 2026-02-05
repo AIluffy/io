@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Install OIN and build your first state in minutes.
+description: Install IO and build your first state in minutes.
 sidebar:
   order: 2
 ---
@@ -14,13 +14,13 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 1. Install the core package:
 
    ```bash
-   npm install @oin/store
+   npm install io-store
    ```
 
 2. Add an adapter (optional):
 
    ```bash
-   npm install @oin/react
+   npm install io-react
    ```
 
 </Steps>
@@ -28,9 +28,9 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 ## Create state
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const count = oin(0);
+const count = io(0);
 
 count(); // read
 count(1); // write
@@ -42,9 +42,9 @@ count((v) => v + 1); // update
 <Tabs>
   <TabItem label="Core">
     ```ts
-    import { oin, batch } from '@oin/store';
+    import { io, batch } from 'io-store';
 
-    const store = oin({ count: 0, user: { name: 'Ada' } });
+    const store = io({ count: 0, user: { name: 'Ada' } });
 
     store.count();
     store.user.name('Grace');
@@ -57,26 +57,26 @@ count((v) => v + 1); // update
   </TabItem>
   <TabItem label="React">
     ```tsx
-    import { oin } from '@oin/store';
-    import { useOin } from '@oin/react';
+    import { io } from 'io-store';
+    import { useIo } from 'io-react';
 
-    const count = oin(0);
+    const count = io(0);
 
     export function Counter() {
-      const value = useOin(count);
+      const value = useIo(count);
       return <button onClick={() => count((v) => v + 1)}>{value}</button>;
     }
     ```
   </TabItem>
   <TabItem label="Vue">
     ```ts
-    import { oin } from '@oin/store';
-    import { useOin } from '@oin/vue';
+    import { io } from 'io-store';
+    import { useIo } from 'io-vue';
 
-    const count = oin(0);
+    const count = io(0);
 
     export function useCounter() {
-      const state = useOin(count);
+      const state = useIo(count);
       const inc = () => count((v) => v + 1);
       return { state, inc };
     }
@@ -84,10 +84,10 @@ count((v) => v + 1); // update
   </TabItem>
   <TabItem label="Svelte">
     ```ts
-    import { oin } from '@oin/store';
-    import { toWritable } from '@oin/svelte';
+    import { io } from 'io-store';
+    import { toWritable } from 'io-svelte';
 
-    const count = oin(0);
+    const count = io(0);
     export const countStore = toWritable(count);
     ```
   </TabItem>

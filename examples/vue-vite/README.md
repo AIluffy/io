@@ -10,5 +10,5 @@ npm run dev
 ## What it demonstrates
 
 - Standard Todo demo (add / toggle / remove / filter)
-- `@oin/store`: tree nodes for object + array state
-- `@oin/vue`: `useOin(source)` bridges `snapshot() + subscribe()`
+- `io-store`: tree nodes for object + array state
+- `io-vue`: `useIo(source)` bridges `snapshot() + subscribe()`

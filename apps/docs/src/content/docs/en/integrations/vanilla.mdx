@@ -1,6 +1,6 @@
 ---
 title: Vanilla JS
-description: Use OIN without a framework.
+description: Use IO without a framework.
 sidebar:
   order: 1
 ---
@@ -8,9 +8,9 @@ sidebar:
 ## Read and write
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const state = oin({ count: 0 });
+const state = io({ count: 0 });
 
 state.count();
 state.count((v) => v + 1);

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-label="IO Architecture">
+  <defs>
+    <style>
+      .box { fill: #0b1220; stroke: #334155; stroke-width: 2; rx: 14; ry: 14; }
+      .title { fill: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; font-size: 18px; font-weight: 700; }
+      .text { fill: #cbd5e1; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; font-size: 14px; }
+      .muted { fill: #94a3b8; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; font-size: 13px; }
+      .arrow { stroke: #64748b; stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <rect x="40" y="40" width="340" height="200" class="box" />
+  <text x="70" y="78" class="title">Data Model</text>
+  <text x="70" y="110" class="text">Unit • Scope • ArrayUnit</text>
+  <text x="70" y="134" class="text">TreeNode (ioTree / io)</text>
+  <text x="70" y="170" class="muted">Frozen snapshots, subscribe, commit</text>
+
+  <rect x="430" y="40" width="340" height="200" class="box" />
+  <text x="460" y="78" class="title">Mutation + Observability</text>
+  <text x="460" y="110" class="text">Patch / Update (set, splice, sort)</text>
+  <text x="460" y="134" class="text">merge • invert • apply • replay</text>
+  <text x="460" y="170" class="muted">batch, onMutation, onError</text>
+
+  <rect x="820" y="40" width="340" height="200" class="box" />
+  <text x="850" y="78" class="title">Derived / Reactive Core</text>
+  <text x="850" y="110" class="text">derived (deps)</text>
+  <text x="850" y="134" class="text">derived (selector)</text>
+  <text x="850" y="170" class="muted">state • computed • effect • untrack</text>
+
+  <rect x="40" y="280" width="520" height="200" class="box" />
+  <text x="70" y="318" class="title">Framework Adapters</text>
+  <text x="70" y="350" class="text">@org/io-react: useIo (useSyncExternalStore)</text>
+  <text x="70" y="374" class="text">@org/io-vue: useIo (shallowRef) + ioRef (customRef)</text>
+  <text x="70" y="398" class="text">@org/io-svelte: toReadable / toWritable (stores)</text>
+  <text x="70" y="434" class="muted">Adapter contract: snapshot() + subscribe(cb)</text>
+
+  <rect x="610" y="280" width="550" height="200" class="box" />
+  <text x="640" y="318" class="title">Tooling & Docs</text>
+  <text x="640" y="350" class="text">TypeScript • Nx monorepo • Vite • Vitest</text>
+  <text x="640" y="374" class="text">Astro + Starlight docs • Pagefind search</text>
+  <text x="640" y="410" class="muted">Auto-generated API reference from source</text>
+
+  <path d="M380 140 L430 140" class="arrow" />
+  <path d="M770 140 L820 140" class="arrow" />
+  <path d="M210 240 L210 280" class="arrow" />
+  <path d="M640 240 L885 280" class="arrow" />
+</svg>

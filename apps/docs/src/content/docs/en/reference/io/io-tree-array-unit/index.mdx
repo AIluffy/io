@@ -1,0 +1,40 @@
+---
+title: "IoTreeArrayUnit"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoTreeArrayUnit<T, MaxDepth>
+```
+
+## Notes
+
+- Used for deep arrays (MaxDepth > 1); `IoArrayUnit` is the shallow alias.
+- `commit` updates array contents via draft diffs.
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| push | `(...items: T[]) => void` |
+| pop | `() => T \| undefined` |
+| splice | `(start: number, deleteCount: number, ...items: T[]) => void` |
+| sort | `(compareFn?: (a: T, b: T) => number) => void` |
+| commit | `(fn: (draft: T[]) => void) => void` |
+| reduce | `<R>(reducer: (acc: R, item: IoTreeNode<T, MaxDepth>, index: number) => R, initialValue: R) => R` |
+| snapshot | `() => T[]` |
+| subscribe | `(fn: (v: T[]) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| __@iterator@349 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

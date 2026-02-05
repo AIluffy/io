@@ -1,0 +1,40 @@
+---
+title: "IoArrayUnit"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoArrayUnit<T>
+```
+
+## Notes
+
+- Alias of `IoTreeArrayUnit<T, 1>` (shallow depth).
+- Implemented by the same tree engine; there is no separate array-unit runtime.
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| push | `(...items: T[]) => void` |
+| pop | `() => T \| undefined` |
+| splice | `(start: number, deleteCount: number, ...items: T[]) => void` |
+| sort | `(compareFn?: (a: T, b: T) => number) => void` |
+| commit | `(fn: (draft: T[]) => void) => void` |
+| reduce | `<R>(reducer: (acc: R, item: IoUnit<T>, index: number) => R, initialValue: R) => R` |
+| snapshot | `() => T[]` |
+| subscribe | `(fn: (v: T[]) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| __@iterator@349 | `() => Iterator<IoUnit<T>>` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

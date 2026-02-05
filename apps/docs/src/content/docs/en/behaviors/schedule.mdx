@@ -10,10 +10,10 @@ sidebar:
 The schedule behavior delays subscription notifications to reduce render churn.
 
 ```ts
-import { oin } from '@oin/store';
-import { schedule, withBehaviors } from '@oin/store/behavior';
+import { io } from 'io-store';
+import { schedule, withBehaviors } from 'io-store/behavior';
 
-const count = oin(0);
+const count = io(0);
 const view = withBehaviors(count, [schedule('microtask')]);
 
 view.subscribe((value) => {

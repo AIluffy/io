@@ -1,4 +1,4 @@
-# AGENTS.md - OIN Monorepo Guidelines
+# AGENTS.md - IO Monorepo Guidelines
 
 ## Build Commands (Nx)
 
@@ -39,12 +39,12 @@ nx run-many -t build
 
 ### Available Projects
 
-- `@oin/store` - Core library
-- `@oin/react`, `@oin/vue`, `@oin/svelte` - Framework adapters
-- `@oin/devtools`, `@oin/devtools-react` - DevTools
+- `io-store` - Core library
+- `io-react`, `io-vue`, `io-svelte` - Framework adapters
+- `io-devtools`, `io-devtools-react` - DevTools
 - `apps-docs` - Documentation site
-- `oin-example-core-node`, `oin-example-react-vite`, `oin-example-vue-vite`, `oin-example-svelte-vite` - Examples
-- `@org/source` - Workspace root
+- `io-example-core-node`, `io-example-react-vite`, `io-example-vue-vite`, `io-example-svelte-vite` - Examples
+- `io-source` - Workspace root
 
 ## Code Style Guidelines
 
@@ -69,13 +69,13 @@ import type { SomeType } from './types.js';
 import { helperFunction } from './utils.js';
 
 // Internal symbol naming
-const INTERNAL = Symbol.for('@org/oin/internal');
+const INTERNAL = Symbol.for('@org/io/internal');
 ```
 
 ### Naming Conventions
 
 - **Functions**: camelCase (`createUnit`, `applyUpdate`)
-- **Types**: PascalCase with `Oin` prefix (`OinUnit`, `OinScope`)
+- **Types**: PascalCase with `Io` prefix (`IoUnit`, `IoScope`)
 - **Internal functions**: camelCase, descriptive
 - **Constants**: UPPER_SNAKE_CASE or camelCase for private
 
@@ -114,9 +114,9 @@ describe('feature', () => {
 
 Projects use Nx tags for dependency constraints:
 
-- `scope:oin` - Core library
-- `scope:oin-react`, `scope:oin-vue`, `scope:oin-svelte` - Adapters
-- `scope:oin-devtools` - DevTools
+- `scope:io` - Core library
+- `scope:io-react`, `scope:io-vue`, `scope:io-svelte` - Adapters
+- `scope:io-devtools` - DevTools
 
 ### Key Patterns
 

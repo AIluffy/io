@@ -1,14 +1,14 @@
-import { oin } from '@oin/store';
-import { useOin } from '@oin/react';
+import { io } from 'io-store';
+import { useIo } from 'io-react';
 
 type Filter = 'all' | 'active' | 'done';
 type Todo = { id: string; title: string; done: boolean };
 
-const store = oin({
+const store = io({
   draft: '',
   filter: 'all' as Filter,
   todos: [
-    { id: '1', title: 'Learn OIN', done: false },
+    { id: '1', title: 'Learn IO', done: false },
     { id: '2', title: 'Ship a demo', done: true },
   ] as Todo[],
 });
@@ -16,7 +16,7 @@ const store = oin({
 const filters: Filter[] = ['all', 'active', 'done'];
 
 export function App() {
-  const state = useOin(store);
+  const state = useIo(store);
   const { draft, filter, todos } = state;
   const filteredTodos = todos.flatMap((todo, index) => {
     if (filter === 'active' && todo.done) return [];
@@ -39,7 +39,7 @@ export function App() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-                OIN + React
+                IO + React
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-slate-900">
                 Todo List

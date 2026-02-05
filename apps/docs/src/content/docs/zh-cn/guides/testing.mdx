@@ -11,10 +11,10 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ```ts
 import { expect, it } from 'vitest';
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
 it('updates count', () => {
-  const count = oin(0);
+  const count = io(0);
   count((v) => v + 1);
   expect(count.snapshot()).toBe(1);
 });
@@ -24,7 +24,7 @@ it('updates count', () => {
 
 ```ts
 it('emits update patches', () => {
-  const count = oin(0);
+  const count = io(0);
   const patches: string[] = [];
   const unsub = count.subscribeUpdate((u) => {
     patches.push(u.patches[0].op);

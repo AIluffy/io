@@ -8,10 +8,10 @@ sidebar:
 行为扩展会包装视图的 `get/set/subscribe`，不改变原始 Unit 或 Tree。这样就能方便地添加持久化、调度或工具能力。
 
 ```ts
-import { oin } from '@oin/store';
-import { persist, schedule, withBehaviors } from '@oin/store/behavior';
+import { io } from 'io-store';
+import { persist, schedule, withBehaviors } from 'io-store/behavior';
 
-const count = oin(0);
+const count = io(0);
 
 const view = withBehaviors(count, [
   schedule('microtask'),

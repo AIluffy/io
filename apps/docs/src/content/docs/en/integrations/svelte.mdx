@@ -1,6 +1,6 @@
 ---
 title: Svelte
-description: Svelte stores from OIN Units.
+description: Svelte stores from IO Units.
 sidebar:
   order: 4
 ---
@@ -8,17 +8,17 @@ sidebar:
 ## toReadable
 
 ```ts
-import { oin } from '@oin/store';
-import { toReadable } from '@oin/svelte';
+import { io } from 'io-store';
+import { toReadable } from 'io-svelte';
 
-const count = oin(0);
+const count = io(0);
 export const countReadable = toReadable(count);
 ```
 
 ## toWritable
 
 ```ts
-import { toWritable } from '@oin/svelte';
+import { toWritable } from 'io-svelte';
 
 export const countWritable = toWritable(count);
 ```

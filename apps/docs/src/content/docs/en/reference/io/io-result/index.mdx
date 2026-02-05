@@ -1,0 +1,28 @@
+---
+title: "IoResult"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoResult<T, MaxDepth>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| snapshot | `(() => T) \| (() => unknown[]) \| (() => T)` |
+| subscribe | `((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
+| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

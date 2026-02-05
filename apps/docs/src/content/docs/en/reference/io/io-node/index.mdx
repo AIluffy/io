@@ -1,0 +1,28 @@
+---
+title: "IoNode"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoNode<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
+| subscribe | `((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
+| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

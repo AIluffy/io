@@ -26,32 +26,32 @@ export default [
           allow: ['^.*/eslint(.base)?.config.[cm]?[jt]s$'],
           depConstraints: [
             {
-              sourceTag: 'scope:oin',
-              onlyDependOnLibsWithTags: ['scope:oin'],
+              sourceTag: 'scope:io',
+              onlyDependOnLibsWithTags: ['scope:io'],
             },
             {
-              sourceTag: 'scope:oin-devtools',
-              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-devtools'],
+              sourceTag: 'scope:io-devtools',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-devtools'],
             },
             {
-              sourceTag: 'scope:oin-react',
-              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-react'],
+              sourceTag: 'scope:io-react',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-react'],
             },
             {
-              sourceTag: 'scope:oin-devtools-react',
+              sourceTag: 'scope:io-devtools-react',
               onlyDependOnLibsWithTags: [
-                'scope:oin',
-                'scope:oin-devtools',
-                'scope:oin-devtools-react',
+                'scope:io',
+                'scope:io-devtools',
+                'scope:io-devtools-react',
               ],
             },
             {
-              sourceTag: 'scope:oin-svelte',
-              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-svelte'],
+              sourceTag: 'scope:io-svelte',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-svelte'],
             },
             {
-              sourceTag: 'scope:oin-vue',
-              onlyDependOnLibsWithTags: ['scope:oin', 'scope:oin-vue'],
+              sourceTag: 'scope:io-vue',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-vue'],
             },
           ],
         },

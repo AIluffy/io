@@ -1,0 +1,32 @@
+---
+title: "IoHistoryEntry"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoHistoryEntry
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| id | `string` |
+| timestamp | `number` |
+| update | `IoUpdate` |
+| patchDiffs | `IoPatchDiff[]` |
+| snapshotBefore | `unknown` |
+| snapshotAfter | `unknown` |
+| perf | `IoDevtoolsPerfSample` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

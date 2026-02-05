@@ -1,0 +1,74 @@
+name: Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      specifier:
+        description: 'Semver specifier or exact version (patch, minor, major, 1.2.3)'
+        required: true
+        default: 'patch'
+        type: string
+      dry_run:
+        description: 'Dry run only (no changes)'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-pr:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_BRANCH: release/${{ inputs.specifier }}-${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npx nx run-many -t lint test typecheck build
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release branch
+        if: inputs.dry_run != true
+        run: |
+          git checkout -b "${RELEASE_BRANCH}"
+          git push --set-upstream origin "${RELEASE_BRANCH}"
+
+      - name: Release (dry run)
+        if: inputs.dry_run == true
+        run: npx nx release ${{ inputs.specifier }} --dry-run
+
+      - name: Release (create version + changelog)
+        if: inputs.dry_run != true
+        run: npx nx release ${{ inputs.specifier }} --skip-publish
+
+      - name: Read version
+        if: inputs.dry_run != true
+        id: version
+        run: echo "value=$(node -p \"require('./packages/io/package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${RELEASE_BRANCH}" \
+            --title "chore(release): v${{ steps.version.outputs.value }}" \
+            --body "Automated release PR."

@@ -1,0 +1,16 @@
+---
+title: "schedule"
+description: "行为：调度订阅通知"
+---
+
+## 签名
+
+```ts
+schedule<T>(kind?: 'sync' | 'microtask' | 'animationFrame'): IoBehavior<T>
+```
+
+## 说明
+
+- 默认是 `microtask`。
+- 包裹 `subscribe`，用于合并/调度通知。
+

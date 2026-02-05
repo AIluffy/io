@@ -1,6 +1,6 @@
 ---
 title: Vanilla JS
-description: 不依赖框架使用 OIN。
+description: 不依赖框架使用 IO。
 sidebar:
   order: 1
 ---
@@ -8,9 +8,9 @@ sidebar:
 ## 读写
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const state = oin({ count: 0 });
+const state = io({ count: 0 });
 
 state.count();
 state.count((v) => v + 1);

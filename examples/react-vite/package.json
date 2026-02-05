@@ -1,5 +1,5 @@
 {
-  "name": "oin-example-react-vite",
+  "name": "io-example-react-vite",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@oin/store": "*",
-    "@oin/react": "*",
+    "io-store": "*",
+    "io-react": "*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

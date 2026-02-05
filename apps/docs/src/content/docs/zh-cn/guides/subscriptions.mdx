@@ -8,9 +8,9 @@ sidebar:
 ## 值订阅
 
 ```ts
-import { oin } from '@oin/store';
+import { io } from 'io-store';
 
-const count = oin(0);
+const count = io(0);
 
 const unsub = count.subscribe((value) => {
   console.log('value', value);

@@ -1,0 +1,40 @@
+---
+title: "Extensions"
+description: "IO 行为扩展"
+---
+
+## 概览
+
+IO 提供最小行为扩展层，用于增强读/写/订阅行为，而不修改核心节点模型。
+
+```ts
+import { withBehaviors, schedule, persist } from 'io-store/behavior';
+
+const view = withBehaviors(count, [
+  schedule('microtask'),
+  persist({ key: 'count' }),
+]);
+
+view();   // 读取
+view(1);  // 写入
+```
+
+当输入为树节点时，返回的 view 会保留深层访问能力（例如 `view.user.age(2)`）。
+
+## 导出
+
+来自 `io-store`：
+- `fromIo`
+- `lens`
+
+来自 `io-store/behavior`：
+- `withBehaviors`
+- `schedule`
+- `persist`
+- `devtools`
+
+## 内建行为
+
+- [schedule](./schedule)
+- [persist](./persist)
+- [devtools](./devtools)

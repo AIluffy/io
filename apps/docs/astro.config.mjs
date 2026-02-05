@@ -8,19 +8,19 @@ export default defineConfig({
   output: 'static',
   vite: {
     resolve: {
-      conditions: ['@org/source'],
+      conditions: ['io-source'],
     },
   },
   integrations: [
     react(),
     starlight({
       plugins: [],
-      title: 'OIN Documentation',
+      title: 'IO Documentation',
       description: 'Reactive state management with deep signal support.',
       logo: {
-        light: './src/assets/oin-logo-light.svg',
-        dark: './src/assets/oin-logo-dark.svg',
-        alt: 'OIN',
+        light: './src/assets/io-logo-light.svg',
+        dark: './src/assets/io-logo-dark.svg',
+        alt: 'IO',
       },
       favicon: '/favicon.svg',
       defaultLocale: 'en',
