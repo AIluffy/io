@@ -54,17 +54,17 @@ export type IoDerived<T> = {
   subscribe(fn: (v: T) => void): IoUnsubscribe;
 };
 
-export type IoNode<T> = T extends readonly (infer U)[]
+export type IoNode<T> = [T] extends [readonly (infer U)[]]
   ? IoArrayUnit<U>
-  : T extends Record<string, unknown>
+  : [T] extends [Record<string, unknown>]
   ? IoScope<T>
   : IoUnit<T>;
 
 export type IoTreeNode<T, MaxDepth extends number = 16> = MaxDepth extends 0
   ? IoUnit<T>
-  : T extends readonly (infer U)[]
+  : [T] extends [readonly (infer U)[]]
   ? IoTreeArrayUnit<U, PrevDepth<MaxDepth>>
-  : T extends Record<string, unknown>
+  : [T] extends [Record<string, unknown>]
   ? IoTreeScope<T, PrevDepth<MaxDepth>>
   : IoUnit<T>;
 
