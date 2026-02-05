@@ -81,7 +81,7 @@ describe('async-retry', () => {
       const fn1 = vi
         .fn()
         .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success1');
+        .mockResolvedValue('success3');
 
       const fn2 = vi
         .fn()
