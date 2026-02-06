@@ -2,10 +2,15 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import vue from '@astrojs/vue';
+import rehypeSortable from './src/rehype/rehype-sortable.js';
 
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
+  markdown: {
+    rehypePlugins: [rehypeSortable],
+  },
   vite: {
     resolve: {
       conditions: ['io-source'],
@@ -13,6 +18,7 @@ export default defineConfig({
   },
   integrations: [
     react(),
+    vue(),
     starlight({
       plugins: [],
       title: 'IO Documentation',
@@ -58,6 +64,11 @@ export default defineConfig({
           label: 'Integrations',
           translations: { 'zh-cn': '集成' },
           autogenerate: { directory: 'integrations' },
+        },
+        {
+          label: 'State Management',
+          translations: { 'zh-cn': '状态管理' },
+          autogenerate: { directory: 'state-management' },
         },
         {
           label: 'Migrations',

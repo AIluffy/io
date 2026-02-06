@@ -14,16 +14,24 @@
     "io-devtools-react": "*",
     "io-store": "*",
     "@astrojs/react": "^4.4.2",
+    "@astrojs/vue": "^5.0.9",
     "@astrojs/starlight": "^0.37.5",
     "@six-tech/starlight-theme-six": "^1.0.16",
     "@fontsource/inter": "^5.2.6",
     "@fontsource/jetbrains-mono": "^5.2.6",
+    "@reduxjs/toolkit": "^2.9.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.17.1",
+    "pinia": "^3.0.4",
+    "react-redux": "^9.2.0",
+    "recoil": "^0.7.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "sharp": "^0.34.5"
+    "redux": "^5.0.1",
+    "sharp": "^0.34.5",
+    "vue": "^3.5.13",
+    "zustand": "^5.0.11"
   },
   "nx": {
     "targets": {

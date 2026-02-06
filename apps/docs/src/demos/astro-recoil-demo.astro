@@ -1,0 +1,12 @@
+---
+import RecoilCounter from './recoil/RecoilCounter.tsx';
+---
+
+<section>
+  <h4>Recoil + React（client:load）</h4>
+  <RecoilCounter client:load />
+
+  <h4>Recoil + React（client:only="react"）</h4>
+  <!-- client:only 会跳过 SSR，有助于规避同构边界问题。 -->
+  <RecoilCounter client:only="react" />
+</section>

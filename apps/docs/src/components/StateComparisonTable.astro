@@ -1,0 +1,45 @@
+---
+type Props = {
+  caption?: string;
+  hint?: string;
+};
+
+const { caption, hint } = Astro.props;
+---
+
+<div class="state-comparison-table">
+  {caption ? <p class="state-comparison-table__caption">{caption}</p> : null}
+  {hint ? <p class="state-comparison-table__hint">{hint}</p> : null}
+  <slot />
+</div>
+
+<style>
+  .state-comparison-table :global(table[data-io-sortable='true']) :global(thead th[role='button']) {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .state-comparison-table
+    :global(table[data-io-sortable='true'])
+    :global(thead th[role='button'][aria-sort='ascending']::after) {
+    content: ' ▲';
+  }
+
+  .state-comparison-table
+    :global(table[data-io-sortable='true'])
+    :global(thead th[role='button'][aria-sort='descending']::after) {
+    content: ' ▼';
+  }
+
+  .state-comparison-table__caption {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+  }
+
+  .state-comparison-table__hint {
+    margin: 0 0 0.75rem;
+    color: var(--sl-color-text-muted);
+    font-size: var(--sl-text-sm);
+  }
+</style>
+

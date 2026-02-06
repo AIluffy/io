@@ -3,11 +3,14 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "lint:mdx": "markdownlint-cli2 --config .markdownlint.json \"apps/docs/src/content/docs/**/*.{md,mdx}\"",
+    "lighthouse:ci": "lhci autorun --config=./lighthouserc.json",
     "docs:generate-api": "node tools/docs/generate-api-docs.mjs",
     "docs:check": "node tools/docs/generate-api-docs.mjs && git diff --exit-code apps/docs/src/content/docs"
   },
   "private": true,
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@eslint/js": "^9.39.2",
     "@babel/core": "^7.25.9",
     "@nx/eslint": "22.4.4",
@@ -30,6 +33,7 @@
     "jiti": "2.6.1",
     "jsdom": "^27.4.0",
     "jsonc-eslint-parser": "^2.4.2",
+    "markdownlint-cli2": "^0.18.0",
     "nx": "22.4.4",
     "prettier": "^3.8.1",
     "tslib": "^2.8.1",

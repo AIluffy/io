@@ -33,7 +33,9 @@ export function focus<T>(
     const segment = path[i];
     const internal = getInternal(node);
     if (!internal)
-      throw new Error(`focus: path traversed into non-node at ${formatPath(path.slice(0, i))}`);
+      throw new Error(
+        `focus: path traversed into non-node at ${formatPath(path.slice(0, i))}`,
+      );
 
     if (internal.kind === 'scope') {
       if (typeof segment !== 'string' && typeof segment !== 'symbol') {
@@ -89,9 +91,7 @@ export function focus<T>(
       typeof readable.snapshot !== 'function' ||
       typeof readable.subscribe !== 'function'
     ) {
-      throw new Error(
-        `focus: target is not readable at ${formatPath(path)}`,
-      );
+      throw new Error(`focus: target is not readable at ${formatPath(path)}`);
     }
     return {
       get: () => readable.snapshot(),
