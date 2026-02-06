@@ -2,7 +2,7 @@
 title: Svelte Stores（说明）
 description: Svelte Stores 在 Astro 中的集成要点与最小骨架。
 sidebar:
-  order: 6
+  order: 5
 ---
 
 import { LinkButton } from '@astrojs/starlight/components';
@@ -34,7 +34,4 @@ import { LinkButton } from '@astrojs/starlight/components';
 - 使用 `subscribe` 时注意在组件卸载时释放订阅，避免事件泄漏。
 - SSR 输出应保持纯静态可复现；需要交互的部分交给 islands hydration。
 
-<LinkButton href="/zh-cn/state-management/comparison/">
-  返回对比页
-</LinkButton>
-
+<LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>

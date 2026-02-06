@@ -2,7 +2,7 @@
 title: SolidJS Store（说明）
 description: SolidJS Store 在 Astro 中的集成要点与最小骨架。
 sidebar:
-  order: 5
+  order: 4
 ---
 
 import { LinkButton } from '@astrojs/starlight/components';
@@ -34,7 +34,4 @@ import { LinkButton } from '@astrojs/starlight/components';
 - 把 store 与 effect 限定在 island 生命周期内，避免跨请求共享可变状态。
 - SSR 输出应保持纯静态可复现；需要交互的部分交给 islands hydration。
 
-<LinkButton href="/zh-cn/state-management/comparison/">
-  返回对比页
-</LinkButton>
-
+<LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>
