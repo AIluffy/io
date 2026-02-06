@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { Ref, ShallowRef } from 'vue';
 import { effectScope } from 'vue';
 import { io } from 'io-store';
-import { ioRef, useIo } from './index.js';
+import { ioRef, useIO } from './index.js';
 
 describe('@org/io-vue', () => {
   it('exports adapters', () => {
-    expect(typeof useIo).toBe('function');
+    expect(typeof useIO).toBe('function');
     expect(typeof ioRef).toBe('function');
   });
 
@@ -16,7 +16,7 @@ describe('@org/io-vue', () => {
     let state: ShallowRef<number> | undefined;
     scope.run(() => {
       const count = io(0);
-      state = useIo(count);
+      state = useIO(count);
       expect(state?.value).toBe(0);
       count(2);
     });
@@ -42,12 +42,12 @@ describe('@org/io-vue', () => {
     expect(output).toBe(3);
   });
 
-  it('supports sync schedule in useIo', () => {
+  it('supports sync schedule in useIO', () => {
     const scope = effectScope();
     let state: ShallowRef<number> | undefined;
     scope.run(() => {
       const count = io(0);
-      state = useIo(count, { schedule: 'sync' });
+      state = useIO(count, { schedule: 'sync' });
       count(5);
       expect(state?.value).toBe(5);
     });

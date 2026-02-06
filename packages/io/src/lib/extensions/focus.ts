@@ -1,4 +1,3 @@
-import type { IoTreeNode } from '../utils/types.js';
 import type { IoView } from './types.js';
 
 import { getInternal } from '../utils/internal-access.js';
@@ -25,8 +24,8 @@ function isNumericString(value: PropertyKey): value is string {
 }
 
 export function focus<T>(
-  root: IoTreeNode<unknown>,
-  path: ReadonlyArray<PropertyKey>
+  root: unknown,
+  path: ReadonlyArray<PropertyKey>,
 ): IoView<T> {
   let node: unknown = root;
   for (let i = 0; i < path.length; i += 1) {

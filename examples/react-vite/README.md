@@ -11,4 +11,4 @@ npm run dev
 
 - Standard Todo demo (add / toggle / remove / filter)
 - `io-store`: tree nodes for object + array state
-- `io-react`: `useIo(source)` subscribes via `snapshot() + subscribe()`
+- `io-react`: `useIO(source)` subscribes via `snapshot() + subscribe()`

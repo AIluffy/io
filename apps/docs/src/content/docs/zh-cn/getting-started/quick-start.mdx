@@ -54,33 +54,36 @@ count((v) => v + 1); // 更新
       store.count((v) => v + 1);
     });
     ```
+
   </TabItem>
   <TabItem label="React">
     ```tsx
     import { io } from 'io-store';
-    import { useIo } from 'io-react';
+    import { useIO } from 'io-react';
 
     const count = io(0);
 
     export function Counter() {
-      const value = useIo(count);
+      const value = useIO(count);
       return <button onClick={() => count((v) => v + 1)}>{value}</button>;
     }
     ```
+
   </TabItem>
   <TabItem label="Vue">
     ```ts
     import { io } from 'io-store';
-    import { useIo } from 'io-vue';
+    import { useIO } from 'io-vue';
 
     const count = io(0);
 
     export function useCounter() {
-      const state = useIo(count);
+      const state = useIO(count);
       const inc = () => count((v) => v + 1);
       return { state, inc };
     }
     ```
+
   </TabItem>
   <TabItem label="Svelte">
     ```ts
@@ -90,6 +93,7 @@ count((v) => v + 1); // 更新
     const count = io(0);
     export const countStore = toWritable(count);
     ```
+
   </TabItem>
 </Tabs>
 

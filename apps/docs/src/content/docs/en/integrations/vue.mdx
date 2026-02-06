@@ -5,16 +5,16 @@ sidebar:
   order: 3
 ---
 
-## useIo
+## useIO
 
 ```ts
 import { io } from 'io-store';
-import { useIo } from 'io-vue';
+import { useIO } from 'io-vue';
 
 const count = io(0);
 
 export function useCounter() {
-  const state = useIo(count);
+  const state = useIO(count);
   const inc = () => count((v) => v + 1);
   return { state, inc };
 }

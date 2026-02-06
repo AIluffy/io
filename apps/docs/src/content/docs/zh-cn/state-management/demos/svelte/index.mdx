@@ -1,0 +1,40 @@
+---
+title: Svelte Stores（说明）
+description: Svelte Stores 在 Astro 中的集成要点与最小骨架。
+sidebar:
+  order: 6
+---
+
+import { LinkButton } from '@astrojs/starlight/components';
+
+本仓库的文档站点当前未启用 Svelte 集成（未安装 `@astrojs/svelte`），因此本页只提供可复用的最小骨架与注意事项。
+
+## 最小骨架
+
+1. 安装集成并启用：
+
+   ```bash
+   pnpm -C apps/docs add @astrojs/svelte svelte
+   ```
+
+2. 在 `astro.config.mjs` 中添加 Svelte integration。
+
+3. 在 Astro 页面里以 island 方式渲染 Svelte 组件：
+
+   ```astro
+   ---
+   import Counter from '../components/Counter.svelte';
+   ---
+
+   <Counter client:load />
+   ```
+
+## 注意事项
+
+- 使用 `subscribe` 时注意在组件卸载时释放订阅，避免事件泄漏。
+- SSR 输出应保持纯静态可复现；需要交互的部分交给 islands hydration。
+
+<LinkButton href="/zh-cn/state-management/comparison/">
+  返回对比页
+</LinkButton>
+

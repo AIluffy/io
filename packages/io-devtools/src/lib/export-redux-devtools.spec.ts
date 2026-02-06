@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { exportReduxDevToolsImportState } from './export-redux-devtools.js';
+import type { IoHistoryEntry } from './types.js';
 
-const entry = {
+const entry: IoHistoryEntry = {
   id: 'u1',
   timestamp: 0,
   update: { id: 'u1', baseRevision: 0, revision: 1, patches: [] },

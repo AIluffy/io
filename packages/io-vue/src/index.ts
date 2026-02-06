@@ -32,7 +32,7 @@ function createUpdater<T>(
   };
 }
 
-export function useIo<T>(
+export function useIO<T>(
   source: IoSource<T>,
   options?: IoVueOptions,
 ): ShallowRef<T> {
@@ -48,10 +48,7 @@ export function useIo<T>(
   return state;
 }
 
-export function ioRef<T>(
-  unit: IoUnit<T>,
-  options?: IoVueOptions,
-): Ref<T> {
+export function ioRef<T>(unit: IoUnit<T>, options?: IoVueOptions): Ref<T> {
   return customRef<T>((track, trigger) => {
     let current = unit();
     const schedule = options?.schedule ?? 'microtask';

@@ -32,8 +32,8 @@
 
   <rect x="40" y="280" width="520" height="200" class="box" />
   <text x="70" y="318" class="title">Framework Adapters</text>
-  <text x="70" y="350" class="text">@org/io-react: useIo (useSyncExternalStore)</text>
-  <text x="70" y="374" class="text">@org/io-vue: useIo (shallowRef) + ioRef (customRef)</text>
+  <text x="70" y="350" class="text">@org/io-react: useIO (useSyncExternalStore)</text>
+  <text x="70" y="374" class="text">@org/io-vue: useIO (shallowRef) + ioRef (customRef)</text>
   <text x="70" y="398" class="text">@org/io-svelte: toReadable / toWritable (stores)</text>
   <text x="70" y="434" class="muted">Adapter contract: snapshot() + subscribe(cb)</text>
 

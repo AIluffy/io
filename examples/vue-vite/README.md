@@ -11,4 +11,4 @@ npm run dev
 
 - Standard Todo demo (add / toggle / remove / filter)
 - `io-store`: tree nodes for object + array state
-- `io-vue`: `useIo(source)` bridges `snapshot() + subscribe()`
+- `io-vue`: `useIO(source)` bridges `snapshot() + subscribe()`

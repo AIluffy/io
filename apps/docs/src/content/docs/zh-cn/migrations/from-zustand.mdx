@@ -68,10 +68,10 @@ const view = withBehaviors(store, [
 ## React 使用方式
 
 ```tsx
-import { useIo } from 'io-react';
+import { useIO } from 'io-react';
 
 function Counter() {
-  const value = useIo(store.count);
+  const value = useIO(store.count);
   return <button onClick={inc}>{value}</button>;
 }
 ```

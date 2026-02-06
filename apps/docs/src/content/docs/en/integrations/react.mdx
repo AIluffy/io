@@ -1,6 +1,6 @@
 ---
 title: React
-description: Use IO with React via the `useIo` hook.
+description: Use IO with React via the `useIO` hook.
 sidebar:
   order: 2
 ---
@@ -9,12 +9,12 @@ sidebar:
 
 ```tsx
 import { io } from 'io-store';
-import { useIo } from 'io-react';
+import { useIO } from 'io-react';
 
 const count = io(0);
 
 export function Counter() {
-  const value = useIo(count);
+  const value = useIO(count);
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -23,13 +23,13 @@ export function Counter() {
 
 ```tsx
 import { derived, io } from 'io-store';
-import { useIo } from 'io-react';
+import { useIO } from 'io-react';
 
 const store = io({ count: 0 });
 const doubled = derived([store.count], (value) => value * 2);
 
 export function Summary() {
-  const value = useIo(doubled);
+  const value = useIO(doubled);
   return <span>{value}</span>;
 }
 ```

@@ -1,0 +1,42 @@
+---
+title: Pinia 在线体验
+description: 在 Astro 中用 Vue island 接入 Pinia 的独立示例页。
+sidebar:
+  order: 4
+---
+
+import { Code, LinkButton, Tabs, TabItem } from '@astrojs/starlight/components';
+
+import PiniaDemo from '/src/demos/astro-pinia-demo.astro';
+import piniaDemoAstro from '/src/demos/astro-pinia-demo.astro?raw';
+import piniaCounterVue from '/src/demos/pinia/PiniaCounter.vue?raw';
+
+## 可运行示例
+
+本页会渲染同一个 Counter 的两种 hydration 策略，便于对比 `client:load` 与 `client:only="vue"` 的差异。
+
+<PiniaDemo />
+
+## 源码
+
+<Tabs>
+  <TabItem label="src/demos/astro-pinia-demo.astro">
+    <Code
+      code={piniaDemoAstro}
+      lang="astro"
+      title="src/demos/astro-pinia-demo.astro"
+    />
+  </TabItem>
+  <TabItem label="src/demos/pinia/PiniaCounter.vue">
+    <Code
+      code={piniaCounterVue}
+      lang="vue"
+      title="src/demos/pinia/PiniaCounter.vue"
+    />
+  </TabItem>
+</Tabs>
+
+<LinkButton href="/zh-cn/state-management/comparison/">
+  返回对比页
+</LinkButton>
+

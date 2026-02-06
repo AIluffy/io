@@ -21,8 +21,7 @@
     "access": "public"
   },
   "dependencies": {
-    "io-devtools": "*",
-    "tslib": "^2.8.1"
+    "io-devtools": "*"
   },
   "peerDependencies": {
     "react": ">=18"

@@ -40,7 +40,7 @@ function createSubscriber<T>(
   };
 }
 
-export function useIo<T>(source: IoSource<T>, options?: IoReactOptions): T {
+export function useIO<T>(source: IoSource<T>, options?: IoReactOptions): T {
   return useSyncExternalStore(
     createSubscriber(source, options),
     () => source.snapshot(),

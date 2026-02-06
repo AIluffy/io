@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { io } from 'io-store';
-import { useIo } from 'io-vue';
+import { useIO } from 'io-vue';
 import { computed } from 'vue';
 
 type Filter = 'all' | 'active' | 'done';
@@ -16,7 +16,7 @@ const store = io({
 });
 
 const filters: Filter[] = ['all', 'active', 'done'];
-const state = useIo(store);
+const state = useIO(store);
 
 const draft = computed({
   get: () => state.value.draft,
@@ -57,12 +57,18 @@ const removeTodo = (index: number) => {
       <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+            <p
+              class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"
+            >
               IO + Vue
             </p>
-            <h1 class="mt-2 text-2xl font-semibold text-slate-900">Todo List</h1>
+            <h1 class="mt-2 text-2xl font-semibold text-slate-900">
+              Todo List
+            </h1>
           </div>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
+          <span
+            class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
+          >
             {{ remaining }} left
           </span>
         </div>

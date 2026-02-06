@@ -21,9 +21,7 @@
     "access": "public"
   },
   "dependencies": {
-    "tslib": "^2.8.1",
-    "io-store": "*",
-    "vite": "^7.3.1"
+    "io-store": "*"
   },
   "peerDependencies": {
     "vue": ">=3"

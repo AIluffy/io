@@ -106,10 +106,10 @@ applyUpdate(state, invertUpdate(update));
 ### React
 
 ```typescript
-import { useIo } from 'io-react';
+import { useIO } from 'io-react';
 
 function Counter({ count }) {
-  const value = useIo(count);
+  const value = useIO(count);
   return <button onClick={() => count((v) => v + 1)}>{value}</button>;
 }
 ```
@@ -129,10 +129,10 @@ const writable = toWritable(unit);
 ### Vue
 
 ```typescript
-import { useIo, ioRef } from 'io-vue';
+import { useIO, ioRef } from 'io-vue';
 
 // 组合式函数
-const state = useIo(source);
+const state = useIO(source);
 
 // 双向绑定 ref
 const ref = ioRef(unit);

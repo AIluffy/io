@@ -1,0 +1,42 @@
+---
+title: Zustand 在线体验
+description: 在 Astro 中用 React island 接入 Zustand 的独立示例页。
+sidebar:
+  order: 2
+---
+
+import { Code, LinkButton, Tabs, TabItem } from '@astrojs/starlight/components';
+
+import ZustandDemo from '/src/demos/astro-zustand-demo.astro';
+import zustandDemoAstro from '/src/demos/astro-zustand-demo.astro?raw';
+import zustandCounterTsx from '/src/demos/zustand/ZustandCounter.tsx?raw';
+
+## 可运行示例
+
+本页会渲染同一个 Counter 的两种 hydration 策略，便于对比 `client:load` 与 `client:only="react"` 的差异。
+
+<ZustandDemo />
+
+## 源码
+
+<Tabs>
+  <TabItem label="src/demos/astro-zustand-demo.astro">
+    <Code
+      code={zustandDemoAstro}
+      lang="astro"
+      title="src/demos/astro-zustand-demo.astro"
+    />
+  </TabItem>
+  <TabItem label="src/demos/zustand/ZustandCounter.tsx">
+    <Code
+      code={zustandCounterTsx}
+      lang="tsx"
+      title="src/demos/zustand/ZustandCounter.tsx"
+    />
+  </TabItem>
+</Tabs>
+
+<LinkButton href="/zh-cn/state-management/comparison/">
+  返回对比页
+</LinkButton>
+

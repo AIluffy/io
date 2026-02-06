@@ -1,5 +1,5 @@
 import { io } from 'io-store';
-import { useIo } from 'io-react';
+import { useIO } from 'io-react';
 
 type Filter = 'all' | 'active' | 'done';
 type Todo = { id: string; title: string; done: boolean };
@@ -16,7 +16,7 @@ const store = io({
 const filters: Filter[] = ['all', 'active', 'done'];
 
 export function App() {
-  const state = useIo(store);
+  const state = useIO(store);
   const { draft, filter, todos } = state;
   const filteredTodos = todos.flatMap((todo, index) => {
     if (filter === 'active' && todo.done) return [];

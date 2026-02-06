@@ -77,13 +77,13 @@ export type IoPatchDiff =
       path: IoPath;
       start: number;
       deleteCount: number;
-      deleted: unknown[];
-      items: unknown[];
+      deleted: ReadonlyArray<unknown>;
+      items: ReadonlyArray<unknown>;
     }
   | {
       op: 'sort';
       path: IoPath;
-      order: number[];
+      order: ReadonlyArray<number>;
     };
 
 export type IoSnapshotDiff = {

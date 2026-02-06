@@ -4,14 +4,14 @@ import { act } from 'react';
 import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
 
-import { useIo } from './index.js';
+import { useIO } from './index.js';
 
 async function setup(schedule: 'sync' | 'microtask') {
   const count = io(0);
   const renders: number[] = [];
 
   const App = () => {
-    const value = useIo(count, { schedule });
+    const value = useIO(count, { schedule });
     renders.push(value);
     return React.createElement('span', null, String(value));
   };
