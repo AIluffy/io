@@ -28,7 +28,7 @@ export default defineConfig({
         dark: './src/assets/io-logo.png',
         alt: 'IO',
       },
-      favicon: '/favicon.svg',
+      favicon: '/favicon.ico',
       defaultLocale: 'en',
       locales: {
         en: {
