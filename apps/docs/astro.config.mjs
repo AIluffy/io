@@ -21,11 +21,11 @@ export default defineConfig({
     vue(),
     starlight({
       plugins: [],
-      title: 'IO Documentation',
+      title: 'IO',
       description: 'Reactive state management with deep signal support.',
       logo: {
-        light: './src/assets/io-logo-light.svg',
-        dark: './src/assets/io-logo-dark.svg',
+        light: './src/assets/io-logo.png',
+        dark: './src/assets/io-logo.png',
         alt: 'IO',
       },
       favicon: '/favicon.svg',
@@ -89,6 +89,7 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       components: {
         Head: './src/components/Head.astro',
+        Hero: './src/components/Hero.astro',
       },
       // Pagefind is enabled by default
     }),
