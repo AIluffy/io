@@ -13,9 +13,6 @@
   "include": ["src"],
   "references": [
     {
-      "path": "../../packages/io-react"
-    },
-    {
       "path": "../../packages/io"
     }
   ]

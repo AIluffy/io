@@ -333,6 +333,18 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         }
         return Reflect.get(target, prop, receiver);
       },
+      set(target, prop, value, receiver) {
+        if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
+          setIndex(Number(prop), value, {
+            emitUpdate: true,
+            emitValue: true,
+          });
+          return true;
+        }
+        if (prop === 'length')
+          throw new Error('ioTree array: length is read-only');
+        return Reflect.set(target, prop, value, receiver);
+      },
     }) as TreeNode;
 
     node = proxy as unknown as TreeNode;
@@ -438,27 +450,39 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         if (!existing)
           throw new Error(`ioTree array: index out of range ${index}`);
 
+        const emitValue = options?.emitValue !== false;
+        const emitUpdate = options?.emitUpdate !== false;
+        const baseRevision = state.revision;
+
         if (deps.isUnit(existing)) {
           const internal = deps.getInternal(existing);
           if (!internal || internal.kind !== 'unit')
             throw new Error('ioTree array: invalid unit internal');
           const before = internal.getValue();
-          const emitValue = options?.emitValue !== false;
-          internal.setValue(next, {
-            emitUpdate: false,
-            emitValue,
-          });
+          internal.setValue(next, { emitUpdate: false, emitValue: false });
           const after = internal.getValue();
-          if (!Object.is(before, after)) {
-            state.revision += 1;
-            if (!emitValue) {
-              state.valueEpoch += 1;
-              state.dirtyIndices.add(index);
-            }
+          if (Object.is(before, after)) return;
+          state.revision += 1;
+          state.valueEpoch += 1;
+          state.dirtyIndices.add(index);
+          if (emitUpdate) {
+            deps.emitArrayUpdate(
+              state,
+              deps.createUpdate(baseRevision, state.revision, [
+                {
+                  op: 'set',
+                  path: [index],
+                  prev: deps.cloneValue(before),
+                  next: deps.cloneValue(after),
+                },
+              ]),
+            );
           }
+          if (emitValue) deps.emitArrayValue(state);
           return;
         }
 
+        const prevValue = deps.getNodeValue(existing, new WeakMap());
         deps.detachChildFromArray(state, existing);
         deps.unregisterSubtree(ctx, [...path, index], existing);
         const replaced = createTreeNode(ctx, [...path, index], next);
@@ -467,7 +491,20 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.revision += 1;
         state.dirtyIndices.add(index);
         state.valueEpoch += 1;
-        if (options?.emitValue !== false) deps.emitArrayValue(state);
+        if (emitUpdate) {
+          deps.emitArrayUpdate(
+            state,
+            deps.createUpdate(baseRevision, state.revision, [
+              {
+                op: 'set',
+                path: [index],
+                prev: deps.cloneValue(prevValue),
+                next: deps.cloneValue(next),
+              },
+            ]),
+          );
+        }
+        if (emitValue) deps.emitArrayValue(state);
       } catch (error) {
         deps.emitError(node, error, [...path, index], 'set');
         throw error;
@@ -754,6 +791,12 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     if (initial !== null && typeof initial === 'object') {
       const existing = ctx.seen.get(initial as object);
       if (existing) {
+        const last = path[path.length - 1];
+        if (typeof last === 'number') {
+          throw new TypeError(
+            'ioTree array: shared object references are not allowed',
+          );
+        }
         deps.setPathNode(ctx, path, existing);
         return existing;
       }

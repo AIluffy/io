@@ -523,8 +523,8 @@ export function applyArrayCommitDiff<
       patches.push({
         op: 'set',
         path: relPath,
-        prev,
-        next: nextValue,
+        prev: deps.cloneValue(prev),
+        next: deps.cloneValue(nextValue),
       });
       deps.markDirty(parentState, segment);
       return true;
@@ -542,8 +542,8 @@ export function applyArrayCommitDiff<
       patches.push({
         op: 'set',
         path: relPath,
-        prev,
-        next: nextValue,
+        prev: deps.cloneValue(prev),
+        next: deps.cloneValue(nextValue),
       });
       deps.markDirty(parentState, segment);
       return true;
@@ -563,8 +563,8 @@ export function applyArrayCommitDiff<
     patches.push({
       op: 'set',
       path: relPath,
-      prev,
-      next: nextValue,
+      prev: deps.cloneValue(prev),
+      next: deps.cloneValue(nextValue),
     });
     deps.markDirty(parentState, segment);
     return true;

@@ -13,9 +13,6 @@
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
   "references": [
     {
-      "path": "../../packages/io-vue"
-    },
-    {
       "path": "../../packages/io"
     }
   ]
