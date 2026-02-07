@@ -20,7 +20,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
+  "peerdependencies": {
+    "io-store": "*"
+  },
+  "devDependencies": {
     "io-store": "*"
   },
   "nx": {

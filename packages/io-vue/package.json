@@ -20,15 +20,14 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "io-store": "*"
-  },
   "peerDependencies": {
-    "vue": ">=3"
+    "vue": ">=3",
+    "io-store": "*"
   },
   "devDependencies": {
     "vite": "^7.3.1",
-    "vue": "^3.5.27"
+    "vue": "^3.5.27",
+    "io-store": "*"
   },
   "nx": {
     "tags": [
