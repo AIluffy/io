@@ -15,7 +15,7 @@ import { derived, io } from 'io-store';
 const count = io(1);
 const doubled = derived([count], (value) => value * 2);
 
-doubled(); // 2
+doubled.get(); // 2
 ```
 
 ## From a tree selector
@@ -29,13 +29,13 @@ const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
 ## From a computed function
 
 ```ts
-const combined = derived(() => count() + doubled());
+const combined = derived(() => count.get() + doubled.get());
 ```
 
 <Tabs>
   <TabItem label="Read">
     ```ts
-    total();
+    total.get();
     total.snapshot();
     ```
   </TabItem>

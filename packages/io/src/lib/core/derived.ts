@@ -17,12 +17,14 @@ type Subscribable = {
   subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
 };
 
-type FormulaDep = IoArrayUnit<unknown> | IoUnit<unknown> | { (): unknown };
+type FormulaDep =
+  | IoArrayUnit<unknown>
+  | IoUnit<unknown>
+  | IoDerived<unknown>
+  | { get: () => unknown };
 type DepArg<D> = D extends IoArrayUnit<infer U>
   ? IoArrayUnit<U>
-  : D extends IoUnit<infer U>
-  ? U
-  : D extends { (): infer R }
+  : D extends { get: () => infer R }
   ? R
   : never;
 
@@ -36,6 +38,14 @@ function isIndexKey(prop: PropertyKey): prop is string {
   return typeof prop === 'string' && /^[0-9]+$/.test(prop);
 }
 
+function hasGet(value: unknown): value is { get: () => unknown } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { get?: unknown }).get === 'function'
+  );
+}
+
 function getValueView<T>(node: unknown): T {
   if (node === null || node === undefined) return node as T;
   const t = typeof node;
@@ -43,7 +53,7 @@ function getValueView<T>(node: unknown): T {
 
   const internal = getInternal(node);
   if (internal?.kind === 'unit' || internal?.kind === 'derived') {
-    return (node as unknown as { (): unknown })() as T;
+    return (node as unknown as { get: () => unknown }).get() as T;
   }
 
   const obj = node as unknown as object;
@@ -65,14 +75,14 @@ function getValueView<T>(node: unknown): T {
         prop === 'length' &&
         internal?.kind === 'array'
       ) {
-        const arr = (target as unknown as { (): unknown[] })();
+        const arr = (target as unknown as { get: () => unknown[] }).get();
         return arr.length;
       }
 
       const child = Reflect.get(target, prop, receiver);
       const childInternal = getInternal(child);
       if (childInternal?.kind === 'unit' || childInternal?.kind === 'derived') {
-        return (child as unknown as { (): unknown })();
+        return (child as unknown as { get: () => unknown }).get();
       }
       if (childInternal?.kind === 'scope' || childInternal?.kind === 'array') {
         return getValueView(child);
@@ -90,9 +100,7 @@ function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
   let stop: IoUnsubscribe | undefined;
   let current = c.get();
 
-  const derived = function () {
-    return c.get();
-  } as IoDerived<T>;
+  const get = (): T => c.get();
 
   const snapshot = (): T => snapshotValue(c.get());
 
@@ -117,7 +125,9 @@ function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
 
   const internal: { kind: 'derived' } = { kind: 'derived' };
 
+  const derived = {} as IoDerived<T>;
   Object.defineProperties(derived, {
+    get: { value: get },
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     [INTERNAL]: { value: internal },
@@ -136,7 +146,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     deps.map((dep) => {
       const internal = getInternal(dep);
       if (internal?.kind === 'array') return dep;
-      if (typeof dep === 'function') return dep();
+      if (hasGet(dep)) return dep.get();
       return undefined;
     }) as unknown as { [K in keyof D]: DepArg<D[K]> };
 
@@ -177,10 +187,10 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     depUnsubs = [];
   };
 
-  const derived = function () {
+  const get = (): T => {
     ensureCurrent();
     return readValue(current);
-  } as IoDerived<T>;
+  };
 
   const snapshot = (): T => {
     ensureCurrent();
@@ -201,7 +211,9 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
 
   const internal: { kind: 'derived' } = { kind: 'derived' };
 
+  const derived = {} as IoDerived<T>;
   Object.defineProperties(derived, {
+    get: { value: get },
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     [INTERNAL]: { value: internal },

@@ -40,8 +40,9 @@ export type IoUpdate = {
 };
 
 export type IoUnit<T> = {
-  (): T;
-  (next: T | ((prev: T) => T)): void;
+  get(): T;
+  set(next: T): void;
+  update(fn: (prev: T) => T): void;
   snapshot(): T;
   subscribe(fn: (v: T) => void): IoUnsubscribe;
   subscribeUpdate(fn: (u: IoUpdate) => void): IoUnsubscribe;
@@ -49,7 +50,7 @@ export type IoUnit<T> = {
 };
 
 export type IoDerived<T> = {
-  (): T;
+  get(): T;
   snapshot(): T;
   subscribe(fn: (v: T) => void): IoUnsubscribe;
 };
@@ -71,7 +72,7 @@ export type IoTreeNode<T, MaxDepth extends number = 16> = MaxDepth extends 0
 export type IoResult<T, MaxDepth extends number = 16> = IoTreeNode<T, MaxDepth>;
 
 export type IoTreeArrayUnit<T, MaxDepth extends number = 8> = {
-  (): T[];
+  get(): T[];
   [i: number]: IoTreeNode<T, MaxDepth>;
   push(...items: T[]): void;
   pop(): T | undefined;
@@ -96,6 +97,7 @@ export type IoTreeScope<
 > = {
   [K in keyof T]: IoTreeNode<T[K], MaxDepth>;
 } & {
+  get(): T;
   commit(fn: (draft: T) => void): void;
   snapshot(): T;
   subscribe(fn: (v: T) => void): IoUnsubscribe;

@@ -24,7 +24,7 @@ describe('io-devtools-react: IoDevtoolsPanel', () => {
     expect(getButton('Clear')?.props.disabled).toBe(true);
 
     act(() => {
-      store.count(1);
+      store.count.set(1);
     });
 
     expect(getButton('Clear')?.props.disabled).toBe(false);

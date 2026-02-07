@@ -34,8 +34,8 @@ describe('io-react', () => {
     const { count, renders, getText } = await setup('microtask');
 
     act(() => {
-      count(1);
-      count(2);
+      count.set(1);
+      count.set(2);
     });
 
     await act(async () => {
@@ -51,10 +51,10 @@ describe('io-react', () => {
     const { count, renders, getText } = await setup('sync');
 
     act(() => {
-      count(1);
+      count.set(1);
     });
     act(() => {
-      count(2);
+      count.set(2);
     });
 
     expect(getText()).toBe('2');

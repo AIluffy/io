@@ -18,7 +18,7 @@ const unsub = count.subscribeUpdate((update) => {
   console.log(update.patches);
 });
 
-count(1);
+count.set(1);
 unsub();
 ```
 
@@ -49,8 +49,8 @@ const store = io({ count: 0 });
 const updates = [];
 const unsub = store.subscribeUpdate((u) => updates.push(u));
 
-store.count(1);
-store.count(2);
+store.count.set(1);
+store.count.set(2);
 unsub();
 
 const merged = mergeUpdates(updates[0], updates[1]);

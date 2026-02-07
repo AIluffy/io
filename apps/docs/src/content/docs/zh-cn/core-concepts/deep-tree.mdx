@@ -14,8 +14,8 @@ import { io } from 'io-store';
 
 const state = io({ user: { profile: { name: 'Ada' } } });
 
-state.user.profile.name();
-state.user.profile.name('Grace');
+state.user.profile.name.get();
+state.user.profile.name.set('Grace');
 ```
 
 ## 浅层模式
@@ -25,8 +25,8 @@ state.user.profile.name('Grace');
 ```ts
 const state = io({ user: { name: 'Ada' } }, { shallow: true });
 
-state.user(); // 返回普通对象
-state.user({ name: 'Grace' });
+state.user.get(); // 返回普通对象
+state.user.set({ name: 'Grace' });
 ```
 
 浅层模式下的 `commit` 不允许新增未知 key，以保持结构稳定。
@@ -39,7 +39,7 @@ import { relocate, io } from 'io-store';
 const store = io({ settings: { theme: 'light' } });
 const theme = relocate<string>(store, ['settings', 'theme']);
 
-theme('dark');
+theme.set?.('dark');
 ```
 
 ## 下一步

@@ -16,7 +16,7 @@ const unsub = count.subscribe((value) => {
   console.log('value', value);
 });
 
-count(1);
+count.set(1);
 unsub();
 ```
 

@@ -7,16 +7,16 @@ sidebar:
 
 ## Unit
 
-A Unit is a function-like cell. Call it to read, call it with a value (or updater) to write.
+A Unit is a small state cell with explicit `get/set/update` methods.
 
 ```ts
 import { io } from 'io-store';
 
 const count = io(0);
 
-count(); // 0
-count(1); // write
-count((v) => v + 1); // update
+count.get(); // 0
+count.set(1); // write
+count.update((v) => v + 1); // update
 ```
 
 Units expose:
@@ -32,8 +32,8 @@ When you pass an object to `io`, you get a Scope with Units for each key. Scopes
 ```ts
 const user = io({ name: 'Ada', age: 36 });
 
-user.name();
-user.age(37);
+user.name.get();
+user.age.set(37);
 ```
 
 Scopes also support grouped updates with `commit` (unknown keys are rejected to keep the shape stable):
@@ -53,7 +53,7 @@ Arrays are first-class. Mutating helpers emit updates and keep paths stable. The
 const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 
 todos.push({ id: 'b', title: 'Document', done: false });
-todos[0].done(true);
+todos[0].done.set(true);
 ```
 
 ## Next steps

@@ -14,6 +14,9 @@ IoUnit<T>
 
 | Name | Type |
 | --- | --- |
+| get | `() => T` |
+| set | `(next: T) => void` |
+| update | `(fn: (prev: T) => T) => void` |
 | snapshot | `() => T` |
 | subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |

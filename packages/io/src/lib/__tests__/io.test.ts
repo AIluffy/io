@@ -53,18 +53,18 @@ describe('io: array', () => {
 
   it('deep-processes object array items', () => {
     const a = io([{ n: 1 }, { n: 2 }]);
-    expect(a[0].n()).toBe(1);
-    expect(a[1].n()).toBe(2);
-    a[0].n(10);
+    expect(a[0].n.get()).toBe(1);
+    expect(a[1].n.get()).toBe(2);
+    a[0].n.set(10);
     expect(a.snapshot()).toMatchSnapshot();
   });
 
   it('deep-processes nested arrays and objects', () => {
     const a = io([{ a: [{ b: 1 }] }, [{ c: 2 }]] as unknown[]);
-    expect((a[0] as any).a[0].b()).toBe(1);
-    expect((a[1] as any)[0].c()).toBe(2);
-    (a[0] as any).a[0].b(10);
-    (a[1] as any)[0].c(20);
+    expect((a[0] as any).a[0].b.get()).toBe(1);
+    expect((a[1] as any)[0].c.get()).toBe(2);
+    (a[0] as any).a[0].b.set(10);
+    (a[1] as any)[0].c.set(20);
     expect(a.snapshot()).toMatchSnapshot();
   });
 
@@ -74,15 +74,15 @@ describe('io: array', () => {
     input[2] = 3;
     const a = io(input);
     expect(a.snapshot()).toEqual([1, undefined, 3]);
-    expect(a[1]()).toBeUndefined();
+    expect(a[1].get()).toBeUndefined();
     expect(a.snapshot()).toMatchSnapshot();
   });
 
   it('supports reduce and iterator', () => {
     const a = io([1, 2, 3]);
-    const sum = a.reduce((acc, item) => acc + item(), 0);
+    const sum = a.reduce((acc, item) => acc + item.get(), 0);
     expect(sum).toBe(6);
-    const values = Array.from(a, (n) => n());
+    const values = Array.from(a, (n) => n.get());
     expect(values).toEqual([1, 2, 3]);
   });
 });
@@ -90,22 +90,22 @@ describe('io: array', () => {
 describe('io: object', () => {
   it('handles flat objects', () => {
     const o = io({ a: 1, b: 'x' });
-    expect(o.a()).toBe(1);
-    expect(o.b()).toBe('x');
+    expect(o.a.get()).toBe(1);
+    expect(o.b.get()).toBe('x');
     expect(o.snapshot()).toMatchSnapshot();
   });
 
   it('handles deep nested objects', () => {
     const o = io({ a: { b: { c: 1 } } });
-    expect(o.a.b.c()).toBe(1);
-    o.a.b.c(2);
+    expect(o.a.b.c.get()).toBe(1);
+    o.a.b.c.set(2);
     expect(o.snapshot()).toMatchSnapshot();
   });
 
   it('handles object with array property', () => {
     const o = io({ list: [{ n: 1 }] });
-    expect(o.list[0].n()).toBe(1);
-    o.list[0].n(2);
+    expect(o.list[0].n.get()).toBe(1);
+    o.list[0].n.set(2);
     expect(o.snapshot()).toMatchSnapshot();
   });
 
@@ -131,7 +131,7 @@ describe('io: object', () => {
     });
     const o: any = io(input);
     expect(Reflect.ownKeys(o)).toContain('hidden');
-    expect(o.hidden.n()).toBe(1);
+    expect(o.hidden.n.get()).toBe(1);
   });
 
   it('includes symbol keys', () => {
@@ -139,26 +139,26 @@ describe('io: object', () => {
     const input: any = { [k]: { n: 1 } };
     const o: any = io(input);
     expect(Reflect.ownKeys(o)).toContain(k);
-    expect(o[k].n()).toBe(1);
+    expect(o[k].n.get()).toBe(1);
   });
 });
 
 describe('io: shallow', () => {
   it('shallow-processes objects', () => {
     const o: any = io({ a: { b: 1 }, n: 1 }, { shallow: true });
-    expect(typeof o.a).toBe('function');
-    expect(o.a()).toEqual({ b: 1 });
+    expect(typeof o.a.get).toBe('function');
+    expect(o.a.get()).toEqual({ b: 1 });
     expect(o.snapshot()).toEqual({ a: { b: 1 }, n: 1 });
-    o.a((prev: any) => ({ ...prev, b: 2 }));
+    o.a.update((prev: any) => ({ ...prev, b: 2 }));
     expect(o.snapshot()).toEqual({ a: { b: 2 }, n: 1 });
   });
 
   it('shallow-processes arrays', () => {
     const a: any = io([{ n: 1 }, { n: 2 }], { shallow: true });
-    expect(typeof a[0]).toBe('function');
-    expect(a[0]()).toEqual({ n: 1 });
-    expect(a[1]()).toEqual({ n: 2 });
-    a[0]({ n: 10 });
+    expect(typeof a[0].get).toBe('function');
+    expect(a[0].get()).toEqual({ n: 1 });
+    expect(a[1].get()).toEqual({ n: 2 });
+    a[0].set({ n: 10 });
     expect(a.snapshot()).toEqual([{ n: 10 }, { n: 2 }]);
   });
 
@@ -185,7 +185,7 @@ describe('io: shallow', () => {
     });
     const o: any = io(input, { shallow: true });
     expect(Reflect.ownKeys(o)).toContain('hidden');
-    expect(o.hidden()).toEqual({ n: 1 });
+    expect(o.hidden.get()).toEqual({ n: 1 });
     expect(Reflect.ownKeys(o.snapshot())).toContain('hidden');
   });
 
@@ -194,7 +194,7 @@ describe('io: shallow', () => {
     const input: any = { [k]: { n: 1 } };
     const o: any = io(input, { shallow: true });
     expect(Reflect.ownKeys(o)).toContain(k);
-    expect(o[k]()).toEqual({ n: 1 });
+    expect(o[k].get()).toEqual({ n: 1 });
     expect(Reflect.ownKeys(o.snapshot())).toContain(k);
   });
 

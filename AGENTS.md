@@ -35,16 +35,22 @@ nx run-many -t build
 - Dev server: `nx run apps-docs:dev`
 - Production build: `nx run apps-docs:build`
 - Preview build: `nx run apps-docs:preview`
-- Root route should show the English homepage via `apps/docs/src/pages/index.astro` redirecting to `/en/`
+- API docs generation: `nx run apps-docs:generate-api` (runs `tools/docs/generate-api-docs.mjs`)
+- Root route currently redirects via `apps/docs/src/pages/index.astro` to `/zh-cn/`
 
 ### Available Projects
 
-- `io-store` - Core library
-- `io-react`, `io-vue`, `io-svelte` - Framework adapters
-- `io-devtools`, `io-devtools-react` - DevTools
-- `apps-docs` - Documentation site
-- `io-example-core-node`, `io-example-react-vite`, `io-example-vue-vite`, `io-example-svelte-vite` - Examples
-- `io-source` - Workspace root
+- Core library: `io-store` (`packages/io`)
+- Framework adapters: `io-react`, `io-vue`, `io-svelte`
+- DevTools: `io-devtools`, `io-devtools-react`
+- Docs site: `apps-docs` (`apps/docs`)
+- Examples: `io-example-core-node`, `io-example-react-vite`, `io-example-vue-vite`, `io-example-svelte-vite`
+- Workspace root project: `io-source` (root `package.json`)
+
+### Local Registry (Verdaccio)
+
+- Start local registry: `nx run io-source:local-registry`
+- Storage directory: `tmp/local-registry/storage`
 
 ## Code Style Guidelines
 

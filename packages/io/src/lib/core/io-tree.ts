@@ -16,6 +16,7 @@ import { createDraft, finishDraft } from '../utils/cow.js';
 import { createUpdate } from '../utils/updates.js';
 import { createUnit, isUnit } from '../units/unit.js';
 import { emitError } from '../utils/debug.js';
+import { trackRead } from '../utils/signals.js';
 import {
   getInternal as getAnyInternal,
   registerInternal,
@@ -229,6 +230,7 @@ const { createTreeNode } = createNodeFactory({
   emitScopeUpdate,
   emitArrayValue,
   emitArrayUpdate,
+  trackRead,
   markDirty,
   attachChildToScope,
   detachChildFromScope,

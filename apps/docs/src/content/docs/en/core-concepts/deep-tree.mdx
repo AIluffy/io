@@ -14,8 +14,8 @@ import { io } from 'io-store';
 
 const state = io({ user: { profile: { name: 'Ada' } } });
 
-state.user.profile.name();
-state.user.profile.name('Grace');
+state.user.profile.name.get();
+state.user.profile.name.set('Grace');
 ```
 
 ## Shallow mode
@@ -26,8 +26,8 @@ same tree engine with depth limited to 1).
 ```ts
 const state = io({ user: { name: 'Ada' } }, { shallow: true });
 
-state.user(); // returns the plain object
-state.user({ name: 'Grace' });
+state.user.get(); // returns the plain object
+state.user.set({ name: 'Grace' });
 ```
 
 `commit` in shallow mode rejects unknown keys to keep the shape stable.
@@ -42,7 +42,7 @@ import { relocate, io } from 'io-store';
 const store = io({ settings: { theme: 'light' } });
 const theme = relocate<string>(store, ['settings', 'theme']);
 
-theme('dark');
+theme.set?.('dark');
 ```
 
 ## Next steps

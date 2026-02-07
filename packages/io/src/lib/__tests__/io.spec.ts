@@ -22,15 +22,15 @@ import {
 } from '../utils/updates.js';
 
 describe('io: unit', () => {
-  it('supports get/set/functional set/reset', () => {
+  it('supports get/set/update/reset', () => {
     const count = io(1);
-    expect(count()).toBe(1);
-    count(2);
-    expect(count()).toBe(2);
-    count((v) => v + 1);
-    expect(count()).toBe(3);
+    expect(count.get()).toBe(1);
+    count.set(2);
+    expect(count.get()).toBe(2);
+    count.update((v) => v + 1);
+    expect(count.get()).toBe(3);
     count.reset();
-    expect(count()).toBe(1);
+    expect(count.get()).toBe(1);
   });
 
   it('emits subscribe and subscribeUpdate', () => {
@@ -41,13 +41,13 @@ describe('io: unit', () => {
     const unsubValue = count.subscribe((v) => values.push(v));
     const unsubUpdate = count.subscribeUpdate((u) => updates.push(u));
 
-    count(2);
-    count(3);
+    count.set(2);
+    count.set(3);
 
     unsubValue();
     unsubUpdate();
 
-    count(4);
+    count.set(4);
 
     expect(values).toEqual([2, 3]);
     expect(updates).toHaveLength(2);
@@ -61,16 +61,16 @@ describe('io: unit', () => {
     expect(() => {
       (snap as unknown as Record<string, unknown>).a = 2;
     }).toThrow();
-    expect(scope.a()).toBe(1);
+    expect(scope.a.get()).toBe(1);
   });
 });
 
 describe('io: array', () => {
   it('supports snapshot get and index units', () => {
     const arr = io([1, 2, 3]);
-    expect(arr()).toEqual([1, 2, 3]);
-    expect(Object.isFrozen(arr())).toBe(true);
-    expect(arr[0]()).toBe(1);
+    expect(arr.get()).toEqual([1, 2, 3]);
+    expect(Object.isFrozen(arr.get())).toBe(true);
+    expect(arr[0].get()).toBe(1);
   });
 
   it('bubbles element changes to array subscribe and derived', () => {
@@ -79,13 +79,13 @@ describe('io: array', () => {
     const unsub = arr.subscribe((v) => values.push(v));
 
     const sum = derived([arr], (a) =>
-      a.reduce((p: number, n: IoUnit<number>) => p + n(), 0),
+      a.reduce((p: number, n: IoUnit<number>) => p + n.get(), 0),
     );
-    expect(sum()).toBe(6);
+    expect(sum.get()).toBe(6);
 
-    arr[0](10);
-    expect(arr()).toEqual([10, 2, 3]);
-    expect(sum()).toBe(15);
+    arr[0].set(10);
+    expect(arr.get()).toEqual([10, 2, 3]);
+    expect(sum.get()).toBe(15);
 
     unsub();
     expect(values[values.length - 1]).toEqual([10, 2, 3]);
@@ -94,13 +94,13 @@ describe('io: array', () => {
   it('supports push/pop/splice/sort', () => {
     const arr = io([3, 1, 2]);
     arr.push(4);
-    expect(arr()).toEqual([3, 1, 2, 4]);
+    expect(arr.get()).toEqual([3, 1, 2, 4]);
     expect(arr.pop()).toBe(4);
-    expect(arr()).toEqual([3, 1, 2]);
+    expect(arr.get()).toEqual([3, 1, 2]);
     arr.splice(1, 1, 9);
-    expect(arr()).toEqual([3, 9, 2]);
+    expect(arr.get()).toEqual([3, 9, 2]);
     arr.sort((a, b) => a - b);
-    expect(arr()).toEqual([2, 3, 9]);
+    expect(arr.get()).toEqual([2, 3, 9]);
   });
 });
 
@@ -109,13 +109,13 @@ describe('io: scope', () => {
     const counter = io({ count: 0, step: 1 });
     let inside = -1;
     counter.commit((draft) => {
-      inside = counter.count();
+      inside = counter.count.get();
       draft.count += 1;
       draft.step = 2;
     });
     expect(inside).toBe(0);
-    expect(counter.count()).toBe(1);
-    expect(counter.step()).toBe(2);
+    expect(counter.count.get()).toBe(1);
+    expect(counter.step.get()).toBe(2);
   });
 
   it('emits a single scope update for commit', () => {
@@ -137,16 +137,16 @@ describe('updates: merge/apply/invert/replay', () => {
     const u1 = io(1);
     const seen: IoUpdate[] = [];
     u1.subscribeUpdate((u) => seen.push(u));
-    u1(2);
-    u1(3);
+    u1.set(2);
+    u1.set(3);
 
     const merged = mergeUpdates(seen);
     const u2 = io(1);
     applyUpdate(u2, merged);
-    expect(u2()).toBe(3);
+    expect(u2.get()).toBe(3);
 
     applyUpdate(u2, invertUpdate(merged));
-    expect(u2()).toBe(1);
+    expect(u2.get()).toBe(1);
   });
 
   it('replays array structural updates', () => {
@@ -159,7 +159,7 @@ describe('updates: merge/apply/invert/replay', () => {
 
     const a2 = io([1, 2, 3]);
     replay(a2, updates);
-    expect(a2()).toEqual(a1());
+    expect(a2.get()).toEqual(a1.get());
   });
 });
 
@@ -172,10 +172,10 @@ describe('ioTree: deep path replay', () => {
     const updates: IoUpdate[] = [];
     s1.subscribeUpdate((u: IoUpdate) => updates.push(u));
 
-    s1.items[0].count(10);
+    s1.items[0].count.set(10);
     s1.items.push({ count: 3 });
-    s1.items[1].count(20);
-    s1.meta.tag('b');
+    s1.items[1].count.set(20);
+    s1.meta.tag.set('b');
 
     const paths: IoPath[] = updates.flatMap((u) =>
       u.patches.map((p) => p.path),
@@ -197,9 +197,9 @@ describe('ioTree: deep path replay', () => {
 describe('ioTree: nested split', () => {
   it('splits nested objects into leaf nodes', () => {
     const user = ioTree({ profile: { name: 'a', age: 1 } });
-    expect(user.profile.age()).toBe(1);
-    user.profile.age((v) => v + 1);
-    expect(user.profile.age()).toBe(2);
+    expect(user.profile.age.get()).toBe(1);
+    user.profile.age.update((v) => v + 1);
+    expect(user.profile.age.get()).toBe(2);
   });
 
   it('supports deep path mapping via internal ctx', () => {
@@ -234,16 +234,16 @@ describe('signals: computed/effect', () => {
     const s = ioTree({ user: { name: 'a', age: 1 } });
     const seen: string[] = [];
     const stop = effect(() => {
-      seen.push(s.user.name());
+      seen.push(s.user.name.get());
     });
     await Promise.resolve();
     expect(seen).toEqual(['a']);
 
-    s.user.age(2);
+    s.user.age.set(2);
     await Promise.resolve();
     expect(seen).toEqual(['a']);
 
-    s.user.name('b');
+    s.user.name.set('b');
     await Promise.resolve();
     expect(seen).toEqual(['a', 'b']);
     stop();
@@ -272,9 +272,9 @@ describe('batch', () => {
     u3.subscribe(cb);
 
     batch(() => {
-      u1(1);
-      u2(2);
-      u3(3);
+      u1.set(1);
+      u2.set(2);
+      u3.set(3);
     });
     expect(calls).toBe(1);
   });
@@ -284,7 +284,7 @@ describe('batch', () => {
     const v1 = s.snapshot();
     const v2 = s.snapshot();
     expect(v1).toBe(v2);
-    s.a(2);
+    s.a.set(2);
     const v3 = s.snapshot();
     expect(v3).not.toBe(v2);
   });
@@ -294,17 +294,17 @@ describe('derived', () => {
   it('supports type-safe selectors with property access', async () => {
     const scope = ioTree({ user: { name: 'a', age: 1 } });
     const display = derived(scope, (s) => `${s.user.name} (${s.user.age})`);
-    expect(display()).toBe('a (1)');
+    expect(display.get()).toBe('a (1)');
     const seen: string[] = [];
     const unsub = display.subscribe((v) => seen.push(v));
 
-    scope.user.age(2);
+    scope.user.age.set(2);
     await Promise.resolve();
-    scope.user.name('b');
+    scope.user.name.set('b');
     await Promise.resolve();
 
     unsub();
-    expect(display()).toBe('b (2)');
+    expect(display.get()).toBe('b (2)');
     expect(seen).toEqual(['a (2)', 'b (2)']);
   });
 });
@@ -316,8 +316,8 @@ describe('debug hooks', () => {
     const unsub = onMutation(scope, (patch, path) => {
       seen.push({ path, op: patch.op });
     });
-    scope.user.name('b');
-    scope.user.age(2);
+    scope.user.name.set('b');
+    scope.user.age.set(2);
     unsub();
     expect(seen).toContainEqual({ path: ['user', 'name'], op: 'set' });
     expect(seen).toContainEqual({ path: ['user', 'age'], op: 'set' });
@@ -351,7 +351,7 @@ describe('types', () => {
     expectTypeOf(scope).toEqualTypeOf<IoScope<{ a: number }>>();
 
     const d = derived([unit], (n) => n + 1);
-    expectTypeOf(d()).toEqualTypeOf<number>();
+    expectTypeOf(d.get()).toEqualTypeOf<number>();
   });
 
   it('infers tree node types', () => {
@@ -376,15 +376,15 @@ describe('derived: unit-level deps and release', () => {
     const unsub = d.subscribe(() => {
       return undefined;
     });
-    expect(d()).toBe(2);
+    expect(d.get()).toBe(2);
     const before = calls;
 
-    user.profile.name('b');
+    user.profile.name.set('b');
     expect(calls).toBe(before);
 
-    user.profile.age((v) => v + 1);
+    user.profile.age.update((v) => v + 1);
     expect(calls).toBeGreaterThan(before);
-    expect(d()).toBe(4);
+    expect(d.get()).toBe(4);
 
     unsub();
   });
@@ -431,22 +431,22 @@ describe('updates: replay/invert consistency', () => {
       for (let i = 0; i < 80; i += 1) {
         if (rng() < 0.6) {
           const delta = randInt(rng, 11) - 5;
-          u1((v) => v + delta);
+          u1.update((v) => v + delta);
         } else {
-          u1(randInt(rng, 200) - 100);
+          u1.set(randInt(rng, 200) - 100);
         }
       }
 
       const u2 = io(0);
       replay(u2, seen);
-      expect(u2()).toBe(u1());
+      expect(u2.get()).toBe(u1.get());
 
       const merged = mergeUpdates(seen);
       const u3 = io(0);
       applyUpdate(u3, merged);
-      expect(u3()).toBe(u1());
+      expect(u3.get()).toBe(u1.get());
       applyUpdate(u3, invertUpdate(merged));
-      expect(u3()).toBe(0);
+      expect(u3.get()).toBe(0);
     }
   });
 
@@ -459,8 +459,9 @@ describe('updates: replay/invert consistency', () => {
 
       for (let i = 0; i < 60; i += 1) {
         const op = randInt(rng, 3);
-        if (op === 0) s1.a(randInt(rng, 100));
-        else if (op === 1) s1.b((v) => v + (randInt(rng, 7) - 3));
+        if (op === 0) s1.a.set(randInt(rng, 100));
+        else if (op === 1)
+          s1.b.update((v) => v + (randInt(rng, 7) - 3));
         else {
           s1.commit((draft) => {
             draft.a = randInt(rng, 100);
@@ -494,14 +495,15 @@ describe('updates: replay/invert consistency', () => {
         if (op === 0) a1.push(randInt(rng, 50));
         else if (op === 1) a1.pop();
         else if (op === 2) {
-          const start = a1().length === 0 ? 0 : randInt(rng, a1().length);
-          const del = a1().length === 0 ? 0 : randInt(rng, 3);
+          const start =
+            a1.get().length === 0 ? 0 : randInt(rng, a1.get().length);
+          const del = a1.get().length === 0 ? 0 : randInt(rng, 3);
           a1.splice(start, del, randInt(rng, 50));
         } else if (op === 3) {
-          const len = a1().length;
+          const len = a1.get().length;
           if (len > 0) {
             const idx = randInt(rng, len);
-            a1[idx](randInt(rng, 1000));
+            a1[idx].set(randInt(rng, 1000));
           }
         } else {
           a1.sort((x, y) => x - y);
@@ -510,14 +512,14 @@ describe('updates: replay/invert consistency', () => {
 
       const a2 = io([0, 1, 2, 3]);
       replay(a2, seen);
-      expect(a2()).toEqual(a1());
+      expect(a2.get()).toEqual(a1.get());
 
       const merged = mergeUpdates(seen);
       const a3 = io([0, 1, 2, 3]);
       applyUpdate(a3, merged);
-      expect(a3()).toEqual(a1());
+      expect(a3.get()).toEqual(a1.get());
       applyUpdate(a3, invertUpdate(merged));
-      expect(a3()).toEqual([0, 1, 2, 3]);
+      expect(a3.get()).toEqual([0, 1, 2, 3]);
     }
   });
 
@@ -535,19 +537,21 @@ describe('updates: replay/invert consistency', () => {
         const op = randInt(rng, 5);
         if (op === 0) {
           const name = String.fromCharCode(97 + randInt(rng, 3));
-          t1.user.name(name);
+          t1.user.name.set(name);
         } else if (op === 1) {
-          t1.user.age((v) => v + 1);
+          t1.user.age.update((v) => v + 1);
         } else if (op === 2) {
-          const len = t1.items().length;
+          const len = t1.items.get().length;
           if (len > 0) {
             const idx = randInt(rng, len);
-            t1.items[idx].count((v) => v + (randInt(rng, 5) - 2));
+            t1.items[idx].count.update(
+              (v) => v + (randInt(rng, 5) - 2),
+            );
           }
         } else if (op === 3) {
           t1.items.push({ count: randInt(rng, 10) });
         } else {
-          const len = t1.items().length;
+          const len = t1.items.get().length;
           if (len > 0) {
             const start = randInt(rng, len);
             const del = randInt(rng, Math.min(2, len - start) + 1);
@@ -574,7 +578,7 @@ describe('snapshot reuse', () => {
     });
 
     const s1 = store.snapshot();
-    store.items[0].count((v) => v + 1);
+    store.items[0].count.update((v) => v + 1);
     const s2 = store.snapshot();
 
     expect(s1).not.toBe(s2);

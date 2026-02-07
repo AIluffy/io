@@ -19,7 +19,8 @@ const view = withBehaviors(count, [
 ]);
 
 view.subscribe((v) => console.log(v));
-view(1);
+view.set?.(1);
+view.get();
 ```
 
 ## 常见行为

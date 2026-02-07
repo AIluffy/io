@@ -4,6 +4,5 @@ export { persist } from './lib/extensions/behaviors/persist.js';
 export { devtools } from './lib/extensions/behaviors/devtools.js';
 export type {
   IoBehavior,
-  IoCallableView,
   IoView,
 } from './lib/extensions/types.js';

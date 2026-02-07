@@ -12,8 +12,8 @@ import { io } from 'io-store';
 
 const state = io({ count: 0 });
 
-state.count();
-state.count((v) => v + 1);
+state.count.get();
+state.count.update((v) => v + 1);
 ```
 
 ## Subscribe

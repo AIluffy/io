@@ -17,7 +17,7 @@ import { io } from 'io-store';
 
 it('updates count', () => {
   const count = io(0);
-  count((v) => v + 1);
+  count.update((v) => v + 1);
   expect(count.snapshot()).toBe(1);
 });
 ```
@@ -34,7 +34,7 @@ it('emits update patches', () => {
     patches.push(u.patches[0].op);
   });
 
-  count(1);
+  count.set(1);
   unsub();
 
   expect(patches).toEqual(['set']);

@@ -20,7 +20,7 @@ const state = useIO(store);
 
 const draft = computed({
   get: () => state.value.draft,
-  set: (value: string) => store.draft(value),
+  set: (value: string) => store.draft.set(value),
 });
 
 const filteredTodos = computed(() =>
@@ -39,11 +39,11 @@ const addTodo = () => {
   const title = state.value.draft.trim();
   if (!title) return;
   store.todos.push({ id: String(Date.now()), title, done: false });
-  store.draft('');
+  store.draft.set('');
 };
 
 const toggleTodo = (index: number) => {
-  store.todos[index].done((value) => !value);
+  store.todos[index].done.update((value) => !value);
 };
 
 const removeTodo = (index: number) => {
@@ -99,7 +99,7 @@ const removeTodo = (index: number) => {
                 ? 'rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white'
                 : 'rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700'
             "
-            @click="store.filter(key)"
+            @click="store.filter.set(key)"
           >
             {{ key }}
           </button>

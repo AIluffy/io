@@ -50,7 +50,7 @@ export function useIO<T>(
 
 export function ioRef<T>(unit: IoUnit<T>, options?: IoVueOptions): Ref<T> {
   return customRef<T>((track, trigger) => {
-    let current = unit();
+    let current = unit.get();
     const schedule = options?.schedule ?? 'microtask';
     const update = createUpdater<T>(schedule, (value) => {
       current = value;
@@ -64,7 +64,7 @@ export function ioRef<T>(unit: IoUnit<T>, options?: IoVueOptions): Ref<T> {
         return current;
       },
       set(value) {
-        unit(value);
+        unit.set(value);
       },
     };
   });

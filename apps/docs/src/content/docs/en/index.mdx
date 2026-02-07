@@ -3,35 +3,112 @@ title: Welcome to IO
 description: Reactive state primitives with deep signal support.
 template: splash
 hero:
-  tagline: Predictable state with deep updates, frozen snapshots, and explicit update logs.
+  tagline: Deep state, touch to reach.
   actions:
     - text: Get Started
       link: /en/getting-started/quick-start/
       icon: right-arrow
       variant: primary
     - text: View on GitHub
-      link: https://github.com/io-js/io
+      link: https://github.com/AIluffy/io-mono
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Quick Start
 
-```ts
+<Tabs>
+  <TabItem label="Vanilla JS">
+    ```ts
 import { io, batch } from 'io-store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 
-store.count();
-store.user.name('Grace');
+store.count.get(); // read
+store.user.name.set('Grace'); // deep write
 
 batch(() => {
-  store.count((v) => v + 1);
-  store.count((v) => v + 1);
+store.count.update((v) => v + 1);
+store.count.update((v) => v + 1);
 });
-```
+
+store.subscribeUpdate((update) => {
+console.log('Updated:', update);
+});
+
+````
+
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+import { io } from 'io-store';
+import { useIO } from 'io-react';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+export default function App() {
+  const state = useIO(store);
+  const { count, user } = state;
+
+return (
+  <div>
+    <p>Count: {count}</p>
+    <input
+      value={user.name}
+      onChange={(e) => store.user.name.set(e.target.value)}
+    />
+    <button onClick={() => store.count.update((v) => v + 1)}>
+      Increment
+    </button>
+  </div>
+);
+}
+````
+
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+<script setup lang="ts">
+import { io } from 'io-store';
+import { useIO } from 'io-vue';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const state = useIO(store);
+
+const increment = () => store.count.update((v) => v + 1);
+
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ state.value.count }}</p>
+    <input v-model="state.value.user.name" />
+    <button @click="increment">Increment</button>
+  </div>
+</template>
+    ```
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+<script>
+  import { io } from 'io-store';
+  import { toReadable } from 'io-svelte';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const state = toReadable(store);
+
+</script>
+
+<p>Count: {$state.count}</p>
+<input bind:value={$state.user.name} />
+<button on:click={() => store.count.update((v) => v + 1)}>
+  Increment
+</button>
+    ```
+  </TabItem>
+</Tabs>
 
 ## Why IO
 

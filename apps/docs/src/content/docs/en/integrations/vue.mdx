@@ -15,7 +15,7 @@ const count = io(0);
 
 export function useCounter() {
   const state = useIO(count);
-  const inc = () => count((v) => v + 1);
+  const inc = () => count.update((v) => v + 1);
   return { state, inc };
 }
 ```

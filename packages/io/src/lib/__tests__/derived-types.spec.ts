@@ -10,18 +10,18 @@ describe('derived: type overloads', () => {
     const count = io(1);
     const d = derived([count], (n) => n + 1);
     expectTypeOf(d).toEqualTypeOf<IoDerived<number>>();
-    expectTypeOf(d()).toEqualTypeOf<number>();
+    expectTypeOf(d.get()).toEqualTypeOf<number>();
   });
 
   it('infers selector-based derived types', () => {
     const scope = io({ user: { age: 1 } });
     const d = derived(scope, (s) => s.user.age + 1);
-    expectTypeOf(d()).toEqualTypeOf<number>();
+    expectTypeOf(d.get()).toEqualTypeOf<number>();
   });
 
   it('infers computed-based derived types', () => {
     const d = derived(() => 'ok');
-    expectTypeOf(d()).toEqualTypeOf<string>();
+    expectTypeOf(d.get()).toEqualTypeOf<string>();
   });
 });
 

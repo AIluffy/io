@@ -32,9 +32,9 @@ import { io } from 'io-store';
 
 const count = io(0);
 
-count(); // read
-count(1); // write
-count((v) => v + 1); // update
+count.get(); // read
+count.set(1); // write
+count.update((v) => v + 1); // update
 ```
 
 ## Use in your framework
@@ -46,12 +46,12 @@ count((v) => v + 1); // update
 
     const store = io({ count: 0, user: { name: 'Ada' } });
 
-    store.count();
-    store.user.name('Grace');
+    store.count.get();
+    store.user.name.set('Grace');
 
     batch(() => {
-      store.count((v) => v + 1);
-      store.count((v) => v + 1);
+      store.count.update((v) => v + 1);
+      store.count.update((v) => v + 1);
     });
     ```
 
@@ -65,7 +65,9 @@ count((v) => v + 1); // update
 
     export function Counter() {
       const value = useIO(count);
-      return <button onClick={() => count((v) => v + 1)}>{value}</button>;
+      return (
+        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+      );
     }
     ```
 
@@ -79,7 +81,7 @@ count((v) => v + 1); // update
 
     export function useCounter() {
       const state = useIO(count);
-      const inc = () => count((v) => v + 1);
+      const inc = () => count.update((v) => v + 1);
       return { state, inc };
     }
     ```

@@ -7,8 +7,8 @@ describe('io-devtools: createIoDevtools', () => {
     const store = io({ count: 0, user: { name: 'a' } });
     const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
 
-    store.count(1);
-    store.user.name('b');
+    store.count.set(1);
+    store.user.name.set('b');
 
     const state = devtools.getState();
     expect(state.history).toHaveLength(2);
@@ -21,8 +21,8 @@ describe('io-devtools: createIoDevtools', () => {
     const store = io({ count: 0, user: { name: 'a' } });
     const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
 
-    store.count(1);
-    store.user.name('b');
+    store.count.set(1);
+    store.user.name.set('b');
     expect(store.snapshot()).toMatchObject({ count: 1, user: { name: 'b' } });
 
     devtools.timeTravel.undo();
@@ -36,12 +36,12 @@ describe('io-devtools: createIoDevtools', () => {
     const store = io({ count: 0, user: { name: 'a' } });
     const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
 
-    store.count(1);
-    store.user.name('b');
+    store.count.set(1);
+    store.user.name.set('b');
     expect(devtools.getState().history).toHaveLength(2);
 
     devtools.timeTravel.goTo(0);
-    store.count(10);
+    store.count.set(10);
 
     const state = devtools.getState();
     expect(state.history).toHaveLength(2);
@@ -52,7 +52,7 @@ describe('io-devtools: createIoDevtools', () => {
   it('exports JSON and Redux DevTools import state', () => {
     const store = io({ count: 0 });
     const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
-    store.count(1);
+    store.count.set(1);
 
     const json = devtools.export.json();
     expect(() => JSON.parse(json)).not.toThrow();
@@ -71,7 +71,7 @@ describe('io-devtools: createIoDevtools', () => {
       throw new Error('listener boom');
     });
 
-    expect(() => store.count(1)).not.toThrow();
+    expect(() => store.count.set(1)).not.toThrow();
     expect(devtools.getState().history).toHaveLength(1);
   });
 });

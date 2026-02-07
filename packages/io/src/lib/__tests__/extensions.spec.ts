@@ -12,8 +12,8 @@ describe('extensions: behaviors', () => {
     const view = withBehaviors(unit, [schedule('sync')]);
     const seen: number[] = [];
     const unsub = view.subscribe((v) => seen.push(v));
-    view(1);
-    view(2);
+    view.set?.(1);
+    view.set?.(2);
     unsub();
     expect(seen).toEqual([1, 2]);
   });
@@ -28,14 +28,14 @@ describe('extensions: behaviors', () => {
       },
     };
     const view = withBehaviors(unit, [persist({ key: 'count', storage })]);
-    view(3);
+    view.set?.(3);
     expect(stored).toBe('3');
   });
 
-  it('reads via callable view', () => {
+  it('reads via view getter', () => {
     const unit = io(1);
     const view = withBehaviors(unit, [schedule('sync')]);
-    expect(view()).toBe(1);
+    expect(view.get()).toBe(1);
   });
 
   it('attaches devtools instance to view extensions', () => {
@@ -60,8 +60,8 @@ describe('extensions: behaviors', () => {
   it('preserves deep access on tree nodes', () => {
     const state = io({ user: { age: 1 } });
     const view = withBehaviors(state, [schedule('sync')]);
-    view.user.age(2);
-    expect(view.user.age()).toBe(2);
+    view.user.age.set(2);
+    expect(view.user.age.get()).toBe(2);
   });
 
   it('reflects view methods without exposing read-only setters', () => {
@@ -71,7 +71,7 @@ describe('extensions: behaviors', () => {
     expect('set' in view).toBe(true);
     expect(Reflect.ownKeys(view)).toContain('get');
 
-    const readOnly = derived(() => unit());
+    const readOnly = derived(() => unit.get());
     const roView = withBehaviors(readOnly, [schedule('sync')]);
     expect('set' in roView).toBe(false);
   });

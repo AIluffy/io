@@ -50,7 +50,7 @@ describe('edge cases: applyUpdate', () => {
       ],
     });
 
-    expect((store[key] as () => number)()).toBe(2);
+    expect((store[key] as { get: () => number }).get()).toBe(2);
   });
 
   it('rejects non-node targets', () => {

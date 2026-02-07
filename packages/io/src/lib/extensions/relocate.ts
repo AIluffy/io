@@ -2,14 +2,8 @@ import type { IoView } from './types.js';
 
 import { getInternal } from '../utils/internal-access.js';
 
-type CallableNode<T> = {
-  (): T;
-  (next: T | ((prev: T) => T)): void;
-  subscribe(fn: (v: T) => void): () => void;
-  snapshot(): T;
-};
-
 type ReadableNode<T> = {
+  get(): T;
   snapshot(): T;
   subscribe(fn: (v: T) => void): () => void;
 };
@@ -66,19 +60,26 @@ export function relocate<T>(
     throw new Error(`relocate: target is not a node at ${formatPath(path)}`);
 
   if (internal.kind === 'unit') {
-    const unit = node as CallableNode<T>;
+    const unit = node as {
+      get(): T;
+      set(next: T): void;
+      update(fn: (prev: T) => T): void;
+      subscribe(fn: (v: T) => void): () => void;
+      snapshot(): T;
+    };
     return {
-      get: () => unit(),
-      set: (next) => unit(next),
+      get: () => unit.get(),
+      set: (next) => unit.set(next),
+      update: (fn) => unit.update(fn),
       subscribe: (fn) => unit.subscribe(fn),
       snapshot: () => unit.snapshot(),
     };
   }
 
   if (internal.kind === 'derived') {
-    const derived = node as CallableNode<T>;
+    const derived = node as ReadableNode<T>;
     return {
-      get: () => derived(),
+      get: () => derived.get(),
       subscribe: (fn) => derived.subscribe(fn),
       snapshot: () => derived.snapshot(),
     };
@@ -87,6 +88,7 @@ export function relocate<T>(
   if (internal.kind === 'scope' || internal.kind === 'array') {
     const readable = node as ReadableNode<T>;
     if (
+      typeof readable.get !== 'function' ||
       typeof readable.snapshot !== 'function' ||
       typeof readable.subscribe !== 'function'
     ) {
@@ -95,7 +97,7 @@ export function relocate<T>(
       );
     }
     return {
-      get: () => readable.snapshot(),
+      get: () => readable.get(),
       subscribe: (fn) => readable.subscribe(fn),
       snapshot: () => readable.snapshot(),
     };

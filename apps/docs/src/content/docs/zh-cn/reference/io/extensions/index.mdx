@@ -15,11 +15,11 @@ const view = withBehaviors(count, [
   persist({ key: 'count' }),
 ]);
 
-view(); // 读取
-view(1); // 写入
+view.get(); // 读取
+view.set?.(1); // 写入
 ```
 
-当输入为树节点时，返回的 view 会保留深层访问能力（例如 `view.user.age(2)`）。
+当输入为树节点时，返回的 view 会保留深层访问能力（例如 `view.user.age.set(2)`）。
 
 ## 导出
 

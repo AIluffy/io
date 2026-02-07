@@ -14,6 +14,7 @@ IoTreeNode<T, MaxDepth>
 
 | Name | Type |
 | --- | --- |
+| get | `(() => unknown[]) \| (() => T) \| (() => T)` |
 | snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
 | subscribe | `((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
 | subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |

@@ -11,17 +11,17 @@ type IoOptions = { shallow?: boolean; silent?: boolean };
  *
  * @example
  * const count = io(1);
- * count(2);
- * count();
+ * count.set(2);
+ * count.get();
  *
  * @example
  * const list = io([1, { n: 1 }]);
- * list[0]();
- * list[1].n(2);
+ * list[0].get();
+ * list[1].n.set(2);
  *
  * @example
  * const user = io({ profile: { name: 'a' } });
- * user.profile.name('b');
+ * user.profile.name.set('b');
  * user.snapshot();
  */
 export function io<T>(

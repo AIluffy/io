@@ -15,14 +15,14 @@
   const state = toReadable(store);
 
   const addTodo = () => {
-    const title = store.draft().trim();
+    const title = store.draft.get().trim();
     if (!title) return;
     store.todos.push({ id: String(Date.now()), title, done: false });
-    store.draft('');
+    store.draft.set('');
   };
 
   const toggleTodo = (index) => {
-    store.todos[index].done((value) => !value);
+    store.todos[index].done.update((value) => !value);
   };
 
   const removeTodo = (index) => {
@@ -30,7 +30,7 @@
   };
 
   const setFilter = (next) => {
-    store.filter(next);
+    store.filter.set(next);
   };
 
   $: filteredTodos = $state.todos.flatMap((todo, index) => {
@@ -62,7 +62,7 @@
       value={$state.draft}
       placeholder="What needs to be done?"
       class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-      on:input={(event) => store.draft(event.currentTarget.value)}
+      on:input={(event) => store.draft.set(event.currentTarget.value)}
       on:keydown={(event) => event.key === 'Enter' && addTodo()}
     />
     <button

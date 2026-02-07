@@ -20,7 +20,7 @@ const count: IoUnit<number> = io(0);
 
 ```ts
 const store = io({ user: { name: 'Ada', age: 36 } });
-store.user.name();
+store.user.name.get();
 ```
 
 ## Path 工具类型

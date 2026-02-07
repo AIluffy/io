@@ -15,11 +15,11 @@ const view = withBehaviors(count, [
   persist({ key: 'count' }),
 ]);
 
-view(); // read
-view(1); // write
+view.get(); // read
+view.set?.(1); // write
 ```
 
-When the input is a tree node, the returned view preserves deep access (e.g. `view.user.age(2)`).
+When the input is a tree node, the returned view preserves deep access (e.g. `view.user.age.set(2)`).
 
 ## Exports
 

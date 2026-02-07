@@ -7,16 +7,16 @@ sidebar:
 
 ## Unit
 
-Unit 是函数式单元：调用读取，传值写入。
+Unit 是状态单元，提供明确的 `get/set/update` 方法。
 
 ```ts
 import { io } from 'io-store';
 
 const count = io(0);
 
-count(); // 0
-count(1); // 写入
-count((v) => v + 1); // 更新
+count.get(); // 0
+count.set(1); // 写入
+count.update((v) => v + 1); // 更新
 ```
 
 Unit 暴露以下能力：
@@ -32,8 +32,8 @@ Unit 暴露以下能力：
 ```ts
 const user = io({ name: 'Ada', age: 36 });
 
-user.name();
-user.age(37);
+user.name.get();
+user.age.set(37);
 ```
 
 Scope 支持 `commit` 进行成组更新（不允许新增未知 key 以保持结构稳定）：
@@ -53,7 +53,7 @@ user.commit((draft) => {
 const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 
 todos.push({ id: 'b', title: 'Document', done: false });
-todos[0].done(true);
+todos[0].done.set(true);
 ```
 
 ## 下一步

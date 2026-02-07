@@ -3,35 +3,112 @@ title: 欢迎使用 IO（艾欧）
 description: 具有深度信号支持的响应式状态管理。
 template: splash
 hero:
-  tagline: 深层更新、冻结快照与显式更新日志的可预测状态系统。
+  tagline: 深层状态，一触即达。
   actions:
     - text: 快速开始
       link: /zh-cn/getting-started/quick-start/
       icon: right-arrow
       variant: primary
     - text: 查看 GitHub
-      link: https://github.com/io-js/io
+      link: https://github.com/AIluffy/io-mono
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## 快速开始
 
-```ts
-import { io, batch } from 'io-store';
+<Tabs>
+  <TabItem label="纯JavaScript">
+  ```ts
+  import { io, batch } from 'io-store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 
-store.count();
-store.user.name('Grace');
+store.count.get(); // 读取
+store.user.name.set('Grace'); // 深层写入
 
 batch(() => {
-  store.count((v) => v + 1);
-  store.count((v) => v + 1);
+store.count.update((v) => v + 1);
+store.count.update((v) => v + 1);
 });
-```
+
+store.subscribeUpdate((update) => {
+console.log('Updated:', update);
+});
+
+````
+
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+import { io } from 'io-store';
+import { useIO } from 'io-react';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+export default function App() {
+  const state = useIO(store);
+  const { count, user } = state;
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <input
+        value={user.name}
+        onChange={(e) => store.user.name.set(e.target.value)}
+      />
+      <button onClick={() => store.count.update((v) => v + 1)}>
+        Increment
+      </button>
+    </div>
+  );
+}
+````
+
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+<script setup lang="ts">
+import { io } from 'io-store';
+import { useIO } from 'io-vue';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const state = useIO(store);
+
+const increment = () => store.count.update((v) => v + 1);
+
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ state.value.count }}</p>
+    <input v-model="state.value.user.name" />
+    <button @click="increment">Increment</button>
+  </div>
+</template>
+    ```
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+<script>
+  import { io } from 'io-store';
+  import { toReadable } from 'io-svelte';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const state = toReadable(store);
+
+</script>
+
+<p>Count: {$state.count}</p>
+<input bind:value={$state.user.name} />
+<button on:click={() => store.count.update((v) => v + 1)}>
+  Increment
+</button>
+    ```
+  </TabItem>
+</Tabs>
 
 ## 为什么选择 IO
 

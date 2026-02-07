@@ -9,14 +9,14 @@ IO is a TypeScript state library built around small, composable primitives and a
 
 ## Mental model
 
-- **Unit**: a function-like cell. Call it to read, call it with a value (or updater) to write.
+- **Unit**: a state cell with explicit `get/set/update`.
 - **Scope**: an object of Units that can be updated together.
 - **Tree**: deep structures where every nested path is addressable as a Unit.
 - **Update Log**: every write creates patches you can subscribe to, replay, or invert.
 
 ## What IO optimizes for
 
-- **Deep updates without ceremony**: update nested paths directly (`state.user.name('Ada')`).
+- **Deep updates without ceremony**: update nested paths directly (`state.user.name.set('Ada')`).
 - **Snapshot safety**: reads return frozen snapshots to prevent accidental mutation.
 - **Explicit change tracking**: updates are structured and replayable.
 - **Adapter-friendly**: `snapshot() + subscribe()` works consistently everywhere.

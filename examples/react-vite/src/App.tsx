@@ -29,7 +29,7 @@ export function App() {
     const title = draft.trim();
     if (!title) return;
     store.todos.push({ id: String(Date.now()), title, done: false });
-    store.draft('');
+    store.draft.set('');
   };
 
   return (
@@ -53,7 +53,7 @@ export function App() {
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <input
               value={draft}
-              onChange={(event) => store.draft(event.target.value)}
+              onChange={(event) => store.draft.set(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') addTodo();
               }}
@@ -74,7 +74,7 @@ export function App() {
               return (
                 <button
                   key={key}
-                  onClick={() => store.filter(key)}
+                  onClick={() => store.filter.set(key)}
                   className={
                     active
                       ? 'rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white'
@@ -101,7 +101,7 @@ export function App() {
                   <input
                     type="checkbox"
                     checked={todo.done}
-                    onChange={() => store.todos[index].done((v) => !v)}
+                    onChange={() => store.todos[index].done.update((v) => !v)}
                     className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
                   />
                   <div className="flex-1">

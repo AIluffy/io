@@ -109,21 +109,23 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     try {
       applyUnitSet(state, next, options);
     } catch (error) {
-      emitError(unitFn, error, [], 'set');
+      emitError(unit, error, [], 'set');
       throw error;
     }
   };
 
-  function unit(): T;
-  function unit(next: T | ((prev: T) => T)): void;
-  function unit(next?: T | ((prev: T) => T)): T | void {
-    if (arguments.length === 0) {
-      trackRead(unitFn);
-      return readCachedValue(state);
-    }
-    setValue(next as T | ((prev: T) => T));
-  }
-  const unitFn = unit as IoUnit<T>;
+  const get = (): T => {
+    trackRead(unit);
+    return readCachedValue(state);
+  };
+
+  const set = (next: T): void => {
+    setValue(next);
+  };
+
+  const update = (fn: (prev: T) => T): void => {
+    setValue(fn);
+  };
 
   const snapshot = (): T => readCachedValue(state);
 
@@ -145,7 +147,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     try {
       setValue(cloneValue(state.initial));
     } catch (error) {
-      emitError(unitFn, error, [], 'reset');
+      emitError(unit, error, [], 'reset');
       throw error;
     }
   };
@@ -157,7 +159,11 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     getState: () => state,
   };
 
+  const unit = {} as IoUnit<T>;
   Object.defineProperties(unit, {
+    get: { value: get },
+    set: { value: set },
+    update: { value: update },
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     subscribeUpdate: { value: subscribeUpdate },
@@ -167,9 +173,9 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     },
   });
 
-  registerInternal(unitFn as unknown as object, internal);
+  registerInternal(unit as unknown as object, internal);
 
-  return unitFn;
+  return unit;
 }
 
 export function isUnit(value: unknown): value is IoUnit<unknown> {

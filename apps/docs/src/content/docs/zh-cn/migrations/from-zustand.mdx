@@ -24,7 +24,7 @@ IO：
 import { io } from 'io-store';
 
 const store = io({ count: 0 });
-const inc = () => store.count((v) => v + 1);
+const inc = () => store.count.update((v) => v + 1);
 ```
 
 如果你更偏好“只保留第一层”的 store，可以使用 `shallow: true`。浅层模式深度限制为 1，并且 `commit` 不允许新增未知 key。

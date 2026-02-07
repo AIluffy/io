@@ -9,14 +9,14 @@ IO 是一个 TypeScript 状态库，由少量可组合原语与显式更新日�
 
 ## 心智模型
 
-- **Unit**：函数式单元，调用读取，传值写入。
+- **Unit**：状态单元，使用 `get/set/update` 读写。
 - **Scope**：由多个 Unit 组成的对象，可成组更新。
 - **Tree**：深层结构，每个路径都是 Unit。
 - **Update Log（更新日志）**：每次写入都会生成可订阅的 patch。
 
 ## IO 关注点
 
-- **深层更新零样板**：`state.user.name('Ada')` 直接写。
+- **深层更新零样板**：`state.user.name.set('Ada')` 直接写。
 - **快照安全**：读取返回冻结快照，避免误修改。
 - **显式变更记录**：patch 可回放、可合并。
 - **适配一致**：`snapshot() + subscribe()` 统一在各框架使用。

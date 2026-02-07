@@ -25,7 +25,7 @@ describe('@org/io-svelte', () => {
     const readable = toReadable(unit, { schedule: 'sync' });
     const seen: number[] = [];
     const unsub = readable.subscribe((v) => seen.push(v));
-    unit(2);
+    unit.set(2);
     unsub();
     expect(seen).toEqual([0, 2]);
   });

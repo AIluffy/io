@@ -24,7 +24,7 @@ IO:
 import { io } from 'io-store';
 
 const store = io({ count: 0 });
-const inc = () => store.count((v) => v + 1);
+const inc = () => store.count.update((v) => v + 1);
 ```
 
 If you prefer “shallow” shape-only stores, use `shallow: true`. Shallow mode limits depth to 1 and rejects unknown keys in `commit`.

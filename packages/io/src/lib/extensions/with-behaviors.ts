@@ -1,15 +1,18 @@
 import type { IoDerived, IoUnit } from '../utils/types.js';
-import type { IoBehavior, IoCallableView, IoView } from './types.js';
+import type { IoBehavior, IoView } from './types.js';
 
 type WithBehaviorsNode<T> = object & {
   subscribe(fn: (v: T) => void): () => void;
-} & ({ snapshot(): T } | { (): T });
+} & ({ get(): T } | { snapshot(): T }) & {
+    set?(next: T): void;
+    update?(fn: (prev: T) => T): void;
+  };
 
 type IoLike<T> = IoUnit<T> | IoDerived<T> | WithBehaviorsNode<T>;
 
 type ValueOfNode<N> = N extends { snapshot(): infer T }
   ? T
-  : N extends { (): infer T }
+  : N extends { get(): infer T }
     ? T
     : never;
 
@@ -22,22 +25,19 @@ function isView<T>(value: unknown): value is IoView<T> {
   );
 }
 
-function isCallable(value: unknown): value is (...args: unknown[]) => unknown {
-  return typeof value === 'function';
-}
-
 function isWritable<T>(node: IoLike<T>): node is IoUnit<T> {
   return (
-    typeof node === 'function' &&
-    typeof (node as { reset?: unknown }).reset === 'function'
+    typeof (node as { set?: unknown }).set === 'function' ||
+    typeof (node as { update?: unknown }).update === 'function'
   );
 }
 
 function adaptIo<T>(node: IoLike<T>): IoView<T> {
+  const hasGet = typeof (node as { get?: unknown }).get === 'function';
   const hasSnapshot =
     typeof (node as { snapshot?: unknown }).snapshot === 'function';
   const get = () => {
-    if (isCallable(node)) return (node as IoUnit<T>)();
+    if (hasGet) return (node as { get: () => T }).get();
     if (hasSnapshot) return (node as { snapshot: () => T }).snapshot();
     throw new Error('withBehaviors: node is not readable');
   };
@@ -48,13 +48,23 @@ function adaptIo<T>(node: IoLike<T>): IoView<T> {
       fn,
     );
   };
-  const set = (next: T | ((prev: T) => T)) => {
+  const set = (next: T) => {
     if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
-    node(next as T | ((prev: T) => T));
+    const setter = (node as { set?: (value: T) => void }).set;
+    if (!setter) throw new Error('withBehaviors: node is read-only');
+    setter(next);
+  };
+  const update = (fn: (prev: T) => T) => {
+    if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
+    const updater = (node as { update?: (next: (prev: T) => T) => void })
+      .update;
+    if (!updater) throw new Error('withBehaviors: node does not support update');
+    updater(fn);
   };
   return {
     get,
     set: isWritable(node) ? set : undefined,
+    update: isWritable(node) ? update : undefined,
     subscribe,
     snapshot: hasSnapshot
       ? () => (node as { snapshot: () => T }).snapshot()
@@ -62,44 +72,34 @@ function adaptIo<T>(node: IoLike<T>): IoView<T> {
   };
 }
 
-function createCallableView<T, N extends object>(
+function createViewProxy<T, N extends object>(
   view: IoView<T>,
   node: N,
-): N & IoCallableView<T> {
-  const fn = function (...args: [T | ((prev: T) => T)] | []): T | void {
-    if (args.length === 0) return view.get();
-    if (!view.set) throw new Error('withBehaviors: view is read-only');
-    view.set(args[0] as T | ((prev: T) => T));
-  };
-
+): N & IoView<T> {
   const overrides = new Map<string | symbol, unknown>([
     ['get', view.get],
     ['set', view.set],
+    ['update', view.update],
     ['subscribe', view.subscribe],
     ['snapshot', view.snapshot],
     ['extensions', view.extensions],
     ['destroy', view.destroy],
   ]);
 
-  return new Proxy(fn as IoLike<T> & IoCallableView<T>, {
-    apply(_target, _thisArg, argArray) {
-      return (fn as (...args: unknown[]) => unknown)(...argArray);
-    },
+  return new Proxy(view as IoView<T> & object, {
     get(_target, prop, receiver) {
       if (overrides.has(prop)) return overrides.get(prop);
       if (Reflect.has(node as object, prop))
         return Reflect.get(node as object, prop, receiver);
-      return Reflect.get(fn as object, prop, receiver);
+      return Reflect.get(view as object, prop, receiver);
     },
     has(_target, prop) {
       if (overrides.has(prop)) return overrides.get(prop) !== undefined;
-      return (
-        Reflect.has(node as object, prop) || Reflect.has(fn as object, prop)
-      );
+      return Reflect.has(node as object, prop) || Reflect.has(view as object, prop);
     },
     ownKeys(_target) {
       const keys = new Set<string | symbol>([
-        ...Reflect.ownKeys(fn as object),
+        ...Reflect.ownKeys(view as object),
         ...Reflect.ownKeys(node as object),
       ]);
       for (const [key, value] of overrides.entries()) {
@@ -108,7 +108,7 @@ function createCallableView<T, N extends object>(
       return Array.from(keys);
     },
     getOwnPropertyDescriptor(_target, prop) {
-      const targetDesc = Object.getOwnPropertyDescriptor(fn as object, prop);
+      const targetDesc = Object.getOwnPropertyDescriptor(view as object, prop);
       if (targetDesc && targetDesc.configurable === false) return targetDesc;
 
       if (overrides.has(prop)) {
@@ -125,22 +125,22 @@ function createCallableView<T, N extends object>(
       if (nodeDesc) return nodeDesc;
       return targetDesc;
     },
-  }) as N & IoCallableView<T>;
+  }) as N & IoView<T>;
 }
 
 export function withBehaviors<T>(
   input: IoView<T>,
   behaviors: IoBehavior<T>[],
-): IoCallableView<T>;
+): IoView<T>;
 export function withBehaviors<N extends WithBehaviorsNode<unknown>>(
   input: N,
   behaviors: IoBehavior<ValueOfNode<N>>[],
-): N & IoCallableView<ValueOfNode<N>>;
+): N & IoView<ValueOfNode<N>>;
 export function withBehaviors(
   input: IoView<unknown> | WithBehaviorsNode<unknown>,
   behaviors: IoBehavior<unknown>[],
 ): object {
   const baseView = isView(input) ? input : adaptIo(input as IoLike<unknown>);
   const enhanced = behaviors.reduce((acc, behavior) => behavior(acc), baseView);
-  return createCallableView(enhanced, input);
+  return createViewProxy(enhanced, input);
 }

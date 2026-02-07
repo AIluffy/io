@@ -10,16 +10,16 @@ Input:
 import { io } from 'io-store';
 
 const s = io({ user: { profile: { age: 1 } }, items: [{ count: 0 }] });
-s.user.profile.age();
-s.items[0].count((v) => v + 1);
+s.user.profile.age.get();
+s.items[0].count.update((v) => v + 1);
 ```
 
 Output (conceptual):
 
 ```ts
 const s = io(...);
-__oin_get(s, ['user', 'profile', 'age'])();
-__oin_get(s, ['items', 0, 'count'])((v) => v + 1);
+__oin_get(s, ['user', 'profile', 'age']).get();
+__oin_get(s, ['items', 0, 'count']).update((v) => v + 1);
 ```
 
 The helper uses IO internals (`Symbol.for('io-store/internal')`) to resolve children without proxy access.

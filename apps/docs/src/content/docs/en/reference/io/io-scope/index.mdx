@@ -20,6 +20,7 @@ IoScope<T>
 | Name | Type |
 | --- | --- |
 | commit | `(fn: (draft: T) => void) => void` |
+| get | `() => T` |
 | snapshot | `() => T` |
 | subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |

@@ -18,7 +18,7 @@ describe('@org/io-vue', () => {
       const count = io(0);
       state = useIO(count);
       expect(state?.value).toBe(0);
-      count(2);
+      count.set(2);
     });
     await new Promise<void>((resolve) => queueMicrotask(resolve));
     output = state?.value ?? 0;
@@ -34,7 +34,7 @@ describe('@org/io-vue', () => {
       const count = io(0);
       ref = ioRef(count);
       expect(ref?.value).toBe(0);
-      count(3);
+      count.set(3);
     });
     await new Promise<void>((resolve) => queueMicrotask(resolve));
     output = ref?.value ?? 0;
@@ -48,7 +48,7 @@ describe('@org/io-vue', () => {
     scope.run(() => {
       const count = io(0);
       state = useIO(count, { schedule: 'sync' });
-      count(5);
+      count.set(5);
       expect(state?.value).toBe(5);
     });
     scope.stop();
@@ -60,7 +60,7 @@ describe('@org/io-vue', () => {
     scope.run(() => {
       const count = io(0);
       ref = ioRef(count, { schedule: 'microtask' });
-      count(7);
+      count.set(7);
       expect(ref?.value).toBe(0);
     });
     await new Promise<void>((resolve) => queueMicrotask(resolve));

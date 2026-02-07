@@ -56,7 +56,7 @@ export function toWritable<T>(
 ): Writable<T> {
   return {
     subscribe(run) {
-      run(unit());
+      run(unit.get());
       const schedule = options?.schedule ?? 'sync';
       const update = createUpdater<T>(schedule, (value) => {
         run(value);
@@ -67,10 +67,10 @@ export function toWritable<T>(
       };
     },
     set(value) {
-      unit(value);
+      unit.set(value);
     },
     update(updater) {
-      unit((prev) => updater(prev));
+      unit.update((prev) => updater(prev));
     },
   };
 }

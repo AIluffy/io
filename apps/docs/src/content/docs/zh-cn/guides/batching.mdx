@@ -15,8 +15,8 @@ import { batch, io } from 'io-store';
 const store = io({ count: 0, name: 'Ada' });
 
 batch(() => {
-  store.count((v) => v + 1);
-  store.name('Grace');
+  store.count.update((v) => v + 1);
+  store.name.set('Grace');
 });
 ```
 

@@ -54,6 +54,9 @@ export type NodeFactoryDeps = {
   emitScopeUpdate: (state: TreeScopeState, update: IoUpdate) => void;
   emitArrayValue: (state: TreeArrayState) => void;
   emitArrayUpdate: (state: TreeArrayState, update: IoUpdate) => void;
+  trackRead: (
+    dep: { subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe },
+  ) => void;
   markDirty: (
     parentState: TreeScopeState | TreeArrayState,
     segment: PropertyKey,
@@ -116,6 +119,14 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
 
     const snapshot = (): Record<string, unknown> =>
       deps.getScopeSnapshot(state);
+    const get = (): Record<string, unknown> => {
+      deps.trackRead(
+        scope as unknown as {
+          subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
+        },
+      );
+      return snapshot();
+    };
 
     const subscribe = (
       fn: (v: Record<string, unknown>) => void,
@@ -267,6 +278,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
 
     Object.defineProperties(scope, {
       commit: { value: commit },
+      get: { value: get },
       snapshot: { value: snapshot },
       subscribe: { value: subscribe },
       subscribeUpdate: { value: subscribeUpdate },
@@ -304,10 +316,16 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     };
 
     const snapshot = (): unknown[] => deps.getArraySnapshot(state);
-
-    const array = function (): unknown[] {
+    let node = undefined as unknown as TreeNode;
+    const array: Record<PropertyKey, unknown> = {};
+    const get = (): unknown[] => {
+      deps.trackRead(
+        node as unknown as {
+          subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
+        },
+      );
       return snapshot();
-    } as unknown as TreeNode & object;
+    };
     const proxy = new Proxy(array as TreeNode & object, {
       get(target, prop, receiver) {
         if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
@@ -317,7 +335,8 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       },
     }) as TreeNode;
 
-    state.node = proxy as unknown as TreeNode;
+    node = proxy as unknown as TreeNode;
+    state.node = node;
     ctx.seen.set(initial as unknown as object, proxy as unknown as TreeNode);
     deps.setPathNode(ctx, path, proxy as unknown as TreeNode);
 
@@ -384,7 +403,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.valueEpoch += 1;
         if (options?.emitValue !== false) deps.emitArrayValue(state);
       } catch (error) {
-        deps.emitError(array, error, path, 'splice');
+        deps.emitError(node, error, path, 'splice');
         throw error;
       }
     };
@@ -404,7 +423,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.valueEpoch += 1;
         if (options?.emitValue !== false) deps.emitArrayValue(state);
       } catch (error) {
-        deps.emitError(array, error, path, 'sort');
+        deps.emitError(node, error, path, 'sort');
         throw error;
       }
     };
@@ -450,7 +469,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.valueEpoch += 1;
         if (options?.emitValue !== false) deps.emitArrayValue(state);
       } catch (error) {
-        deps.emitError(array, error, [...path, index], 'set');
+        deps.emitError(node, error, [...path, index], 'set');
         throw error;
       }
     };
@@ -485,7 +504,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.valueEpoch += 1;
         deps.emitArrayValue(state);
       } catch (error) {
-        deps.emitError(array, error, path, 'push');
+        deps.emitError(node, error, path, 'push');
         throw error;
       }
     };
@@ -521,7 +540,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         deps.emitArrayValue(state);
         return removedValue;
       } catch (error) {
-        deps.emitError(array, error, path, 'pop');
+        deps.emitError(node, error, path, 'pop');
         throw error;
       }
     };
@@ -557,7 +576,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         deps.emitArrayValue(state);
         rebuildMapping();
       } catch (error) {
-        deps.emitError(array, error, path, 'splice');
+        deps.emitError(node, error, path, 'splice');
         throw error;
       }
     };
@@ -597,7 +616,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.valueEpoch += 1;
         deps.emitArrayValue(state);
       } catch (error) {
-        deps.emitError(array, error, path, 'sort');
+        deps.emitError(node, error, path, 'sort');
         throw error;
       }
     };
@@ -666,7 +685,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         deps.emitArrayValue(state);
       } catch (error) {
         state.isCommitting = false;
-        deps.emitError(array, error, path, 'commit');
+        deps.emitError(node, error, path, 'commit');
         throw error;
       }
     };
@@ -695,6 +714,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     };
 
     Object.defineProperties(array, {
+      get: { value: get },
       snapshot: { value: snapshot },
       subscribe: { value: subscribe },
       subscribeUpdate: { value: subscribeUpdate },

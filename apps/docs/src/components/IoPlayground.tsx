@@ -51,12 +51,14 @@ export function IoPlayground() {
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        <button onClick={() => store.counter((v) => v + 1)}>counter +1</button>
+        <button onClick={() => store.counter.update((v) => v + 1)}>
+          counter +1
+        </button>
         <button
           onClick={() =>
             batch(() => {
-              store.counter((v) => v + 1);
-              store.counter((v) => v + 1);
+              store.counter.update((v) => v + 1);
+              store.counter.update((v) => v + 1);
             })
           }
         >
@@ -64,7 +66,7 @@ export function IoPlayground() {
         </button>
         <button
           onClick={() =>
-            store.user.name((n) => (n === 'Ada' ? 'Grace' : 'Ada'))
+            store.user.name.update((n) => (n === 'Ada' ? 'Grace' : 'Ada'))
           }
         >
           toggle name
@@ -84,8 +86,8 @@ export function IoPlayground() {
           onClick={() => {
             const first = store.todos[0];
             if (!first) return;
-            if (first.done()) first.done(false as const);
-            else first.done(true as const);
+            if (first.done.get()) first.done.set(false as const);
+            else first.done.set(true as const);
           }}
         >
           toggle first todo
