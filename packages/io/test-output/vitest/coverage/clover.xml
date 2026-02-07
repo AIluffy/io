@@ -914,7 +914,7 @@
     </package>
     <package name="extensions">
       <metrics statements="91" coveredstatements="56" conditionals="76" coveredconditionals="42" methods="31" coveredmethods="20"/>
-      <file name="focus.ts" path="/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/extensions/focus.ts">
+      <file name="relocate.ts" path="/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/extensions/relocate.ts">
         <metrics statements="45" coveredstatements="25" conditionals="32" coveredconditionals="22" methods="14" coveredmethods="5"/>
         <line num="19" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="20" count="3" type="stmt"/>

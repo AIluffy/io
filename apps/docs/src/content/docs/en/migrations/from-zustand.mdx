@@ -45,12 +45,12 @@ import { derived } from 'io-store';
 const count = derived(store, (s) => s.count);
 ```
 
-For path-focused access, use `focus`:
+For path-focused access, use `relocate`:
 
 ```ts
-import { focus } from 'io-store';
+import { relocate } from 'io-store';
 
-const userName = focus<string>(store, ['user', 'name']);
+const userName = relocate<string>(store, ['user', 'name']);
 ```
 
 ## Middleware → Behaviors

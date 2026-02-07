@@ -1,68 +1,64 @@
-
 <!doctype html>
 <html lang="en">
-
-<head>
-    <title>Code coverage report for extensions/focus.ts</title>
+  <head>
+    <title>Code coverage report for extensions/relocate.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
-        }
+    <style type="text/css">
+      .coverage-summary .sorter {
+        background-image: url(../sort-arrow-sprite.png);
+      }
     </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">extensions</a> focus.ts</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">56.25% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>27/48</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">68.75% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>22/32</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">35.71% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>5/14</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>25/45</span>
-            </div>
-        
-            
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="pad1">
+        <h1>
+          <a href="../index.html">All files</a> /
+          <a href="index.html">extensions</a> relocate.ts
+        </h1>
+        <div class="clearfix">
+          <div class="fl pad1y space-right2">
+            <span class="strong">56.25% </span>
+            <span class="quiet">Statements</span>
+            <span class="fraction">27/48</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">68.75% </span>
+            <span class="quiet">Branches</span>
+            <span class="fraction">22/32</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">35.71% </span>
+            <span class="quiet">Functions</span>
+            <span class="fraction">5/14</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">55.55% </span>
+            <span class="quiet">Lines</span>
+            <span class="fraction">25/45</span>
+          </div>
         </div>
         <p class="quiet">
-            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+          Press <em>n</em> or <em>j</em> to go to the next uncovered block,
+          <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
         </p>
         <template id="filterTemplate">
-            <div class="quiet">
-                Filter:
-                <input type="search" id="fileSearch">
-            </div>
+          <div class="quiet">
+            Filter:
+            <input type="search" id="fileSearch" />
+          </div>
         </template>
-    </div>
-    <div class='status-line medium'></div>
-    <pre><table class="coverage">
+      </div>
+      <div class="status-line medium"></div>
+      <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
 <a name='L3'></a><a href='#L3'>3</a>
@@ -297,7 +293,7 @@ function isNumericString(value: PropertyKey): value is string {
   return typeof value === 'string' &amp;&amp; /^[0-9]+$/.test(value);
 }
 &nbsp;
-export function focus&lt;T&gt;(
+export function relocate&lt;T&gt;(
   root: IoTreeNode&lt;unknown&gt;,
   path: ReadonlyArray&lt;PropertyKey&gt;
 ): IoView&lt;T&gt; {
@@ -306,12 +302,12 @@ export function focus&lt;T&gt;(
     const segment = path[i];
     const internal = getInternal(node);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!internal)
-<span class="cstat-no" title="statement not covered" >      throw new Error(`focus: path traversed into non-node at ${formatPath(path.slice(0, i))}`);</span>
+<span class="cstat-no" title="statement not covered" >      throw new Error(`relocate: path traversed into non-node at ${formatPath(path.slice(0, i))}`);</span>
 &nbsp;
     if (internal.kind === 'scope') {
       <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof segment !== 'string' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >typeof segment !== 'symbol') {</span>
 <span class="cstat-no" title="statement not covered" >        throw new Error(</span>
-          `focus: invalid scope key at ${formatPath(path.slice(0, i + 1))}`,
+          `relocate: invalid scope key at ${formatPath(path.slice(0, i + 1))}`,
         );
       }
       node = (node as Record&lt;PropertyKey, unknown&gt;)[segment];
@@ -321,7 +317,7 @@ export function focus&lt;T&gt;(
     if (internal.kind === 'array') {
       <span class="missing-if-branch" title="else path not taken" >E</span>if (typeof segment !== 'number' &amp;&amp; !isNumericString(segment)) {
         throw new Error(
-          `focus: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
+          `relocate: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
         );
       }
 <span class="cstat-no" title="statement not covered" >      node = (node as Record&lt;PropertyKey, unknown&gt;)[segment];</span>
@@ -329,13 +325,13 @@ export function focus&lt;T&gt;(
     }
 &nbsp;
     throw new Error(
-      `focus: path traversed into leaf at ${formatPath(path.slice(0, i))}`,
+      `relocate: path traversed into leaf at ${formatPath(path.slice(0, i))}`,
     );
   }
 &nbsp;
   const internal = getInternal(node);
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!internal)
-<span class="cstat-no" title="statement not covered" >    throw new Error(`focus: target is not a node at ${formatPath(path)}`);</span>
+<span class="cstat-no" title="statement not covered" >    throw new Error(`relocate: target is not a node at ${formatPath(path)}`);</span>
 &nbsp;
   <span class="missing-if-branch" title="if path not taken" >I</span>if (internal.kind === 'unit') {
     const unit = <span class="cstat-no" title="statement not covered" >node as CallableNode&lt;T&gt;;</span>
@@ -363,7 +359,7 @@ export function focus&lt;T&gt;(
       typeof readable.subscribe !== 'function'
     ) {
 <span class="cstat-no" title="statement not covered" >      throw new Error(</span>
-        `focus: target is not readable at ${formatPath(path)}`,
+        `relocate: target is not readable at ${formatPath(path)}`,
       );
     }
     return {
@@ -373,25 +369,31 @@ export function focus&lt;T&gt;(
     };
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  throw new Error(`focus: unsupported target at ${formatPath(path)}`);</span>
+<span class="cstat-no" title="statement not covered" >  throw new Error(`relocate: unsupported target at ${formatPath(path)}`);</span>
 }
 &nbsp;</pre></td></tr></table></pre>
 
-                <div class='push'></div><!-- for sticky footer -->
-            </div><!-- /wrapper -->
-            <div class='footer quiet pad2 space-top1 center small'>
-                Code coverage generated by
-                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T17:29:07.459Z
-            </div>
-        <script src="../prettify.js"></script>
-        <script>
-            window.onload = function () {
-                prettyPrint();
-            };
-        </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
-    </body>
+      <div class="push"></div>
+      <!-- for sticky footer -->
+    </div>
+    <!-- /wrapper -->
+    <div class="footer quiet pad2 space-top1 center small">
+      Code coverage generated by
+      <a
+        href="https://istanbul.js.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >istanbul</a
+      >
+      at 2026-02-05T17:29:07.459Z
+    </div>
+    <script src="../prettify.js"></script>
+    <script>
+      window.onload = function () {
+        prettyPrint();
+      };
+    </script>
+    <script src="../sorter.js"></script>
+    <script src="../block-navigation.js"></script>
+  </body>
 </html>
-    

@@ -1,6 +1,6 @@
 ---
-title: "Extensions"
-description: "Behavior extensions for IO"
+title: 'Extensions'
+description: 'Behavior extensions for IO'
 ---
 
 ## Overview
@@ -15,8 +15,8 @@ const view = withBehaviors(count, [
   persist({ key: 'count' }),
 ]);
 
-view();   // read
-view(1);  // write
+view(); // read
+view(1); // write
 ```
 
 When the input is a tree node, the returned view preserves deep access (e.g. `view.user.age(2)`).
@@ -24,9 +24,11 @@ When the input is a tree node, the returned view preserves deep access (e.g. `vi
 ## Exports
 
 From `io-store`:
-- `focus`
+
+- `relocate`
 
 From `io-store/behavior`:
+
 - `withBehaviors`
 - `schedule`
 - `persist`

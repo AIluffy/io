@@ -45,12 +45,12 @@ import { derived } from 'io-store';
 const count = derived(store, (s) => s.count);
 ```
 
-需要路径聚焦时可使用 `focus`：
+需要路径聚焦时可使用 `relocate`：
 
 ```ts
-import { focus } from 'io-store';
+import { relocate } from 'io-store';
 
-const userName = focus<string>(store, ['user', 'name']);
+const userName = relocate<string>(store, ['user', 'name']);
 ```
 
 ## 中间件 → 行为扩展

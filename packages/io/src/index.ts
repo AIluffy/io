@@ -4,7 +4,7 @@ export { batch } from './lib/utils/batch.js';
 export { isServerEnv } from './lib/utils/env.js';
 export { scheduleTask } from './lib/utils/schedule.js';
 export { onError, onMutation } from './lib/utils/debug.js';
-export { focus } from './lib/extensions/focus.js';
+export { relocate } from './lib/extensions/relocate.js';
 export type {
   IoArrayUnit,
   IoDerived,

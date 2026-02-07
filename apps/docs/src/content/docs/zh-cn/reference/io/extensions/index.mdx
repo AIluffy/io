@@ -1,6 +1,6 @@
 ---
-title: "Extensions"
-description: "IO 行为扩展"
+title: 'Extensions'
+description: 'IO 行为扩展'
 ---
 
 ## 概览
@@ -15,8 +15,8 @@ const view = withBehaviors(count, [
   persist({ key: 'count' }),
 ]);
 
-view();   // 读取
-view(1);  // 写入
+view(); // 读取
+view(1); // 写入
 ```
 
 当输入为树节点时，返回的 view 会保留深层访问能力（例如 `view.user.age(2)`）。
@@ -24,9 +24,11 @@ view(1);  // 写入
 ## 导出
 
 来自 `io-store`：
-- `focus`
+
+- `relocate`
 
 来自 `io-store/behavior`：
+
 - `withBehaviors`
 - `schedule`
 - `persist`

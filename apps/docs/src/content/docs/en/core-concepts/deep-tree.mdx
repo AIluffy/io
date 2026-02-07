@@ -34,13 +34,13 @@ state.user({ name: 'Grace' });
 
 ## Focus for explicit paths
 
-Use `focus` to build a view for a specific path.
+Use `relocate` to build a view for a specific path.
 
 ```ts
-import { focus, io } from 'io-store';
+import { relocate, io } from 'io-store';
 
 const store = io({ settings: { theme: 'light' } });
-const theme = focus<string>(store, ['settings', 'theme']);
+const theme = relocate<string>(store, ['settings', 'theme']);
 
 theme('dark');
 ```
