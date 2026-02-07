@@ -32,17 +32,6 @@
   "nx": {
     "tags": [
       "scope:io-svelte"
-    ],
-    "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io-svelte. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      }
-    }
+    ]
   }
 }

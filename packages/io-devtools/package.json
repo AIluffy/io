@@ -20,7 +20,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "peerdependencies": {
+  "peerDependencies": {
     "io-store": "*"
   },
   "devDependencies": {
@@ -31,15 +31,6 @@
       "scope:io-devtools"
     ],
     "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io-devtools. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      },
       "coverage": {
         "executor": "nx:run-commands",
         "cache": false,

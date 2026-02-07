@@ -20,13 +20,12 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "react": ">=18",
     "io-devtools": "*"
   },
-  "peerDependencies": {
-    "react": ">=18"
-  },
   "devDependencies": {
+    "io-devtools": "*",
     "@types/react-test-renderer": "^19.1.0",
     "@types/react": "^19.2.10",
     "react": "^19.2.4",
@@ -36,17 +35,6 @@
   "nx": {
     "tags": [
       "scope:io-devtools-react"
-    ],
-    "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io-devtools-react. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      }
-    }
+    ]
   }
 }

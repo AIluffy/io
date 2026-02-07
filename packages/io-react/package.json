@@ -35,17 +35,6 @@
   "nx": {
     "tags": [
       "scope:io-react"
-    ],
-    "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io-react. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      }
-    }
+    ]
   }
 }

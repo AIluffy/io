@@ -31,15 +31,6 @@
       "scope:io"
     ],
     "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      },
       "bench": {
         "executor": "nx:run-commands",
         "options": {

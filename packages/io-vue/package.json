@@ -32,17 +32,6 @@
   "nx": {
     "tags": [
       "scope:io-vue"
-    ],
-    "targets": {
-      "build-base": {
-        "command": "echo 'Running build-base for io-vue. This can be replaced with arbitrary commands.'",
-        "cache": true
-      },
-      "build": {
-        "dependsOn": [
-          "build-base"
-        ]
-      }
-    }
+    ]
   }
 }
