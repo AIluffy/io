@@ -9,8 +9,14 @@ const PAGE_TITLE_ID = '_top';
 const { data } = Astro.locals.starlightRoute.entry;
 const { title = data.title, tagline, image, actions = [] } = data.hero || {};
 
-const isZhCnHome =
-  Astro.url.pathname === '/zh-cn/' || Astro.url.pathname === '/zh-cn';
+const normalizedPath =
+  Astro.url.pathname === '/'
+    ? '/'
+    : Astro.url.pathname.replace(/\/$/, '');
+const showHero3D =
+  normalizedPath === '/' ||
+  normalizedPath === '/zh-cn' ||
+  normalizedPath === '/en';
 
 const imageAttrs = {
   loading: 'eager' as const,
@@ -37,7 +43,7 @@ if (image) {
 
 <div class="hero">
   {
-    isZhCnHome ? (
+    showHero3D ? (
       <div class="io-hero-media">
         {
           darkImage && (

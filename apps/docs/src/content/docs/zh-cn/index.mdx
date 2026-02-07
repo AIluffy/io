@@ -1,9 +1,9 @@
 ---
 title: 欢迎使用 IO（艾欧）
-description: 具有深度信号支持的响应式状态管理。
+description: 轻量级响应式状态管理库。
 template: splash
 hero:
-  tagline: 深层状态，一触即达。
+  tagline: 深层状态，随触即达。
   actions:
     - text: 快速开始
       link: /zh-cn/getting-started/quick-start/
@@ -19,119 +19,85 @@ import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## 快速开始
 
-<Tabs>
-  <TabItem label="纯JavaScript">
-  ```ts
-  import { io, batch } from 'io-store';
+<Tabs default="core">
+  <TabItem label="Core" id="core">
+    ```ts
+    import { io } from 'io-store';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
+    const count = io(0);
 
-store.count.get(); // 读取
-store.user.name.set('Grace'); // 深层写入
-
-batch(() => {
-store.count.update((v) => v + 1);
-store.count.update((v) => v + 1);
-});
-
-store.subscribeUpdate((update) => {
-console.log('Updated:', update);
-});
-
-````
+    count.get();
+    count.update((v) => v + 1);
+    ```
 
   </TabItem>
   <TabItem label="React">
     ```tsx
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+    import { io } from 'io-store';
+    import { useIO } from 'io-react';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
+    const count = io(0);
 
-export default function App() {
-  const state = useIO(store);
-  const { count, user } = state;
-
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <input
-        value={user.name}
-        onChange={(e) => store.user.name.set(e.target.value)}
-      />
-      <button onClick={() => store.count.update((v) => v + 1)}>
-        Increment
-      </button>
-    </div>
-  );
-}
-````
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+      );
+    }
+    ```
 
   </TabItem>
   <TabItem label="Vue">
-    ```vue
-<script setup lang="ts">
-import { io } from 'io-store';
-import { useIO } from 'io-vue';
+    ```ts
+    import { io } from 'io-store';
+    import { useIO, ioRef } from 'io-vue';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
-const state = useIO(store);
+    const count = io(0);
+    const countRef = ioRef(count);
 
-const increment = () => store.count.update((v) => v + 1);
-
-</script>
-
-<template>
-  <div>
-    <p>Count: {{ state.value.count }}</p>
-    <input v-model="state.value.user.name" />
-    <button @click="increment">Increment</button>
-  </div>
-</template>
+    export function useCounter() {
+      const state = useIO(count);
+      const inc = () => count.update((v) => v + 1);
+      const reset = () => countRef.value = 0;
+      return { state, countRef, inc, reset };
+    }
     ```
+
   </TabItem>
   <TabItem label="Svelte">
-    ```svelte
-<script>
-  import { io } from 'io-store';
-  import { toReadable } from 'io-svelte';
+    ```ts
+    import { io } from 'io-store';
+    import { toWritable } from 'io-svelte';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
-const state = toReadable(store);
-
-</script>
-
-<p>Count: {$state.count}</p>
-<input bind:value={$state.user.name} />
-<button on:click={() => store.count.update((v) => v + 1)}>
-  Increment
-</button>
+    const count = io(0);
+    export const countStore = toWritable(count);
     ```
+
   </TabItem>
 </Tabs>
 
 ## 为什么选择 IO
 
 <CardGrid stagger>
-  <Card title="深层更新" icon="open-book">
-    任意深度路径都可以直接读写。
+  <Card title="原子化" icon="sourcehut">
+    状态拆分为独立原子，精准订阅，零额外渲染。
   </Card>
-  <Card title="快照安全" icon="approve-check-circle">
-    读取返回冻结快照，避免误修改。
+  <Card title="路径直达" icon="seti:stylus">
+    直接读写任意深度嵌套，无需改变 API。
   </Card>
-  <Card title="结构化更新" icon="add-document">
-    每次写入都会生成 patch 记录。
+  <Card title="不可变快照" icon="approve-check-circle">
+    冻结快照 + 可回放变更，确保状态可预测。
   </Card>
-  <Card title="框架适配" icon="setting">
-    React、Vue、Svelte 共享同一契约。
+  <Card title="行为扩展" icon="puzzle">
+    组合持久化、调度、DevTools 等能力。
+  </Card>
+  <Card title="多框架" icon="setting">
+    React、Vue、Svelte 共享同一核心契约。
   </Card>
 </CardGrid>
 
-## 继续探索
+## 下一步
 
-- [入门](/zh-cn/getting-started/introduction/)
+- [快速开始](/zh-cn/getting-started/quick-start/)
 - [核心概念](/zh-cn/core-concepts/units-scopes/)
-- [指南](/zh-cn/guides/derived/)
-- [行为扩展](/zh-cn/behaviors/overview/)
-- [集成](/zh-cn/integrations/vanilla/)
-- [迁移](/zh-cn/migrations/from-zustand/)
+- [从 Zustand 迁移](/zh-cn/migrations/from-zustand/)

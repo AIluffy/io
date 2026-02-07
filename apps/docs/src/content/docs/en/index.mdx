@@ -1,9 +1,9 @@
 ---
 title: Welcome to IO
-description: Reactive state primitives with deep signal support.
+description: Lightweight reactive state management library.
 template: splash
 hero:
-  tagline: Deep state, touch to reach.
+  tagline: Deep state, right at your fingertips.
   actions:
     - text: Get Started
       link: /en/getting-started/quick-start/
@@ -19,119 +19,86 @@ import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Quick Start
 
-<Tabs>
-  <TabItem label="Vanilla JS">
+<Tabs default="core">
+  <TabItem label="Core" id="core">
     ```ts
-import { io, batch } from 'io-store';
+    import { io } from 'io-store';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
+    const count = io(0);
 
-store.count.get(); // read
-store.user.name.set('Grace'); // deep write
-
-batch(() => {
-store.count.update((v) => v + 1);
-store.count.update((v) => v + 1);
-});
-
-store.subscribeUpdate((update) => {
-console.log('Updated:', update);
-});
-
-````
+    count.get();
+    count.update((v) => v + 1);
+    ```
 
   </TabItem>
   <TabItem label="React">
     ```tsx
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+    import { io } from 'io-store';
+    import { useIO } from 'io-react';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
+    const count = io(0);
 
-export default function App() {
-  const state = useIO(store);
-  const { count, user } = state;
-
-return (
-  <div>
-    <p>Count: {count}</p>
-    <input
-      value={user.name}
-      onChange={(e) => store.user.name.set(e.target.value)}
-    />
-    <button onClick={() => store.count.update((v) => v + 1)}>
-      Increment
-    </button>
-  </div>
-);
-}
-````
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+      );
+    }
+    ```
 
   </TabItem>
   <TabItem label="Vue">
-    ```vue
-<script setup lang="ts">
-import { io } from 'io-store';
-import { useIO } from 'io-vue';
+    ```ts
+    import { io } from 'io-store';
+    import { useIO, ioRef } from 'io-vue';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
-const state = useIO(store);
+    const count = io(0);
+    const countRef = ioRef(count);
 
-const increment = () => store.count.update((v) => v + 1);
-
-</script>
-
-<template>
-  <div>
-    <p>Count: {{ state.value.count }}</p>
-    <input v-model="state.value.user.name" />
-    <button @click="increment">Increment</button>
-  </div>
-</template>
+    export function useCounter() {
+      const state = useIO(count);
+      const inc = () => count.update((v) => v + 1);
+      const reset = () => countRef.value = 0;
+      return { state, countRef, inc, reset };
+    }
     ```
+
   </TabItem>
   <TabItem label="Svelte">
-    ```svelte
-<script>
-  import { io } from 'io-store';
-  import { toReadable } from 'io-svelte';
+    ```ts
+    import { io } from 'io-store';
+    import { toWritable } from 'io-svelte';
 
-const store = io({ count: 0, user: { name: 'Ada' } });
-const state = toReadable(store);
-
-</script>
-
-<p>Count: {$state.count}</p>
-<input bind:value={$state.user.name} />
-<button on:click={() => store.count.update((v) => v + 1)}>
-  Increment
-</button>
+    const count = io(0);
+    export const countStore = toWritable(count);
     ```
+
   </TabItem>
 </Tabs>
 
 ## Why IO
 
 <CardGrid stagger>
-  <Card title="Deep tree updates" icon="open-book">
-    Address nested paths directly without changing APIs.
+  <Card title="Atomic" icon="sourcehut">
+    State decomposed into independent atoms for precise subscriptions with zero
+    extra renders.
   </Card>
-  <Card title="Snapshot safety" icon="approve-check-circle">
-    Reads return frozen snapshots for predictable sharing.
+  <Card title="Direct Paths" icon="seti:stylus">
+    Read and write nested paths at any depth without changing your APIs.
   </Card>
-  <Card title="Structured updates" icon="add-document">
-    Every write is logged as patches you can replay.
+  <Card title="Immutable Snapshots" icon="approve-check-circle">
+    Frozen snapshots with replayable change logs for predictable state.
   </Card>
-  <Card title="Adapters" icon="setting">
-    React, Vue, and Svelte adapters share the same contract.
+  <Card title="Behaviors" icon="puzzle">
+    Compose persist, schedule, and DevTools capabilities.
+  </Card>
+  <Card title="Multi-Framework" icon="setting">
+    React, Vue, and Svelte adapters share the same core contract.
   </Card>
 </CardGrid>
 
-## Explore
+## Next Steps
 
-- [Getting Started](/en/getting-started/introduction/)
+- [Quick Start](/en/getting-started/quick-start/)
 - [Core Concepts](/en/core-concepts/units-scopes/)
-- [Guides](/en/guides/derived/)
-- [Behaviors](/en/behaviors/overview/)
-- [Integrations](/en/integrations/vanilla/)
-- [Migrations](/en/migrations/from-zustand/)
+- [From Zustand Migration](/en/migrations/from-zustand/)
