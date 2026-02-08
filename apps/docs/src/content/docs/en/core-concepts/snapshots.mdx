@@ -1,41 +1,40 @@
 ---
 title: Snapshots
-description: Read frozen values that are safe to share.
+description: Frozen reads and snapshot semantics.
 sidebar:
   order: 3
 ---
 
-## Frozen by default
+IO reads return **frozen snapshots** so accidental mutations don't leak back into state.
 
-Any read that returns an object or array is frozen. This prevents accidental in-place mutation and makes comparisons safer.
+## snapshot vs get
 
-```ts
-import { io } from 'io-store';
-
-const state = io({ items: ['a', 'b'] });
-const snapshot = state.snapshot();
-
-Object.isFrozen(snapshot); // true
-```
-
-## Snapshot API
-
-Every Unit and Scope exposes `snapshot()`.
+- `snapshot()`: returns frozen data, safe for serialization and sharing.
+- `get()`: reads the current value and participates in dependency tracking.
 
 ```ts
-const count = io(0);
+const store = io({ count: 0 });
 
-count.snapshot();
+const snap = store.snapshot();
+const value = store.count.get();
 ```
 
-Snapshots are **referentially stable** within the same revision, which is helpful for memoization and UI rendering.
+## Why Freeze
 
-## `get()` vs `snapshot()`
+- Prevents accidental mutation in UI layers.
+- Enables safe caching and reuse.
+- Makes diffing and replay reliable.
 
-- Use `get()` when you want the read to participate in dependency tracking (for example inside `derived()`).
-- Use `snapshot()` when you just want the value without being tracked.
+## Snapshot Cache
 
-## Next steps
+Tree nodes cache snapshots and only rebuild for dirty paths.
 
-- Learn about update metadata in [Update Log](/en/core-concepts/update-log/).
-- See framework usage in [Integrations](/en/integrations/vanilla/).
+## Guidance
+
+- Use `snapshot()` when handing data to UI or external systems.
+- Use `get()` inside `derived()` and selectors.
+
+## Next Steps
+
+- Explore the [Update Log](/en/core-concepts/update-log/).
+- Learn the difference between [Subscriptions](/en/guides/subscriptions/).

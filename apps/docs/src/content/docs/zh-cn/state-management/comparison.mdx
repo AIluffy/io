@@ -1,6 +1,6 @@
 ---
 title: 状态管理库对比
-description: 在 Astro 项目中对比 Redux、Zustand、Pinia、SolidJS Store 与 Svelte Stores。
+description: 在 Astro 场景下对比主流状态库的思维模型与集成成本。
 sidebar:
   order: 1
 ---
@@ -17,242 +17,74 @@ import zustandCounterTsx from '/src/demos/zustand/ZustandCounter.tsx?raw';
 import piniaDemoAstro from '/src/demos/astro-pinia-demo.astro?raw';
 import piniaCounterVue from '/src/demos/pinia/PiniaCounter.vue?raw';
 
-## 概述
+## 选择依据
 
-在 Astro 中，你通常以 islands 方式渲染交互。状态管理会决定哪些状态需要 hydration，哪些可留在 SSR。
+在 Astro 中通常通过 islands 渲染交互，因此“状态放在哪里、如何 hydration”是关键。选型时建议优先关注：
 
-选型时优先看数据流是否可控、SSR/同构能力、生态与维护状态，并把 bundle 体积与可测试性纳入约束。
+- 数据流是否清晰可控
+- SSR/同构能力与约束
+- 订阅粒度与渲染成本
+- 团队维护与扩展成本
 
 ## 对比矩阵
 
-<StateComparisonTable caption="主流状态管理库对比（可点击表头排序）" hint="排序功能由客户端增强；禁用 JS 时表格保持静态可读。">
+<StateComparisonTable caption="主流状态管理库对比" hint="可点击表头排序。">
 
-| 库名称        | 体积(gzip) | 学习曲线 | SSR 友好度 | Astro 集成难度 | 官方维护状态                                            |
-| ------------- | ---------- | -------- | ---------- | -------------- | ------------------------------------------------------- |
-| Redux         | 1.42 kB    | 中       | 高         | 中             | Active（21M/week，61k★）[^redux-stats][^redux-size]     |
-| Zustand       | 3.55 kB    | 低       | 中         | 低             | Active（21M/week，57k★）[^zustand-stats][^zustand-size] |
-| Pinia         | 223 kB     | 中       | 中         | 高             | Active（2.9M/week，14k★）[^pinia-stats][^pinia-size]    |
-| SolidJS Store | 3.96 kB    | 中       | 高         | 中             | Active（1.4M/week，35k★）[^solid-stats][^solid-size]    |
-| Svelte Stores | 1.63 kB    | 低       | 高         | 低             | Active（2.7M/week，86k★）[^svelte-stats][^svelte-size]  |
+| 库名称        | 数据流模型      | 更新粒度 | SSR 友好度 | 学习曲线 | 适用场景 |
+| ------------- | --------------- | -------- | ---------- | -------- | -------- |
+| IO（本库）    | 直接写入 + patch | 细       | 高         | 低       | 深层状态、需要回放与精细订阅 |
+| Redux         | Action → Reducer | 中       | 高         | 中       | 强规范与可审计流程 |
+| Zustand       | 命令式写入       | 中       | 中         | 低       | 轻量状态与快速落地 |
+| Pinia         | Store + Action   | 中       | 中         | 中       | Vue 生态内状态管理 |
+| Solid Store   | Signals          | 细       | 高         | 中       | 响应式依赖链路复杂 |
+| Svelte Store  | Store/订阅       | 中       | 高         | 低       | Svelte 生态或轻量 store |
 
 </StateComparisonTable>
 
-## Redux
+## 示例代码
 
-### 核心机制
+以下示例展示同一类交互在 Astro islands 中的接入方式。
 
-Redux 强调单一 store、不可变 state 与纯 reducer。数据流为单向：action → reducer → 新 state → 订阅更新。
-
-### 体积与性能
-
-包体积（gzip）：1.42 kB（bundlejs）[^redux-size]。
-
-Lighthouse（Desktop）：Performance 100、Accessibility 96（2026-02-06，Lighthouse CI）。[^lighthouse-note]
-
-### Astro 集成示例
-
-示例展示同一 React island 用 `client:load` 与 `client:only="react"` 的 hydration 差异。
+### Redux
 
 <Tabs>
   <TabItem label="src/demos/astro-redux-demo.astro">
-    <Code
-      code={reduxDemoAstro}
-      lang="astro"
-      title="src/demos/astro-redux-demo.astro"
-    />
+    <Code code={reduxDemoAstro} lang="astro" title="src/demos/astro-redux-demo.astro" />
   </TabItem>
   <TabItem label="src/demos/redux/ReduxCounter.tsx">
-    <Code
-      code={reduxCounterTsx}
-      lang="tsx"
-      title="src/demos/redux/ReduxCounter.tsx"
-    />
+    <Code code={reduxCounterTsx} lang="tsx" title="src/demos/redux/ReduxCounter.tsx" />
   </TabItem>
 </Tabs>
-
-### 优缺点总结
-
-- 优点：数据流明确，工具链成熟，适合团队协作与审计。
-- 优点：生态完整，middleware/DevTools 覆盖面广。
-- 缺点：样板代码较多，抽象层次偏高。
-- 缺点：对 SSR 需要额外约束 action 与副作用边界。
-
-### 适用场景
-
-你需要强一致的数据流规范与长期可维护性时选 Redux。
 
 <LinkButton href="/zh-cn/state-management/demos/redux/">在线体验</LinkButton>
 
-## Zustand
-
-### 核心机制
-
-Zustand 以 hook 读取 store，内部以订阅驱动更新。数据流多为“命令式写入 + 订阅派发”，无强制 action 结构。
-
-### 体积与性能
-
-包体积（gzip）：3.55 kB（bundlejs）[^zustand-size]。
-
-Lighthouse（Desktop）：Performance 100、Accessibility 96（2026-02-06，Lighthouse CI）。[^lighthouse-note]
-
-### Astro 集成示例
-
-示例以 islands 将状态限定在客户端，避免把可变 store 引入 SSR 结果。
+### Zustand
 
 <Tabs>
   <TabItem label="src/demos/astro-zustand-demo.astro">
-    <Code
-      code={zustandDemoAstro}
-      lang="astro"
-      title="src/demos/astro-zustand-demo.astro"
-    />
+    <Code code={zustandDemoAstro} lang="astro" title="src/demos/astro-zustand-demo.astro" />
   </TabItem>
   <TabItem label="src/demos/zustand/ZustandCounter.tsx">
-    <Code
-      code={zustandCounterTsx}
-      lang="tsx"
-      title="src/demos/zustand/ZustandCounter.tsx"
-    />
+    <Code code={zustandCounterTsx} lang="tsx" title="src/demos/zustand/ZustandCounter.tsx" />
   </TabItem>
 </Tabs>
-
-### 优缺点总结
-
-- 优点：API 小，学习成本低，适合快速落地。
-- 优点：选择性订阅较自然，重渲染压力可控。
-- 缺点：缺少统一约束时，状态边界容易漂移。
-- 缺点：调试与审计能力依赖团队约定。
-
-### 适用场景
-
-你追求轻量与局部状态聚合，并愿意用规范补足约束时选 Zustand。
 
 <LinkButton href="/zh-cn/state-management/demos/zustand/">在线体验</LinkButton>
 
-## Pinia
-
-### 核心机制
-
-Pinia 以 store 为单位组织 state/getter/action。数据流为“组件调用 action → 写入 state → 响应式系统推送更新”。
-
-### 体积与性能
-
-包体积（gzip）：223 kB（bundlejs，默认导出）[^pinia-size]。
-
-Lighthouse（Desktop）：Performance 100、Accessibility 96（2026-02-06，Lighthouse CI）。[^lighthouse-note]
-
-### Astro 集成示例
-
-示例通过 `setActivePinia()` 将 Pinia 实例限定在 island 内，避免跨请求共享。
+### Pinia
 
 <Tabs>
   <TabItem label="src/demos/astro-pinia-demo.astro">
-    <Code
-      code={piniaDemoAstro}
-      lang="astro"
-      title="src/demos/astro-pinia-demo.astro"
-    />
+    <Code code={piniaDemoAstro} lang="astro" title="src/demos/astro-pinia-demo.astro" />
   </TabItem>
   <TabItem label="src/demos/pinia/PiniaCounter.vue">
-    <Code
-      code={piniaCounterVue}
-      lang="vue"
-      title="src/demos/pinia/PiniaCounter.vue"
-    />
+    <Code code={piniaCounterVue} lang="vue" title="src/demos/pinia/PiniaCounter.vue" />
   </TabItem>
 </Tabs>
 
-### 优缺点总结
-
-- 优点：与 Vue 生态一致，store 结构清晰。
-- 优点：devtools 与插件体系成熟。
-- 缺点：在 Astro 中需要引入 Vue islands，整体集成成本更高。
-- 缺点：同构与注入边界要避免全局单例。
-
-### 适用场景
-
-你已在 Vue 体系内，并希望在 Astro 中复用 store 时选 Pinia。
-
 <LinkButton href="/zh-cn/state-management/demos/pinia/">在线体验</LinkButton>
 
-## SolidJS Store
+## 下一步
 
-### 核心机制
-
-SolidJS Store 基于 fine-grained signals，更新按依赖传播到最小观察点。数据流以依赖追踪为主，非强制单向。
-
-### 体积与性能
-
-包体积（gzip）：3.96 kB（bundlejs）[^solid-size]。
-
-Lighthouse（Desktop）：Performance 100、Accessibility 96（2026-02-06，Lighthouse CI）。[^lighthouse-note]
-
-### Astro 集成示例
-
-推荐在 Solid island 中承载 UI，把 store 与 effect 限制在组件生命周期内。
-
-### 优缺点总结
-
-- 优点：更新粒度细，派生链路成本低。
-- 优点：适合复杂依赖计算与频繁局部更新。
-- 缺点：思维模型更偏响应式图，对传统 reducer 思路不直观。
-- 缺点：生态与工具链偏向 Solid 圈层。
-
-### 适用场景
-
-你要压缩重渲染范围并接受响应式图模型时选 SolidJS Store。
-
-<LinkButton href="/zh-cn/state-management/demos/solid/">在线体验</LinkButton>
-
-## Svelte Stores
-
-### 核心机制
-
-Svelte Stores 通过 `subscribe` 推送变更，`derived` 负责派生与组合。数据流可单向，也可直接写入 store。
-
-### 体积与性能
-
-包体积（gzip）：1.63 kB（svelte/store runtime 文件 gzip）[^svelte-size]。
-
-Lighthouse（Desktop）：Performance 100、Accessibility 96（2026-02-06，Lighthouse CI）。[^lighthouse-note]
-
-### Astro 集成示例
-
-你可以把 store 订阅放进 islands 组件，或用客户端脚本订阅并更新 DOM。
-
-### 优缺点总结
-
-- 优点：API 简洁，组合能力强。
-- 优点：与 Svelte 生态一致，迁移成本低。
-- 缺点：跨框架使用时，类型与订阅生命周期要自管。
-- 缺点：对复杂写入规范需要额外约束。
-
-### 适用场景
-
-你以订阅为核心组织 UI，并希望维持极低心智负担时选 Svelte Stores。
-
-<LinkButton href="/zh-cn/state-management/demos/svelte/">在线体验</LinkButton>
-
-## 数据来源
-
-[^redux-stats]: 2026-02-05，shields：npm [redux](https://img.shields.io/npm/dw/redux.json)，GitHub [reduxjs/redux](https://img.shields.io/github/stars/reduxjs/redux.json)
-
-[^zustand-stats]: 2026-02-05，shields：npm [zustand](https://img.shields.io/npm/dw/zustand.json)，GitHub [pmndrs/zustand](https://img.shields.io/github/stars/pmndrs/zustand.json)
-
-[^pinia-stats]: 2026-02-05，shields：npm [pinia](https://img.shields.io/npm/dw/pinia.json)，GitHub [vuejs/pinia](https://img.shields.io/github/stars/vuejs/pinia.json)
-
-[^solid-stats]: 2026-02-05，shields：npm [solid-js](https://img.shields.io/npm/dw/solid-js.json)，GitHub [solidjs/solid](https://img.shields.io/github/stars/solidjs/solid.json)
-
-[^svelte-stats]: 2026-02-05，shields：npm [svelte](https://img.shields.io/npm/dw/svelte.json)，GitHub [sveltejs/svelte](https://img.shields.io/github/stars/sveltejs/svelte.json)
-
-[^redux-size]: bundlejs gzip：[redux](https://deno.bundlejs.com/?q=redux)
-
-[^zustand-size]: bundlejs gzip：[zustand](https://deno.bundlejs.com/?q=zustand)
-
-[^pinia-size]: bundlejs gzip：[pinia](https://deno.bundlejs.com/?q=pinia)
-
-[^solid-size]: bundlejs gzip：[solid-js](https://deno.bundlejs.com/?q=solid-js)
-
-[^svelte-size]: svelte/store gzip（unpkg）：[svelte@4.2.12/store](https://unpkg.com/svelte@4.2.12/store)
-
-[^lighthouse-note]: Lighthouse CI（Desktop，1 次）：Performance 100，Accessibility 96，报告位于 .lighthouseci/。
+- 打开 [在线体验](/zh-cn/state-management/demos/) 逐个验证。
+- 查看 [从 Zustand 迁移](/zh-cn/migrations/from-zustand/)。

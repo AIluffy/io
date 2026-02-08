@@ -1,6 +1,6 @@
 ---
-title: Redux 在线体验
-description: 在 Astro 中用 React island 接入 Redux。
+title: Redux Demo
+description: Redux in Astro via React islands.
 sidebar:
   order: 1
 ---
@@ -11,13 +11,13 @@ import ReduxDemo from '/src/demos/astro-redux-demo.astro';
 import reduxDemoAstro from '/src/demos/astro-redux-demo.astro?raw';
 import reduxCounterTsx from '/src/demos/redux/ReduxCounter.tsx?raw';
 
-## 运行示例
+## Live Example
 
-本页渲染同一个 Counter 的两种 hydration 策略，便于对比 `client:load` 与 `client:only="react"`。
+This page renders the same counter with two hydration strategies: `client:load` and `client:only="react"`.
 
 <ReduxDemo />
 
-## 源码
+## Source
 
 <Tabs>
   <TabItem label="src/demos/astro-redux-demo.astro">
@@ -28,4 +28,4 @@ import reduxCounterTsx from '/src/demos/redux/ReduxCounter.tsx?raw';
   </TabItem>
 </Tabs>
 
-<LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>
+<LinkButton href="/en/state-management/comparison/">Back to comparison</LinkButton>

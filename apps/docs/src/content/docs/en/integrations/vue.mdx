@@ -1,9 +1,11 @@
 ---
 title: Vue
-description: Vue Composition API helpers for IO.
+description: Use useIO and ioRef with Vue.
 sidebar:
   order: 3
 ---
+
+`io-vue` provides `useIO` (read-only) and `ioRef` (two-way binding).
 
 ## useIO
 
@@ -11,28 +13,30 @@ sidebar:
 import { io } from 'io-store';
 import { useIO } from 'io-vue';
 
-const count = io(0);
+const store = io({ count: 0 });
 
-export function useCounter() {
-  const state = useIO(count);
-  const inc = () => count.update((v) => v + 1);
-  return { state, inc };
-}
+const state = useIO(store.count);
 ```
 
-## ioRef
+`useIO` returns a `ShallowRef` for template usage.
 
-`ioRef` adapts a Unit into a Vue `ref`.
+## ioRef (Two-way Binding)
 
 ```ts
-import { io } from 'io-store';
 import { ioRef } from 'io-vue';
 
-const count = io(0);
-const countRef = ioRef(count);
+const countRef = ioRef(store.count);
 ```
 
-## Next steps
+## Scheduling
 
-- Learn how to subscribe in [Vanilla JS](/en/integrations/vanilla/).
-- Add tooling in [Behaviors: DevTools](/en/behaviors/devtools/).
+```ts
+const state = useIO(store.count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## Next Steps
+
+- Learn [Derived Values](/en/guides/derived/).
+- Use [Schedule](/en/behaviors/schedule/) to coalesce updates.

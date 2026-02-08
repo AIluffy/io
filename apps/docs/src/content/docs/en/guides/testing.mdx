@@ -1,82 +1,61 @@
 ---
 title: Testing
-description: Test IO stores with snapshots and updates.
+description: Verify IO behavior in unit tests.
 sidebar:
-  order: 4
+  order: 5
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import TestingRecipe from '../../../../components/snippets/guides/TestingRecipe.mdx';
+Use `snapshot()` for assertions and `subscribeUpdate()` to validate patch streams.
 
-## 30-second recipe
-
-<TestingRecipe />
-
-## Prefer snapshot assertions
-
-Snapshots are frozen and stable within a revision, so they are ideal for tests.
+## Basic Assertions
 
 ```ts
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
 
-it('updates count', () => {
-  const count = io(0);
-  count.update((v) => v + 1);
-  expect(count.snapshot()).toBe(1);
-});
-```
-
-## Test a store shape
-
-```ts
-import { expect, it } from 'vitest';
-import { io } from 'io-store';
-
-it('updates deep fields', () => {
-  const store = io({ user: { name: 'Ada' } });
-  store.user.name.set('Grace');
-  expect(store.snapshot()).toEqual({ user: { name: 'Grace' } });
-});
-```
-
-## Assert patches
-
-Use `subscribeUpdate` to inspect the exact patches produced by an action.
-
-```ts
-it('emits update patches', () => {
-  const count = io(0);
-  const patches = [] as string[];
-  const unsub = count.subscribeUpdate((u) => {
-    patches.push(u.patches[0].op);
+describe('counter', () => {
+  it('increments', () => {
+    const store = io({ count: 0 });
+    store.count.update((v) => v + 1);
+    expect(store.count.snapshot()).toBe(1);
   });
-
-  count.set(1);
-  unsub();
-
-  expect(patches).toEqual(['set']);
 });
 ```
 
-<Tabs>
-  <TabItem label="Arrange">
-    Use plain functions to wrap mutations so you can reuse them in tests and app code.
-  </TabItem>
-  <TabItem label="Act">
-    Call those functions and assert on snapshots or patches.
-  </TabItem>
-  <TabItem label="Assert">
-    Compare snapshots or patch sequences to expected values.
-  </TabItem>
-</Tabs>
+## Assert Patches
 
-## Tips
+```ts
+import { io } from 'io-store';
 
-- Wrap your mutations in plain functions so you can reuse them in app code and tests.
-- Prefer value assertions for behavior and patch assertions for auditing.
+const store = io({ count: 0 });
+const updates: any[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
 
-## Next steps
+store.count.set(1);
+stop();
 
-- Learn advanced typing in [TypeScript](/en/guides/typescript/).
-- Explore the [Playground](/en/guides/playground/).
+expect(updates[0].patches[0].op).toBe('set');
+```
+
+## Replay Tests
+
+```ts
+import { io, replay } from 'io-store';
+
+const base = io({ count: 0 });
+const updates: any[] = [];
+const stop = base.subscribeUpdate((u) => updates.push(u));
+
+base.count.set(1);
+base.count.set(2);
+stop();
+
+const replayStore = io({ count: 0 });
+replay(replayStore, updates);
+expect(replayStore.count.snapshot()).toBe(2);
+```
+
+## Next Steps
+
+- Explore the [Update Log](/en/core-concepts/update-log/).
+- Learn [Batching](/en/guides/batching/).

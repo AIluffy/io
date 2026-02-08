@@ -1,74 +1,52 @@
 ---
 title: 派生值
-description: 从 Unit 或树计算派生结果。
+description: 用 derived 构建只读计算结果。
 sidebar:
   order: 1
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import DerivedRecipe from '../../../../components/snippets/guides/DerivedRecipe.mdx';
+派生值是基于 IO 状态计算出的只读结果，依赖变化时自动更新。
 
-派生值是只读节点：由其他状态计算得出。适合做汇总、视图模型、派生标记等。
-
-## 30 秒配方
-
-<DerivedRecipe />
-
-## 如何选择
-
-- 用 `derived([deps], compute)`：依赖明确、输入固定。
-- 用 `derived(tree, selector)`：从树里“选择”需要的字段。
-- 用 `derived(() => ...)`：在函数里用 `get()` 读取，让 IO 自动追踪依赖。
-
-## 显式依赖
+## 方式一：显式依赖
 
 ```ts
 import { derived, io } from 'io-store';
 
-const count = io(1);
+const count = io(0);
 const doubled = derived([count], (value) => value * 2);
-
-doubled.get(); // 2
 ```
 
-## 树选择器
+## 方式二：树选择器
 
 ```ts
-const store = io({ pricing: { price: 10, tax: 2 } });
+const store = io({ count: 0, user: { name: 'Ada' } });
 
-const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
+const summary = derived(store, (s) => `${s.user.name} · ${s.count}`);
 ```
 
-## 计算函数
+## 方式三：自动追踪
 
 ```ts
-const combined = derived(() => count.get() + doubled.get());
+const store = io({ count: 0, rate: 2 });
+
+const total = derived(() => store.count.get() * store.rate.get());
 ```
 
-## 读取与订阅
+## 订阅派生值
 
-<Tabs>
-  <TabItem label="读取">
-    ```ts
-    total.get();
-    total.snapshot();
-    ```
-  </TabItem>
-  <TabItem label="订阅">
-    ```ts
-    const unsub = total.subscribe((value) => {
-      console.log(value);
-    });
-    ```
-  </TabItem>
-</Tabs>
+```ts
+const stop = doubled.subscribe((value) => {
+  console.log(value);
+});
+```
 
 ## 注意事项
 
-- 派生值是只读的；要写入，请更新底层 Unit。
-- 订阅会让派生值保持“活跃”，不再需要时记得取消订阅。
+- 派生值只读，不能 `set`。
+- 使用 `get()` 读取时会参与依赖追踪。
+- 依赖链过长时建议拆分为多个派生值。
 
 ## 下一步
 
-- 查看 [批处理](/zh-cn/guides/batching/)。
-- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 学习 [订阅](/zh-cn/guides/subscriptions/) 与 [批处理](/zh-cn/guides/batching/)。
+- 在 [React](/zh-cn/integrations/react/) 或 [Vue](/zh-cn/integrations/vue/) 中使用派生值。

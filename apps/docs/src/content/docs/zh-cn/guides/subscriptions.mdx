@@ -1,68 +1,54 @@
 ---
 title: 订阅
-description: 监听值变化或结构化更新。
+description: 值订阅与更新订阅的差异。
 sidebar:
-  order: 3
+  order: 2
 ---
 
-import SubscriptionsRecipe from '../../../../components/snippets/guides/SubscriptionsRecipe.mdx';
+IO 提供两类订阅：值订阅与更新订阅。它们解决不同问题。
 
-## 30 秒配方
-
-<SubscriptionsRecipe />
-
-## 值订阅
+## subscribe：订阅值变化
 
 ```ts
-import { io } from 'io-store';
+const store = io({ count: 0 });
 
-const count = io(0);
-
-const unsub = count.subscribe((value) => {
+const stop = store.count.subscribe((value) => {
   console.log('value', value);
 });
-
-count.set(1);
-unsub();
 ```
 
-值订阅适合 UI 渲染与任何需要“最新值”的场景。
+适合 UI 渲染与派生更新。
 
-## 更新订阅
-
-`subscribeUpdate` 提供结构化 patch 信息。
+## subscribeUpdate：订阅 patch
 
 ```ts
-const unsubUpdate = count.subscribeUpdate((update) => {
-  for (const patch of update.patches) {
-    console.log(patch.op, patch.path, patch.next);
-  }
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
 });
 ```
 
-更新订阅适合日志、持久化、同步、DevTools 等需要 patch 的场景。
+适合日志、审计、同步、回放等场景。
 
-## Scope / Tree 冒泡
+## 订阅粒度
 
-订阅会向上冒泡，在根节点订阅即可捕获任意深层变化。
+- 订阅叶子：只关心某个字段。
+- 订阅根节点：捕获整棵树的更新流。
+
+## 退订
+
+所有订阅都返回取消函数：
 
 ```ts
-const store = io({ user: { name: 'Ada' } });
-
-store.subscribe(() => {
-  console.log('root value changed', store.snapshot());
-});
-
-store.subscribeUpdate((u) => {
-  console.log('root patches', u.patches);
-});
+const stop = store.count.subscribe(() => {});
+stop();
 ```
 
-## 清理订阅
+## 建议
 
-记得调用取消订阅函数（React effect cleanup、Vue scope dispose、Svelte onDestroy 等）。
+- UI 层优先用 `subscribe`。
+- 需要回放/同步时再用 `subscribeUpdate`。
 
 ## 下一步
 
-- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
-- 使用 [DevTools](/zh-cn/behaviors/devtools/)。
+- 学习 [批处理](/zh-cn/guides/batching/) 合并通知。
+- 了解 [更新日志](/zh-cn/core-concepts/update-log/)。

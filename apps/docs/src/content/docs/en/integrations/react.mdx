@@ -1,11 +1,13 @@
 ---
 title: React
-description: Use IO with React via the `useIO` hook.
+description: Connect IO with useIO.
 sidebar:
   order: 2
 ---
 
-## Hook usage
+`io-react` provides `useIO`, built on `useSyncExternalStore`.
+
+## Basic Usage
 
 ```tsx
 import { io } from 'io-store';
@@ -15,13 +17,11 @@ const count = io(0);
 
 export function Counter() {
   const value = useIO(count);
-  return (
-    <button onClick={() => count.update((v) => v + 1)}>{value}</button>
-  );
+  return <button onClick={() => count.update((v) => v + 1)}>{value}</button>;
 }
 ```
 
-## Derived in React
+## Derived Values
 
 ```tsx
 import { derived, io } from 'io-store';
@@ -36,7 +36,15 @@ export function Summary() {
 }
 ```
 
-## Next steps
+## Scheduling
 
-- Add persistence in [Behaviors: Persist](/en/behaviors/persist/).
-- See advanced typings in [TypeScript](/en/guides/typescript/).
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## Next Steps
+
+- Learn about [TypeScript](/en/guides/typescript/).
+- Combine with [Persist](/en/behaviors/persist/).

@@ -1,35 +1,45 @@
 ---
 title: Behaviors Overview
-description: Compose read/write/subscribe behavior without changing state.
+description: Compose extra capabilities with withBehaviors().
 sidebar:
   order: 1
 ---
 
-Behaviors wrap a view’s `get/set/subscribe` without changing the underlying Unit or tree. This makes it easy to add persistence, scheduling, or tooling.
+Behaviors add capabilities without changing the core API: persistence, scheduling, DevTools, and more.
+
+## Basic Usage
 
 ```ts
 import { io } from 'io-store';
 import { persist, schedule, withBehaviors } from 'io-store/behavior';
 
 const count = io(0);
-
 const view = withBehaviors(count, [
-  schedule('microtask'),
   persist({ key: 'count' }),
+  schedule('microtask'),
 ]);
 
-view.subscribe((v) => console.log(v));
-view.set?.(1);
-view.get(); // read through the view
+view.subscribe((value) => {
+  console.log(value);
+});
 ```
 
-## Behavior types
+## IoView Interface
 
-- **Persist**: write-through to storage.
-- **Schedule**: debounce subscriber notifications.
-- **DevTools**: attach tooling instances.
+`withBehaviors` adapts nodes to an `IoView`:
 
-## Next steps
+- `get()` / `set()` / `update()`
+- `subscribe()` / `snapshot()`
+- `extensions` for behavior instances
+- `destroy()` for cleanup
 
-- Learn [Persist](/en/behaviors/persist/) and [Schedule](/en/behaviors/schedule/).
-- Attach tooling via [DevTools](/en/behaviors/devtools/).
+## Composition Tips
+
+- Apply `persist` before `schedule` or `devtools`.
+- Order matters when behaviors wrap each other.
+
+## Next Steps
+
+- Use [Persist](/en/behaviors/persist/) to store state.
+- Explore [Schedule](/en/behaviors/schedule/) to control notification cadence.
+- Hook up [DevTools](/en/behaviors/devtools/) for debugging.

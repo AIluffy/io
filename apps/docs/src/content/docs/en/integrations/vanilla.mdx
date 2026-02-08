@@ -1,40 +1,49 @@
 ---
-title: Vanilla JS
+title: Vanilla Usage
 description: Use IO without a framework.
 sidebar:
   order: 1
 ---
 
-## Read and write
+IO is framework-agnostic. Use `snapshot()` + `subscribe()` directly.
+
+## Basic Example
 
 ```ts
 import { io } from 'io-store';
 
-const state = io({ count: 0 });
+const store = io({ count: 0 });
 
-state.count.get();
-state.count.update((v) => v + 1);
-```
-
-## Subscribe
-
-```ts
-const unsub = state.subscribe((snapshot) => {
-  console.log('snapshot', snapshot);
+const stop = store.count.subscribe((value) => {
+  console.log('render', value);
 });
 
-const unsubUpdates = state.subscribeUpdate((update) => {
-  console.log('patches', update.patches);
+store.count.set(1);
+stop();
+```
+
+## Subscribe to Updates
+
+```ts
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
 });
 ```
 
-## Use snapshots
+## Manual Scheduling
+
+Use `batch()` or the `schedule()` behavior to coalesce notifications.
 
 ```ts
-const snapshot = state.snapshot();
+import { batch } from 'io-store';
+
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
 ```
 
-## Next steps
+## Next Steps
 
-- Use the React hook in [Integrations: React](/en/integrations/react/).
-- Add debugging via [DevTools](/en/behaviors/devtools/).
+- See [React](/en/integrations/react/) or [Vue](/en/integrations/vue/).
+- Learn more in [Subscriptions](/en/guides/subscriptions/).

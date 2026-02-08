@@ -1,74 +1,52 @@
 ---
 title: Derived Values
-description: Compute values from other Units or trees.
+description: Build read-only computations with derived().
 sidebar:
   order: 1
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import DerivedRecipe from '../../../../components/snippets/guides/DerivedRecipe.mdx';
+Derived values are read-only computations that update when dependencies change.
 
-Derived values are read-only nodes computed from other state. Use them for totals, view models, and derived flags.
-
-## 30-second recipe
-
-<DerivedRecipe />
-
-## Choose a style
-
-- Use `derived([deps], compute)` when you know the exact inputs.
-- Use `derived(tree, selector)` when you want to “select” from a tree.
-- Use `derived(() => ...)` when you want to read via `get()` and let IO track dependencies.
-
-## From explicit deps
+## Option 1: Explicit Dependencies
 
 ```ts
 import { derived, io } from 'io-store';
 
-const count = io(1);
+const count = io(0);
 const doubled = derived([count], (value) => value * 2);
-
-doubled.get(); // 2
 ```
 
-## From a tree selector
+## Option 2: Tree Selector
 
 ```ts
-const store = io({ pricing: { price: 10, tax: 2 } });
+const store = io({ count: 0, user: { name: 'Ada' } });
 
-const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
+const summary = derived(store, (s) => `${s.user.name} · ${s.count}`);
 ```
 
-## From a computed function
+## Option 3: Auto Tracking
 
 ```ts
-const combined = derived(() => count.get() + doubled.get());
+const store = io({ count: 0, rate: 2 });
+
+const total = derived(() => store.count.get() * store.rate.get());
 ```
 
-## Read and subscribe
+## Subscribe
 
-<Tabs>
-  <TabItem label="Read">
-    ```ts
-    total.get();
-    total.snapshot();
-    ```
-  </TabItem>
-  <TabItem label="Subscribe">
-    ```ts
-    const unsub = total.subscribe((value) => {
-      console.log(value);
-    });
-    ```
-  </TabItem>
-</Tabs>
+```ts
+const stop = doubled.subscribe((value) => {
+  console.log(value);
+});
+```
 
-## Gotchas
+## Notes
 
-- Derived values are read-only. To change state, update the underlying Units.
-- Subscriptions keep derived values “live”. Always unsubscribe when you no longer need updates.
+- Derived values are read-only.
+- Reads via `get()` participate in dependency tracking.
+- Split heavy chains into smaller derived values for clarity.
 
-## Next steps
+## Next Steps
 
-- Group updates in [Batching](/en/guides/batching/).
-- Track fine-grained changes in [Update Log](/en/core-concepts/update-log/).
+- Learn [Subscriptions](/en/guides/subscriptions/) and [Batching](/en/guides/batching/).
+- Use derived values in [React](/en/integrations/react/) or [Vue](/en/integrations/vue/).

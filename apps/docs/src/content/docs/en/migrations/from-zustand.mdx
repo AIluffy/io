@@ -1,13 +1,13 @@
 ---
-title: From Zustand
-description: Map common Zustand patterns to IO.
+title: Migrate from Zustand
+description: Map common patterns to IO.
 sidebar:
   order: 1
 ---
 
-This guide maps popular Zustand patterns to IO equivalents. The goal is clarity, not a 1:1 API match.
+This guide maps typical Zustand patterns to IO with an emphasis on semantic equivalence.
 
-## Store creation
+## Create a Store
 
 Zustand:
 
@@ -27,17 +27,15 @@ const store = io({ count: 0 });
 const inc = () => store.count.update((v) => v + 1);
 ```
 
-If you prefer “shallow” shape-only stores, use `shallow: true`. Shallow mode limits depth to 1 and rejects unknown keys in `commit`.
-
 ## Selectors
 
-Zustand selector:
+Zustand:
 
 ```ts
 const count = useStore((s) => s.count);
 ```
 
-IO selector via derived:
+IO (derived):
 
 ```ts
 import { derived } from 'io-store';
@@ -45,17 +43,7 @@ import { derived } from 'io-store';
 const count = derived(store, (s) => s.count);
 ```
 
-For path-focused access, use `relocate`:
-
-```ts
-import { relocate } from 'io-store';
-
-const userName = relocate<string>(store, ['user', 'name']);
-```
-
 ## Middleware → Behaviors
-
-Zustand middlewares like `persist` and `devtools` map to IO behaviors.
 
 ```ts
 import { persist, devtools, withBehaviors } from 'io-store/behavior';
@@ -67,9 +55,7 @@ const view = withBehaviors(store, [
 ]);
 ```
 
-## React usage
-
-Zustand `useStore` becomes `useIO`:
+## React Usage
 
 ```tsx
 import { useIO } from 'io-react';
@@ -80,17 +66,15 @@ function Counter() {
 }
 ```
 
-## Silent option removal
+## Shallow Mode
 
-Deep mode now only accepts plain arrays and objects. Passing a class instance directly throws `TypeError`. If you previously used `io(target, { silent: true })`, replace it with shallow mode:
+If you only need the first level to be Units:
 
 ```ts
-const wrapper = io(target, { shallow: true });
+const shallow = io({ count: 0 }, { shallow: true });
 ```
 
-Otherwise wrap the object in a plain shell before deep-tracking it.
+## Next Steps
 
-## Next steps
-
-- Learn the IO mental model in [Introduction](/en/getting-started/introduction/).
-- Explore behaviors in [Behaviors](/en/behaviors/overview/).
+- Read the [Introduction](/en/getting-started/introduction/).
+- Explore [Behaviors](/en/behaviors/overview/).

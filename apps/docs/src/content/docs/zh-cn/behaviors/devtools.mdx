@@ -1,11 +1,11 @@
 ---
 title: DevTools
-description: 时间旅行、diff 与导出能力。
+description: 调试、时间旅行与导出。
 sidebar:
   order: 4
 ---
 
-## 初始化
+## 创建实例
 
 ```ts
 import { io } from 'io-store';
@@ -21,13 +21,12 @@ const devtools = createIoDevtools(store, {
 });
 ```
 
-## 接入 React 面板
+## React 面板
 
 ```tsx
-import { createIoDevtools } from 'io-devtools';
 import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from 'io-devtools-react';
 
-export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createIoDevtools> }) {
+export function DevtoolsDock({ devtools }) {
   return (
     <IoDevtoolsErrorBoundary>
       <IoDevtoolsPanel devtools={devtools} height={420} />
@@ -38,9 +37,9 @@ export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createI
 
 ## 时间旅行
 
-- `devtools.timeTravel.undo()` 应用反向 `update`
-- `devtools.timeTravel.redo()` 重放 `update`
-- `devtools.timeTravel.goTo(index)` 跳转
+- `devtools.timeTravel.undo()`
+- `devtools.timeTravel.redo()`
+- `devtools.timeTravel.goTo(index)`
 
 ## Diff
 
@@ -62,7 +61,10 @@ import { createIoDevtools } from 'io-devtools';
 import { io } from 'io-store';
 
 const store = io({ count: 0 });
-const view = withBehaviors(store, [devtools({ target: store, create: createIoDevtools })]);
+const view = withBehaviors(store, [
+  devtools({ target: store, create: createIoDevtools }),
+]);
+
 const dt = view.extensions?.devtools;
 ```
 

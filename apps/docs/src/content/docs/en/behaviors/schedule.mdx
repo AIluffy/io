@@ -1,13 +1,13 @@
 ---
 title: Schedule
-description: Control when subscriptions fire.
+description: Control notification timing.
 sidebar:
   order: 3
 ---
 
-## Debounce notifications
+Schedule coalesces or delays subscription notifications to reduce render thrash.
 
-The schedule behavior delays subscription notifications to reduce render churn.
+## Basic Usage
 
 ```ts
 import { io } from 'io-store';
@@ -21,13 +21,18 @@ view.subscribe((value) => {
 });
 ```
 
-## Schedule options
+## Strategies
 
 - `sync`: notify immediately
-- `microtask`: coalesce within the current tick
-- `animationFrame`: notify before next paint (if available)
+- `microtask`: coalesce within the same tick
+- `animationFrame`: notify before the next frame (if available)
 
-## Next steps
+## When to Use
 
-- Persist values with [Persist](/en/behaviors/persist/).
-- Add tooling with [DevTools](/en/behaviors/devtools/).
+- Frequent writes that can be delayed slightly
+- UI jitter caused by many rapid updates
+
+## Next Steps
+
+- Combine with [Persist](/en/behaviors/persist/).
+- Explore [DevTools](/en/behaviors/devtools/) for time travel.

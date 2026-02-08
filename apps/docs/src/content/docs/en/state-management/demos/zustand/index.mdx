@@ -1,6 +1,6 @@
 ---
-title: Zustand 在线体验
-description: 在 Astro 中用 React island 接入 Zustand。
+title: Zustand Demo
+description: Zustand in Astro via React islands.
 sidebar:
   order: 2
 ---
@@ -11,13 +11,13 @@ import ZustandDemo from '/src/demos/astro-zustand-demo.astro';
 import zustandDemoAstro from '/src/demos/astro-zustand-demo.astro?raw';
 import zustandCounterTsx from '/src/demos/zustand/ZustandCounter.tsx?raw';
 
-## 运行示例
+## Live Example
 
-通过 islands 将 Zustand 限定在客户端，避免状态泄漏到 SSR。
+Zustand is isolated to the client island to avoid SSR leakage.
 
 <ZustandDemo />
 
-## 源码
+## Source
 
 <Tabs>
   <TabItem label="src/demos/astro-zustand-demo.astro">
@@ -28,4 +28,4 @@ import zustandCounterTsx from '/src/demos/zustand/ZustandCounter.tsx?raw';
   </TabItem>
 </Tabs>
 
-<LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>
+<LinkButton href="/en/state-management/comparison/">Back to comparison</LinkButton>

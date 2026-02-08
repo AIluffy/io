@@ -1,56 +1,36 @@
 ---
 title: 批处理
-description: 多次写入合并为一次更新。
+description: 用 batch 合并多次写入。
 sidebar:
-  order: 2
+  order: 3
 ---
 
-import BatchingRecipe from '../../../../components/snippets/guides/BatchingRecipe.mdx';
+`batch()` 会把多次写入合并成一次通知，减少重复渲染与 patch 噪音。
 
-## 30 秒配方
-
-<BatchingRecipe />
-
-## 为什么批处理
-
-批处理会合并通知与 patch，减少渲染抖动，DevTools 记录也更清晰。
+## 基础用法
 
 ```ts
 import { batch, io } from 'io-store';
 
-const store = io({ count: 0, name: 'Ada' });
+const store = io({ count: 0, user: { name: 'Ada' } });
 
 batch(() => {
   store.count.update((v) => v + 1);
-  store.name.set('Grace');
+  store.user.name.set('Lin');
 });
 ```
 
-## 会发生什么
+## 作用范围
 
-- `subscribe()`：批处理结束后，每个节点只会把“最终值”通知给监听者。
-- `subscribeUpdate()`：批处理结束后，会收到一个合并后的 update（包含本次批处理产生的所有 patches）。
+- 合并 `subscribe` 的值通知。
+- 合并 `subscribeUpdate` 的 patch 更新（内部会 merge）。
 
-## 嵌套批处理
+## 何时使用
 
-批处理可嵌套，只有最外层结束时才会触发通知。
-
-```ts
-batch(() => {
-  store.count.set(1);
-  batch(() => {
-    store.count.set(2);
-  });
-  store.count.set(3);
-});
-```
-
-## 适用场景
-
-- 一次交互会改多个字段（表单、开关、事务）。
-- 需要批量应用变更（回放、撤销/重做、同步）。
+- 同一逻辑动作涉及多处写入。
+- 需要减少 UI 抖动或订阅触发次数。
 
 ## 下一步
 
-- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
-- 了解在应用中接入 IO：查看 [集成](/zh-cn/integrations/vanilla/)。
+- 了解 [订阅](/zh-cn/guides/subscriptions/)。
+- 学习 [更新日志](/zh-cn/core-concepts/update-log/) 的 merge 机制。

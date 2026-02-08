@@ -1,51 +1,49 @@
 ---
 title: 深层 Tree
-description: 任意深度的路径都是 Unit。
+description: 默认深度、路径访问与浅层模式。
 sidebar:
   order: 2
 ---
 
-## 默认深层
+IO 默认工作在深层模式：对象与数组会被展开成可订阅的树结构。
 
-`io()` 会递归处理普通对象与数组，把深层路径变成可读写的节点。你可以直接改到任意深度，而不需要 reducer 或样板代码。
+## 深层访问
 
 ```ts
 import { io } from 'io-store';
 
-const state = io({ user: { profile: { name: 'Ada' } } });
+const store = io({
+  user: { profile: { name: 'Ada' } },
+  items: [{ id: 1, count: 0 }],
+});
 
-state.user.profile.name.get();
-state.user.profile.name.set('Grace');
+store.user.profile.name.set('Grace');
+store.items[0].count.update((v) => v + 1);
 ```
 
-## 浅层模式
+每条路径都像 Unit 一样读写，因此订阅也可以精确到叶子。
 
-仅将第一层转为 Unit（深度限制为 1），更深层的值按普通数据对待：
+## 浅层模式（shallow）
+
+当你只需要第一层变成 Unit，可以启用浅层模式：
 
 ```ts
-const state = io({ user: { name: 'Ada' } }, { shallow: true });
+const shallow = io({ name: 'Ada', age: 36 }, { shallow: true });
 
-state.user.get(); // 返回普通对象
-state.user.set({ name: 'Grace' });
+shallow.name.set('Lin');
 ```
 
-浅层模式下的 `commit` 不允许新增未知 key，以保持结构稳定。
+浅层模式深度限制为 1，结构更稳定，适合“扁平 store”。
 
-## 聚焦某条路径
+## 结构约束
 
-使用 `relocate` 为某条路径创建一个“视图”。适合把局部状态传给函数或组件，而不用暴露整个树。
+- 深层模式只支持**纯对象**和**数组**。
+- 传入类实例或非 plain object 会抛出 `TypeError`。
 
-```ts
-import { relocate, io } from 'io-store';
-
-const store = io({ settings: { theme: 'light' } });
-const theme = relocate<string>(store, ['settings', 'theme']);
-
-theme.get(); // 'light'
-theme.set?.('dark'); // 只有目标是 Unit 时才可写
-```
+如果你必须存放复杂对象，建议把它包在 plain object 内，再用 `io()` 创建。
 
 ## 下一步
 
-- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。
-- 学习 [Derived](/zh-cn/guides/derived/)。
+- 了解 [快照](/zh-cn/core-concepts/snapshots/) 的冻结与缓存。
+- 查看 [更新日志](/zh-cn/core-concepts/update-log/) 的 patch 结构。
+- 学习 [派生值](/zh-cn/guides/derived/) 如何读取 Tree。

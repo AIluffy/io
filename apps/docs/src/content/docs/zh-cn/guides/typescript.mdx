@@ -1,56 +1,50 @@
 ---
 title: TypeScript
-description: 路径与节点的强类型支持。
+description: 常用类型与类型推断。
 sidebar:
-  order: 5
+  order: 4
 ---
 
-import TypeScriptRecipe from '../../../../components/snippets/guides/TypeScriptRecipe.mdx';
+IO 默认提供良好的类型推断，但你仍可以使用导出的类型做更精确的约束。
 
-## 30 秒配方
-
-<TypeScriptRecipe />
-
-## Unit 类型
+## 推断示例
 
 ```ts
-import type { IoUnit } from 'io-store';
 import { io } from 'io-store';
 
-const count: IoUnit<number> = io(0);
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.count.get();
+store.user.name.set('Lin');
 ```
 
-## 树形类型
+## 常用类型
 
-`io()` 会保留嵌套结构类型。
+- `IoUnit<T>`：叶子 Unit
+- `IoNode<T>`：Tree 节点
+- `IoScope<T>`：对象 Scope
+- `IoUpdate` / `IoPatch`：更新日志
+- `IoPathOf<T>` / `IoPathValue<T, P>`：路径工具
+- `UnwrapIo<T>`：从 `io()` 结果中提取普通数据结构
 
-```ts
-const store = io({ user: { name: 'Ada', age: 36 } });
-store.user.name.get();
-```
-
-## Path 工具类型
+## 类型工具示例
 
 ```ts
 import type { IoPathOf, IoPathValue } from 'io-store';
 
-type Store = { user: { profile: { name: string } } };
+type Store = { user: { name: string }; count: number };
 
-type NamePath = IoPathOf<Store>;
+type Path = IoPathOf<Store>; // ['user', 'name'] | ['count'] ...
 
-type NameValue = IoPathValue<Store, ['user', 'profile', 'name']>;
+type NameValue = IoPathValue<Store, ['user', 'name']>; // string
 ```
 
-## Unwrap 工具类型
+## 建议
 
-```ts
-import type { UnwrapIo } from 'io-store';
-
-const store = io({ user: { profile: { name: 'Ada' } } });
-type Shape = UnwrapIo<typeof store>;
-```
+- 用 `io()` 的推断结果作为默认类型来源。
+- 仅在需要跨层传递时显式标注类型。
 
 ## 下一步
 
-- 阅读 [行为扩展](/zh-cn/behaviors/overview/)。
-- 查看 [集成](/zh-cn/integrations/react/)。
+- 了解 [派生值](/zh-cn/guides/derived/) 的类型推断。
+- 查看 [测试](/zh-cn/guides/testing/) 中的断言示例。

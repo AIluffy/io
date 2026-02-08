@@ -1,13 +1,13 @@
 ---
 title: Schedule
-description: 控制订阅触发的时间点。
+description: 控制订阅通知的节奏。
 sidebar:
   order: 3
 ---
 
-## 合并通知
+Schedule 用于合并或延迟订阅通知，降低渲染抖动。
 
-通过 schedule 行为延迟订阅通知，降低渲染抖动。
+## 基础用法
 
 ```ts
 import { io } from 'io-store';
@@ -21,13 +21,18 @@ view.subscribe((value) => {
 });
 ```
 
-## 可选参数
+## 可选策略
 
 - `sync`：立即触发
 - `microtask`：同一事件循环合并
 - `animationFrame`：下一帧前触发（若可用）
 
+## 适用场景
+
+- UI 渲染抖动较大时
+- 写入频繁，但允许延迟到下一帧
+
 ## 下一步
 
-- 结合 [Persist](/zh-cn/behaviors/persist/)。
-- 使用 [DevTools](/zh-cn/behaviors/devtools/)。
+- 结合 [Persist](/zh-cn/behaviors/persist/) 做持久化。
+- 了解 [DevTools](/zh-cn/behaviors/devtools/) 的时间旅行能力。

@@ -1,11 +1,11 @@
 ---
 title: DevTools
-description: Time-travel, diffs, and export for IO updates.
+description: Debugging, time travel, and export.
 sidebar:
   order: 4
 ---
 
-## Setup
+## Create an Instance
 
 ```ts
 import { io } from 'io-store';
@@ -21,13 +21,12 @@ const devtools = createIoDevtools(store, {
 });
 ```
 
-## UI panel (React)
+## React Panel
 
 ```tsx
-import { createIoDevtools } from 'io-devtools';
 import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from 'io-devtools-react';
 
-export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createIoDevtools> }) {
+export function DevtoolsDock({ devtools }) {
   return (
     <IoDevtoolsErrorBoundary>
       <IoDevtoolsPanel devtools={devtools} height={420} />
@@ -36,16 +35,16 @@ export function DevtoolsDock({ devtools }: { devtools: ReturnType<typeof createI
 }
 ```
 
-## Time travel
+## Time Travel
 
-- `devtools.timeTravel.undo()` applies the inverted `update`.
-- `devtools.timeTravel.redo()` replays the `update`.
-- `devtools.timeTravel.goTo(index)` jumps to a cursor.
+- `devtools.timeTravel.undo()`
+- `devtools.timeTravel.redo()`
+- `devtools.timeTravel.goTo(index)`
 
-## Diffs
+## Diff
 
-- **Patch diff**: derived from `update.patches`.
-- **Snapshot diff**: available when `captureSnapshots: 'always'`.
+- **Patch diff**: from `update.patches`
+- **Snapshot diff**: available with `captureSnapshots: 'always'`
 
 ## Export
 
@@ -54,9 +53,7 @@ const json = devtools.export.json();
 const reduxImportState = devtools.export.reduxDevToolsImport();
 ```
 
-## Behavior integration
-
-To expose DevTools on the view node, attach it via behaviors:
+## Behavior Integration
 
 ```ts
 import { devtools, withBehaviors } from 'io-store/behavior';
@@ -64,11 +61,14 @@ import { createIoDevtools } from 'io-devtools';
 import { io } from 'io-store';
 
 const store = io({ count: 0 });
-const view = withBehaviors(store, [devtools({ target: store, create: createIoDevtools })]);
+const view = withBehaviors(store, [
+  devtools({ target: store, create: createIoDevtools }),
+]);
+
 const dt = view.extensions?.devtools;
 ```
 
-## Next steps
+## Next Steps
 
-- See update structure in [Update Log](/en/core-concepts/update-log/).
-- Try it live in the [Playground](/en/guides/playground/).
+- Read the [Update Log](/en/core-concepts/update-log/).
+- Try the [Playground](/en/guides/playground/).

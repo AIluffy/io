@@ -1,84 +1,65 @@
 ---
 title: Update Log
-description: Every change produces structured patches.
+description: Patches, updates, replay, and undo.
 sidebar:
   order: 4
 ---
 
-## Patch and Update
+IO records every write as a structured `patch`, grouped into `update` objects. This is the basis for replay and audit trails.
 
-IO records each write as a `patch` (`set` / `splice` / `sort`) and groups patches into an `update`. Updates can be merged, inverted (undo), or replayed.
+## Patch Types
+
+- `set`: assign a value at a path
+- `splice`: array insert/delete
+- `sort`: array reorder
+
+## Subscribe to Updates
 
 ```ts
 import { io } from 'io-store';
 
-const count = io(0);
+const store = io({ count: 0 });
 
-const unsub = count.subscribeUpdate((update) => {
+const stop = store.subscribeUpdate((update) => {
   console.log(update.patches);
 });
 
-count.set(1);
-unsub();
+store.count.set(1);
+stop();
 ```
-
-:::tip
-Subscribe at the tree root to capture changes across the whole store.
-:::
 
 :::note
-`subscribeUpdate()` is about “what changed” (patches). If you also need the latest value, read it with `snapshot()`/`get()` (or use `subscribe()` for value-driven updates).
+`subscribeUpdate()` tells you what changed. Use `snapshot()` or `subscribe()` for latest values.
 :::
 
-## onMutation and onError
-
-Use the debug helpers for cross-cutting observability.
+## Replay and Undo
 
 ```ts
-import { onMutation, onError, io } from 'io-store';
+import { applyUpdate, mergeUpdates, undoUpdate, replay, io } from 'io-store';
 
 const store = io({ count: 0 });
-
-const stop = onMutation(store, (patch, path) => {
-  console.log(path, patch.op, patch.next);
-});
-
-const stopError = onError(store, (error, path, op) => {
-  console.error('failed', op, path, error);
-});
-```
-
-## Update utilities
-
-```ts
-import { applyUpdate, mergeUpdates, undoUpdate, io } from 'io-store';
-
-const store = io({ count: 0 });
-const updates = [];
-const unsub = store.subscribeUpdate((u) => updates.push(u));
+const updates: any[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
 
 store.count.set(1);
 store.count.set(2);
-unsub();
+stop();
 
 const replayStore = io({ count: 0 });
-applyUpdate(replayStore, updates);
+replay(replayStore, updates);
 
 const merged = mergeUpdates(...updates);
 const inverted = undoUpdate(merged);
-
 applyUpdate(store, inverted);
 ```
 
-## Undo / redo
-
-Use `createHistory` for a ready-to-go undo/redo flow:
+## Undo / Redo
 
 ```ts
 import { createHistory, io } from 'io-store';
 
 const store = io({ count: 0 });
-const history = createHistory(store);
+const history = createHistory(store, { limit: 100 });
 
 store.count.set(1);
 store.count.set(2);
@@ -87,7 +68,23 @@ history.undo();
 history.redo();
 ```
 
-## Next steps
+## Debug Hooks
 
-- Try time-travel with [DevTools](/en/behaviors/devtools/).
-- Learn how to batch writes in [Guides: Batching](/en/guides/batching/).
+```ts
+import { io, onMutation, onError } from 'io-store';
+
+const store = io({ count: 0 });
+
+const stopMutation = onMutation(store, (patch, path) => {
+  console.log(path, patch.op);
+});
+
+const stopError = onError(store, (error, path, op) => {
+  console.error(op, path, error);
+});
+```
+
+## Next Steps
+
+- Combine with [DevTools](/en/behaviors/devtools/).
+- Learn [Batching](/en/guides/batching/) to merge notifications.

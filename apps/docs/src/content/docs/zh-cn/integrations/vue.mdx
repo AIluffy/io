@@ -1,9 +1,11 @@
 ---
 title: Vue
-description: Vue Composition API 适配。
+description: 使用 useIO 与 ioRef 接入 Vue。
 sidebar:
   order: 3
 ---
+
+`io-vue` 提供 `useIO`（只读）与 `ioRef`（双向绑定）。
 
 ## useIO
 
@@ -11,28 +13,30 @@ sidebar:
 import { io } from 'io-store';
 import { useIO } from 'io-vue';
 
-const count = io(0);
+const store = io({ count: 0 });
 
-export function useCounter() {
-  const state = useIO(count);
-  const inc = () => count.update((v) => v + 1);
-  return { state, inc };
-}
+const state = useIO(store.count);
 ```
 
-## ioRef
+`useIO` 返回 `ShallowRef`，适合在模板中直接使用。
 
-`ioRef` 将 Unit 适配成 Vue `ref`。
+## ioRef（双向绑定）
 
 ```ts
-import { io } from 'io-store';
 import { ioRef } from 'io-vue';
 
-const count = io(0);
-const countRef = ioRef(count);
+const countRef = ioRef(store.count);
 ```
+
+## 调度策略
+
+```ts
+const state = useIO(store.count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
 
 ## 下一步
 
-- 查看 [Vanilla JS](/zh-cn/integrations/vanilla/)。
-- 使用 [DevTools](/zh-cn/behaviors/devtools/)。
+- 查看 [派生值](/zh-cn/guides/derived/) 的组合方式。
+- 了解 [Schedule](/zh-cn/behaviors/schedule/) 合并通知。

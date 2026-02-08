@@ -1,9 +1,11 @@
 ---
 title: Svelte
-description: 将 IO Unit 适配为 Svelte store。
+description: 使用 toReadable 与 toWritable 接入 Svelte。
 sidebar:
   order: 4
 ---
+
+`io-svelte` 提供与 Svelte Stores 兼容的适配器。
 
 ## toReadable
 
@@ -11,8 +13,8 @@ sidebar:
 import { io } from 'io-store';
 import { toReadable } from 'io-svelte';
 
-const count = io(0);
-export const countReadable = toReadable(count);
+const store = io({ count: 0 });
+const readable = toReadable(store.count);
 ```
 
 ## toWritable
@@ -20,10 +22,18 @@ export const countReadable = toReadable(count);
 ```ts
 import { toWritable } from 'io-svelte';
 
-export const countWritable = toWritable(count);
+const writable = toWritable(store.count);
 ```
+
+## 调度策略
+
+```ts
+const readable = toReadable(store.count, { schedule: 'sync' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
 
 ## 下一步
 
-- 查看 [React 集成](/zh-cn/integrations/react/)。
-- 阅读 [行为扩展概览](/zh-cn/behaviors/overview/)。
+- 学习 [订阅](/zh-cn/guides/subscriptions/) 的值与更新区别。
+- 结合 [Persist](/zh-cn/behaviors/persist/) 做持久化。

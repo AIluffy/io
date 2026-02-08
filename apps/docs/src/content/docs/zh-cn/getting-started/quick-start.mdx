@@ -1,135 +1,69 @@
 ---
 title: 快速开始
-description: 安装 IO 并完成第一个状态。
+description: 5 分钟完成安装与基础使用。
 sidebar:
   order: 2
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-
 ## 安装
 
-<Steps>
+```bash
+npm install io-store
+```
 
-1. 安装核心包：
+需要框架适配时再装对应包：
 
-   ```bash
-   npm install io-store
-   ```
-
-2. 安装框架适配（可选）：
-
-   ```bash
-   npm install io-react
-   ```
-
-</Steps>
-
-:::note
-如果你的项目已经在用框架，请安装对应适配包：
-`io-react`、`io-vue` 或 `io-svelte`。
-:::
+```bash
+npm install io-react io-vue io-svelte
+```
 
 ## 创建状态
 
 ```ts
 import { io } from 'io-store';
 
-const count = io(0);
-
-count.get(); // 读取
-count.set(1); // 写入
-count.update((v) => v + 1); // 更新
+const store = io({ count: 0, user: { name: 'Ada' } });
 ```
 
-:::tip
-`get()` 返回冻结快照，读取结果可以放心共享，不会被误修改污染。
-:::
+## 读取与更新
 
-## 在框架中使用
+```ts
+store.count.get();
+store.user.name.set('Grace');
+store.count.update((v) => v + 1);
+```
 
-<Tabs default="core">
-  <TabItem label="Core" id="core">
-    ```ts
-    import { io, batch } from 'io-store';
+## 订阅
 
-    const store = io({ count: 0, user: { name: 'Ada' } });
+```ts
+const unsub = store.count.subscribe((value) => {
+  console.log('count changed', value);
+});
 
-    store.count.get();
-    store.user.name.set('Grace');
+unsub();
+```
 
-    batch(() => {
-      store.count.update((v) => v + 1);
-      store.count.update((v) => v + 1);
-    });
+## 派生值
 
-    const unsubscribe = store.count.subscribe((value) => {
-      console.log('count changed', value);
-    });
+```ts
+import { derived } from 'io-store';
 
-    // 之后需要取消订阅：
-    unsubscribe();
-    ```
+const doubled = derived(store, (s) => s.count * 2);
+```
 
-  </TabItem>
-  <TabItem label="React">
-    ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-react';
+## 批处理
 
-    const count = io(0);
+```ts
+import { batch } from 'io-store';
 
-    export function Counter() {
-      const value = useIO(count);
-      return (
-        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
-      );
-    }
-    ```
-
-  </TabItem>
-  <TabItem label="Vue">
-    ```vue
-    <script setup lang="ts">
-    import { io } from 'io-store';
-    import { ioRef, useIO } from 'io-vue';
-
-    const count = io(0);
-    const value = useIO(count);
-    const model = ioRef(count);
-    const inc = () => count.update((v) => v + 1);
-    </script>
-
-    <template>
-      <button @click="inc">{{ value }}</button>
-      <input v-model="model" type="number" />
-    </template>
-    ```
-
-  </TabItem>
-  <TabItem label="Svelte">
-    ```svelte
-    <script lang="ts">
-      import { io } from 'io-store';
-      import { toWritable } from 'io-svelte';
-
-      const count = io(0);
-      const countStore = toWritable(count);
-      const inc = () => count.update((v) => v + 1);
-    </script>
-
-    <button on:click={inc}>{$countStore}</button>
-    ```
-
-  </TabItem>
-</Tabs>
-
-## 常见坑
-
-- 不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
+batch(() => {
+  store.count.update((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
 
 ## 下一步
 
-- 了解 [核心概念](/zh-cn/core-concepts/units-scopes/)。
-- 查看 [行为扩展](/zh-cn/behaviors/overview/)。
-- 阅读自动生成的 [API 参考](/zh-cn/reference/)。
+- 理解 [核心概念](/zh-cn/core-concepts/units-scopes/)。
+- 学习 [派生值](/zh-cn/guides/derived/) 与 [订阅](/zh-cn/guides/subscriptions/)。
+- 查看 [React](/zh-cn/integrations/react/) 或 [Vue](/zh-cn/integrations/vue/) 接入方式。

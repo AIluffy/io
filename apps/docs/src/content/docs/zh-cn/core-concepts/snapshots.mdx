@@ -1,39 +1,42 @@
 ---
 title: 快照
-description: 读取冻结快照，安全共享。
+description: 冻结快照与读取语义。
 sidebar:
   order: 3
 ---
 
-## 默认冻结
+IO 的读取默认返回**冻结快照**，避免意外修改穿透到状态内部。
 
-任何对象/数组读取都会返回冻结快照，避免误修改。
+## snapshot 与 get
 
-```ts
-import { io } from 'io-store';
-
-const state = io({ items: ['a', 'b'] });
-const snapshot = state.snapshot();
-
-Object.isFrozen(snapshot); // true
-```
-
-## snapshot API
+- `snapshot()`：返回冻结快照，适合序列化与跨层传递。
+- `get()`：读取值，并用于派生值的依赖追踪。
 
 ```ts
-const count = io(0);
+const store = io({ count: 0 });
 
-count.snapshot();
+const snap = store.snapshot();
+const value = store.count.get();
 ```
 
-同一版本内快照具有稳定引用，适合缓存与渲染优化。
+## 为什么冻结
 
-## `get()` vs `snapshot()`
+冻结快照能保证：
 
-- 需要参与依赖追踪（例如在 `derived()` 中）时用 `get()`。
-- 只想拿值、不希望被追踪时用 `snapshot()`。
+- UI 读取后不会误改状态。
+- Snapshot 可安全缓存与复用。
+- Debug/Replay 时可以对比前后差异。
+
+## 快照缓存
+
+树节点会缓存快照，仅在路径变脏时重建局部数据，从而避免全量复制。
+
+## 建议
+
+- 向 UI 传值时优先用 `snapshot()`。
+- 在 `derived()` 中读取时使用 `get()` 或 selector。
 
 ## 下一步
 
-- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
-- 查看 [集成](/zh-cn/integrations/vanilla/)。
+- 了解 [更新日志](/zh-cn/core-concepts/update-log/) 的 patch 结构。
+- 学习 [订阅](/zh-cn/guides/subscriptions/) 的值与更新区别。

@@ -1,135 +1,69 @@
 ---
 title: Quick Start
-description: Install IO and build your first state in minutes.
+description: Install IO and build your first store.
 sidebar:
   order: 2
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-
 ## Install
 
-<Steps>
+```bash
+npm install io-store
+```
 
-1. Install the core package:
+Add adapters only when needed:
 
-   ```bash
-   npm install io-store
-   ```
+```bash
+npm install io-react io-vue io-svelte
+```
 
-2. Add a framework adapter (optional):
-
-   ```bash
-   npm install io-react
-   ```
-
-</Steps>
-
-:::note
-If your project already uses a framework, install its adapter:
-`io-react`, `io-vue`, or `io-svelte`.
-:::
-
-## Create state
+## Create State
 
 ```ts
 import { io } from 'io-store';
 
-const count = io(0);
-
-count.get(); // read
-count.set(1); // write
-count.update((v) => v + 1); // update
+const store = io({ count: 0, user: { name: 'Ada' } });
 ```
 
-:::tip
-`get()` returns a frozen snapshot, so reads are safe to share and won’t be mutated by accident.
-:::
+## Read and Write
 
-## Use in your framework
+```ts
+store.count.get();
+store.user.name.set('Grace');
+store.count.update((v) => v + 1);
+```
 
-<Tabs default="core">
-  <TabItem label="Core" id="core">
-    ```ts
-    import { io, batch } from 'io-store';
+## Subscribe
 
-    const store = io({ count: 0, user: { name: 'Ada' } });
+```ts
+const unsub = store.count.subscribe((value) => {
+  console.log('count changed', value);
+});
 
-    store.count.get();
-    store.user.name.set('Grace');
+unsub();
+```
 
-    batch(() => {
-      store.count.update((v) => v + 1);
-      store.count.update((v) => v + 1);
-    });
+## Derived Values
 
-    const unsubscribe = store.count.subscribe((value) => {
-      console.log('count changed', value);
-    });
+```ts
+import { derived } from 'io-store';
 
-    // Later:
-    unsubscribe();
-    ```
+const doubled = derived(store, (s) => s.count * 2);
+```
 
-  </TabItem>
-  <TabItem label="React">
-    ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-react';
+## Batch Updates
 
-    const count = io(0);
+```ts
+import { batch } from 'io-store';
 
-    export function Counter() {
-      const value = useIO(count);
-      return (
-        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
-      );
-    }
-    ```
+batch(() => {
+  store.count.update((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
 
-  </TabItem>
-  <TabItem label="Vue">
-    ```vue
-    <script setup lang="ts">
-    import { io } from 'io-store';
-    import { ioRef, useIO } from 'io-vue';
+## Next Steps
 
-    const count = io(0);
-    const value = useIO(count);
-    const model = ioRef(count);
-    const inc = () => count.update((v) => v + 1);
-    </script>
-
-    <template>
-      <button @click="inc">{{ value }}</button>
-      <input v-model="model" type="number" />
-    </template>
-    ```
-
-  </TabItem>
-  <TabItem label="Svelte">
-    ```svelte
-    <script lang="ts">
-      import { io } from 'io-store';
-      import { toWritable } from 'io-svelte';
-
-      const count = io(0);
-      const countStore = toWritable(count);
-      const inc = () => count.update((v) => v + 1);
-    </script>
-
-    <button on:click={inc}>{$countStore}</button>
-    ```
-
-  </TabItem>
-</Tabs>
-
-## Common gotcha
-
-- Avoid putting the same object instance in an array twice. Create a new object for each item.
-
-## Next steps
-
-- Learn the structure of Units and Scopes in [Core Concepts](/en/core-concepts/units-scopes/).
-- Add behavior layers in [Behaviors](/en/behaviors/overview/).
-- Read the auto-generated [API Reference](/en/reference/).
+- Learn the [Core Concepts](/en/core-concepts/units-scopes/).
+- Read about [Derived Values](/en/guides/derived/) and [Subscriptions](/en/guides/subscriptions/).
+- See [React](/en/integrations/react/) or [Vue](/en/integrations/vue/) usage.

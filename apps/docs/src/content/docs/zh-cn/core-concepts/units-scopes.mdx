@@ -1,101 +1,86 @@
 ---
 title: Unit 与 Scope
-description: 状态读写的核心原语。
+description: 状态读写的最小原语与对象作用域。
 sidebar:
   order: 1
 ---
 
+本页解释 IO 的两个基础形态：Unit（值）与 Scope（对象作用域）。
+
 ## Unit
 
-Unit 是最小的可写状态单元，提供明确的 `get/set/update` 方法。
+Unit 是最小可写状态单元，拥有清晰的读写 API。
 
 ```ts
 import { io } from 'io-store';
 
 const count = io(0);
 
-count.get(); // 0
-count.set(1); // 写入
-count.update((v) => v + 1); // 更新
+count.get();
+count.set(1);
+count.update((v) => v + 1);
 ```
 
-Unit 也支持订阅，你可以直接监听变化：
+Unit 同时提供订阅与快照：
 
 ```ts
 const unsub = count.subscribe((value) => {
   console.log('count changed', value);
 });
 
-count.set(2);
+const snap = count.snapshot();
 unsub();
 ```
 
-Unit 暴露以下能力：
+常用能力：
 
-- `subscribe(fn)` 订阅值变化
-- `subscribeUpdate(fn)` 订阅更新记录
-- `snapshot()` 获取冻结快照
+- `get()`：读取当前值
+- `set(next)`：写入值
+- `update(fn)`：基于旧值更新
+- `subscribe(fn)`：订阅值变化
+- `subscribeUpdate(fn)`：订阅 patch 更新
+- `snapshot()`：冻结快照
+- `reset()`：回到初始值
 
-### `subscribe()` vs `subscribeUpdate()`
+## Scope（对象）
 
-两者相关，但关注点不同：
-
-- 用 `subscribe(fn(value))`：拿到最新值（UI 渲染最常用）。
-- 用 `subscribeUpdate(fn(update))`：拿到变更元信息（patch、revision），用于回放/撤销/持久化/DevTools。
-
-如果你只订阅更新，并不会自动拿到“新值”。需要值时再调用 `snapshot()`/`get()`。
-
-最小示例：
-
-```ts
-const unsubValue = count.subscribe((value) => {
-  console.log('render with value', value);
-});
-
-const unsubUpdate = count.subscribeUpdate((update) => {
-  console.log('patches', update.patches);
-  console.log('latest value', count.snapshot());
-});
-```
-
-## Scope
-
-当 `io` 接收对象时，会生成 Scope：每个 key 都对应一个 Unit。Scope 与深层 Tree 共享同一运行时实现。
+当 `io()` 接收对象时，会创建 Scope。Scope 内部每个 key 都是 Unit。
 
 ```ts
 const user = io({ name: 'Ada', age: 36 });
 
-user.name.get();
-user.age.set(37);
+user.name.set('Grace');
+user.age.update((v) => v + 1);
 ```
 
-Scope 支持 `commit` 进行成组更新（不允许新增未知 key 以保持结构稳定）：
+Scope 支持 `commit` 批量更新，并保持结构稳定：
 
 ```ts
 user.commit((draft) => {
-  draft.name = 'Grace';
-  draft.age = 37;
+  draft.name = 'Lin';
+  draft.age = 40;
 });
 ```
 
-当你想把多处修改合并成一次“逻辑变更”时，用 `commit` 会更清晰。
+> `commit` 适合表达“同一逻辑变更”。它会生成单次更新通知。
 
-## 数组节点
+## Array（数组节点）
 
-数组同样是 Unit，可以直接操作并产生更新，也与深层 Tree 共享实现。
+数组也是 Tree 节点的一种，支持常见的可变操作。
 
 ```ts
-const todos = io([{ id: 'a', title: 'Ship', done: false }]);
+const todos = io([{ id: 'a', done: false }]);
 
-todos.push({ id: 'b', title: 'Document', done: false });
+todos.push({ id: 'b', done: false });
 todos[0].done.set(true);
 ```
 
 :::caution
-不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
+请避免在数组里复用同一对象实例。每个元素保持独立更安全。
 :::
 
 ## 下一步
 
 - 了解 [深层 Tree](/zh-cn/core-concepts/deep-tree/)。
 - 阅读 [快照](/zh-cn/core-concepts/snapshots/)。
+- 查看 [更新日志](/zh-cn/core-concepts/update-log/)。

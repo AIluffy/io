@@ -1,68 +1,52 @@
 ---
 title: Subscriptions
-description: Listen to values or structured updates.
+description: Value subscriptions vs update subscriptions.
 sidebar:
-  order: 3
+  order: 2
 ---
 
-import SubscriptionsRecipe from '../../../../components/snippets/guides/SubscriptionsRecipe.mdx';
+IO provides two subscription styles: value subscriptions and update subscriptions.
 
-## 30-second recipe
-
-<SubscriptionsRecipe />
-
-## Value subscriptions
+## subscribe: Value Changes
 
 ```ts
-import { io } from 'io-store';
+const store = io({ count: 0 });
 
-const count = io(0);
-
-const unsub = count.subscribe((value) => {
+const stop = store.count.subscribe((value) => {
   console.log('value', value);
 });
-
-count.set(1);
-unsub();
 ```
 
-Use value subscriptions for UI rendering and anything that needs the latest value.
+Use this for UI rendering or reactive updates.
 
-## Update subscriptions
-
-`subscribeUpdate` gives you structured patches.
+## subscribeUpdate: Patch Stream
 
 ```ts
-const unsubUpdate = count.subscribeUpdate((update) => {
-  for (const patch of update.patches) {
-    console.log(patch.op, patch.path, patch.next);
-  }
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
 });
 ```
 
-Use update subscriptions for logging, persistence, syncing, and devtools.
+Use this for logs, replay, syncing, and auditing.
 
-## Scope and tree bubbling
+## Subscription Granularity
 
-Subscriptions bubble through tree nodes, so subscribing at the root will capture nested changes.
+- Subscribe at leaves to react to specific fields.
+- Subscribe at root to capture a full update stream.
+
+## Unsubscribe
 
 ```ts
-const store = io({ user: { name: 'Ada' } });
-
-store.subscribe(() => {
-  console.log('root value changed', store.snapshot());
-});
-
-store.subscribeUpdate((u) => {
-  console.log('root patches', u.patches);
-});
+const stop = store.count.subscribe(() => {});
+stop();
 ```
 
-## Cleanup
+## Guidance
 
-Always call the unsubscribe function (React effect cleanup, Vue scope dispose, Svelte onDestroy, etc.).
+- UI prefers `subscribe`.
+- Use `subscribeUpdate` when you need patch metadata.
 
-## Next steps
+## Next Steps
 
-- Learn debugging hooks in [Update Log](/en/core-concepts/update-log/).
-- Time-travel with [DevTools](/en/behaviors/devtools/).
+- Learn [Batching](/en/guides/batching/).
+- Explore the [Update Log](/en/core-concepts/update-log/).

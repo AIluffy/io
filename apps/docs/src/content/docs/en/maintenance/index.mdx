@@ -1,38 +1,38 @@
 ---
-title: Maintenance
-description: Documentation update workflow, access control, and release hygiene.
+title: Maintenance and Process
+description: Doc workflow, access control, and release steps.
 sidebar:
   order: 1
 ---
 
 ## Access Control
 
-- The published docs site is a static site. If it is hosted on GitHub Pages, end-user access control is not enforced by the site itself.
-- Use repository permissions, branch protection rules, and required reviews to control who can change documentation.
-- If you need authenticated access for readers, host the static site behind an access gateway (for example, a reverse proxy with SSO).
+- The docs site is static and cannot enforce reader authentication.
+- Control writes via repo permissions, branch protection, and reviews.
+- If reader auth is required, place the site behind an access gateway.
 
-## Update Workflow
+## Update Flow
 
-- Treat `apps/docs/src/content/docs/**` as product code: changes require PR review.
-- If a public API changes, regenerate API reference pages:
-
-```bash
-npm run docs:generate-api
-```
-
-- Verify that the generated docs are committed and in sync:
+- Treat `apps/docs/src/content/docs/**` as product code with PR review.
+- Regenerate API references when public APIs change:
 
 ```bash
-npm run docs:check
+nx run apps-docs:generate-api
 ```
 
-- Build the docs site locally:
+- Verify generated output:
+
+```bash
+git diff --exit-code apps/docs/src/content/docs
+```
+
+- Build the site locally:
 
 ```bash
 nx run apps-docs:build
 ```
 
-## CI Enforcement
+## CI Constraints
 
-- CI runs `docs:check` to prevent API docs from drifting away from source exports.
-- Docs deployment runs API generation before building the site, so docs stay up to date when code changes.
+- CI regenerates API docs to prevent drift.
+- Deployments run a full build to ensure the site is healthy.

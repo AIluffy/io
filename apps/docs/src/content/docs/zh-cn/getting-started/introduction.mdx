@@ -1,37 +1,47 @@
 ---
 title: 介绍
-description: IO 是什么，以及如何理解它。
+description: IO 的定位、设计目标与核心概念。
 sidebar:
   order: 1
 ---
 
-IO 是一个给“深层状态”准备的 TypeScript 状态库：想改哪一层就改哪一层，想订阅哪一块就订阅哪一块，把渲染开销压到最小。每次写入都会生成 patch（更新日志），方便你做调试、回放和撤销。
+IO 是一个面向“深层状态”的 TypeScript 状态库。你可以直接修改任何层级字段，并只订阅你实际使用的路径，从而把渲染成本压到最小。
 
-从这三个 API 开始：
+## 适合什么场景
 
-`io()` 创建状态，`derived()` 创建派生值，`batch()` 把多次写入合并成一次通知。
+- 业务状态层级深、更新点多，但希望写法保持直观。
+- 需要更精确的订阅粒度，减少无关组件渲染。
+- 希望有可回放/可撤销的更新日志（patch）。
+- 需要跨框架复用同一套状态模型。
 
-## 心智模型
+## 核心概念
 
-- **Unit**：最小的状态格子，`get/set/update`。
-- **Tree**：嵌套状态，每条路径都像 Unit 一样可读写。
-- **Derived**：计算出来的只读值。
-- **Update Log**：写入产生的 patch。
+- **Unit**：最小可写单元，提供 `get/set/update`。
+- **Tree**：对象/数组形成的深层状态树，每条路径都像 Unit。
+- **Derived**：只读派生值，依赖变化自动更新。
+- **Update Log**：每次写入生成 `patch`，可回放与撤销。
 
-## IO 关注点
+## 设计目标
 
-- **深层更新很直接**：`state.user.name.set('Ada')`，不用 reducer / action。
-- **快照安全**：读取返回冻结快照，不怕误改漏改。
-- **回放/撤销更自然**：patch 让时间旅行、同步、审计更容易。
-- **按需加装**：`withBehaviors` 让你选择性启用 `persist`、`devtools`、`schedule` 等能力。
-- **跨框架一个契约**：`snapshot() + subscribe()`。
+- **直改深层状态**：`store.user.name.set('Ada')` 无需 reducer。
+- **快照安全**：读取返回冻结快照，避免误改。
+- **更新可追踪**：patch 是一等公民，调试与同步更自然。
+- **统一适配契约**：`snapshot()` + `subscribe()` 覆盖主流框架。
 
-:::note
-熟悉 Zustand？可以把 IO 理解为：保留熟悉的使用体验，但把“深层状态”和“patch 更新”变成一等公民。迁移指南提供 API 对照。
-:::
+## 最小示例
+
+```ts
+import { io, derived } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const doubled = derived(store, (s) => s.count * 2);
+
+store.count.update((v) => v + 1);
+console.log(doubled.get());
+```
 
 ## 下一步
 
-- 进入 [快速开始](/zh-cn/getting-started/quick-start/)。
-- 阅读 [核心概念](/zh-cn/core-concepts/units-scopes/)。
-- 查看 [集成](/zh-cn/integrations/vanilla/)。
+- 直接进入 [快速开始](/zh-cn/getting-started/quick-start/)。
+- 学习 [Unit 与 Scope](/zh-cn/core-concepts/units-scopes/)。
+- 查看 [集成](/zh-cn/integrations/vanilla/) 如何接入框架。

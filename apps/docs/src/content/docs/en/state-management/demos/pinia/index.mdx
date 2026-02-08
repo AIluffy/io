@@ -1,6 +1,6 @@
 ---
-title: Pinia 在线体验
-description: 在 Astro 中用 Vue island 接入 Pinia。
+title: Pinia Demo
+description: Pinia in Astro via Vue islands.
 sidebar:
   order: 3
 ---
@@ -11,13 +11,13 @@ import PiniaDemo from '/src/demos/astro-pinia-demo.astro';
 import piniaDemoAstro from '/src/demos/astro-pinia-demo.astro?raw';
 import piniaCounterVue from '/src/demos/pinia/PiniaCounter.vue?raw';
 
-## 运行示例
+## Live Example
 
-示例通过 Vue island 承载 Pinia，避免跨请求共享状态。
+Pinia runs inside the Vue island to keep state per request.
 
 <PiniaDemo />
 
-## 源码
+## Source
 
 <Tabs>
   <TabItem label="src/demos/astro-pinia-demo.astro">
@@ -28,4 +28,4 @@ import piniaCounterVue from '/src/demos/pinia/PiniaCounter.vue?raw';
   </TabItem>
 </Tabs>
 
-<LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>
+<LinkButton href="/en/state-management/comparison/">Back to comparison</LinkButton>

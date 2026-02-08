@@ -1,51 +1,49 @@
 ---
-title: Deep Tree
-description: Nested state is addressable at any depth.
+title: Deep Trees
+description: Default depth, path access, and shallow mode.
 sidebar:
   order: 2
 ---
 
-## Deep by default
+IO defaults to deep mode: objects and arrays expand into a subscribable tree.
 
-`io()` walks plain objects and arrays and turns nested paths into nodes. In practice, that means you can update deep values without reducers or ceremony.
+## Deep Access
 
 ```ts
 import { io } from 'io-store';
 
-const state = io({ user: { profile: { name: 'Ada' } } });
+const store = io({
+  user: { profile: { name: 'Ada' } },
+  items: [{ id: 1, count: 0 }],
+});
 
-state.user.profile.name.get();
-state.user.profile.name.set('Grace');
+store.user.profile.name.set('Grace');
+store.items[0].count.update((v) => v + 1);
 ```
 
-## Shallow mode
+Every path behaves like a Unit, so you can subscribe at leaf level.
 
-If you only want the first level as Units, use `shallow: true`. This keeps the tree shallow (depth 1) and treats deeper values as plain data.
+## Shallow Mode
+
+If you only want the first level to be Units:
 
 ```ts
-const state = io({ user: { name: 'Ada' } }, { shallow: true });
+const shallow = io({ name: 'Ada', age: 36 }, { shallow: true });
 
-state.user.get(); // returns the plain object
-state.user.set({ name: 'Grace' });
+shallow.name.set('Lin');
 ```
 
-`commit` in shallow mode rejects unknown keys to keep the shape stable.
+Shallow mode limits depth to 1 and keeps structure stable.
 
-## Focus on one path
+## Structural Constraints
 
-Use `relocate` to create a view for a specific path (useful when passing state around without exposing the whole tree).
+- Deep mode only supports **plain objects** and **arrays**.
+- Passing class instances throws `TypeError`.
 
-```ts
-import { relocate, io } from 'io-store';
+Wrap complex values in a plain object if needed.
 
-const store = io({ settings: { theme: 'light' } });
-const theme = relocate<string>(store, ['settings', 'theme']);
+## Next Steps
 
-theme.get(); // 'light'
-theme.set?.('dark'); // only works when the target is a Unit
-```
-
-## Next steps
-
-- See how updates are logged in [Update Log](/en/core-concepts/update-log/).
-- Explore derived values in [Guides: Derived](/en/guides/derived/).
+- Learn how [Snapshots](/en/core-concepts/snapshots/) are frozen and cached.
+- See the [Update Log](/en/core-concepts/update-log/).
+- Read about [Derived Values](/en/guides/derived/).

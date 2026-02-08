@@ -1,11 +1,13 @@
 ---
 title: Persist
-description: Persist state to storage with a behavior layer.
+description: Persist state via behaviors.
 sidebar:
   order: 2
 ---
 
-## Basic usage
+Persist writes values to storage (defaults to `localStorage`).
+
+## Basic Usage
 
 ```ts
 import { io } from 'io-store';
@@ -15,9 +17,7 @@ const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);
 ```
 
-By default, `persist` uses `localStorage` when available.
-
-## Custom storage
+## Custom Storage
 
 ```ts
 const memory = new Map<string, string>();
@@ -43,7 +43,12 @@ persist({
 });
 ```
 
-## Next steps
+## Notes
 
-- Add update scheduling in [Schedule](/en/behaviors/schedule/).
-- Combine behaviors in [Overview](/en/behaviors/overview/).
+- Persist currently writes on `set()`.
+- If you primarily use `update()`, ensure it results in `set()` or extend the behavior.
+
+## Next Steps
+
+- Combine with [Schedule](/en/behaviors/schedule/) to coalesce notifications.
+- See the [Behaviors Overview](/en/behaviors/overview/).

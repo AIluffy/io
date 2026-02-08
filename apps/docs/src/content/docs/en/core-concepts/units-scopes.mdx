@@ -1,101 +1,84 @@
 ---
 title: Units and Scopes
-description: The core primitives for reading and writing state.
+description: The smallest writable primitive and object scope.
 sidebar:
   order: 1
 ---
 
+This page explains the two foundational shapes in IO: Units (values) and Scopes (objects).
+
 ## Unit
 
-A Unit is the smallest writable piece of state. It gives you explicit `get/set/update` methods.
+A Unit is the smallest writable cell with clear read/write APIs.
 
 ```ts
 import { io } from 'io-store';
 
 const count = io(0);
 
-count.get(); // 0
-count.set(1); // write
-count.update((v) => v + 1); // update
+count.get();
+count.set(1);
+count.update((v) => v + 1);
 ```
 
-Units also expose subscriptions so you can react to changes:
+Units also support subscriptions and snapshots:
 
 ```ts
 const unsub = count.subscribe((value) => {
   console.log('count changed', value);
 });
 
-count.set(2);
+const snap = count.snapshot();
 unsub();
 ```
 
-Units expose:
+Common APIs:
 
-- `subscribe(fn)` to listen to value changes
-- `subscribeUpdate(fn)` to listen to update records
-- `snapshot()` to get a frozen value
+- `get()`
+- `set(next)`
+- `update(fn)`
+- `subscribe(fn)`
+- `subscribeUpdate(fn)`
+- `snapshot()`
+- `reset()`
 
-### `subscribe()` vs `subscribeUpdate()`
+## Scope (Objects)
 
-They are related but not the same:
-
-- Use `subscribe(fn(value))` when you want the latest value (typical UI rendering).
-- Use `subscribeUpdate(fn(update))` when you want the change metadata (patches, revision) for replay/undo/persistence/devtools.
-
-If you only subscribe to updates, you will not receive the new value automatically. Call `snapshot()`/`get()` when you need the value.
-
-Minimal examples:
-
-```ts
-const unsubValue = count.subscribe((value) => {
-  console.log('render with value', value);
-});
-
-const unsubUpdate = count.subscribeUpdate((update) => {
-  console.log('patches', update.patches);
-  console.log('latest value', count.snapshot());
-});
-```
-
-## Scope
-
-When you pass an object to `io`, you get a Scope with Units for each key. Scopes are produced by the same tree engine used for deep structures.
+When `io()` receives an object, it creates a Scope. Every key becomes a Unit.
 
 ```ts
 const user = io({ name: 'Ada', age: 36 });
 
-user.name.get();
-user.age.set(37);
+user.name.set('Grace');
+user.age.update((v) => v + 1);
 ```
 
-Scopes also support grouped updates with `commit` (unknown keys are rejected to keep the shape stable):
+Scopes support `commit` for grouped updates:
 
 ```ts
 user.commit((draft) => {
-  draft.name = 'Grace';
-  draft.age = 37;
+  draft.name = 'Lin';
+  draft.age = 40;
 });
 ```
 
-Use `commit` when you want to update multiple fields as one logical change.
+## Arrays
 
-## Array Nodes
-
-Arrays are first-class. Mutating helpers emit updates and keep paths stable. They share the same runtime as deep tree arrays.
+Arrays are Tree nodes too and support common mutations.
 
 ```ts
-const todos = io([{ id: 'a', title: 'Ship', done: false }]);
+const todos = io([{ id: 'a', done: false }]);
 
-todos.push({ id: 'b', title: 'Document', done: false });
+todos.push({ id: 'b', done: false });
 todos[0].done.set(true);
 ```
 
 :::caution
-Avoid putting the same object instance in an array twice. Create a new object for each item.
+Avoid reusing the same object instance inside arrays.
 :::
 
-## Next steps
+## Next Steps
 
-- Learn how deep structures are modeled in [Deep Tree](/en/core-concepts/deep-tree/).
-- Understand snapshots in [Snapshots](/en/core-concepts/snapshots/).
+- Learn [Deep Trees](/en/core-concepts/deep-tree/).
+- Read about [Snapshots](/en/core-concepts/snapshots/).
+- Explore the [Update Log](/en/core-concepts/update-log/).

@@ -1,14 +1,18 @@
 ---
 title: Welcome to IO
-description: Fine-grained state with deep updates and predictable snapshots.
+description: Deep updates, fine-grained subscriptions, predictable snapshots.
 template: splash
 hero:
-  tagline: Update deep state directly. Render only what changed.
+  tagline: Fine-grained state designed for deep updates.
   actions:
     - text: Get Started
       link: /en/getting-started/quick-start/
       icon: right-arrow
       variant: primary
+    - text: Read the Guide
+      link: /en/getting-started/introduction/
+      icon: right-arrow
+      variant: minimal
     - text: View on GitHub
       link: https://github.com/AIluffy/io-mono
       icon: external
@@ -25,6 +29,7 @@ import { io, batch } from 'io-store';
 const store = io({ count: 0, user: { name: 'Ada' } });
 
 store.user.name.set('Grace');
+
 batch(() => {
   store.count.update((v) => v + 1);
   store.count.update((v) => v + 1);
@@ -45,10 +50,21 @@ Framework adapters: [React](/en/integrations/react/) · [Vue](/en/integrations/v
   <Card title="Predictable" icon="approve-check-circle">
     Frozen snapshots and patch-based writes for replay/undo.
   </Card>
+  <Card title="Composable" icon="gear">
+    Persist, Schedule, and DevTools plug in as behaviors.
+  </Card>
 </CardGrid>
+
+## Architecture at a Glance
+
+- **Unit + Tree**: leaves and trees share the same runtime.
+- **Snapshot cache**: rebuild only dirty paths.
+- **Update log**: patches make time travel natural.
+- **Unified adapters**: `snapshot()` + `subscribe()` everywhere.
 
 ## Next Steps
 
-- [Quick Start](/en/getting-started/quick-start/)
-- [Core Concepts](/en/core-concepts/units-scopes/)
-- [From Zustand Migration](/en/migrations/from-zustand/)
+- Start with [Introduction](/en/getting-started/introduction/).
+- Learn [Core Concepts](/en/core-concepts/units-scopes/).
+- Read [Architecture Overview](/en/core-concepts/architecture/).
+- For API details, see [Reference](/en/reference/).

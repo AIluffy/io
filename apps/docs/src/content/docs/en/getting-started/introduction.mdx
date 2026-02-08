@@ -1,37 +1,47 @@
 ---
 title: Introduction
-description: What IO is and how to think about it.
+description: What IO is, what it solves, and how to think about it.
 sidebar:
   order: 1
 ---
 
-IO is a TypeScript state library for apps that want “deep state, no drama.” You change a nested field directly, subscribe precisely to what you use, and keep rendering work small. Every write also produces patches you can inspect, replay, or undo.
+IO is a TypeScript state library built for deep state. You update nested fields directly and subscribe only to the paths you use, keeping render work small.
 
-Start here:
+## When to Choose IO
 
-`io()` creates state, `derived()` creates computed values, and `batch()` groups multiple writes into one notification.
+- Your state is deeply nested and changes are frequent.
+- You need precise subscriptions to avoid unnecessary renders.
+- You want an update log for replay/undo or auditing.
+- You want one state model shared across frameworks.
 
-## Mental model
+## Core Concepts
 
-- **Unit**: a tiny state cell with `get/set/update`.
-- **Tree**: nested state where each path acts like a Unit.
-- **Derived**: computed, read-only state.
-- **Update Log**: patches produced by writes.
+- **Unit**: the smallest writable cell, with `get/set/update`.
+- **Tree**: objects/arrays expanded into a deep, subscribable structure.
+- **Derived**: read-only computed values that track dependencies.
+- **Update Log**: patches generated on every write.
 
-## What IO optimizes for
+## Design Goals
 
-- **Deep updates, directly**: `state.user.name.set('Ada')` without reducers or action types.
-- **Snapshot safety**: reads are frozen snapshots, so accidental mutation doesn’t leak.
-- **Undo/redo & replay**: patches make time travel and syncing straightforward.
-- **Opt-in extras**: `withBehaviors` adds `persist`, `devtools`, `schedule`, etc.
-- **One integration contract**: `snapshot()` + `subscribe()` across adapters.
+- **Direct deep updates**: `store.user.name.set('Ada')` without reducers.
+- **Snapshot safety**: reads return frozen snapshots.
+- **Traceable updates**: patches are first-class.
+- **Unified adapters**: `snapshot()` + `subscribe()` across frameworks.
 
-:::note
-If you know Zustand: IO keeps the ergonomics, but makes deep state and patch-based updates first-class. The migration guide maps patterns side-by-side.
-:::
+## Minimal Example
 
-## Next steps
+```ts
+import { io, derived } from 'io-store';
 
-- Start with the [Quick Start](/en/getting-started/quick-start/).
-- Learn the building blocks in [Core Concepts](/en/core-concepts/units-scopes/).
-- Explore [Integrations](/en/integrations/vanilla/) for framework usage.
+const store = io({ count: 0, user: { name: 'Ada' } });
+const doubled = derived(store, (s) => s.count * 2);
+
+store.count.update((v) => v + 1);
+console.log(doubled.get());
+```
+
+## Next Steps
+
+- Jump to the [Quick Start](/en/getting-started/quick-start/).
+- Learn [Units & Scopes](/en/core-concepts/units-scopes/).
+- See [Integrations](/en/integrations/vanilla/) for framework usage.

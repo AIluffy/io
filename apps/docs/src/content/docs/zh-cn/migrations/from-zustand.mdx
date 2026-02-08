@@ -1,11 +1,11 @@
 ---
 title: 从 Zustand 迁移
-description: 常见模式的对应关系。
+description: 常见模式的语义对应。
 sidebar:
   order: 1
 ---
 
-本指南将常见 Zustand 模式映射到 IO。目标是语义对齐，而不是完全一一对应。
+本指南将常见 Zustand 模式映射到 IO，强调语义对齐而非一一复刻。
 
 ## 创建 store
 
@@ -27,30 +27,20 @@ const store = io({ count: 0 });
 const inc = () => store.count.update((v) => v + 1);
 ```
 
-如果你更偏好“只保留第一层”的 store，可以使用 `shallow: true`。浅层模式深度限制为 1，并且 `commit` 不允许新增未知 key。
-
 ## 选择器
 
-Zustand 选择器：
+Zustand：
 
 ```ts
 const count = useStore((s) => s.count);
 ```
 
-IO 选择器（derived）：
+IO（derived）：
 
 ```ts
 import { derived } from 'io-store';
 
 const count = derived(store, (s) => s.count);
-```
-
-需要路径聚焦时可使用 `relocate`：
-
-```ts
-import { relocate } from 'io-store';
-
-const userName = relocate<string>(store, ['user', 'name']);
 ```
 
 ## 中间件 → 行为扩展
@@ -65,7 +55,7 @@ const view = withBehaviors(store, [
 ]);
 ```
 
-## React 使用方式
+## React 接入
 
 ```tsx
 import { useIO } from 'io-react';
@@ -76,17 +66,17 @@ function Counter() {
 }
 ```
 
-## silent 选项移除
+## shallow 模式
 
-深度模式现在只接受纯数组和纯对象，传入普通类实例会抛出 `TypeError`。如果之前使用过 `io(target, { silent: true })`，可以改成浅层模式：
+如果你只需要第一层变成 Unit：
 
 ```ts
-const wrapper = io(target, { shallow: true });
+const shallow = io({ count: 0 }, { shallow: true });
 ```
 
-或者把值包在简单对象/数组里再调用 `io()`。
+浅层模式深度限制为 1，并保持结构稳定。
 
 ## 下一步
 
-- 了解 [介绍](/zh-cn/getting-started/introduction/)。
+- 阅读 [介绍](/zh-cn/getting-started/introduction/)。
 - 查看 [行为扩展](/zh-cn/behaviors/overview/)。

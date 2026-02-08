@@ -1,9 +1,11 @@
 ---
 title: Svelte
-description: Svelte stores from IO Units.
+description: Use toReadable and toWritable.
 sidebar:
   order: 4
 ---
+
+`io-svelte` provides adapters compatible with Svelte stores.
 
 ## toReadable
 
@@ -11,8 +13,8 @@ sidebar:
 import { io } from 'io-store';
 import { toReadable } from 'io-svelte';
 
-const count = io(0);
-export const countReadable = toReadable(count);
+const store = io({ count: 0 });
+const readable = toReadable(store.count);
 ```
 
 ## toWritable
@@ -20,10 +22,18 @@ export const countReadable = toReadable(count);
 ```ts
 import { toWritable } from 'io-svelte';
 
-export const countWritable = toWritable(count);
+const writable = toWritable(store.count);
 ```
 
-## Next steps
+## Scheduling
 
-- Explore adapters in [Integrations: React](/en/integrations/react/).
-- Use behaviors in [Behaviors: Overview](/en/behaviors/overview/).
+```ts
+const readable = toReadable(store.count, { schedule: 'sync' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## Next Steps
+
+- Learn [Subscriptions](/en/guides/subscriptions/).
+- Combine with [Persist](/en/behaviors/persist/).

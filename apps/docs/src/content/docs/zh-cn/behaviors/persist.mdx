@@ -5,6 +5,8 @@ sidebar:
   order: 2
 ---
 
+Persist 将写入后的值同步到存储（默认 `localStorage`）。
+
 ## 基础用法
 
 ```ts
@@ -14,8 +16,6 @@ import { persist, withBehaviors } from 'io-store/behavior';
 const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);
 ```
-
-默认会优先使用 `localStorage`（若可用）。
 
 ## 自定义存储
 
@@ -43,7 +43,12 @@ persist({
 });
 ```
 
+## 注意事项
+
+- Persist 目前基于 `set()` 写入存储。
+- 如果你主要使用 `update()`，请确保最终会触发 `set()` 或自行扩展行为。
+
 ## 下一步
 
-- 使用 [Schedule](/zh-cn/behaviors/schedule/)。
+- 结合 [Schedule](/zh-cn/behaviors/schedule/) 合并通知。
 - 查看 [行为扩展概览](/zh-cn/behaviors/overview/)。

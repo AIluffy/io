@@ -1,58 +1,50 @@
 ---
 title: TypeScript
-description: Strong typing for paths, nodes, and derived values.
+description: Types and inference helpers.
 sidebar:
-  order: 5
+  order: 4
 ---
 
-import TypeScriptRecipe from '../../../../components/snippets/guides/TypeScriptRecipe.mdx';
+IO ships with strong inference, but you can also use exported types for precision.
 
-## 30-second recipe
-
-<TypeScriptRecipe />
-
-## Typed Units
+## Inference Example
 
 ```ts
-import type { IoUnit } from 'io-store';
 import { io } from 'io-store';
 
-const count: IoUnit<number> = io(0);
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.count.get();
+store.user.name.set('Lin');
 ```
 
-## Typed trees
+## Common Types
 
-`io()` preserves nested shapes, so property access is strongly typed.
+- `IoUnit<T>`
+- `IoNode<T>`
+- `IoScope<T>`
+- `IoUpdate` / `IoPatch`
+- `IoPathOf<T>` / `IoPathValue<T, P>`
+- `UnwrapIo<T>`
 
-```ts
-const store = io({ user: { name: 'Ada', age: 36 } });
-store.user.name.get();
-```
-
-## Path helpers
-
-Use path helpers for utilities and adapters.
+## Type Helper Example
 
 ```ts
 import type { IoPathOf, IoPathValue } from 'io-store';
 
-type Store = { user: { profile: { name: string } } };
+type Store = { user: { name: string }; count: number };
 
-type NamePath = IoPathOf<Store>; // ['user', 'profile', 'name'] | ...
+type Path = IoPathOf<Store>;
 
-type NameValue = IoPathValue<Store, ['user', 'profile', 'name']>; // string
+type NameValue = IoPathValue<Store, ['user', 'name']>;
 ```
 
-## Unwrap helpers
+## Guidance
 
-```ts
-import type { UnwrapIo } from 'io-store';
+- Use `io()` inference by default.
+- Add explicit types only for cross-layer APIs.
 
-const store = io({ user: { profile: { name: 'Ada' } } });
-type Shape = UnwrapIo<typeof store>;
-```
+## Next Steps
 
-## Next steps
-
-- Learn how to compose behavior layers in [Behaviors](/en/behaviors/overview/).
-- See framework bindings in [Integrations](/en/integrations/react/).
+- See [Derived Values](/en/guides/derived/) for typed selectors.
+- Review [Testing](/en/guides/testing/) examples.

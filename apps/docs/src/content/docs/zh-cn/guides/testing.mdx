@@ -1,78 +1,61 @@
 ---
 title: 测试
-description: 用快照与 patch 进行测试。
+description: 在单元测试中验证 IO 行为。
 sidebar:
-  order: 4
+  order: 5
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import TestingRecipe from '../../../../components/snippets/guides/TestingRecipe.mdx';
+在测试中，优先使用 `snapshot()` 验证结果，用 `subscribeUpdate()` 验证更新日志。
 
-## 30 秒配方
-
-<TestingRecipe />
-
-## 使用 snapshot 断言
+## 基础断言
 
 ```ts
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
 
-it('updates count', () => {
-  const count = io(0);
-  count.update((v) => v + 1);
-  expect(count.snapshot()).toBe(1);
-});
-```
-
-## 测试一个 store 结构
-
-```ts
-import { expect, it } from 'vitest';
-import { io } from 'io-store';
-
-it('updates deep fields', () => {
-  const store = io({ user: { name: 'Ada' } });
-  store.user.name.set('Grace');
-  expect(store.snapshot()).toEqual({ user: { name: 'Grace' } });
+describe('counter', () => {
+  it('increments', () => {
+    const store = io({ count: 0 });
+    store.count.update((v) => v + 1);
+    expect(store.count.snapshot()).toBe(1);
+  });
 });
 ```
 
 ## 断言 patch
 
 ```ts
-it('emits update patches', () => {
-  const count = io(0);
-  const patches: string[] = [];
-  const unsub = count.subscribeUpdate((u) => {
-    patches.push(u.patches[0].op);
-  });
+import { io } from 'io-store';
 
-  count.set(1);
-  unsub();
+const store = io({ count: 0 });
+const updates: any[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
 
-  expect(patches).toEqual(['set']);
-});
+store.count.set(1);
+stop();
+
+expect(updates[0].patches[0].op).toBe('set');
 ```
 
-<Tabs>
-  <TabItem label="Arrange">
-    把写入逻辑封装成函数，测试和业务共用。
-  </TabItem>
-  <TabItem label="Act">
-    执行函数并触发更新。
-  </TabItem>
-  <TabItem label="Assert">
-    使用 snapshot 或 patch 断言结果。
-  </TabItem>
-</Tabs>
+## 回放测试
 
-## 小建议
+```ts
+import { io, replay } from 'io-store';
 
-- 把写入操作封装成普通函数，业务和测试复用。
-- 行为正确性优先用快照断言；需要审计/回放时再断言 patch。
+const base = io({ count: 0 });
+const updates: any[] = [];
+const stop = base.subscribeUpdate((u) => updates.push(u));
+
+base.count.set(1);
+base.count.set(2);
+stop();
+
+const replayStore = io({ count: 0 });
+replay(replayStore, updates);
+expect(replayStore.count.snapshot()).toBe(2);
+```
 
 ## 下一步
 
-- 阅读 [TypeScript](/zh-cn/guides/typescript/)。
-- 体验 [Playground](/zh-cn/guides/playground/)。
+- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 学习 [批处理](/zh-cn/guides/batching/) 的合并行为。

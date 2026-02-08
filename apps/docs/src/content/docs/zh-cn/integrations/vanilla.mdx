@@ -1,40 +1,49 @@
 ---
-title: Vanilla JS
-description: 不依赖框架使用 IO。
+title: 原生使用
+description: 在任意框架或无框架环境中使用 IO。
 sidebar:
   order: 1
 ---
 
-## 读写
+IO 的核心 API 与框架无关，直接使用 `snapshot()` + `subscribe()` 即可。
+
+## 基础示例
 
 ```ts
 import { io } from 'io-store';
 
-const state = io({ count: 0 });
+const store = io({ count: 0 });
 
-state.count.get();
-state.count.update((v) => v + 1);
-```
-
-## 订阅
-
-```ts
-const unsub = state.subscribe((snapshot) => {
-  console.log('snapshot', snapshot);
+const stop = store.count.subscribe((value) => {
+  console.log('render', value);
 });
 
-const unsubUpdates = state.subscribeUpdate((update) => {
-  console.log('patches', update.patches);
+store.count.set(1);
+stop();
+```
+
+## 订阅更新日志
+
+```ts
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
 });
 ```
 
-## 快照
+## 手动调度
+
+如果需要合并通知，请使用 `batch()` 或行为扩展 `schedule()`：
 
 ```ts
-const snapshot = state.snapshot();
+import { batch } from 'io-store';
+
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
 ```
 
 ## 下一步
 
-- 使用 [React 集成](/zh-cn/integrations/react/)。
-- 添加 [DevTools](/zh-cn/behaviors/devtools/)。
+- 查看 [React](/zh-cn/integrations/react/) 或 [Vue](/zh-cn/integrations/vue/)。
+- 阅读 [订阅](/zh-cn/guides/subscriptions/) 细节。

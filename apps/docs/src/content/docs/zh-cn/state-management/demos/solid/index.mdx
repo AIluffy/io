@@ -1,37 +1,35 @@
 ---
 title: SolidJS Store（说明）
-description: SolidJS Store 在 Astro 中的集成要点与最小骨架。
+description: SolidJS Store 在 Astro 中的集成要点。
 sidebar:
   order: 4
 ---
 
 import { LinkButton } from '@astrojs/starlight/components';
 
-本仓库的文档站点当前未启用 Solid 集成（未安装 `@astrojs/solid`），因此本页只提供可复用的最小骨架与注意事项。
+当前文档站未启用 Solid 集成（未安装 `@astrojs/solid`），本页仅提供最小骨架与注意事项。
 
 ## 最小骨架
 
-1. 安装集成并启用：
+安装依赖：
 
-   ```bash
-   pnpm -C apps/docs add @astrojs/solid solid-js
-   ```
+```bash
+pnpm -C apps/docs add @astrojs/solid solid-js
+```
 
-2. 在 `astro.config.mjs` 中添加 Solid integration。
+在 `astro.config.mjs` 中启用 Solid integration，然后用 island 方式渲染：
 
-3. 在 Astro 页面里以 island 方式渲染 Solid 组件：
+```astro
+---
+import Counter from '../components/Counter.tsx';
+---
 
-   ```astro
-   ---
-   import Counter from '../components/Counter.tsx';
-   ---
-
-   <Counter client:load />
-   ```
+<Counter client:load />
+```
 
 ## 注意事项
 
-- 把 store 与 effect 限定在 island 生命周期内，避免跨请求共享可变状态。
-- SSR 输出应保持纯静态可复现；需要交互的部分交给 islands hydration。
+- 把 store 与 effect 限定在 island 生命周期内。
+- SSR 输出应保持纯静态，交互交给 islands。
 
 <LinkButton href="/zh-cn/state-management/comparison/">返回对比页</LinkButton>

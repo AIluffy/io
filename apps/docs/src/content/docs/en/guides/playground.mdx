@@ -1,30 +1,29 @@
 ---
 title: Playground
-description: Try IO updates and DevTools in the browser.
+description: Try IO updates and DevTools online.
 sidebar:
   order: 6
 ---
 
 import { IoPlayground } from '../../../../components/IoPlayground';
 
-This page provides a safe, interactive playground to explore IO behavior without executing arbitrary code.
+The Playground is a safe interactive space to explore updates, snapshots, and patches.
 
-## 30-second recipe
+## Quick Tour
 
-1. Open the Playground.
-2. Update `count` and `user.name` and watch the UI update.
-3. Repeat the same changes inside and outside batching and compare the patch output.
+1. Change `count` and `user.name`.
+2. Toggle batching and compare patch output.
+3. Compare leaf vs root subscriptions.
 
-## What to try
+## Suggested Experiments
 
-- Increment counters with and without batching.
-- Toggle nested values and observe patch output in DevTools.
-- Compare snapshots before and after updates.
-- Subscribe to a leaf vs subscribe at the root and compare what you receive.
+- Modify deep fields and inspect patch paths.
+- Compare `snapshot()` output to `get()`.
+- Switch schedules and observe notification frequency.
 
 <IoPlayground client:load />
 
-## Next steps
+## Next Steps
 
-- Learn the DevTools workflow in [Behaviors: DevTools](/en/behaviors/devtools/).
-- Inspect update structures in [Update Log](/en/core-concepts/update-log/).
+- See [DevTools](/en/behaviors/devtools/).
+- Read about the [Update Log](/en/core-concepts/update-log/).

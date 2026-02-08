@@ -1,56 +1,36 @@
 ---
 title: Batching
-description: Combine multiple writes into one update.
+description: Use batch() to merge writes.
 sidebar:
-  order: 2
+  order: 3
 ---
 
-import BatchingRecipe from '../../../../components/snippets/guides/BatchingRecipe.mdx';
+`batch()` merges multiple writes into a single notification cycle.
 
-## 30-second recipe
-
-<BatchingRecipe />
-
-## Why batch
-
-Batching coalesces notifications and merges patches into a single update, which is great for UI performance and DevTools history.
+## Basic Usage
 
 ```ts
 import { batch, io } from 'io-store';
 
-const store = io({ count: 0, name: 'Ada' });
+const store = io({ count: 0, user: { name: 'Ada' } });
 
 batch(() => {
   store.count.update((v) => v + 1);
-  store.name.set('Grace');
+  store.user.name.set('Lin');
 });
 ```
 
-## What you get
+## What It Merges
 
-- `subscribe()` listeners receive only the latest value per node after the batch.
-- `subscribeUpdate()` listeners receive one merged update containing all patches from the batch.
+- Value notifications from `subscribe`.
+- Patch notifications from `subscribeUpdate` (merged internally).
 
-## Nested batches
+## When to Use
 
-Batches can be nested. IO only flushes once at the outer boundary.
+- Multiple writes as one logical action.
+- Reduce render thrash or patch noise.
 
-```ts
-batch(() => {
-  store.count.set(1);
-  batch(() => {
-    store.count.set(2);
-  });
-  store.count.set(3);
-});
-```
+## Next Steps
 
-## When to use
-
-- UI event handlers that touch multiple fields (forms, toggles, transactions).
-- Import/apply a list of changes (replay, undo/redo, syncing).
-
-## Next steps
-
-- Inspect updates in [Update Log](/en/core-concepts/update-log/).
-- Use it in apps via [Integrations](/en/integrations/vanilla/).
+- Read [Subscriptions](/en/guides/subscriptions/).
+- Learn how [Updates](/en/core-concepts/update-log/) are merged.
