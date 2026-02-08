@@ -55,13 +55,6 @@ batch(() => {
   </Card>
 </CardGrid>
 
-## 架构一览
-
-- **Unit + Tree**：叶子值与树结构共享同一运行时。
-- **Snapshot 缓存**：只重建脏路径，避免无谓复制。
-- **Update Log**：写入生成 patch，天然支持时间旅行。
-- **统一适配**：`snapshot()` + `subscribe()` 覆盖多框架。
-
 ## 下一步
 
 - 从 [介绍](/zh-cn/getting-started/introduction/) 开始。

@@ -21,6 +21,8 @@ IO 是一个面向“深层状态”的 TypeScript 状态库。你可以直接�
 - **Derived**：只读派生值，依赖变化自动更新。
 - **Update Log**：每次写入生成 `patch`，可回放与撤销。
 
+你也可以把 Unit 理解为“原子状态”：`io(0)` 是一个原子，而深层 Tree 的每条路径同样是可订阅的原子单元。
+
 ## 设计目标
 
 - **直改深层状态**：`store.user.name.set('Ada')` 无需 reducer。

@@ -21,6 +21,8 @@ IO is a TypeScript state library built for deep state. You update nested fields 
 - **Derived**: read-only computed values that track dependencies.
 - **Update Log**: patches generated on every write.
 
+You can also think of a Unit as “atomic state”: `io(0)` is an atom, and in deep Trees every path is also an atom-like, subscribable unit.
+
 ## Design Goals
 
 - **Direct deep updates**: `store.user.name.set('Ada')` without reducers.

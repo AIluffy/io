@@ -1,0 +1,112 @@
+---
+title: 状态库对比
+description: 通过常见维度快速理解 IO 的定位。
+sidebar:
+  order: 3
+---
+
+状态库没有“绝对最优”，只有“更匹配当前约束”。这一页用一张矩阵 + 几个常见对比点，帮助你快速定位 IO。
+
+## 对比维度
+
+- **状态模型**：写入方式与数据流约束。
+- **订阅粒度**：渲染更新是否可控。
+- **工程接入**：是否需要 Provider、心智负担与重构成本。
+
+## 快速矩阵
+
+| 库 | 写入方式 | 订阅粒度 | 更新可追踪 | 更适合 | 主要代价 |
+| --- | --- | --- | --- | --- | --- |
+| **IO** | 深层路径直改 | 路径级（细） | patch/update | 深层状态、回放/撤销、跨框架复用 | 需要接受“树路径即状态”的模型 |
+| Redux | action/reducer | 通常按 selector | 通过 action 日志 | 强约束团队流程、审计与可预测数据流 | 样板代码与约束成本更高 |
+| Zustand | set + selector | 通常按 selector | 取决于约定/中间件 | React 局部状态、快速落地 | 深层更新/回放能力更依赖封装 |
+| Recoil | atom/selector | atom 级（细） | 依赖调试工具 | React 中复杂依赖图 | atom 设计与 key/边界管理 |
+| Jotai | atom 组合 | atom 级（细） | 依赖调试工具 | 原子化建模、组合自由 | 需要显式拆分并维护 atom 体系 |
+| Valtio | proxy 可变对象 | 基于使用路径 | 以快照为主 | “可变对象写法”偏好 | 更新日志/审计要额外方案 |
+
+> “更新可追踪”这里指：变更是否天然携带结构化信息（例如 patch）以支持回放/撤销/审计。
+
+## IO 的原子态优势
+
+IO 既能“像原子库一样拆分”，又能“保持一个统一的深层结构”：
+
+- **Unit 就是原子**：`io(0)`、`io('text')` 直接得到可订阅、可更新的原子单元。
+- **路径就是原子**：在深层 Tree 中，`store.user.name`、`store.todos[0].done` 这样的路径同样是 Unit。
+- **组合很自然**：用 `derived([unit...])` 把多个原子组合成派生值，不需要额外的 key/registry。
+
+```ts
+import { derived, io } from 'io-store';
+
+const store = io({
+  user: { name: 'Ada' },
+  counter: 0,
+  todos: [{ id: 'a', done: false }],
+});
+
+// Atom-like: leaf/path units
+const name = store.user.name;
+const count = store.counter;
+const firstDone = store.todos[0].done;
+
+// Compose multiple atoms
+const summary = derived([name, count], (n, c) => `${n} · ${c}`);
+
+// Subscribe at atom granularity
+const stop = firstDone.subscribe((v) => console.log('done changed', v));
+stop();
+```
+
+这意味着：你不必为了“原子粒度订阅”把整个状态拆成大量 atom；但当你需要复用/隔离时，也可以按 Unit 拆出来像原子库一样使用。
+
+## IO vs Redux
+
+如果你希望“深层状态写起来像对象一样自然”，IO 通常更顺手；如果你希望“团队统一的动作与流程规范”，Redux 更适配。
+
+- Redux：偏向显式 action/reducer 与全局约束。
+- IO：直接写入深层字段，patch 让更新可回放。
+
+## IO vs Zustand
+
+两者都追求“少样板”，但关注点不同：Zustand 更偏向 React 内的轻量 store；IO 更强调深层路径与可回放的更新日志。
+
+- **深层状态一等公民**：路径即 Unit，天然细粒度订阅。
+- **快照 + patch**：默认冻结快照，更新有结构化日志。
+
+## IO vs Recoil
+
+Recoil 擅长在 React 内表达复杂依赖图（atom/selector），适合“原子化建模 + 依赖推导”的系统。
+
+IO 更偏向“以数据结构为中心”的建模：
+
+- **不需要 atom 拆分**：以对象/数组结构组织状态，路径直接可订阅。
+- **跨框架一致**：适配层统一依赖 `snapshot() + subscribe()`。
+
+## IO vs Jotai
+
+Jotai 以 atom 为最小单元，组合灵活，适合从一开始就用“原子体系”建模的项目。
+
+IO 的差异点更偏向“用数据结构表达状态边界”：
+
+- **路径即状态**：不需要手动拆 atom，树路径天然成为可订阅单元。
+- **更新日志**：patch 一等公民，适合回放/撤销/审计场景。
+
+## IO vs Valtio
+
+Valtio 基于代理对象，强调“写起来像可变对象”，读取用快照避免渲染抖动。
+
+IO 的差异点：
+
+- **快照 + patch**：默认冻结快照，并生成结构化更新日志。
+- **订阅粒度**：路径级 Unit，便于精准订阅与局部刷新。
+
+## 什么时候选 IO
+
+- 深层状态多，且希望写法保持“像对象一样直接”。 
+- 需要 patch/update 用于回放、撤销、同步或审计。
+- 希望一个状态模型在 React/Vue/Svelte（甚至无框架）里复用。
+- 你想把渲染更新压到“真正变化的路径”上，而不是整棵对象。
+
+## 下一步
+
+- 进入 [快速开始](/zh-cn/getting-started/quick-start/)。
+- 阅读 [核心概念](/zh-cn/core-concepts/units-scopes/)。

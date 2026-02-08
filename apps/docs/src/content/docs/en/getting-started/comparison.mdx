@@ -1,0 +1,112 @@
+---
+title: State Library Comparison
+description: A quick comparison to clarify IO’s positioning.
+sidebar:
+  order: 3
+---
+
+There’s no universally “best” state library—only tradeoffs. This page uses a small matrix plus a few practical comparisons to help you place IO quickly.
+
+## Comparison Axes
+
+- **State model**: how updates and data flow are structured.
+- **Subscription granularity**: how precisely renders can be scoped.
+- **Integration cost**: Provider requirements and team overhead.
+
+## Quick Matrix
+
+| Library | Update style | Granularity | Traceability | Best for | Main cost |
+| --- | --- | --- | --- | --- | --- |
+| **IO** | Direct deep writes | Path-level (fine) | patch/update | Deep state, replay/undo, cross-framework reuse | Adopting “tree paths as state units” |
+| Redux | action/reducer | Usually selector-based | action logs | Strong conventions, auditability, predictable flow | Boilerplate and stricter constraints |
+| Zustand | set + selector | Usually selector-based | depends on middleware | Lightweight React stores, fast adoption | Deep updates/replay typically need extra patterns |
+| Recoil | atoms/selectors | Atom-level (fine) | via tooling | Complex dependency graphs in React | Atom modeling and boundary/key management |
+| Jotai | atom composition | Atom-level (fine) | via tooling | Flexible atom-based modeling | Explicit atom design and maintenance |
+| Valtio | proxy mutable objects | Usage-path based | snapshot-first | “Mutable code style” ergonomics | Audit/replay requires additional solutions |
+
+> “Traceability” here means whether changes naturally carry structured metadata (e.g. patches) that enable replay/undo/audit.
+
+## IO’s Atomic Advantage
+
+IO can feel “atom-like” without forcing you to model everything as atoms:
+
+- **Units are atoms**: `io(0)` and `io('text')` create subscribable, writable atomic units.
+- **Paths are atoms**: in deep Trees, paths like `store.user.name` or `store.todos[0].done` are also Units.
+- **Composition stays simple**: use `derived([unit...])` to combine multiple atoms without extra key registries.
+
+```ts
+import { derived, io } from 'io-store';
+
+const store = io({
+  user: { name: 'Ada' },
+  counter: 0,
+  todos: [{ id: 'a', done: false }],
+});
+
+// Atom-like: leaf/path units
+const name = store.user.name;
+const count = store.counter;
+const firstDone = store.todos[0].done;
+
+// Compose multiple atoms
+const summary = derived([name, count], (n, c) => `${n} · ${c}`);
+
+// Subscribe at atom granularity
+const stop = firstDone.subscribe((v) => console.log('done changed', v));
+stop();
+```
+
+In practice: you don’t have to split a whole app state into many atoms just to get fine-grained subscriptions—but you still can factor out Units when reuse and isolation matter.
+
+## IO vs Redux
+
+If you want deep updates to feel like plain object writes, IO is often more ergonomic. If you want team-wide flow constraints and explicit actions, Redux fits better.
+
+- Redux: explicit actions/reducers and stricter flow constraints.
+- IO: direct nested writes with patch-based updates.
+
+## IO vs Zustand
+
+Both aim to reduce boilerplate, but optimize different things: Zustand is a lightweight store pattern for React; IO makes deep paths and patch logs first-class.
+
+- **Deep state is first-class**: each path behaves like a Unit.
+- **Snapshots + patches**: frozen snapshots with structured update logs.
+
+## IO vs Recoil
+
+Recoil shines when you want atom/selector graphs inside React.
+
+IO leans toward “data-structure-first” modeling:
+
+- **No atom splitting**: organize state as objects/arrays; paths are subscribable.
+- **Cross-framework contract**: adapters rely on `snapshot() + subscribe()`.
+
+## IO vs Jotai
+
+Jotai treats atoms as the smallest units and encourages flexible composition—great if you want to model everything as atoms from day one.
+
+IO differs by letting you keep a single nested structure:
+
+- **Paths as state units**: no manual atom splitting; tree paths are subscribable units.
+- **Update log**: patches are first-class for replay/undo/audit.
+
+## IO vs Valtio
+
+Valtio uses proxy-based mutable state with snapshot reads for rendering.
+
+How IO differs:
+
+- **Snapshots + patches**: frozen snapshots plus structured update logs.
+- **Granular subscriptions**: path-level Units for precise rerenders.
+
+## When to Choose IO
+
+- You have deep state and want direct updates with minimal ceremony.
+- You need patch/update logs for replay, undo/redo, sync, or audit.
+- You want one model reusable across React/Vue/Svelte (or vanilla).
+- You want updates scoped to the paths that actually changed.
+
+## Next Steps
+
+- Continue with the [Quick Start](/en/getting-started/quick-start/).
+- Learn [Core Concepts](/en/core-concepts/units-scopes/).

@@ -5,17 +5,30 @@ sidebar:
   order: 2
 ---
 
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## 安装
 
-```bash
-npm install io-store
-```
+<Steps>
 
-需要框架适配时再装对应包：
+1. 安装核心包：
 
-```bash
-npm install io-react io-vue io-svelte
-```
+   ```bash
+   npm install io-store
+   ```
+
+2. 安装框架适配（可选）：
+
+   ```bash
+   npm install io-react
+   ```
+
+</Steps>
+
+:::note
+如果你的项目已经在用框架，请安装对应适配包：
+`io-react`、`io-vue` 或 `io-svelte`。
+:::
 
 ## 创建状态
 
@@ -61,6 +74,65 @@ batch(() => {
   store.user.name.set('Lin');
 });
 ```
+
+## 在框架中使用
+
+<Tabs default="React">
+  <TabItem label="React">
+    ```tsx
+    import { io } from 'io-store';
+    import { useIO } from 'io-react';
+
+    const count = io(0);
+
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+      );
+    }
+    ```
+
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { io } from 'io-store';
+    import { ioRef, useIO } from 'io-vue';
+
+    const count = io(0);
+    const value = useIO(count);
+    const model = ioRef(count);
+    const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <template>
+      <button @click="inc">{{ value }}</button>
+      <input v-model="model" type="number" />
+    </template>
+    ```
+
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+    <script lang="ts">
+      import { io } from 'io-store';
+      import { toWritable } from 'io-svelte';
+
+      const count = io(0);
+      const countStore = toWritable(count);
+      const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <button on:click={inc}>{$countStore}</button>
+    ```
+
+  </TabItem>
+</Tabs>
+
+## 常见坑
+
+- 不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
 
 ## 下一步
 

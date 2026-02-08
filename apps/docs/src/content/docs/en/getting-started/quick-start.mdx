@@ -5,17 +5,30 @@ sidebar:
   order: 2
 ---
 
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Install
 
-```bash
-npm install io-store
-```
+<Steps>
 
-Add adapters only when needed:
+1. Install the core package:
 
-```bash
-npm install io-react io-vue io-svelte
-```
+   ```bash
+   npm install io-store
+   ```
+
+2. Add a framework adapter (optional):
+
+   ```bash
+   npm install io-react
+   ```
+
+</Steps>
+
+:::note
+If your project already uses a framework, install its adapter:
+`io-react`, `io-vue`, or `io-svelte`.
+:::
 
 ## Create State
 
@@ -61,6 +74,65 @@ batch(() => {
   store.user.name.set('Lin');
 });
 ```
+
+## Use in your framework
+
+<Tabs default="React">
+  <TabItem label="React">
+    ```tsx
+    import { io } from 'io-store';
+    import { useIO } from 'io-react';
+
+    const count = io(0);
+
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+      );
+    }
+    ```
+
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { io } from 'io-store';
+    import { ioRef, useIO } from 'io-vue';
+
+    const count = io(0);
+    const value = useIO(count);
+    const model = ioRef(count);
+    const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <template>
+      <button @click="inc">{{ value }}</button>
+      <input v-model="model" type="number" />
+    </template>
+    ```
+
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+    <script lang="ts">
+      import { io } from 'io-store';
+      import { toWritable } from 'io-svelte';
+
+      const count = io(0);
+      const countStore = toWritable(count);
+      const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <button on:click={inc}>{$countStore}</button>
+    ```
+
+  </TabItem>
+</Tabs>
+
+## Common gotcha
+
+- Avoid putting the same object instance in an array twice. Create a new object for each item.
 
 ## Next Steps
 
