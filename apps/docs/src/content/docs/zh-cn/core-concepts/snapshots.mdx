@@ -28,6 +28,11 @@ count.snapshot();
 
 同一版本内快照具有稳定引用，适合缓存与渲染优化。
 
+## `get()` vs `snapshot()`
+
+- 需要参与依赖追踪（例如在 `derived()` 中）时用 `get()`。
+- 只想拿值、不希望被追踪时用 `snapshot()`。
+
 ## 下一步
 
 - 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。

@@ -30,6 +30,11 @@ count.snapshot();
 
 Snapshots are **referentially stable** within the same revision, which is helpful for memoization and UI rendering.
 
+## `get()` vs `snapshot()`
+
+- Use `get()` when you want the read to participate in dependency tracking (for example inside `derived()`).
+- Use `snapshot()` when you just want the value without being tracked.
+
 ## Next steps
 
 - Learn about update metadata in [Update Log](/en/core-concepts/update-log/).

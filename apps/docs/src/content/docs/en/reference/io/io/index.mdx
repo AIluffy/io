@@ -7,7 +7,8 @@ description: "function export"
 ## Signature
 
 ```ts
-<T>(target: T, options: { shallow: true; silent?: boolean; }) => IoNode<T>
+<T>(target: T, options: { shallow: true }) => IoNode<T>
+<T>(target: T, options?: { shallow?: false }) => IoResult<T>
 ```
 
 ## Parameters
@@ -15,7 +16,7 @@ description: "function export"
 | Name | Type |
 | --- | --- |
 | target | `T` |
-| options | `{ shallow: true; silent?: boolean; }` |
+| options | `{ shallow: true }` or `{ shallow?: false }` |
 
 ## Returns
 
@@ -25,6 +26,7 @@ description: "function export"
 
 - `shallow: true` limits depth to 1 using the same tree engine as deep mode.
 - In shallow mode, `commit` rejects unknown keys to keep the shape stable.
+- Deep mode now only tracks plain objects and arrays; passing an opaque class instance throws `TypeError`. Wrap non-plain values in a shallow node if you need to include them.
 
 ## Errors
 

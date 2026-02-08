@@ -7,7 +7,7 @@ sidebar:
 
 ## Unit
 
-Unit 是状态单元，提供明确的 `get/set/update` 方法。
+Unit 是最小的可写状态单元，提供明确的 `get/set/update` 方法。
 
 ```ts
 import { io } from 'io-store';
@@ -19,11 +19,44 @@ count.set(1); // 写入
 count.update((v) => v + 1); // 更新
 ```
 
+Unit 也支持订阅，你可以直接监听变化：
+
+```ts
+const unsub = count.subscribe((value) => {
+  console.log('count changed', value);
+});
+
+count.set(2);
+unsub();
+```
+
 Unit 暴露以下能力：
 
 - `subscribe(fn)` 订阅值变化
 - `subscribeUpdate(fn)` 订阅更新记录
 - `snapshot()` 获取冻结快照
+
+### `subscribe()` vs `subscribeUpdate()`
+
+两者相关，但关注点不同：
+
+- 用 `subscribe(fn(value))`：拿到最新值（UI 渲染最常用）。
+- 用 `subscribeUpdate(fn(update))`：拿到变更元信息（patch、revision），用于回放/撤销/持久化/DevTools。
+
+如果你只订阅更新，并不会自动拿到“新值”。需要值时再调用 `snapshot()`/`get()`。
+
+最小示例：
+
+```ts
+const unsubValue = count.subscribe((value) => {
+  console.log('render with value', value);
+});
+
+const unsubUpdate = count.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+  console.log('latest value', count.snapshot());
+});
+```
 
 ## Scope
 
@@ -45,6 +78,8 @@ user.commit((draft) => {
 });
 ```
 
+当你想把多处修改合并成一次“逻辑变更”时，用 `commit` 会更清晰。
+
 ## 数组节点
 
 数组同样是 Unit，可以直接操作并产生更新，也与深层 Tree 共享实现。
@@ -55,6 +90,10 @@ const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 todos.push({ id: 'b', title: 'Document', done: false });
 todos[0].done.set(true);
 ```
+
+:::caution
+不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
+:::
 
 ## 下一步
 

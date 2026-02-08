@@ -5,6 +5,12 @@ sidebar:
   order: 2
 ---
 
+import BatchingRecipe from '../../../../components/snippets/guides/BatchingRecipe.mdx';
+
+## 30 秒配方
+
+<BatchingRecipe />
+
 ## 为什么批处理
 
 批处理会合并通知与 patch，减少渲染抖动，DevTools 记录也更清晰。
@@ -20,9 +26,29 @@ batch(() => {
 });
 ```
 
+## 会发生什么
+
+- `subscribe()`：批处理结束后，每个节点只会把“最终值”通知给监听者。
+- `subscribeUpdate()`：批处理结束后，会收到一个合并后的 update（包含本次批处理产生的所有 patches）。
+
 ## 嵌套批处理
 
 批处理可嵌套，只有最外层结束时才会触发通知。
+
+```ts
+batch(() => {
+  store.count.set(1);
+  batch(() => {
+    store.count.set(2);
+  });
+  store.count.set(3);
+});
+```
+
+## 适用场景
+
+- 一次交互会改多个字段（表单、开关、事务）。
+- 需要批量应用变更（回放、撤销/重做、同步）。
 
 ## 下一步
 

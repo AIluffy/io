@@ -25,6 +25,11 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 </Steps>
 
+:::note
+如果你的项目已经在用框架，请安装对应适配包：
+`io-react`、`io-vue` 或 `io-svelte`。
+:::
+
 ## 创建状态
 
 ```ts
@@ -37,10 +42,14 @@ count.set(1); // 写入
 count.update((v) => v + 1); // 更新
 ```
 
+:::tip
+`get()` 返回冻结快照，读取结果可以放心共享，不会被误修改污染。
+:::
+
 ## 在框架中使用
 
-<Tabs>
-  <TabItem label="Core">
+<Tabs default="core">
+  <TabItem label="Core" id="core">
     ```ts
     import { io, batch } from 'io-store';
 
@@ -53,6 +62,13 @@ count.update((v) => v + 1); // 更新
       store.count.update((v) => v + 1);
       store.count.update((v) => v + 1);
     });
+
+    const unsubscribe = store.count.subscribe((value) => {
+      console.log('count changed', value);
+    });
+
+    // 之后需要取消订阅：
+    unsubscribe();
     ```
 
   </TabItem>
@@ -73,31 +89,44 @@ count.update((v) => v + 1); // 更新
 
   </TabItem>
   <TabItem label="Vue">
-    ```ts
+    ```vue
+    <script setup lang="ts">
     import { io } from 'io-store';
-    import { useIO } from 'io-vue';
+    import { ioRef, useIO } from 'io-vue';
 
     const count = io(0);
+    const value = useIO(count);
+    const model = ioRef(count);
+    const inc = () => count.update((v) => v + 1);
+    </script>
 
-    export function useCounter() {
-      const state = useIO(count);
-      const inc = () => count.update((v) => v + 1);
-      return { state, inc };
-    }
+    <template>
+      <button @click="inc">{{ value }}</button>
+      <input v-model="model" type="number" />
+    </template>
     ```
 
   </TabItem>
   <TabItem label="Svelte">
-    ```ts
-    import { io } from 'io-store';
-    import { toWritable } from 'io-svelte';
+    ```svelte
+    <script lang="ts">
+      import { io } from 'io-store';
+      import { toWritable } from 'io-svelte';
 
-    const count = io(0);
-    export const countStore = toWritable(count);
+      const count = io(0);
+      const countStore = toWritable(count);
+      const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <button on:click={inc}>{$countStore}</button>
     ```
 
   </TabItem>
 </Tabs>
+
+## 常见坑
+
+- 不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
 
 ## 下一步
 

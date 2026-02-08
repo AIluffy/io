@@ -1,4 +1,4 @@
-import { batch, invertUpdate, mergeUpdates, io, replay } from 'io-store';
+import { batch, mergeUpdates, io, replay, undoUpdate } from 'io-store';
 
 const store = io({
   todos: [{ id: 'a', title: 'Learn IO', done: false }],
@@ -18,7 +18,7 @@ batch(() => {
 unsubscribe();
 
 const merged = mergeUpdates(updates);
-const inverses = merged.map(invertUpdate).reverse();
+const inverses = merged.map(undoUpdate).reverse();
 
 console.log('Snapshot (after mutations):', store.snapshot());
 

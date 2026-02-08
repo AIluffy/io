@@ -150,20 +150,20 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
   }, [selectedEntry]);
 
   const headerStyle: CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 8,
-    alignItems: 'center',
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: 10,
   };
 
   const panelStyle: CSSProperties = {
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
     fontSize: 12,
-    border: '1px solid rgba(148,163,184,0.35)',
+    border: '1px solid var(--io-devtools-border)',
     borderRadius: 10,
     padding: 10,
-    background: 'rgba(148,163,184,0.08)',
+    background: 'var(--io-devtools-panel-bg)',
+    color: 'var(--io-devtools-text)',
     height: props.height ?? 420,
     display: 'grid',
     gridTemplateRows: 'auto 1fr',
@@ -171,80 +171,91 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
   };
 
   return (
-    <div style={panelStyle}>
+    <div className="io-devtools-panel" style={panelStyle}>
       <div style={headerStyle}>
-        <button
-          onClick={() => props.devtools.timeTravel.undo()}
-          disabled={state.cursor < 0}
-        >
-          Undo
-        </button>
-        <button
-          onClick={() => props.devtools.timeTravel.redo()}
-          disabled={state.cursor >= state.history.length - 1}
-        >
-          Redo
-        </button>
-        <button
-          onClick={() => {
-            if (selected >= 0) props.devtools.timeTravel.goTo(selected);
-          }}
-          disabled={selected < 0}
-        >
-          Go
-        </button>
-        <button
-          onClick={() =>
-            state.paused ? props.devtools.resume() : props.devtools.pause()
-          }
-        >
-          {state.paused ? 'Resume' : 'Pause'}
-        </button>
-        <button
-          onClick={() => props.devtools.clear()}
-          disabled={state.history.length === 0}
-        >
-          Clear
-        </button>
-        <button
-          onClick={() => {
-            const json = props.devtools.export.json();
-            downloadText('io-devtools.json', json);
-          }}
-        >
-          Export JSON
-        </button>
-        <button
-          onClick={() => {
-            const payload = props.devtools.export.reduxDevToolsImport();
-            downloadText(
-              'io-redux-devtools-import.json',
-              JSON.stringify(payload, null, 2),
-            );
-          }}
-        >
-          Export Redux Import
-        </button>
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span style={{ opacity: 0.8 }}>Seek</span>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, state.history.length - 1)}
-            value={Math.max(0, selected)}
-            onChange={(e) => setSelected(Number(e.target.value))}
+        <div className="io-devtools-panel__toolbar">
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => props.devtools.timeTravel.undo()}
+            disabled={state.cursor < 0}
+          >
+            Undo
+          </button>
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => props.devtools.timeTravel.redo()}
+            disabled={state.cursor >= state.history.length - 1}
+          >
+            Redo
+          </button>
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => {
+              if (selected >= 0) props.devtools.timeTravel.goTo(selected);
+            }}
+            disabled={selected < 0}
+          >
+            Go
+          </button>
+          <button
+            className="io-devtools-panel__button"
+            onClick={() =>
+              state.paused ? props.devtools.resume() : props.devtools.pause()
+            }
+          >
+            {state.paused ? 'Resume' : 'Pause'}
+          </button>
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => props.devtools.clear()}
             disabled={state.history.length === 0}
-          />
-        </label>
+          >
+            Clear
+          </button>
+          <div className="io-devtools-panel__toolbar-divider" />
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => {
+              const json = props.devtools.export.json();
+              downloadText('io-devtools.json', json);
+            }}
+          >
+            Export JSON
+          </button>
+          <button
+            className="io-devtools-panel__button"
+            onClick={() => {
+              const payload = props.devtools.export.reduxDevToolsImport();
+              downloadText(
+                'io-redux-devtools-import.json',
+                JSON.stringify(payload, null, 2),
+              );
+            }}
+          >
+            Export Redux Import
+          </button>
+        </div>
 
-        <div
-          style={{ marginLeft: 'auto', display: 'flex', gap: 10, opacity: 0.9 }}
-        >
-          <div>Cursor: {state.cursor}</div>
-          <div>History: {state.history.length}</div>
-          {state.perf ? (
-            <div>Avg: {state.perf.summary.avgTotalMs.toFixed(2)}ms</div>
-          ) : null}
+        <div className="io-devtools-panel__seek-row">
+          <label className="io-devtools-panel__seek">
+            <span>Seek</span>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, state.history.length - 1)}
+              value={Math.max(0, selected)}
+              onChange={(e) => setSelected(Number(e.target.value))}
+              disabled={state.history.length === 0}
+            />
+          </label>
+
+          <div className="io-devtools-panel__meta">
+            <div>Cursor: {state.cursor}</div>
+            <div>History: {state.history.length}</div>
+            {state.perf ? (
+              <div>Avg: {state.perf.summary.avgTotalMs.toFixed(2)}ms</div>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -258,9 +269,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
       >
         <div
           style={{
-            border: '1px solid rgba(148,163,184,0.35)',
+            border: '1px solid var(--io-devtools-border)',
             borderRadius: 10,
-            background: 'rgba(255,255,255,0.6)',
+            background: 'var(--io-devtools-surface)',
             overflow: 'auto',
           }}
         >
@@ -268,8 +279,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             style={{
               padding: 8,
               fontWeight: 700,
-              borderBottom: '1px solid rgba(148,163,184,0.2)',
+              borderBottom: '1px solid var(--io-devtools-divider)',
             }}
+            className="io-devtools-panel__section-title"
           >
             Timeline
           </div>
@@ -283,6 +295,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             return (
               <button
                 key={e.id}
+                className={`io-devtools-panel__timeline-item${active ? ' is-active' : ''}${cursorHere ? ' is-cursor' : ''}`}
                 onClick={() => setSelected(idx)}
                 style={{
                   display: 'grid',
@@ -292,18 +305,20 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                   textAlign: 'left',
                   padding: '8px 10px',
                   border: 'none',
-                  borderBottom: '1px solid rgba(148,163,184,0.15)',
-                  background: active ? 'rgba(59,130,246,0.12)' : 'transparent',
+                  borderBottom: '1px solid var(--io-devtools-divider)',
+                  background: active
+                    ? 'var(--io-devtools-timeline-active-bg)'
+                    : 'var(--io-devtools-timeline-bg)',
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ opacity: 0.7 }}>{idx}</div>
+                <div className="io-devtools-panel__muted">{idx}</div>
                 <div style={{ display: 'grid', gap: 2 }}>
                   <div style={{ fontWeight: 600 }}>
                     {cursorHere ? '▶ ' : ''}
                     {label}
                   </div>
-                  <div style={{ opacity: 0.7 }}>
+                  <div className="io-devtools-panel__muted">
                     {formatTimestamp(e.timestamp)}
                     {e.perf
                       ? ` · ${e.perf.totalMs.toFixed(2)}ms · ${e.perf.patchCount} patches`
@@ -317,9 +332,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
 
         <div
           style={{
-            border: '1px solid rgba(148,163,184,0.35)',
+            border: '1px solid var(--io-devtools-border)',
             borderRadius: 10,
-            background: 'rgba(255,255,255,0.6)',
+            background: 'var(--io-devtools-surface)',
             overflow: 'auto',
             minHeight: 0,
           }}
@@ -328,13 +343,14 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             style={{
               padding: 8,
               fontWeight: 700,
-              borderBottom: '1px solid rgba(148,163,184,0.2)',
+              borderBottom: '1px solid var(--io-devtools-divider)',
             }}
+            className="io-devtools-panel__section-title"
           >
             Details
           </div>
           {!selectedEntry ? (
-            <div style={{ padding: 10, opacity: 0.75 }}>
+            <div style={{ padding: 10 }} className="io-devtools-panel__muted">
               Select an entry to inspect diffs.
             </div>
           ) : (
@@ -343,12 +359,14 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                 <div style={{ fontWeight: 700 }}>Patch diffs</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
+                    className="io-devtools-panel__button"
                     onClick={() => setPatchView('tree')}
                     disabled={patchView === 'tree'}
                   >
                     Tree
                   </button>
                   <button
+                    className="io-devtools-panel__button"
                     onClick={() => setPatchView('list')}
                     disabled={patchView === 'list'}
                   >
@@ -361,7 +379,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'rgba(148,163,184,0.12)',
+                      background: 'var(--io-devtools-surface-strong)',
                       overflowX: 'auto',
                     }}
                   >
@@ -373,7 +391,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'rgba(148,163,184,0.12)',
+                      background: 'var(--io-devtools-surface-strong)',
                       display: 'grid',
                       gap: 6,
                     }}
@@ -391,7 +409,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'rgba(148,163,184,0.12)',
+                      background: 'var(--io-devtools-surface-strong)',
                       overflowX: 'auto',
                     }}
                   >

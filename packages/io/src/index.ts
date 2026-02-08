@@ -5,11 +5,14 @@ export { isServerEnv } from './lib/utils/env.js';
 export { scheduleTask } from './lib/utils/schedule.js';
 export { onError, onMutation } from './lib/utils/debug.js';
 export { relocate } from './lib/extensions/relocate.js';
+export { createHistory } from './lib/utils/history.js';
 export type {
   IoArrayUnit,
   IoDerived,
   IoErrorHandler,
   IoErrorHandlerFor,
+  IoHistory,
+  IoHistoryOptions,
   IoMutationOp,
   IoNode,
   IoPatch,
@@ -29,7 +32,7 @@ export type {
 export type { IoSchedule } from './lib/utils/schedule.js';
 export {
   applyUpdate,
-  invertUpdate,
   mergeUpdates,
   replay,
+  undoUpdate,
 } from './lib/utils/updates.js';

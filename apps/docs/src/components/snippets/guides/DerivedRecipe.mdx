@@ -1,0 +1,15 @@
+import { Code } from '@astrojs/starlight/components';
+import { commonStoreTs } from './common-store';
+
+export const code = `${commonStoreTs.replace(
+  "import { io } from 'io-store';",
+  "import { io, derived } from 'io-store';"
+)}
+
+const doubled = derived([store.count], (v) => v * 2);
+
+const unsub = doubled.subscribe((v) => console.log('doubled', v));
+store.count.set(2); // logs 4
+unsub();`;
+
+<Code code={code} lang="ts" />

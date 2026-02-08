@@ -39,6 +39,22 @@ export type IoUpdate = {
   patches: IoPatch[];
 };
 
+export type IoHistoryOptions = {
+  limit?: number;
+  emitUpdate?: boolean;
+};
+
+export type IoHistory = {
+  undo(): void;
+  redo(): void;
+  clear(): void;
+  destroy(): void;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly length: number;
+  readonly cursor: number;
+};
+
 export type IoUnit<T> = {
   get(): T;
   set(next: T): void;

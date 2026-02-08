@@ -4,7 +4,6 @@
   "license": "MIT",
   "scripts": {
     "lint:mdx": "markdownlint-cli2 --config .markdownlint.json \"apps/docs/src/content/docs/**/*.{md,mdx}\"",
-    "lighthouse:ci": "lhci autorun --config=./lighthouserc.json",
     "docs:generate-api": "node tools/docs/generate-api-docs.mjs",
     "docs:check": "node tools/docs/generate-api-docs.mjs && git diff --exit-code apps/docs/src/content/docs"
   },

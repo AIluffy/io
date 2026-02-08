@@ -9,11 +9,18 @@ import { IoPlayground } from '../../../../components/IoPlayground';
 
 This page provides a safe, interactive playground to explore IO behavior without executing arbitrary code.
 
+## 30-second recipe
+
+1. Open the Playground.
+2. Update `count` and `user.name` and watch the UI update.
+3. Repeat the same changes inside and outside batching and compare the patch output.
+
 ## What to try
 
 - Increment counters with and without batching.
 - Toggle nested values and observe patch output in DevTools.
 - Compare snapshots before and after updates.
+- Subscribe to a leaf vs subscribe at the root and compare what you receive.
 
 <IoPlayground client:load />
 

@@ -1,4 +1,4 @@
-import { applyUpdate, invertUpdate, onError } from 'io-store';
+import { applyUpdate, onError, undoUpdate } from 'io-store';
 import type { IoPatch, IoUpdate } from 'io-store';
 import { diffSnapshots } from './diff-snapshots.js';
 import { exportReduxDevToolsImportState } from './export-redux-devtools.js';
@@ -342,7 +342,7 @@ export function createIoDevtools(
   const undo = (): boolean => {
     if (cursor < 0) return false;
     const entry = history[cursor];
-    return applyTimeTravel(invertUpdate(entry.update), 'undo');
+    return applyTimeTravel(undoUpdate(entry.update), 'undo');
   };
 
   const redo = (): boolean => {

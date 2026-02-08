@@ -80,6 +80,16 @@ function Counter() {
 }
 ```
 
+## Silent option removal
+
+Deep mode now only accepts plain arrays and objects. Passing a class instance directly throws `TypeError`. If you previously used `io(target, { silent: true })`, replace it with shallow mode:
+
+```ts
+const wrapper = io(target, { shallow: true });
+```
+
+Otherwise wrap the object in a plain shell before deep-tracking it.
+
 ## Next steps
 
 - Learn the IO mental model in [Introduction](/en/getting-started/introduction/).

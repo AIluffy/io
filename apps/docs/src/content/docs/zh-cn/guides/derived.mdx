@@ -6,6 +6,19 @@ sidebar:
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
+import DerivedRecipe from '../../../../components/snippets/guides/DerivedRecipe.mdx';
+
+派生值是只读节点：由其他状态计算得出。适合做汇总、视图模型、派生标记等。
+
+## 30 秒配方
+
+<DerivedRecipe />
+
+## 如何选择
+
+- 用 `derived([deps], compute)`：依赖明确、输入固定。
+- 用 `derived(tree, selector)`：从树里“选择”需要的字段。
+- 用 `derived(() => ...)`：在函数里用 `get()` 读取，让 IO 自动追踪依赖。
 
 ## 显式依赖
 
@@ -32,6 +45,8 @@ const total = derived(store, (s) => s.pricing.price + s.pricing.tax);
 const combined = derived(() => count.get() + doubled.get());
 ```
 
+## 读取与订阅
+
 <Tabs>
   <TabItem label="读取">
     ```ts
@@ -47,6 +62,11 @@ const combined = derived(() => count.get() + doubled.get());
     ```
   </TabItem>
 </Tabs>
+
+## 注意事项
+
+- 派生值是只读的；要写入，请更新底层 Unit。
+- 订阅会让派生值保持“活跃”，不再需要时记得取消订阅。
 
 ## 下一步
 

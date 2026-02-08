@@ -7,7 +7,7 @@ sidebar:
 
 ## Patch and Update
 
-IO records each write as a `patch` (`set` / `splice` / `sort`) and groups patches into an `update`. Updates can be merged, inverted, or replayed.
+IO records each write as a `patch` (`set` / `splice` / `sort`) and groups patches into an `update`. Updates can be merged, inverted (undo), or replayed.
 
 ```ts
 import { io } from 'io-store';
@@ -21,6 +21,14 @@ const unsub = count.subscribeUpdate((update) => {
 count.set(1);
 unsub();
 ```
+
+:::tip
+Subscribe at the tree root to capture changes across the whole store.
+:::
+
+:::note
+`subscribeUpdate()` is about “what changed” (patches). If you also need the latest value, read it with `snapshot()`/`get()` (or use `subscribe()` for value-driven updates).
+:::
 
 ## onMutation and onError
 
@@ -43,7 +51,7 @@ const stopError = onError(store, (error, path, op) => {
 ## Update utilities
 
 ```ts
-import { applyUpdate, invertUpdate, mergeUpdates, io } from 'io-store';
+import { applyUpdate, mergeUpdates, undoUpdate, io } from 'io-store';
 
 const store = io({ count: 0 });
 const updates = [];
@@ -53,10 +61,30 @@ store.count.set(1);
 store.count.set(2);
 unsub();
 
-const merged = mergeUpdates(updates[0], updates[1]);
-const inverted = invertUpdate(merged);
+const replayStore = io({ count: 0 });
+applyUpdate(replayStore, updates);
+
+const merged = mergeUpdates(...updates);
+const inverted = undoUpdate(merged);
 
 applyUpdate(store, inverted);
+```
+
+## Undo / redo
+
+Use `createHistory` for a ready-to-go undo/redo flow:
+
+```ts
+import { createHistory, io } from 'io-store';
+
+const store = io({ count: 0 });
+const history = createHistory(store);
+
+store.count.set(1);
+store.count.set(2);
+
+history.undo();
+history.redo();
 ```
 
 ## Next steps

@@ -1,9 +1,9 @@
 ---
 title: 欢迎使用 IO（艾欧）
-description: 轻量级响应式状态管理库。
+description: 细粒度状态：深层更新 + 可预测快照。
 template: splash
 hero:
-  tagline: 深层状态，随触即达。
+  tagline: 直接改深层状态，只渲染真正变化的部分。
   actions:
     - text: 快速开始
       link: /zh-cn/getting-started/quick-start/
@@ -15,84 +15,35 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## 快速开始
 
-<Tabs default="core">
-  <TabItem label="Core" id="core">
-    ```ts
-    import { io } from 'io-store';
+```ts
+import { io, batch } from 'io-store';
 
-    const count = io(0);
+const store = io({ count: 0, user: { name: 'Ada' } });
 
-    count.get();
-    count.update((v) => v + 1);
-    ```
+store.user.name.set('Grace');
+batch(() => {
+  store.count.update((v) => v + 1);
+  store.count.update((v) => v + 1);
+});
+```
 
-  </TabItem>
-  <TabItem label="React">
-    ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-react';
-
-    const count = io(0);
-
-    export function Counter() {
-      const value = useIO(count);
-      return (
-        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
-      );
-    }
-    ```
-
-  </TabItem>
-  <TabItem label="Vue">
-    ```ts
-    import { io } from 'io-store';
-    import { useIO, ioRef } from 'io-vue';
-
-    const count = io(0);
-    const countRef = ioRef(count);
-
-    export function useCounter() {
-      const state = useIO(count);
-      const inc = () => count.update((v) => v + 1);
-      const reset = () => countRef.value = 0;
-      return { state, countRef, inc, reset };
-    }
-    ```
-
-  </TabItem>
-  <TabItem label="Svelte">
-    ```ts
-    import { io } from 'io-store';
-    import { toWritable } from 'io-svelte';
-
-    const count = io(0);
-    export const countStore = toWritable(count);
-    ```
-
-  </TabItem>
-</Tabs>
+框架适配：[React](/zh-cn/integrations/react/) · [Vue](/zh-cn/integrations/vue/) · [Svelte](/zh-cn/integrations/svelte/)
 
 ## 为什么选择 IO
 
 <CardGrid stagger>
-  <Card title="原子化" icon="sourcehut">
-    状态拆分为独立原子，精准订阅，零额外渲染。
+  <Card title="深层直改" icon="seti:stylus">
+    直接更新任意深度字段，无需 reducer 或样板代码。
   </Card>
-  <Card title="路径直达" icon="seti:stylus">
-    直接读写任意深度嵌套，无需改变 API。
+  <Card title="细粒度" icon="sourcehut">
+    订阅更精准，更新只影响相关部分。
   </Card>
-  <Card title="不可变快照" icon="approve-check-circle">
-    冻结快照 + 可回放变更，确保状态可预测。
-  </Card>
-  <Card title="行为扩展" icon="puzzle">
-    组合持久化、调度、DevTools 等能力。
-  </Card>
-  <Card title="多框架" icon="setting">
-    React、Vue、Svelte 共享同一核心契约。
+  <Card title="可预测" icon="approve-check-circle">
+    冻结快照 + patch 写入，方便回放与撤销。
   </Card>
 </CardGrid>
 

@@ -1,9 +1,9 @@
 ---
 title: Welcome to IO
-description: Lightweight reactive state management library.
+description: Fine-grained state with deep updates and predictable snapshots.
 template: splash
 hero:
-  tagline: Deep state, right at your fingertips.
+  tagline: Update deep state directly. Render only what changed.
   actions:
     - text: Get Started
       link: /en/getting-started/quick-start/
@@ -15,85 +15,35 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Quick Start
 
-<Tabs default="core">
-  <TabItem label="Core" id="core">
-    ```ts
-    import { io } from 'io-store';
+```ts
+import { io, batch } from 'io-store';
 
-    const count = io(0);
+const store = io({ count: 0, user: { name: 'Ada' } });
 
-    count.get();
-    count.update((v) => v + 1);
-    ```
+store.user.name.set('Grace');
+batch(() => {
+  store.count.update((v) => v + 1);
+  store.count.update((v) => v + 1);
+});
+```
 
-  </TabItem>
-  <TabItem label="React">
-    ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-react';
-
-    const count = io(0);
-
-    export function Counter() {
-      const value = useIO(count);
-      return (
-        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
-      );
-    }
-    ```
-
-  </TabItem>
-  <TabItem label="Vue">
-    ```ts
-    import { io } from 'io-store';
-    import { useIO, ioRef } from 'io-vue';
-
-    const count = io(0);
-    const countRef = ioRef(count);
-
-    export function useCounter() {
-      const state = useIO(count);
-      const inc = () => count.update((v) => v + 1);
-      const reset = () => countRef.value = 0;
-      return { state, countRef, inc, reset };
-    }
-    ```
-
-  </TabItem>
-  <TabItem label="Svelte">
-    ```ts
-    import { io } from 'io-store';
-    import { toWritable } from 'io-svelte';
-
-    const count = io(0);
-    export const countStore = toWritable(count);
-    ```
-
-  </TabItem>
-</Tabs>
+Framework adapters: [React](/en/integrations/react/) · [Vue](/en/integrations/vue/) · [Svelte](/en/integrations/svelte/)
 
 ## Why IO
 
 <CardGrid stagger>
-  <Card title="Atomic" icon="sourcehut">
-    State decomposed into independent atoms for precise subscriptions with zero
-    extra renders.
+  <Card title="Deep, direct" icon="seti:stylus">
+    Update nested paths without reducers or boilerplate.
   </Card>
-  <Card title="Direct Paths" icon="seti:stylus">
-    Read and write nested paths at any depth without changing your APIs.
+  <Card title="Fine-grained" icon="sourcehut">
+    Subscriptions stay precise so work stays local.
   </Card>
-  <Card title="Immutable Snapshots" icon="approve-check-circle">
-    Frozen snapshots with replayable change logs for predictable state.
-  </Card>
-  <Card title="Behaviors" icon="puzzle">
-    Compose persist, schedule, and DevTools capabilities.
-  </Card>
-  <Card title="Multi-Framework" icon="setting">
-    React, Vue, and Svelte adapters share the same core contract.
+  <Card title="Predictable" icon="approve-check-circle">
+    Frozen snapshots and patch-based writes for replay/undo.
   </Card>
 </CardGrid>
 

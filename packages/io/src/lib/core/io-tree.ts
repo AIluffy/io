@@ -240,14 +240,13 @@ const { createTreeNode } = createNodeFactory({
 
 export function ioTree<T>(
   initial: T,
-  options?: { silent?: boolean; devtools?: boolean; maxDepth?: number },
+  options?: { devtools?: boolean; maxDepth?: number },
 ): IoTreeNode<T> {
   const devtools = resolveDevtoolsEnabled(options);
   const ctx: TreeContext = {
     root: createTrieNode(),
     errorListeners: new Set(),
     devtools,
-    silent: options?.silent === true,
     maxDepth: options?.maxDepth,
     seen: new WeakMap(),
   };

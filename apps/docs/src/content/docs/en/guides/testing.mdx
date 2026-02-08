@@ -6,6 +6,11 @@ sidebar:
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
+import TestingRecipe from '../../../../components/snippets/guides/TestingRecipe.mdx';
+
+## 30-second recipe
+
+<TestingRecipe />
 
 ## Prefer snapshot assertions
 
@@ -19,6 +24,19 @@ it('updates count', () => {
   const count = io(0);
   count.update((v) => v + 1);
   expect(count.snapshot()).toBe(1);
+});
+```
+
+## Test a store shape
+
+```ts
+import { expect, it } from 'vitest';
+import { io } from 'io-store';
+
+it('updates deep fields', () => {
+  const store = io({ user: { name: 'Ada' } });
+  store.user.name.set('Grace');
+  expect(store.snapshot()).toEqual({ user: { name: 'Grace' } });
 });
 ```
 
@@ -52,6 +70,11 @@ it('emits update patches', () => {
     Compare snapshots or patch sequences to expected values.
   </TabItem>
 </Tabs>
+
+## Tips
+
+- Wrap your mutations in plain functions so you can reuse them in app code and tests.
+- Prefer value assertions for behavior and patch assertions for auditing.
 
 ## Next steps
 

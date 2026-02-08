@@ -7,7 +7,7 @@ sidebar:
 
 ## Unit
 
-A Unit is a small state cell with explicit `get/set/update` methods.
+A Unit is the smallest writable piece of state. It gives you explicit `get/set/update` methods.
 
 ```ts
 import { io } from 'io-store';
@@ -19,11 +19,44 @@ count.set(1); // write
 count.update((v) => v + 1); // update
 ```
 
+Units also expose subscriptions so you can react to changes:
+
+```ts
+const unsub = count.subscribe((value) => {
+  console.log('count changed', value);
+});
+
+count.set(2);
+unsub();
+```
+
 Units expose:
 
 - `subscribe(fn)` to listen to value changes
 - `subscribeUpdate(fn)` to listen to update records
 - `snapshot()` to get a frozen value
+
+### `subscribe()` vs `subscribeUpdate()`
+
+They are related but not the same:
+
+- Use `subscribe(fn(value))` when you want the latest value (typical UI rendering).
+- Use `subscribeUpdate(fn(update))` when you want the change metadata (patches, revision) for replay/undo/persistence/devtools.
+
+If you only subscribe to updates, you will not receive the new value automatically. Call `snapshot()`/`get()` when you need the value.
+
+Minimal examples:
+
+```ts
+const unsubValue = count.subscribe((value) => {
+  console.log('render with value', value);
+});
+
+const unsubUpdate = count.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+  console.log('latest value', count.snapshot());
+});
+```
 
 ## Scope
 
@@ -45,6 +78,8 @@ user.commit((draft) => {
 });
 ```
 
+Use `commit` when you want to update multiple fields as one logical change.
+
 ## Array Nodes
 
 Arrays are first-class. Mutating helpers emit updates and keep paths stable. They share the same runtime as deep tree arrays.
@@ -55,6 +90,10 @@ const todos = io([{ id: 'a', title: 'Ship', done: false }]);
 todos.push({ id: 'b', title: 'Document', done: false });
 todos[0].done.set(true);
 ```
+
+:::caution
+Avoid putting the same object instance in an array twice. Create a new object for each item.
+:::
 
 ## Next steps
 

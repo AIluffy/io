@@ -5,6 +5,12 @@ sidebar:
   order: 3
 ---
 
+import SubscriptionsRecipe from '../../../../components/snippets/guides/SubscriptionsRecipe.mdx';
+
+## 30 秒配方
+
+<SubscriptionsRecipe />
+
 ## 值订阅
 
 ```ts
@@ -20,6 +26,8 @@ count.set(1);
 unsub();
 ```
 
+值订阅适合 UI 渲染与任何需要“最新值”的场景。
+
 ## 更新订阅
 
 `subscribeUpdate` 提供结构化 patch 信息。
@@ -32,9 +40,27 @@ const unsubUpdate = count.subscribeUpdate((update) => {
 });
 ```
 
+更新订阅适合日志、持久化、同步、DevTools 等需要 patch 的场景。
+
 ## Scope / Tree 冒泡
 
 订阅会向上冒泡，在根节点订阅即可捕获任意深层变化。
+
+```ts
+const store = io({ user: { name: 'Ada' } });
+
+store.subscribe(() => {
+  console.log('root value changed', store.snapshot());
+});
+
+store.subscribeUpdate((u) => {
+  console.log('root patches', u.patches);
+});
+```
+
+## 清理订阅
+
+记得调用取消订阅函数（React effect cleanup、Vue scope dispose、Svelte onDestroy 等）。
 
 ## 下一步
 

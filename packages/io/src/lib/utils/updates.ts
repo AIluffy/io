@@ -58,7 +58,7 @@ function getInternal(value: unknown): Internal | undefined {
 
 export { createUpdate, mergeUpdates } from './update-merge.js';
 
-export function invertUpdate(update: IoUpdate): IoUpdate {
+export function undoUpdate(update: IoUpdate): IoUpdate {
   const inverted: IoPatch[] = [];
   for (let i = update.patches.length - 1; i >= 0; i -= 1) {
     const patch = update.patches[i];
@@ -97,7 +97,24 @@ export function applyUpdate(
   target: unknown,
   update: IoUpdate,
   options?: { emitUpdate?: boolean },
+): void;
+export function applyUpdate(
+  target: unknown,
+  updates: IoUpdate[],
+  options?: { emitUpdate?: boolean },
+): void;
+export function applyUpdate(
+  target: unknown,
+  updateOrUpdates: IoUpdate | IoUpdate[],
+  options?: { emitUpdate?: boolean },
 ): void {
+  if (Array.isArray(updateOrUpdates)) {
+    for (const update of updateOrUpdates) {
+      applyUpdate(target, update, options);
+    }
+    return;
+  }
+  const update = updateOrUpdates;
   const rootInternal = getInternal(target);
   if (!rootInternal) throw new Error('applyUpdate: target is not an IO node');
 
@@ -220,5 +237,5 @@ export function applyUpdate(
 }
 
 export function replay(target: unknown, updates: IoUpdate[]): void {
-  for (const update of updates) applyUpdate(target, update);
+  applyUpdate(target, updates);
 }

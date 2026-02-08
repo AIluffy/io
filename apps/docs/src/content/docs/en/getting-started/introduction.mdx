@@ -5,24 +5,29 @@ sidebar:
   order: 1
 ---
 
-IO is a TypeScript state library built around small, composable primitives and an explicit Update Log. The API favors predictable reads, traceable writes, and easy integration across frameworks.
+IO is a TypeScript state library for apps that want “deep state, no drama.” You change a nested field directly, subscribe precisely to what you use, and keep rendering work small. Every write also produces patches you can inspect, replay, or undo.
+
+Start here:
+
+`io()` creates state, `derived()` creates computed values, and `batch()` groups multiple writes into one notification.
 
 ## Mental model
 
-- **Unit**: a state cell with explicit `get/set/update`.
-- **Scope**: an object of Units that can be updated together.
-- **Tree**: deep structures where every nested path is addressable as a Unit.
-- **Update Log**: every write creates patches you can subscribe to, replay, or invert.
+- **Unit**: a tiny state cell with `get/set/update`.
+- **Tree**: nested state where each path acts like a Unit.
+- **Derived**: computed, read-only state.
+- **Update Log**: patches produced by writes.
 
 ## What IO optimizes for
 
-- **Deep updates without ceremony**: update nested paths directly (`state.user.name.set('Ada')`).
-- **Snapshot safety**: reads return frozen snapshots to prevent accidental mutation.
-- **Explicit change tracking**: updates are structured and replayable.
-- **Adapter-friendly**: `snapshot() + subscribe()` works consistently everywhere.
+- **Deep updates, directly**: `state.user.name.set('Ada')` without reducers or action types.
+- **Snapshot safety**: reads are frozen snapshots, so accidental mutation doesn’t leak.
+- **Undo/redo & replay**: patches make time travel and syncing straightforward.
+- **Opt-in extras**: `withBehaviors` adds `persist`, `devtools`, `schedule`, etc.
+- **One integration contract**: `snapshot()` + `subscribe()` across adapters.
 
 :::note
-If you already know Zustand, think of IO as “stores are trees of units” and “updates are first-class.” The migration guide maps the patterns side-by-side.
+If you know Zustand: IO keeps the ergonomics, but makes deep state and patch-based updates first-class. The migration guide maps patterns side-by-side.
 :::
 
 ## Next steps

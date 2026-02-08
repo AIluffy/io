@@ -15,7 +15,6 @@ export type TreeNode = IoUnit<unknown> | TreeScopeNode | TreeArrayNode;
 
 export type TreeContext = PathTrieContext<TreeNode> & {
   errorListeners: Set<IoErrorHandler>;
-  silent: boolean;
   maxDepth?: number;
   seen: WeakMap<object, TreeNode>;
 };

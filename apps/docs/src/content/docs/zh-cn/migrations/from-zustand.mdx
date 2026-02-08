@@ -76,6 +76,16 @@ function Counter() {
 }
 ```
 
+## silent 选项移除
+
+深度模式现在只接受纯数组和纯对象，传入普通类实例会抛出 `TypeError`。如果之前使用过 `io(target, { silent: true })`，可以改成浅层模式：
+
+```ts
+const wrapper = io(target, { shallow: true });
+```
+
+或者把值包在简单对象/数组里再调用 `io()`。
+
 ## 下一步
 
 - 了解 [介绍](/zh-cn/getting-started/introduction/)。

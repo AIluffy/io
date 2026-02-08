@@ -9,11 +9,18 @@ import { IoPlayground } from '../../../../components/IoPlayground';
 
 该页面提供一个安全的交互式环境，用于体验 IO 行为（不执行任意代码）。
 
+## 30 秒配方
+
+1. 打开 Playground。
+2. 修改 `count` 和 `user.name`，观察 UI 更新。
+3. 同样的修改分别在批处理内/外执行，对比 patch 输出差异。
+
 ## 可以尝试
 
 - 对比批处理和非批处理的更新差异。
 - 切换深层字段，观察 patch 输出。
 - 查看更新前后的快照变化。
+- 对比订阅叶子节点和订阅根节点，观察收到的内容差异。
 
 <IoPlayground client:load />
 

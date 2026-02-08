@@ -162,15 +162,12 @@ describe('io: shallow', () => {
     expect(a.snapshot()).toEqual([{ n: 10 }, { n: 2 }]);
   });
 
-  it('deep mode rejects non-plain objects unless silent', () => {
+  it('deep mode rejects non-plain objects', () => {
     const d = new Date(0);
     expect(() => io(d)).toThrow(TypeError);
-    expect(() => io(d, { silent: true })).not.toThrow();
-    const u: any = io(d, { silent: true });
-    expect(u.snapshot()).toBeInstanceOf(Date);
   });
 
-  it('shallow mode accepts non-plain objects without silent', () => {
+  it('shallow mode accepts non-plain objects', () => {
     const d = new Date(0);
     const u: any = io(d, { shallow: true });
     expect(u.snapshot()).toBeInstanceOf(Date);

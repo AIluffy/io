@@ -12,4 +12,4 @@ npm run start
 - `io()` deep tree nodes
 - `subscribeUpdate()` update recording
 - `batch()` coalescing updates
-- `mergeUpdates()` + `invertUpdate()` + `replay()` for rollback
+- `mergeUpdates()` + `undoUpdate()` + `replay()` for rollback

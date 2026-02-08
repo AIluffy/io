@@ -5,6 +5,12 @@ sidebar:
   order: 2
 ---
 
+import BatchingRecipe from '../../../../components/snippets/guides/BatchingRecipe.mdx';
+
+## 30-second recipe
+
+<BatchingRecipe />
+
 ## Why batch
 
 Batching coalesces notifications and merges patches into a single update, which is great for UI performance and DevTools history.
@@ -20,9 +26,29 @@ batch(() => {
 });
 ```
 
+## What you get
+
+- `subscribe()` listeners receive only the latest value per node after the batch.
+- `subscribeUpdate()` listeners receive one merged update containing all patches from the batch.
+
 ## Nested batches
 
 Batches can be nested. IO only flushes once at the outer boundary.
+
+```ts
+batch(() => {
+  store.count.set(1);
+  batch(() => {
+    store.count.set(2);
+  });
+  store.count.set(3);
+});
+```
+
+## When to use
+
+- UI event handlers that touch multiple fields (forms, toggles, transactions).
+- Import/apply a list of changes (replay, undo/redo, syncing).
 
 ## Next steps
 

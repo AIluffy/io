@@ -4,7 +4,7 @@ import { ioTree } from './io-tree.js';
 import { createUnit } from '../units/unit.js';
 import { isPlainObject } from '../utils/plain-object.js';
 
-type IoOptions = { shallow?: boolean; silent?: boolean };
+type IoOptions = { shallow?: boolean };
 
 /**
  * Create an IO node from any value.
@@ -26,11 +26,11 @@ type IoOptions = { shallow?: boolean; silent?: boolean };
  */
 export function io<T>(
   target: T,
-  options: { shallow: true; silent?: boolean },
+  options: { shallow: true },
 ): IoNode<T>;
 export function io<T>(
   target: T,
-  options?: { shallow?: false; silent?: boolean },
+  options?: { shallow?: false },
 ): IoResult<T>;
 export function io(target: unknown, options?: IoOptions): unknown {
   if (options?.shallow === true) {
@@ -42,11 +42,10 @@ export function io(target: unknown, options?: IoOptions): unknown {
   }
 
   if (Array.isArray(target))
-    return ioTree(target, { silent: options?.silent });
+    return ioTree(target);
   if (isPlainObject(target))
-    return ioTree(target, { silent: options?.silent });
+    return ioTree(target);
   if (target !== null && typeof target === 'object') {
-    if (options?.silent) return createUnit(target);
     throw new TypeError(
       'io: deep mode only supports plain objects and arrays',
     );

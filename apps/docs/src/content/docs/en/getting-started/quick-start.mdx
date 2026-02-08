@@ -17,13 +17,18 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
    npm install io-store
    ```
 
-2. Add an adapter (optional):
+2. Add a framework adapter (optional):
 
    ```bash
    npm install io-react
    ```
 
 </Steps>
+
+:::note
+If your project already uses a framework, install its adapter:
+`io-react`, `io-vue`, or `io-svelte`.
+:::
 
 ## Create state
 
@@ -37,10 +42,14 @@ count.set(1); // write
 count.update((v) => v + 1); // update
 ```
 
+:::tip
+`get()` returns a frozen snapshot, so reads are safe to share and won’t be mutated by accident.
+:::
+
 ## Use in your framework
 
-<Tabs>
-  <TabItem label="Core">
+<Tabs default="core">
+  <TabItem label="Core" id="core">
     ```ts
     import { io, batch } from 'io-store';
 
@@ -53,6 +62,13 @@ count.update((v) => v + 1); // update
       store.count.update((v) => v + 1);
       store.count.update((v) => v + 1);
     });
+
+    const unsubscribe = store.count.subscribe((value) => {
+      console.log('count changed', value);
+    });
+
+    // Later:
+    unsubscribe();
     ```
 
   </TabItem>
@@ -73,31 +89,44 @@ count.update((v) => v + 1); // update
 
   </TabItem>
   <TabItem label="Vue">
-    ```ts
+    ```vue
+    <script setup lang="ts">
     import { io } from 'io-store';
-    import { useIO } from 'io-vue';
+    import { ioRef, useIO } from 'io-vue';
 
     const count = io(0);
+    const value = useIO(count);
+    const model = ioRef(count);
+    const inc = () => count.update((v) => v + 1);
+    </script>
 
-    export function useCounter() {
-      const state = useIO(count);
-      const inc = () => count.update((v) => v + 1);
-      return { state, inc };
-    }
+    <template>
+      <button @click="inc">{{ value }}</button>
+      <input v-model="model" type="number" />
+    </template>
     ```
 
   </TabItem>
   <TabItem label="Svelte">
-    ```ts
-    import { io } from 'io-store';
-    import { toWritable } from 'io-svelte';
+    ```svelte
+    <script lang="ts">
+      import { io } from 'io-store';
+      import { toWritable } from 'io-svelte';
 
-    const count = io(0);
-    export const countStore = toWritable(count);
+      const count = io(0);
+      const countStore = toWritable(count);
+      const inc = () => count.update((v) => v + 1);
+    </script>
+
+    <button on:click={inc}>{$countStore}</button>
     ```
 
   </TabItem>
 </Tabs>
+
+## Common gotcha
+
+- Avoid putting the same object instance in an array twice. Create a new object for each item.
 
 ## Next steps
 

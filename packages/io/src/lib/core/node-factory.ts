@@ -805,7 +805,6 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     if (deps.isPlainObject(initial))
       return createScopeNode(ctx, path, initial as Record<string, unknown>);
     if (initial !== null && typeof initial === 'object') {
-      if (ctx.silent) return createUnitNode(ctx, path, initial);
       throw new TypeError(
         'ioTree: deep mode only supports plain objects and arrays',
       );

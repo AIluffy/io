@@ -5,24 +5,29 @@ sidebar:
   order: 1
 ---
 
-IO 是一个 TypeScript 状态库，由少量可组合原语与显式更新日志构成。它强调读取可预测、写入可追踪，并在各框架间保持一致的接入方式。
+IO 是一个给“深层状态”准备的 TypeScript 状态库：想改哪一层就改哪一层，想订阅哪一块就订阅哪一块，把渲染开销压到最小。每次写入都会生成 patch（更新日志），方便你做调试、回放和撤销。
+
+从这三个 API 开始：
+
+`io()` 创建状态，`derived()` 创建派生值，`batch()` 把多次写入合并成一次通知。
 
 ## 心智模型
 
-- **Unit**：状态单元，使用 `get/set/update` 读写。
-- **Scope**：由多个 Unit 组成的对象，可成组更新。
-- **Tree**：深层结构，每个路径都是 Unit。
-- **Update Log（更新日志）**：每次写入都会生成可订阅的 patch。
+- **Unit**：最小的状态格子，`get/set/update`。
+- **Tree**：嵌套状态，每条路径都像 Unit 一样可读写。
+- **Derived**：计算出来的只读值。
+- **Update Log**：写入产生的 patch。
 
 ## IO 关注点
 
-- **深层更新零样板**：`state.user.name.set('Ada')` 直接写。
-- **快照安全**：读取返回冻结快照，避免误修改。
-- **显式变更记录**：patch 可回放、可合并。
-- **适配一致**：`snapshot() + subscribe()` 统一在各框架使用。
+- **深层更新很直接**：`state.user.name.set('Ada')`，不用 reducer / action。
+- **快照安全**：读取返回冻结快照，不怕误改漏改。
+- **回放/撤销更自然**：patch 让时间旅行、同步、审计更容易。
+- **按需加装**：`withBehaviors` 让你选择性启用 `persist`、`devtools`、`schedule` 等能力。
+- **跨框架一个契约**：`snapshot() + subscribe()`。
 
 :::note
-如果你熟悉 Zustand，可以把 IO 理解为“树形 Unit”+“更新日志一等公民”。迁移指南给出一一映射。
+熟悉 Zustand？可以把 IO 理解为：保留熟悉的使用体验，但把“深层状态”和“patch 更新”变成一等公民。迁移指南提供 API 对照。
 :::
 
 ## 下一步

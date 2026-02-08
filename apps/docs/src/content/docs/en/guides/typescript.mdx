@@ -5,6 +5,12 @@ sidebar:
   order: 5
 ---
 
+import TypeScriptRecipe from '../../../../components/snippets/guides/TypeScriptRecipe.mdx';
+
+## 30-second recipe
+
+<TypeScriptRecipe />
+
 ## Typed Units
 
 ```ts
@@ -42,7 +48,8 @@ type NameValue = IoPathValue<Store, ['user', 'profile', 'name']>; // string
 ```ts
 import type { UnwrapIo } from 'io-store';
 
-type Shape = UnwrapIo<ReturnType<typeof io>>;
+const store = io({ user: { profile: { name: 'Ada' } } });
+type Shape = UnwrapIo<typeof store>;
 ```
 
 ## Next steps

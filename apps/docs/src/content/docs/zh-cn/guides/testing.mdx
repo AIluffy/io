@@ -6,6 +6,11 @@ sidebar:
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
+import TestingRecipe from '../../../../components/snippets/guides/TestingRecipe.mdx';
+
+## 30 秒配方
+
+<TestingRecipe />
 
 ## 使用 snapshot 断言
 
@@ -17,6 +22,19 @@ it('updates count', () => {
   const count = io(0);
   count.update((v) => v + 1);
   expect(count.snapshot()).toBe(1);
+});
+```
+
+## 测试一个 store 结构
+
+```ts
+import { expect, it } from 'vitest';
+import { io } from 'io-store';
+
+it('updates deep fields', () => {
+  const store = io({ user: { name: 'Ada' } });
+  store.user.name.set('Grace');
+  expect(store.snapshot()).toEqual({ user: { name: 'Grace' } });
 });
 ```
 
@@ -48,6 +66,11 @@ it('emits update patches', () => {
     使用 snapshot 或 patch 断言结果。
   </TabItem>
 </Tabs>
+
+## 小建议
+
+- 把写入操作封装成普通函数，业务和测试复用。
+- 行为正确性优先用快照断言；需要审计/回放时再断言 patch。
 
 ## 下一步
 

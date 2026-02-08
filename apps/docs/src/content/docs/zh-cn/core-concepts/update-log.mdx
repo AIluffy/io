@@ -22,6 +22,14 @@ count.set(1);
 unsub();
 ```
 
+:::tip
+在树的根节点订阅 `subscribeUpdate`，可以捕获整个 store 的变更。
+:::
+
+:::note
+`subscribeUpdate()` 关注的是“发生了什么变化”（patch）。如果你还需要“最新值”，请用 `snapshot()`/`get()` 读取（或者用 `subscribe()` 直接订阅值）。
+:::
+
 ## onMutation 与 onError
 
 用调试辅助函数观察变更与错误。
@@ -43,7 +51,7 @@ const stopError = onError(store, (error, path, op) => {
 ## Update 工具函数
 
 ```ts
-import { applyUpdate, invertUpdate, mergeUpdates, io } from 'io-store';
+import { applyUpdate, mergeUpdates, undoUpdate, io } from 'io-store';
 
 const store = io({ count: 0 });
 const updates = [];
@@ -53,10 +61,30 @@ store.count.set(1);
 store.count.set(2);
 unsub();
 
-const merged = mergeUpdates(updates[0], updates[1]);
-const inverted = invertUpdate(merged);
+const replayStore = io({ count: 0 });
+applyUpdate(replayStore, updates);
+
+const merged = mergeUpdates(...updates);
+const inverted = undoUpdate(merged);
 
 applyUpdate(store, inverted);
+```
+
+## Undo / redo
+
+可直接使用 `createHistory` 快速完成 undo/redo：
+
+```ts
+import { createHistory, io } from 'io-store';
+
+const store = io({ count: 0 });
+const history = createHistory(store);
+
+store.count.set(1);
+store.count.set(2);
+
+history.undo();
+history.redo();
 ```
 
 ## 下一步

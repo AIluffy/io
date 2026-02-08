@@ -14,9 +14,10 @@ import { io } from '../core/io.js';
 import { ioTree } from '../core/io-tree.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 import { Signal, computed, effect } from '../utils/signals.js';
+import { createHistory } from '../utils/history.js';
 import {
   applyUpdate,
-  invertUpdate,
+  undoUpdate,
   mergeUpdates,
   replay,
 } from '../utils/updates.js';
@@ -145,8 +146,24 @@ describe('updates: merge/apply/invert/replay', () => {
     applyUpdate(u2, merged);
     expect(u2.get()).toBe(3);
 
-    applyUpdate(u2, invertUpdate(merged));
+    applyUpdate(u2, undoUpdate(merged));
     expect(u2.get()).toBe(1);
+  });
+
+  it('supports mergeUpdates variadic calls', () => {
+    const u1 = io(1);
+    const seen: IoUpdate[] = [];
+    u1.subscribeUpdate((u) => seen.push(u));
+    u1.set(2);
+    u1.set(3);
+
+    const mergedList = mergeUpdates(seen);
+    const mergedVariadic = mergeUpdates(...seen);
+    expect(mergedVariadic).toMatchObject({
+      baseRevision: mergedList.baseRevision,
+      revision: mergedList.revision,
+      patches: mergedList.patches,
+    });
   });
 
   it('replays array structural updates', () => {
@@ -160,6 +177,53 @@ describe('updates: merge/apply/invert/replay', () => {
     const a2 = io([1, 2, 3]);
     replay(a2, updates);
     expect(a2.get()).toEqual(a1.get());
+  });
+
+  it('applyUpdate supports array input', () => {
+    const a1 = io([1, 2, 3]);
+    const updates: IoUpdate[] = [];
+    a1.subscribeUpdate((u) => updates.push(u));
+    a1.push(4);
+    a1.splice(1, 1, 9);
+
+    const a2 = io([1, 2, 3]);
+    applyUpdate(a2, updates);
+    expect(a2.get()).toEqual(a1.get());
+
+    const a3 = io([1, 2, 3]);
+    replay(a3, updates);
+    expect(a3.get()).toEqual(a1.get());
+  });
+});
+
+describe('history: createHistory', () => {
+  it('supports undo/redo without re-recording', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store);
+
+    store.count.set(1);
+    store.count.set(2);
+
+    expect(history.length).toBe(2);
+    expect(history.cursor).toBe(1);
+    expect(history.canUndo).toBe(true);
+    expect(history.canRedo).toBe(false);
+
+    history.undo();
+    expect(store.count.get()).toBe(1);
+    expect(history.cursor).toBe(0);
+    expect(history.length).toBe(2);
+
+    history.redo();
+    expect(store.count.get()).toBe(2);
+    expect(history.cursor).toBe(1);
+    expect(history.length).toBe(2);
+
+    history.undo();
+    history.undo();
+    expect(store.count.get()).toBe(0);
+    expect(history.canUndo).toBe(false);
+    expect(history.canRedo).toBe(true);
   });
 });
 
@@ -445,7 +509,7 @@ describe('updates: replay/invert consistency', () => {
       const u3 = io(0);
       applyUpdate(u3, merged);
       expect(u3.get()).toBe(u1.get());
-      applyUpdate(u3, invertUpdate(merged));
+      applyUpdate(u3, undoUpdate(merged));
       expect(u3.get()).toBe(0);
     }
   });
@@ -478,7 +542,7 @@ describe('updates: replay/invert consistency', () => {
       const s3 = io({ a: 0, b: 0 });
       applyUpdate(s3, merged);
       expect(s3.snapshot()).toEqual(s1.snapshot());
-      applyUpdate(s3, invertUpdate(merged));
+      applyUpdate(s3, undoUpdate(merged));
       expect(s3.snapshot()).toEqual({ a: 0, b: 0 });
     }
   });
@@ -518,7 +582,7 @@ describe('updates: replay/invert consistency', () => {
       const a3 = io([0, 1, 2, 3]);
       applyUpdate(a3, merged);
       expect(a3.get()).toEqual(a1.get());
-      applyUpdate(a3, invertUpdate(merged));
+      applyUpdate(a3, undoUpdate(merged));
       expect(a3.get()).toEqual([0, 1, 2, 3]);
     }
   });

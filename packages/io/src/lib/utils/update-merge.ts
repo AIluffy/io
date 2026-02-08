@@ -37,7 +37,16 @@ function pathKey(path: ReadonlyArray<PropertyKey>): string {
   return out;
 }
 
-export function mergeUpdates(updates: IoUpdate[]): IoUpdate {
+export function mergeUpdates(updates: IoUpdate[]): IoUpdate;
+export function mergeUpdates(...updates: IoUpdate[]): IoUpdate;
+export function mergeUpdates(
+  updatesOrFirst: IoUpdate[] | IoUpdate,
+  ...rest: IoUpdate[]
+): IoUpdate {
+  if (!updatesOrFirst) return createUpdate(0, 0, []);
+  const updates = Array.isArray(updatesOrFirst)
+    ? updatesOrFirst
+    : [updatesOrFirst, ...rest];
   if (updates.length === 0) return createUpdate(0, 0, []);
   if (updates.length === 1) return updates[0];
 

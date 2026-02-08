@@ -7,7 +7,7 @@ sidebar:
 
 ## Deep by default
 
-`io()` walks objects and arrays and converts nested paths into Units. You can update deep values without switching APIs.
+`io()` walks plain objects and arrays and turns nested paths into nodes. In practice, that means you can update deep values without reducers or ceremony.
 
 ```ts
 import { io } from 'io-store';
@@ -20,8 +20,7 @@ state.user.profile.name.set('Grace');
 
 ## Shallow mode
 
-If you only want the first level as Units, use `shallow: true` (shallow uses the
-same tree engine with depth limited to 1).
+If you only want the first level as Units, use `shallow: true`. This keeps the tree shallow (depth 1) and treats deeper values as plain data.
 
 ```ts
 const state = io({ user: { name: 'Ada' } }, { shallow: true });
@@ -32,9 +31,9 @@ state.user.set({ name: 'Grace' });
 
 `commit` in shallow mode rejects unknown keys to keep the shape stable.
 
-## Focus for explicit paths
+## Focus on one path
 
-Use `relocate` to build a view for a specific path.
+Use `relocate` to create a view for a specific path (useful when passing state around without exposing the whole tree).
 
 ```ts
 import { relocate, io } from 'io-store';
@@ -42,7 +41,8 @@ import { relocate, io } from 'io-store';
 const store = io({ settings: { theme: 'light' } });
 const theme = relocate<string>(store, ['settings', 'theme']);
 
-theme.set?.('dark');
+theme.get(); // 'light'
+theme.set?.('dark'); // only works when the target is a Unit
 ```
 
 ## Next steps

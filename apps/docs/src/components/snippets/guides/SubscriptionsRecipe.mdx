@@ -1,0 +1,13 @@
+import { Code } from '@astrojs/starlight/components';
+import { commonStoreTs } from './common-store';
+
+export const code = `${commonStoreTs}
+
+const unsubValue = store.count.subscribe((v) => console.log('value', v));
+const unsubUpdate = store.subscribeUpdate((u) => console.log('patches', u.patches));
+
+store.count.set(1);
+unsubValue();
+unsubUpdate();`;
+
+<Code code={code} lang="ts" />

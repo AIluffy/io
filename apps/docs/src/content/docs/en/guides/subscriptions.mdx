@@ -5,6 +5,12 @@ sidebar:
   order: 3
 ---
 
+import SubscriptionsRecipe from '../../../../components/snippets/guides/SubscriptionsRecipe.mdx';
+
+## 30-second recipe
+
+<SubscriptionsRecipe />
+
 ## Value subscriptions
 
 ```ts
@@ -20,6 +26,8 @@ count.set(1);
 unsub();
 ```
 
+Use value subscriptions for UI rendering and anything that needs the latest value.
+
 ## Update subscriptions
 
 `subscribeUpdate` gives you structured patches.
@@ -32,9 +40,27 @@ const unsubUpdate = count.subscribeUpdate((update) => {
 });
 ```
 
+Use update subscriptions for logging, persistence, syncing, and devtools.
+
 ## Scope and tree bubbling
 
 Subscriptions bubble through tree nodes, so subscribing at the root will capture nested changes.
+
+```ts
+const store = io({ user: { name: 'Ada' } });
+
+store.subscribe(() => {
+  console.log('root value changed', store.snapshot());
+});
+
+store.subscribeUpdate((u) => {
+  console.log('root patches', u.patches);
+});
+```
+
+## Cleanup
+
+Always call the unsubscribe function (React effect cleanup, Vue scope dispose, Svelte onDestroy, etc.).
 
 ## Next steps
 

@@ -89,7 +89,7 @@ const double = derived([count], (c) => c * 2);
 ### 4. 更新历史与回放
 
 ```typescript
-import { applyUpdate, invertUpdate, replay } from 'io-store';
+import { applyUpdate, replay, undoUpdate } from 'io-store';
 
 const updates: IoUpdate[] = [];
 state.subscribeUpdate((u) => updates.push(u));
@@ -98,7 +98,7 @@ state.subscribeUpdate((u) => updates.push(u));
 replay(newState, updates);
 
 // 撤销
-applyUpdate(state, invertUpdate(update));
+applyUpdate(state, undoUpdate(update));
 ```
 
 ## 🔧 框架集成

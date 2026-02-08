@@ -7,7 +7,8 @@ description: "function export"
 ## 签名
 
 ```ts
-<T>(target: T, options: { shallow: true; silent?: boolean; }) => IoNode<T>
+<T>(target: T, options: { shallow: true }) => IoNode<T>
+<T>(target: T, options?: { shallow?: false }) => IoResult<T>
 ```
 
 ## 参数
@@ -15,7 +16,7 @@ description: "function export"
 | Name | Type |
 | --- | --- |
 | target | `T` |
-| options | `{ shallow: true; silent?: boolean; }` |
+| options | `{ shallow: true }` or `{ shallow?: false }` |
 
 ## 返回
 
@@ -25,6 +26,7 @@ description: "function export"
 
 - `shallow: true` 仅保留第一层（内部仍使用同一 Tree 引擎）。
 - 浅层模式下 `commit` 不允许新增未知 key，以保持结构稳定。
+- 深度模式只能跟踪纯对象和数组，传入非纯对象会抛出 `TypeError`。需要深度追踪时请把复杂值包裹在浅层节点中。
 
 ## 错误
 
