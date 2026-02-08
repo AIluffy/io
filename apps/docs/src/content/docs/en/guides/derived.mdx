@@ -16,6 +16,18 @@ const count = io(0);
 const doubled = derived([count], (value) => value * 2);
 ```
 
+If your state comes from a Tree, you can also pass “path Units” as atom-like dependencies:
+
+```ts
+import { derived, io } from 'io-store';
+
+const store = io({ user: { name: 'Ada' }, count: 0 });
+const summary = derived(
+  [store.user.name, store.count],
+  (name, count) => `${name} · ${count}`,
+);
+```
+
 ## Option 2: Tree Selector
 
 ```ts

@@ -28,11 +28,11 @@ There’s no universally “best” state library—only tradeoffs. This page us
 
 ## IO’s Atomic Advantage
 
-IO can feel “atom-like” without forcing you to model everything as atoms:
+IO has both atomic state (`Unit`) and structured state (`Tree`). The “atomic advantage” is that you can organize your domain as a Tree, while consuming and subscribing at Unit (atom) granularity.
 
-- **Units are atoms**: `io(0)` and `io('text')` create subscribable, writable atomic units.
-- **Paths are atoms**: in deep Trees, paths like `store.user.name` or `store.todos[0].done` are also Units.
-- **Composition stays simple**: use `derived([unit...])` to combine multiple atoms without extra key registries.
+- **Unit: explicit atoms**: `io(0)` and `io('text')` return standalone Units you can treat as atoms.
+- **Tree: atom factory + namespace**: `io({ ... })` expands objects/arrays into a tree; each path (especially leaves) is a subscribable Unit, while the structure expresses grouping and boundaries.
+- **Composition: atoms compose directly**: use `derived([unit...])` to combine Units into selectors or view-models.
 
 ```ts
 import { derived, io } from 'io-store';
@@ -43,12 +43,12 @@ const store = io({
   todos: [{ id: 'a', done: false }],
 });
 
-// Atom-like: leaf/path units
-const name = store.user.name;
-const count = store.counter;
-const firstDone = store.todos[0].done;
+// Tree -> path Units (atom-like)
+const name = store.user.name; // Unit<string>
+const count = store.counter; // Unit<number>
+const firstDone = store.todos[0].done; // Unit<boolean>
 
-// Compose multiple atoms
+// Compose atoms
 const summary = derived([name, count], (n, c) => `${n} · ${c}`);
 
 // Subscribe at atom granularity
@@ -56,7 +56,7 @@ const stop = firstDone.subscribe((v) => console.log('done changed', v));
 stop();
 ```
 
-In practice: you don’t have to split a whole app state into many atoms just to get fine-grained subscriptions—but you still can factor out Units when reuse and isolation matter.
+Practical takeaway: Trees keep your domain modeled as one structure; Units keep updates local. You don’t have to split an entire app into many atoms just to get fine-grained subscriptions—but you can still pass around and reuse Units when isolation matters.
 
 ## IO vs Redux
 

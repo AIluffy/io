@@ -23,6 +23,8 @@ store.items[0].count.update((v) => v + 1);
 
 Every path behaves like a Unit, so you can subscribe at leaf level.
 
+You can think of this as “automatic atomization”: Trees organize structure, while path Units provide atom-level reads, writes, and subscriptions.
+
 ## Shallow Mode
 
 If you only want the first level to be Units:

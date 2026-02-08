@@ -42,6 +42,27 @@ Common APIs:
 - `snapshot()`
 - `reset()`
 
+## Atomic State (Atom-like)
+
+IO’s “atomic state” comes from `Unit`, while `Tree` lets you organize those atoms as a domain-shaped structure:
+
+- **Unit = atom**: `io(0)` creates a standalone Unit you can subscribe to, update, and reuse.
+- **Tree = atom factory**: `io({ ... })` expands objects/arrays; each path (especially leaves) is a Unit.
+- **Structure stays intact**: you get atom-level subscriptions without giving up a coherent nested model.
+
+```ts
+import { io } from 'io-store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+// Atomic Units
+const name = store.user.name;
+const counter = store.counter;
+
+name.subscribe((v) => console.log('name', v));
+counter.update((v) => v + 1);
+```
+
 ## Scope (Objects)
 
 When `io()` receives an object, it creates a Scope. Every key becomes a Unit.

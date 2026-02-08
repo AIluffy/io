@@ -42,6 +42,27 @@ unsub();
 - `snapshot()`：冻结快照
 - `reset()`：回到初始值
 
+## 原子状态（Atom-like）
+
+IO 的“原子状态”能力来自 `Unit`，而 `Tree` 则让你用业务结构组织这些原子：
+
+- **Unit = 原子**：`io(0)` 直接创建一个独立 Unit，可被订阅、更新、复用。
+- **Tree = 原子工厂**：对对象/数组调用 `io({ ... })` 会展开成树；每条路径（尤其叶子）都是 Unit。
+- **结构不丢**：Tree 既提供原子粒度订阅，又保留分组/边界，让状态更容易理解与维护。
+
+```ts
+import { io } from 'io-store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+// Atomic Units
+const name = store.user.name;
+const counter = store.counter;
+
+name.subscribe((v) => console.log('name', v));
+counter.update((v) => v + 1);
+```
+
 ## Scope（对象）
 
 当 `io()` 接收对象时，会创建 Scope。Scope 内部每个 key 都是 Unit。
