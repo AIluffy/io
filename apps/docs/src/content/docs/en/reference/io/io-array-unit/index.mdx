@@ -14,12 +14,14 @@ IoArrayUnit<T>
 
 - Alias of `IoTreeArrayUnit<T, 1>` (shallow depth).
 - Implemented by the same tree engine; there is no separate array-unit runtime.
+- `set()` replaces the entire array and emits a `set` patch for the array path.
 
 ## Properties
 
 | Name | Type |
 | --- | --- |
 | get | `() => T[]` |
+| set | `(next: T[]) => void` |
 | push | `(...items: T[]) => void` |
 | pop | `() => T \| undefined` |
 | splice | `(start: number, deleteCount: number, ...items: T[]) => void` |

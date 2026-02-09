@@ -14,12 +14,14 @@ IoTreeArrayUnit<T, MaxDepth>
 
 - Used for deep arrays (MaxDepth > 1); `IoArrayUnit` is the shallow alias.
 - `commit` updates array contents via draft diffs.
+- `set()` replaces the entire array and emits a `set` patch for the array path.
 
 ## Properties
 
 | Name | Type |
 | --- | --- |
 | get | `() => T[]` |
+| set | `(next: T[]) => void` |
 | push | `(...items: T[]) => void` |
 | pop | `() => T \| undefined` |
 | splice | `(start: number, deleteCount: number, ...items: T[]) => void` |

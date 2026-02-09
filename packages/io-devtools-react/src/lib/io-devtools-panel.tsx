@@ -337,6 +337,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             background: 'var(--io-devtools-surface)',
             overflow: 'auto',
             minHeight: 0,
+            marginTop: 0,
           }}
         >
           <div

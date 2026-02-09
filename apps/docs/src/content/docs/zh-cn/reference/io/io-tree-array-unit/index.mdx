@@ -14,12 +14,14 @@ IoTreeArrayUnit<T, MaxDepth>
 
 - 用于深层数组（MaxDepth > 1）；`IoArrayUnit` 是浅层别名。
 - `commit` 通过 draft diff 更新数组内容。
+- `set()` 会替换整个数组，并在数组路径上发出 `set` patch。
 
 ## 属性
 
 | Name | Type |
 | --- | --- |
 | get | `() => T[]` |
+| set | `(next: T[]) => void` |
 | push | `(...items: T[]) => void` |
 | pop | `() => T \| undefined` |
 | splice | `(start: number, deleteCount: number, ...items: T[]) => void` |

@@ -4,6 +4,8 @@ import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import vue from '@astrojs/vue';
 import rehypeSortable from './src/rehype/rehype-sortable.js';
+import liveCode from 'astro-live-code';
+import mermaid from 'astro-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,6 +21,8 @@ export default defineConfig({
   integrations: [
     react(),
     vue(),
+    liveCode({}),
+    mermaid(),
     starlight({
       plugins: [],
       title: 'IO',

@@ -90,6 +90,7 @@ export type IoResult<T, MaxDepth extends number = 16> = IoTreeNode<T, MaxDepth>;
 export type IoTreeArrayUnit<T, MaxDepth extends number = 8> = {
   get(): T[];
   [i: number]: IoTreeNode<T, MaxDepth>;
+  set(next: T[]): void;
   push(...items: T[]): void;
   pop(): T | undefined;
   splice(start: number, deleteCount: number, ...items: T[]): void;

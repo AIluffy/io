@@ -618,6 +618,35 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       }
     };
 
+    const set = (next: unknown[]): void => {
+      try {
+        const baseRevision = state.revision;
+        const prevValue = snapshot();
+
+        state.revision += 1;
+        state.dirtyStructure = true;
+
+        performSplice(0, state.children.length, next);
+        rebuildMapping();
+        state.valueEpoch += 1;
+
+        const patch: IoPatch = {
+          op: 'set',
+          path: [],
+          prev: deps.cloneValue(prevValue),
+          next: deps.cloneValue(next),
+        };
+        deps.emitArrayUpdate(
+          state,
+          deps.createUpdate(baseRevision, state.revision, [patch]),
+        );
+        deps.emitArrayValue(state);
+      } catch (error) {
+        deps.emitError(node, error, path, 'set');
+        throw error;
+      }
+    };
+
     const sort = (compareFn?: (a: unknown, b: unknown) => number): void => {
       try {
         if (state.children.length <= 1) return;
@@ -755,6 +784,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       snapshot: { value: snapshot },
       subscribe: { value: subscribe },
       subscribeUpdate: { value: subscribeUpdate },
+      set: { value: set },
       push: { value: push },
       pop: { value: pop },
       splice: { value: splice },
