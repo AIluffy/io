@@ -47,7 +47,7 @@
 ### D. 示例与可运行代码（覆盖常见场景）
 - 新增 `guides/examples/*.mdx`：每个场景一页，给“复制即用”的片段。
 - 另提供可运行示例工程（用于交互/调试与真实运行）：
-  - `examples/core-node`（Node/TS，演示 update 录制/回放）
+  - `examples/vanilla`（HTML + TS，演示 update 录制/回放）
   - `examples/react`、`examples/vue`、`examples/svelte`（最小应用）
   这些示例工程既服务文档，也服务 Playground。
 

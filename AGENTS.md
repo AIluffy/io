@@ -44,7 +44,7 @@ nx run-many -t build
 - Framework adapters: `io-react`, `io-vue`, `io-svelte`
 - DevTools: `io-devtools`, `io-devtools-react`
 - Docs site: `apps-docs` (`apps/docs`)
-- Examples: `io-example-core-node`, `io-example-react-vite`, `io-example-vue-vite`, `io-example-svelte-vite`
+- Examples: `io-example-vanilla`, `io-example-react`, `io-example-vue`, `io-example-svelte`
 - Workspace root project: `io-source` (root `package.json`)
 
 ### Local Registry (Verdaccio)

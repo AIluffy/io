@@ -53,6 +53,15 @@ export default [
               sourceTag: 'scope:io-vue',
               onlyDependOnLibsWithTags: ['scope:io', 'scope:io-vue'],
             },
+            {
+              sourceTag: 'scope:io-example',
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-react',
+                'scope:io-svelte',
+                'scope:io-vue',
+              ],
+            },
           ],
         },
       ],
