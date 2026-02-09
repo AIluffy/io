@@ -98,6 +98,11 @@ todos[0].done.set(true);
 Avoid reusing the same object instance inside arrays.
 :::
 
+:::caution
+`array.set([...])` replaces child units under the array. If a component subscribes to `array[index]`, it stays bound to the old unit and can appear stale.
+Recommendation: update indices (`array[i].set(...)`) or subscribe to the array itself and read by index.
+:::
+
 ## Next Steps
 
 - Learn [Deep Trees](/en/core-concepts/deep-tree/).

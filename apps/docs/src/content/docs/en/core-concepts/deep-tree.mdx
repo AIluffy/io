@@ -41,6 +41,7 @@ Shallow mode limits depth to 1 and keeps structure stable.
 
 - Deep mode only supports **plain objects** and **arrays**.
 - Passing class instances throws `TypeError`.
+- Embedding `io()` nodes directly inside a Tree is not supported yet. See [IO Composition (Design Draft)](/en/core-concepts/io-composition/).
 
 Wrap complex values in a plain object if needed.
 

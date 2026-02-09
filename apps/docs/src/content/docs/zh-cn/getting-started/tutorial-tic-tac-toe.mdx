@@ -2,7 +2,7 @@
 title: 井字棋教程
 description: 用 IO 和 React 构建经典井字棋。
 sidebar:
-  order: 1
+  order: 2
 ---
 
 本教程会用 IO 的 Tree、derived 以及批量更新，完成一个简洁的井字棋。
@@ -238,7 +238,9 @@ function handleClick(index: number) {
 
 function resetGame() {
   batch(() => {
-    game.squares.set(Array(9).fill(null));
+    for (let i = 0; i < 9; i += 1) {
+      game.squares[i].set(null);
+    }
     game.next.set('X');
   });
 }
@@ -291,6 +293,11 @@ export default function TicTacToe() {
   );
 }
 ```
+
+:::caution
+反面教材：`game.squares.set(Array(9).fill(null))` 会替换数组节点下的子 Unit。若组件订阅的是 `game.squares[index]`，它仍绑定旧 Unit，可能出现“重置后仍显示旧值，直到下一次更新才刷新”的现象。
+推荐：重置时逐格 `game.squares[i].set(null)`（如上），或让组件订阅数组本身再按索引读取。
+:::
 
 ## 下一步
 

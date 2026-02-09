@@ -2,7 +2,7 @@
 title: Tic-Tac-Toe Tutorial
 description: Build a classic board game with IO and React.
 sidebar:
-  order: 1
+  order: 2
 ---
 
 This tutorial builds a simple Tic-Tac-Toe game while showcasing IO trees, derived values, and batched updates.
@@ -238,7 +238,9 @@ function handleClick(index: number) {
 
 function resetGame() {
   batch(() => {
-    game.squares.set(Array(9).fill(null));
+    for (let i = 0; i < 9; i += 1) {
+      game.squares[i].set(null);
+    }
     game.next.set('X');
   });
 }
@@ -291,6 +293,11 @@ export default function TicTacToe() {
   );
 }
 ```
+
+:::caution
+Anti-pattern: `game.squares.set(Array(9).fill(null))` replaces all child units under the array. If a component subscribes to `game.squares[index]`, it stays bound to the old unit and can look stale until the next update.
+Recommendation: reset by setting each index (as above), or subscribe to the array itself and read by index.
+:::
 
 ## Next Steps
 

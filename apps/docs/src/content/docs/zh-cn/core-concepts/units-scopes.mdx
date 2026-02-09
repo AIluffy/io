@@ -100,6 +100,11 @@ todos[0].done.set(true);
 请避免在数组里复用同一对象实例。每个元素保持独立更安全。
 :::
 
+:::caution
+`array.set([...])` 会替换数组节点下的子 Unit。若组件订阅的是 `array[index]`，它仍绑定旧 Unit，可能出现 UI 不刷新的假象。
+建议：逐格 `array[i].set(...)`，或让组件订阅数组本身再按索引读取。
+:::
+
 ## 下一步
 
 - 了解 [深层 Tree](/zh-cn/core-concepts/deep-tree/)。
