@@ -15,6 +15,12 @@ import type {
   TreeScopeState,
   UnitInternal,
 } from './io-tree-types.js';
+import {
+  clearDirtyIndices,
+  createDirtyIndexState,
+  markDirtyIndex,
+  resetDirtyIndices,
+} from './dirty-indices.js';
 
 export type NodeFactoryDeps = {
   isPlainObject: (value: unknown) => boolean;
@@ -344,7 +350,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       isCommitting: false,
       valueEpoch: 0,
       snapshotCache: { value: undefined, version: -1, hasValue: false },
-      dirtyIndices: new Set(),
+      dirtyIndices: createDirtyIndexState(initial.length),
       dirtyStructure: false,
       valueListeners: new Set(),
       updateListeners: new Set(),
@@ -451,6 +457,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.revision += 1;
         performSplice(start, deleteCount, items);
         state.dirtyStructure = true;
+        resetDirtyIndices(state.dirtyIndices, state.children.length);
         state.valueEpoch += 1;
         if (options?.emitValue !== false) deps.emitArrayValue(state);
       } catch (error) {
@@ -471,6 +478,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         rebuildMapping();
         state.revision += 1;
         state.dirtyStructure = true;
+        clearDirtyIndices(state.dirtyIndices);
         state.valueEpoch += 1;
         if (options?.emitValue !== false) deps.emitArrayValue(state);
       } catch (error) {
@@ -501,7 +509,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           state.children[index] = replaced;
           deps.attachChildToArray(state, replaced);
           state.revision += 1;
-          state.dirtyIndices.add(index);
+          markDirtyIndex(state.dirtyIndices, index, state.children.length);
           state.valueEpoch += 1;
           if (emitUpdate) {
             const nextValue = deps.getNodeValue(replaced, new WeakMap());
@@ -531,7 +539,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           if (Object.is(before, after)) return;
           state.revision += 1;
           state.valueEpoch += 1;
-          state.dirtyIndices.add(index);
+          markDirtyIndex(state.dirtyIndices, index, state.children.length);
           if (emitUpdate) {
             deps.emitArrayUpdate(
               state,
@@ -556,7 +564,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.children[index] = replaced;
         deps.attachChildToArray(state, replaced);
         state.revision += 1;
-        state.dirtyIndices.add(index);
+        markDirtyIndex(state.dirtyIndices, index, state.children.length);
         state.valueEpoch += 1;
         if (emitUpdate) {
           deps.emitArrayUpdate(
@@ -584,6 +592,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         const baseRevision = state.revision;
         state.revision += 1;
         state.dirtyStructure = true;
+        resetDirtyIndices(state.dirtyIndices, state.children.length + items.length);
 
         const start = state.children.length;
         const created = items.map((v, i) =>
@@ -619,6 +628,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         const baseRevision = state.revision;
         state.revision += 1;
         state.dirtyStructure = true;
+        resetDirtyIndices(state.dirtyIndices, state.children.length - 1);
 
         const start = state.children.length - 1;
         const removed = state.children.pop();
@@ -664,6 +674,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           deleteCount,
           items,
         );
+        resetDirtyIndices(state.dirtyIndices, state.children.length);
         const patch: IoPatch = {
           op: 'splice',
           path: [],
@@ -694,6 +705,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         state.dirtyStructure = true;
 
         performSplice(0, state.children.length, next);
+        resetDirtyIndices(state.dirtyIndices, state.children.length);
         rebuildMapping();
         state.valueEpoch += 1;
 
@@ -720,6 +732,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         const baseRevision = state.revision;
         state.revision += 1;
         state.dirtyStructure = true;
+        clearDirtyIndices(state.dirtyIndices);
 
         const decorated = state.children.map((child, index) => ({
           child,

@@ -1,4 +1,6 @@
 import type { IoPatch } from '../utils/types.js';
+import type { DirtyIndexState } from './dirty-indices.js';
+import { resetDirtyIndices } from './dirty-indices.js';
 
 type PathSegment = PropertyKey;
 type NodePath = readonly PathSegment[];
@@ -14,7 +16,7 @@ type ScopeStateLike<TNode> = {
 type ArrayStateLike<TNode> = {
   children: TNode[];
   path: NodePath;
-  dirtyIndices: Set<number>;
+  dirtyIndices: DirtyIndexState;
   dirtyStructure: boolean;
   isCommitting: boolean;
 };
@@ -146,7 +148,7 @@ function createDiffHelpers<
     relPath: PathSegment[],
   ): boolean => {
     arrayState.dirtyStructure = true;
-    arrayState.dirtyIndices.clear();
+    resetDirtyIndices(arrayState.dirtyIndices, nextArr.length);
     const arrayNode = deps.getPathNode(arrayState.path);
     if (arrayNode) deps.unregisterSubtree(arrayState.path, arrayNode);
 

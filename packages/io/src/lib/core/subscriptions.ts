@@ -1,4 +1,6 @@
 import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
+import type { DirtyIndexState } from './dirty-indices.js';
+import { markDirtyIndex } from './dirty-indices.js';
 
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
@@ -25,7 +27,7 @@ type ArrayStateLike<TNode> = {
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
-  dirtyIndices: Set<number>;
+  dirtyIndices: DirtyIndexState;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
   childValueUnsubs: Map<TNode, { unsub: IoUnsubscribe; count: number }>;
@@ -70,7 +72,12 @@ export function createSubscriptions<
           : typeof segment === 'string' && /^[0-9]+$/.test(segment)
             ? Number(segment)
             : -1;
-      if (index >= 0) parentState.dirtyIndices.add(index);
+      if (index >= 0)
+        markDirtyIndex(
+          parentState.dirtyIndices,
+          index,
+          parentState.children.length,
+        );
     } else {
       parentState.dirtyKeys.add(segment);
     }
@@ -131,12 +138,14 @@ export function createSubscriptions<
       {
         onValue: (indices) => {
           if (state.isCommitting) return;
-          for (const index of indices) state.dirtyIndices.add(index);
+          for (const index of indices)
+            markDirtyIndex(state.dirtyIndices, index, state.children.length);
           state.valueEpoch += 1;
           emitArrayValue(state);
         },
         onUpdate: (u, indices) => {
-          for (const index of indices) state.dirtyIndices.add(index);
+          for (const index of indices)
+            markDirtyIndex(state.dirtyIndices, index, state.children.length);
           const baseRevision = state.revision;
           state.revision += 1;
           const patches = indices.flatMap((index) =>

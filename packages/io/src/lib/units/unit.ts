@@ -57,9 +57,10 @@ function emitUpdate(state: UnitState<unknown>, update: IoUpdate): void {
 }
 
 function createUnitState<T>(initial: T): UnitState<T> {
+  const cloned = cloneValue(initial);
   return {
-    initial: cloneValue(initial),
-    value: cloneValue(initial),
+    initial: cloned,
+    value: cloned,
     revision: 0,
     cachedRead: undefined,
     cachedReadRevision: -1,

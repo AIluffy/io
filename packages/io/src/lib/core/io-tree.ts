@@ -28,6 +28,7 @@ import {
 import { INTERNAL } from '../utils/internal-symbol.js';
 import { isPlainObject } from '../utils/plain-object.js';
 import { readCachedByVersion } from '../container/cache.js';
+import { clearDirtyIndices } from './dirty-indices.js';
 import {
   applyArrayCommitDiff,
   applyScopeCommitDiff,
@@ -159,6 +160,7 @@ function getArraySnapshot(
   state: TreeArrayState,
   cache?: WeakMap<object, unknown>,
 ): unknown[] {
+  const fullRebuildThreshold = 0.5;
   return readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
     const local = cache ?? new WeakMap<object, unknown>();
     const cached = local.get(state.node as unknown as object);
@@ -171,20 +173,46 @@ function getArraySnapshot(
     if (
       prev &&
       !state.dirtyStructure &&
-      state.dirtyIndices.size === 0 &&
+      state.dirtyIndices.items.length === 0 &&
       prev.length === state.children.length
     ) {
       local.set(state.node as unknown as object, prev);
       return prev;
     }
 
-    const values =
-      prev && !state.dirtyStructure && prev.length === state.children.length
-        ? prev.slice()
-        : new Array(state.children.length);
+    let values: unknown[];
+    let forceFullRebuild = false;
+    if (
+      prev &&
+      !state.dirtyStructure &&
+      prev.length === state.children.length
+    ) {
+      let validDirty = 0;
+      for (const index of state.dirtyIndices.items) {
+        if (index >= 0 && index < state.children.length) validDirty += 1;
+      }
+      if (validDirty === 0) {
+        clearDirtyIndices(state.dirtyIndices);
+        local.set(state.node as unknown as object, prev);
+        return prev;
+      }
+      const fullRebuildThresholdCount = Math.ceil(
+        state.children.length * fullRebuildThreshold,
+      );
+      if (validDirty >= fullRebuildThresholdCount) {
+        values = new Array(state.children.length);
+        forceFullRebuild = true;
+      } else {
+        values = prev.slice();
+      }
+    } else {
+      values = new Array(state.children.length);
+      forceFullRebuild = true;
+    }
     local.set(state.node as unknown as object, values);
 
     if (
+      forceFullRebuild ||
       !prev ||
       state.dirtyStructure ||
       prev.length !== state.children.length
@@ -193,13 +221,13 @@ function getArraySnapshot(
         values[i] = getNodeValue(state.children[i], local);
       }
     } else {
-      for (const index of state.dirtyIndices) {
+      for (const index of state.dirtyIndices.items) {
         if (index < 0 || index >= state.children.length) continue;
         values[index] = getNodeValue(state.children[index], local);
       }
     }
 
-    state.dirtyIndices.clear();
+    clearDirtyIndices(state.dirtyIndices);
     state.dirtyStructure = false;
     const frozen = freezeRootShallow(values) as unknown[];
     local.set(state.node as unknown as object, frozen);

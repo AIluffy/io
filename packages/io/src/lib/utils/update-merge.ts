@@ -1,5 +1,7 @@
 import type { IoPatch, IoUpdate } from './types.js';
 
+const PATH_KEY_CACHE = new WeakMap<object, string>();
+
 function newId(): string {
   const cryptoObj = (globalThis as Record<PropertyKey, unknown>).crypto;
   if (typeof cryptoObj === 'object' && cryptoObj !== null) {
@@ -20,6 +22,8 @@ export function createUpdate(
 }
 
 function pathKey(path: ReadonlyArray<PropertyKey>): string {
+  const cached = PATH_KEY_CACHE.get(path as unknown as object);
+  if (cached) return cached;
   let out = '';
   for (let i = 0; i < path.length; i += 1) {
     const seg = path[i];
@@ -34,6 +38,7 @@ function pathKey(path: ReadonlyArray<PropertyKey>): string {
     const escaped = seg.replace(/([\\|:])/g, '\\$1');
     out += `|s:${escaped}`;
   }
+  PATH_KEY_CACHE.set(path as unknown as object, out);
   return out;
 }
 
@@ -58,7 +63,8 @@ export function mergeUpdates(
         last &&
         last.op === 'set' &&
         patch.op === 'set' &&
-        pathKey(last.path) === pathKey(patch.path)
+        (last.path === patch.path ||
+          pathKey(last.path) === pathKey(patch.path))
       ) {
         merged[merged.length - 1] = { ...last, next: patch.next };
         continue;
