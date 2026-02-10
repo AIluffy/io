@@ -5,6 +5,9 @@ import type {
   TreeInternal,
   TreeNode,
   TreeScopeState,
+  TreeScopeInternal,
+  TreeArrayInternal,
+  UnitInternal,
 } from './io-tree-types.js';
 
 import {
@@ -46,15 +49,33 @@ function getInternal(value: unknown): TreeInternal | undefined {
   return getAnyInternal(value) as unknown as TreeInternal | undefined;
 }
 
+function isScopeInternal(
+  internal: TreeInternal | undefined,
+): internal is TreeScopeInternal {
+  return internal?.kind === 'scope';
+}
+
+function isArrayInternal(
+  internal: TreeInternal | undefined,
+): internal is TreeArrayInternal {
+  return internal?.kind === 'array';
+}
+
+function isUnitInternal(
+  internal: TreeInternal | undefined,
+): internal is UnitInternal {
+  return internal?.kind === 'unit';
+}
+
 const subtreeAccess = {
   getScopeChildren(node: TreeNode) {
     const internal = getInternal(node);
-    if (internal?.kind !== 'scope') return undefined;
+    if (!isScopeInternal(internal)) return undefined;
     return internal.getState().children.entries();
   },
   getArrayChildren(node: TreeNode) {
     const internal = getInternal(node);
-    if (internal?.kind !== 'array') return undefined;
+    if (!isArrayInternal(internal)) return undefined;
     return internal.getState().children;
   },
 };
@@ -84,10 +105,10 @@ function getNodeValue(
   cache: WeakMap<object, unknown>,
 ): unknown {
   const internal = getInternal(node);
-  if (internal?.kind === 'unit') return (node as IoUnit<unknown>).snapshot();
-  if (internal?.kind === 'scope')
+  if (isUnitInternal(internal)) return (node as IoUnit<unknown>).snapshot();
+  if (isScopeInternal(internal))
     return getScopeSnapshot(internal.getState(), cache);
-  if (internal?.kind === 'array')
+  if (isArrayInternal(internal))
     return getArraySnapshot(internal.getState(), cache);
   if (hasSnapshot(node)) return node.snapshot();
   return snapshotValue(node, { owned: false });
@@ -111,20 +132,18 @@ function getScopeSnapshot(
       return prev;
     }
 
-    const base =
-      prev && !state.dirtyStructure
-        ? { ...prev }
-        : ({} as Record<string, unknown>);
+    const base: Record<PropertyKey, unknown> =
+      prev && !state.dirtyStructure ? { ...prev } : {};
     local.set(state.node as unknown as object, base);
 
     if (!prev || state.dirtyStructure) {
       for (const [key, node] of state.children.entries()) {
-        (base as any)[key] = getNodeValue(node, local);
+        base[key] = getNodeValue(node, local);
       }
     } else {
       for (const key of state.dirtyKeys) {
         const node = state.children.get(key);
-        if (node) (base as any)[key] = getNodeValue(node, local);
+        if (node) base[key] = getNodeValue(node, local);
       }
     }
 

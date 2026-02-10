@@ -5,8 +5,14 @@ import type {
   IoSnapshotDiff,
 } from 'io-devtools';
 import { buildPatchDiffTree, diffSnapshots } from 'io-devtools';
-import type { CSSProperties, ReactElement } from 'react';
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import type { CSSProperties, MutableRefObject, ReactElement } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 export type IoDevtoolsPanelProps = {
   devtools: IoDevtools;
@@ -22,6 +28,15 @@ function formatTimestamp(ms: number): string {
 }
 
 type PatchPath = IoHistoryEntry['patchDiffs'][number]['path'];
+type DevtoolsState = ReturnType<IoDevtools['getState']>;
+type DevtoolsSnapshotMemo = { key: string; state: DevtoolsState };
+type SnapshotDiffMode = 'collapsed' | 'sample' | 'full';
+
+const SNAPSHOT_SAMPLE_OPTIONS = {
+  maxDepth: 3,
+  maxChanges: 200,
+  maxArrayLength: 50,
+} as const;
 
 function formatPath(path: PatchPath): string {
   if (path.length === 0) return '$';
@@ -39,6 +54,40 @@ function downloadText(filename: string, text: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function selectDevtoolsSnapshotKey(state: DevtoolsState): string {
+  const perf = state.perf;
+  const linkKey =
+    state.links?.multiParents
+      .map((entry) => entry.paths.map((p) => p.join('.')).join('|'))
+      .join(';') ?? '';
+  return [
+    state.enabled ? 1 : 0,
+    state.paused ? 1 : 0,
+    state.cursor,
+    state.history.length,
+    state.errors.length,
+    linkKey,
+    perf?.recent.length ?? 0,
+    perf?.summary.avgTotalMs ?? '',
+    perf?.summary.maxTotalMs ?? '',
+    perf?.summary.avgSnapshotMs ?? '',
+    perf?.summary.maxSnapshotMs ?? '',
+    perf?.summary.avgDiffMs ?? '',
+    perf?.summary.maxDiffMs ?? '',
+  ].join('|');
+}
+
+function memoizeDevtoolsSnapshot(
+  cacheRef: MutableRefObject<DevtoolsSnapshotMemo | null>,
+  state: DevtoolsState,
+): DevtoolsState {
+  const key = selectDevtoolsSnapshotKey(state);
+  const cached = cacheRef.current;
+  if (cached?.key === key) return cached.state;
+  cacheRef.current = { key, state };
+  return state;
 }
 
 function renderPatchTree(
@@ -82,38 +131,11 @@ function renderPatchTree(
 }
 
 function useDevtoolsState(devtools: IoDevtools) {
-  const cacheRef = useRef<{
-    key: string;
-    state: ReturnType<IoDevtools['getState']>;
-  } | null>(null);
+  const cacheRef = useRef<DevtoolsSnapshotMemo | null>(null);
 
   const getSnapshot = () => {
     const state = devtools.getState();
-    const perf = state.perf;
-    const linkKey =
-      state.links?.multiParents
-        .map((entry) => entry.paths.map((p) => p.join('.')).join('|'))
-        .join(';') ?? '';
-    const key = [
-      state.enabled ? 1 : 0,
-      state.paused ? 1 : 0,
-      state.cursor,
-      state.history.length,
-      state.errors.length,
-      linkKey,
-      perf?.recent.length ?? 0,
-      perf?.summary.avgTotalMs ?? '',
-      perf?.summary.maxTotalMs ?? '',
-      perf?.summary.avgSnapshotMs ?? '',
-      perf?.summary.maxSnapshotMs ?? '',
-      perf?.summary.avgDiffMs ?? '',
-      perf?.summary.maxDiffMs ?? '',
-    ].join('|');
-
-    const cached = cacheRef.current;
-    if (cached?.key === key) return cached.state;
-    cacheRef.current = { key, state };
-    return state;
+    return memoizeDevtoolsSnapshot(cacheRef, state);
   };
 
   return useSyncExternalStore(
@@ -136,6 +158,12 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
       : null;
 
   const [patchView, setPatchView] = useState<'list' | 'tree'>('tree');
+  const [snapshotDiffMode, setSnapshotDiffMode] =
+    useState<SnapshotDiffMode>('collapsed');
+
+  useEffect(() => {
+    setSnapshotDiffMode('collapsed');
+  }, [selectedEntry?.id]);
 
   const patchTree: IoPatchDiffTreeNode[] | null = useMemo(() => {
     if (!selectedEntry) return null;
@@ -143,6 +171,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
   }, [selectedEntry]);
 
   const snapshotDiffs: IoSnapshotDiff[] | null = useMemo(() => {
+    if (snapshotDiffMode === 'collapsed') return null;
     if (!selectedEntry) return null;
     if (
       selectedEntry.snapshotBefore === undefined ||
@@ -152,8 +181,14 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
     return diffSnapshots(
       selectedEntry.snapshotBefore,
       selectedEntry.snapshotAfter,
+      snapshotDiffMode === 'sample' ? SNAPSHOT_SAMPLE_OPTIONS : undefined,
     );
-  }, [selectedEntry]);
+  }, [selectedEntry, snapshotDiffMode]);
+
+  const canDiffSnapshots =
+    selectedEntry &&
+    selectedEntry.snapshotBefore !== undefined &&
+    selectedEntry.snapshotAfter !== undefined;
 
   const headerStyle: CSSProperties = {
     display: 'grid',
@@ -408,20 +443,56 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                 )}
               </div>
 
-              {snapshotDiffs ? (
+              {canDiffSnapshots ? (
                 <div style={{ display: 'grid', gap: 6 }}>
                   <div style={{ fontWeight: 700 }}>Snapshot diffs</div>
-                  <pre
-                    style={{
-                      margin: 0,
-                      padding: 10,
-                      borderRadius: 8,
-                      background: 'var(--io-devtools-surface-strong)',
-                      overflowX: 'auto',
-                    }}
-                  >
-                    {JSON.stringify(snapshotDiffs, null, 2)}
-                  </pre>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="io-devtools-panel__button"
+                      onClick={() =>
+                        setSnapshotDiffMode((current) =>
+                          current === 'collapsed' ? 'sample' : 'collapsed',
+                        )
+                      }
+                    >
+                      {snapshotDiffMode === 'collapsed'
+                        ? 'Show (sample)'
+                        : 'Hide'}
+                    </button>
+                    <button
+                      className="io-devtools-panel__button"
+                      onClick={() => setSnapshotDiffMode('full')}
+                      disabled={snapshotDiffMode === 'full'}
+                    >
+                      Deep diff
+                    </button>
+                  </div>
+                  {snapshotDiffMode === 'collapsed' ? (
+                    <div className="io-devtools-panel__muted">
+                      Snapshot diffs are computed on demand. Use sample for quick
+                      checks, deep diff for full detail.
+                    </div>
+                  ) : (
+                    <>
+                      {snapshotDiffMode === 'sample' ? (
+                        <div className="io-devtools-panel__muted">
+                          Sampled diff (depth {SNAPSHOT_SAMPLE_OPTIONS.maxDepth},
+                          max {SNAPSHOT_SAMPLE_OPTIONS.maxChanges} changes).
+                        </div>
+                      ) : null}
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: 10,
+                          borderRadius: 8,
+                          background: 'var(--io-devtools-surface-strong)',
+                          overflowX: 'auto',
+                        }}
+                      >
+                        {JSON.stringify(snapshotDiffs ?? [], null, 2)}
+                      </pre>
+                    </>
+                  )}
                 </div>
               ) : null}
 

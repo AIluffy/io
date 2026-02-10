@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "lint": "npm exec nx run-many -t lint",
+    "lint:affected": "npm exec nx affected -t lint",
     "lint:mdx": "markdownlint-cli2 --config .markdownlint.json \"apps/docs/src/content/docs/**/*.{md,mdx}\"",
     "docs:generate-api": "node tools/docs/generate-api-docs.mjs",
     "docs:generate-bench": "node tools/docs/generate-bench-docs.mjs",

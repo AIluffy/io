@@ -115,13 +115,10 @@ export function applyUpdate(
     return;
   }
   const update = updateOrUpdates;
-  const rootInternal = getInternal(target);
-  if (!rootInternal) throw new Error('applyUpdate: target is not an IO node');
+  if (!getInternal(target))
+    throw new Error('applyUpdate: target is not an IO node');
 
-  const resolveNode = (
-    root: unknown,
-    path: ReadonlyArray<PropertyKey>,
-  ): unknown => {
+  const resolveNode = (root: unknown, path: ReadonlyArray<PropertyKey>) => {
     let current: unknown = root;
     for (const segment of path) {
       const internal = getInternal(current);
@@ -154,70 +151,71 @@ export function applyUpdate(
     return current;
   };
 
-  for (const patch of update.patches) {
-    try {
-      if (patch.op === 'set') {
-        if (patch.path.length === 0) {
-          const internal = getInternal(target);
-          if (!internal || internal.kind !== 'unit') {
-            throw new Error('applyUpdate: unsupported root set');
-          }
-          internal.setValue(patch.next, { emitUpdate: false, emitValue: true });
-          continue;
+  type PatchHandlerMap = {
+    [K in IoPatch['op']]: (patch: Extract<IoPatch, { op: K }>) => void;
+  };
+
+  const handlers: PatchHandlerMap = {
+    set: (patch) => {
+      if (patch.path.length === 0) {
+        const internal = getInternal(target);
+        if (!internal || internal.kind !== 'unit') {
+          throw new Error('applyUpdate: unsupported root set');
         }
-
-        const parentPath = patch.path.slice(0, -1);
-        const last = patch.path[patch.path.length - 1];
-        const parentNode = resolveNode(target, parentPath);
-        const parentInternal = getInternal(parentNode);
-        if (!parentInternal)
-          throw new Error('applyUpdate: invalid parent node');
-
-        if (parentInternal.kind === 'scope') {
-          if (typeof last !== 'string' && typeof last !== 'symbol')
-            throw new Error('applyUpdate: invalid scope key');
-          
-          parentInternal.applySet(last, patch.next, {
-            emitUpdate: false,
-            emitValue: true,
-          });
-          continue;
-        }
-
-        if (parentInternal.kind === 'array') {
-          if (typeof last !== 'number')
-            throw new Error('applyUpdate: invalid array index');
-          parentInternal.setIndex(last, patch.next, {
-            emitUpdate: false,
-            emitValue: true,
-          });
-          continue;
-        }
-
-        throw new Error('applyUpdate: set target is not a container');
+        internal.setValue(patch.next, { emitUpdate: false, emitValue: true });
+        return;
       }
 
-      if (patch.op === 'splice') {
-        const arrayNode = resolveNode(target, patch.path);
-        const arrayInternal = getInternal(arrayNode);
-        if (!arrayInternal || arrayInternal.kind !== 'array')
-          throw new Error('applyUpdate: splice target is not array');
-        arrayInternal.applySplice(patch.start, patch.deleteCount, patch.items, {
+      const parentPath = patch.path.slice(0, -1);
+      const last = patch.path[patch.path.length - 1];
+      const parentNode = resolveNode(target, parentPath);
+      const parentInternal = getInternal(parentNode);
+      if (!parentInternal) throw new Error('applyUpdate: invalid parent node');
+
+      if (parentInternal.kind === 'scope') {
+        if (typeof last !== 'string' && typeof last !== 'symbol')
+          throw new Error('applyUpdate: invalid scope key');
+
+        parentInternal.applySet(last, patch.next, {
+          emitUpdate: false,
           emitValue: true,
         });
-        continue;
+        return;
       }
 
-      if (patch.op === 'sort') {
-        const arrayNode = resolveNode(target, patch.path);
-        const arrayInternal = getInternal(arrayNode);
-        if (!arrayInternal || arrayInternal.kind !== 'array')
-          throw new Error('applyUpdate: sort target is not array');
-        arrayInternal.applySortOrder(patch.order, { emitValue: true });
-        continue;
+      if (parentInternal.kind === 'array') {
+        if (typeof last !== 'number')
+          throw new Error('applyUpdate: invalid array index');
+        parentInternal.setIndex(last, patch.next, {
+          emitUpdate: false,
+          emitValue: true,
+        });
+        return;
       }
 
-      throw new Error('applyUpdate: unsupported patch');
+      throw new Error('applyUpdate: set target is not a container');
+    },
+    splice: (patch) => {
+      const arrayNode = resolveNode(target, patch.path);
+      const arrayInternal = getInternal(arrayNode);
+      if (!arrayInternal || arrayInternal.kind !== 'array')
+        throw new Error('applyUpdate: splice target is not array');
+      arrayInternal.applySplice(patch.start, patch.deleteCount, patch.items, {
+        emitValue: true,
+      });
+    },
+    sort: (patch) => {
+      const arrayNode = resolveNode(target, patch.path);
+      const arrayInternal = getInternal(arrayNode);
+      if (!arrayInternal || arrayInternal.kind !== 'array')
+        throw new Error('applyUpdate: sort target is not array');
+      arrayInternal.applySortOrder(patch.order, { emitValue: true });
+    },
+  };
+
+  for (const patch of update.patches) {
+    try {
+      handlers[patch.op](patch as never);
     } catch (error) {
       emitError(target, error, patch.path, 'applyUpdate');
       throw error;
