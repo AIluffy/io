@@ -45,6 +45,13 @@
           "command": "node tools/docs/generate-api-docs.mjs",
           "cwd": "{workspaceRoot}"
         }
+      },
+      "generate-bench": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/docs/generate-bench-docs.mjs",
+          "cwd": "{workspaceRoot}"
+        }
       }
     }
   },

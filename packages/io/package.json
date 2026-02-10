@@ -34,7 +34,7 @@
       "bench": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "vitest bench --config vite.config.ts --include src/**/*.bench.ts",
+          "command": "vitest bench --config vite.config.ts",
           "cwd": "packages/io"
         }
       }
