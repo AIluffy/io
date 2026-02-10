@@ -44,6 +44,18 @@ const store = io({ count: 0, rate: 2 });
 const total = derived(() => store.count.get() * store.rate.get());
 ```
 
+## Why Not Implicit Auto Tracking
+
+`derived()` offers three options to keep dependency semantics explicit:
+
+- **Explicit deps**: subscriptions come from the provided dependencies.
+- **Tree selector**: subscriptions come from the provided tree node (not the selector’s access paths).
+- **Auto tracking**: dependencies come from runtime `get()` reads.
+
+If these were merged into implicit auto tracking, dependency sources would be opaque,
+which makes subscription scope, performance, and debugging harder to reason about.
+IO keeps the semantics explicit and limits “auto tracking” to `derived(() => ...)`.
+
 ## Subscribe
 
 ```ts
