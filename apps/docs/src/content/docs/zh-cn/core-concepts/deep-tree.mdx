@@ -5,6 +5,8 @@ sidebar:
   order: 2
 ---
 
+import { DeepTreeDashboard } from '../../../../components/DeepTreeDashboard';
+
 IO 默认工作在深层模式：对象与数组会被展开成可订阅的树结构。
 
 ## 深层访问
@@ -24,6 +26,14 @@ store.items[0].count.update((v) => v + 1);
 每条路径都像 Unit 一样读写，因此订阅也可以精确到叶子。
 
 你可以把这理解为“自动原子化”：Tree 负责组织结构，路径 Unit 负责提供原子粒度的读写与订阅。
+
+## 复杂对象示例（React 可视化）
+
+下面示例定义一个包含用户、看板与提醒的深层 Tree，并用 React 拆成多个小组件。每个组件只订阅自己用到的路径，并在 UI 上显示渲染次数，便于观察更新范围。
+
+<DeepTreeDashboard client:load />
+
+点击按钮观察：改名只会刷新 Profile 面板，切换卡片只会刷新对应行，批量更新会合并通知。
 
 ## 浅层模式（shallow）
 
