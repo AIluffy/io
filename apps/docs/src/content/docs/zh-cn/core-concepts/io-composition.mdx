@@ -1,43 +1,38 @@
 ---
-title: IO 组合（设计草案）
-description: 在 Tree 中复用已有 IO 节点的设计提案。
+title: IO 组合
+description: 用 link() 复用已有 IO 节点。
 sidebar:
   order: 6
 ---
 
-:::caution
-当前版本不支持把 `io()` 返回的节点直接放进另一个 `io()` 的对象里。
-示例 `io({ akey: io(0) })` 会被当成普通对象展开，并在克隆或快照阶段失败。
-:::
+IO 支持通过 `link()` 显式复用已有 IO 节点，避免误把节点当作普通对象展开。
 
-## 目标
+## 使用方式
 
-- 允许把已有的 `IoUnit` / `IoScope` / `IoArray` 当作树节点复用。
-- 保持引用身份：`b.akey === a`。
-- 更新与订阅向父树冒泡，patch 路径自动前缀。
-- Snapshot 读取到被引用节点的快照。
+```ts
+import { io, link } from 'io-store';
 
-## 方案概要（提案）
+const count = io(0);
+const store = io({ count: link(count) });
 
-- `io()` 在构建树时识别 IO 节点，并把它们当作“引用节点”直接挂载。
-- 引用节点不再深拷贝或展开，仅参与订阅冒泡与路径映射。
-- `set` / `commit` 对引用节点生效时，直接写入被引用节点。
-- 引用节点可来自其他树或独立 Unit。
+store.count === count; // true
+```
 
-## 实现要点（草案）
+## 为什么必须显式
 
-- 在 `core/node-factory.ts` 的 `createTreeNode` 中优先识别 IO 节点（`getInternal()?.kind`），避免当作 plain object 展开。
-- 对引用节点调用 `registerSubtree` 与 `setPathNode`，保证 devtools 与路径查询可用。
-- 类型层（`utils/types.ts`）将 `IoUnit` / `IoScope` / `IoArray` 视为叶子，避免类型被再次展开。
-- `utils/updates.ts` 与 `extensions/relocate.ts` 可复用现有的 `getInternal()` 分派逻辑。
+- IO 节点是带方法的对象，隐式展开会把方法当作普通字段，导致快照/克隆失败。
+- 结构更清晰：`link()` 表示“引用节点”，否则就是“普通值”。
+- 避免不小心把外部节点混进 Tree，造成循环或不可预期的更新路径。
 
-## 边界与限制（初版建议）
+## 语义
 
-- 不允许形成循环引用（例如把父节点重新挂回子节点）。
-- 数组中复用同一引用节点的语义与 patch 路径需保持一致。
-- 引用节点的生命周期由其原始创建方负责。
+- **保持引用身份**：`store.count === count`。
+- **冒泡更新**：对子节点的更新会向父树冒泡，patch 路径自动前缀。
+- **快照读取**：`store.snapshot()` 读取到被引用节点的快照值。
+- **数组复用规则**：同一节点在数组里出现多次时，更新会冒泡到每个索引位置（生成多条 patch 路径）。
 
-## 开放问题
+## 限制与注意事项
 
-- 是否需要显式 API（例如 `link(a)`）来避免无意把 IO 节点当值使用。
-- 同一 IO 节点被多个树引用时的路径可视化与 devtools 展示策略。
+- **必须显式使用 `link()`**。直接 `io({ count })` 会被当作普通对象展开并在克隆/快照阶段失败。
+- **请避免循环引用**（例如把父节点重新挂回子节点）。
+- **跨树引用** 会被视作外部节点，DevTools 仅记录根路径，不展开子路径。

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { io } from 'io-store';
+import { io, link } from 'io-store';
 import { createIoDevtools } from './create-io-devtools.js';
 
 describe('io-devtools: createIoDevtools', () => {
@@ -73,5 +73,17 @@ describe('io-devtools: createIoDevtools', () => {
 
     expect(() => store.count.set(1)).not.toThrow();
     expect(devtools.getState().history).toHaveLength(1);
+  });
+
+  it('exposes multi-parent link info', () => {
+    const count = io(0);
+    const store = io({ a: link(count), b: link(count) });
+    const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
+
+    const links = devtools.getState().links;
+    expect(links?.multiParents.length).toBe(1);
+    const paths = links?.multiParents[0].paths ?? [];
+    expect(paths).toContainEqual(['a']);
+    expect(paths).toContainEqual(['b']);
   });
 });

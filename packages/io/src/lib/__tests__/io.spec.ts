@@ -13,6 +13,7 @@ import { derived } from '../core/derived.js';
 import { io } from '../core/io.js';
 import { ioTree } from '../core/io-tree.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
+import { link } from '../utils/link.js';
 import { Signal, computed, effect } from '../utils/signals.js';
 import { createHistory } from '../utils/history.js';
 import {
@@ -403,6 +404,104 @@ describe('debug hooks', () => {
   });
 });
 
+describe('link', () => {
+  it('preserves identity and snapshots', () => {
+    const count = io(0);
+    const store = io({ count: link(count) });
+
+    expect(store.count).toBe(count);
+    expect(store.snapshot()).toEqual({ count: 0 });
+
+    count.set(2);
+    expect(store.snapshot()).toEqual({ count: 2 });
+  });
+
+  it('bubbles updates with prefixed paths', () => {
+    const count = io(0);
+    const store = io({ count: link(count) });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    count.set(1);
+    unsub();
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: ['count'] });
+  });
+
+  it('supports commit against linked nodes', () => {
+    const count = io(0);
+    const store = io({ count: link(count) });
+
+    store.commit((draft) => {
+      draft.count = 5;
+    });
+
+    expect(count.get()).toBe(5);
+  });
+
+  it('rejects non-IO targets', () => {
+    expect(() => link({ value: 1 } as unknown)).toThrow(
+      'link: target is not an IO node',
+    );
+  });
+
+  it('links scopes and bubbles nested updates', () => {
+    const profile = io({ name: 'Ada' });
+    const store = io({ profile: link(profile) });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    profile.name.set('Grace');
+    unsub();
+
+    expect(store.profile).toBe(profile);
+    expect(store.snapshot()).toEqual({ profile: { name: 'Grace' } });
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'set',
+      path: ['profile', 'name'],
+    });
+  });
+
+  it('links arrays and bubbles indexed updates', () => {
+    const items = io([{ id: 'a' }]);
+    const store = io({ items: link(items) });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    items[0].id.set('b');
+    unsub();
+
+    expect(store.items).toBe(items);
+    expect(store.snapshot()).toEqual({ items: [{ id: 'b' }] });
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'set',
+      path: ['items', 0, 'id'],
+    });
+  });
+
+  it('bubbles updates to all indices for repeated links in arrays', () => {
+    const count = io(0);
+    const store = io({ items: [link(count), link(count)] });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    count.set(1);
+    unsub();
+
+    const paths = updates[0].patches.map((p) => p.path);
+    expect(paths).toContainEqual(['items', 0]);
+    expect(paths).toContainEqual(['items', 1]);
+  });
+
+  it('rejects link cycles', () => {
+    const store = io({ items: [] as unknown[] });
+    expect(() => {
+      store.items.push(link(store));
+    }).toThrow(/cycle/i);
+  });
+});
+
 describe('types', () => {
   it('infers node types', () => {
     const unit = io(1);
@@ -425,6 +524,13 @@ describe('types', () => {
     >();
     expectTypeOf(tree.profile.age).toEqualTypeOf<IoUnit<number>>();
     expectTypeOf(tree.items[0].count).toEqualTypeOf<IoUnit<number>>();
+  });
+
+  it('infers linked node types', () => {
+    const count = io(1);
+    const store = io({ count: link(count) });
+    expectTypeOf(store.count).toEqualTypeOf<IoUnit<number>>();
+    expectTypeOf(store.get().count).toEqualTypeOf<number>();
   });
 });
 

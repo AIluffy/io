@@ -71,38 +71,57 @@ export type IoDerived<T> = {
   subscribe(fn: (v: T) => void): IoUnsubscribe;
 };
 
-export type IoNode<T> = [T] extends [readonly (infer U)[]]
-  ? IoArrayUnit<U>
-  : [T] extends [Record<string, unknown>]
-    ? IoScope<T>
-    : IoUnit<T>;
+declare const IO_LINK: unique symbol;
+export type IoLink<T> = {
+  readonly [IO_LINK]: T;
+};
 
-export type IoTreeNode<T, MaxDepth extends number = 16> = MaxDepth extends 0
-  ? IoUnit<T>
+export type IoTreeNode<T, MaxDepth extends number = 16> =
+  [T] extends [IoLink<infer U>]
+    ? U
+    : MaxDepth extends 0
+      ? IoUnit<T>
+      : [T] extends [readonly (infer U)[]]
+        ? IoTreeArrayUnit<U, PrevDepth<MaxDepth>>
+        : [T] extends [Record<string, unknown>]
+          ? IoTreeScope<T, PrevDepth<MaxDepth>>
+          : IoUnit<T>;
+
+export type IoNode<T> = [T] extends [IoLink<infer U>]
+  ? U
   : [T] extends [readonly (infer U)[]]
-    ? IoTreeArrayUnit<U, PrevDepth<MaxDepth>>
+    ? IoArrayUnit<U>
     : [T] extends [Record<string, unknown>]
-      ? IoTreeScope<T, PrevDepth<MaxDepth>>
+      ? IoScope<T>
       : IoUnit<T>;
 
 export type IoResult<T, MaxDepth extends number = 16> = IoTreeNode<T, MaxDepth>;
 
 export type IoTreeArrayUnit<T, MaxDepth extends number = 8> = {
-  get(): T[];
+  get(): UnwrapIo<T>[];
   [i: number]: IoTreeNode<T, MaxDepth>;
-  set(next: T[]): void;
-  push(...items: T[]): void;
-  pop(): T | undefined;
-  splice(start: number, deleteCount: number, ...items: T[]): void;
-  sort(compareFn?: (a: T, b: T) => number): void;
-  commit(fn: (draft: T[]) => void): void;
+  set(next: UnwrapIo<T>[]): void;
+  push(...items: UnwrapIo<T>[]): void;
+  pop(): UnwrapIo<T> | undefined;
+  splice(
+    start: number,
+    deleteCount: number,
+    ...items: UnwrapIo<T>[]
+  ): void;
+  sort(
+    compareFn?: (
+      a: UnwrapIo<T>,
+      b: UnwrapIo<T>
+    ) => number
+  ): void;
+  commit(fn: (draft: UnwrapIo<T>[]) => void): void;
   reduce<R>(
     reducer: (acc: R, item: IoTreeNode<T, MaxDepth>, index: number) => R,
     initialValue: R,
   ): R;
   [Symbol.iterator](): Iterator<IoTreeNode<T, MaxDepth>>;
-  snapshot(): T[];
-  subscribe(fn: (v: T[]) => void): IoUnsubscribe;
+  snapshot(): UnwrapIo<T>[];
+  subscribe(fn: (v: UnwrapIo<T>[]) => void): IoUnsubscribe;
   subscribeUpdate(fn: (u: IoUpdate) => void): IoUnsubscribe;
 };
 
@@ -114,10 +133,12 @@ export type IoTreeScope<
 > = {
   [K in keyof T]: IoTreeNode<T[K], MaxDepth>;
 } & {
-  get(): T;
-  commit(fn: (draft: T) => void): void;
-  snapshot(): T;
-  subscribe(fn: (v: T) => void): IoUnsubscribe;
+  get(): UnwrapIo<T>;
+  commit(fn: (draft: UnwrapIo<T>) => void): void;
+  snapshot(): UnwrapIo<T>;
+  subscribe(
+    fn: (v: UnwrapIo<T>) => void
+  ): IoUnsubscribe;
   subscribeUpdate(fn: (u: IoUpdate) => void): IoUnsubscribe;
 };
 
@@ -206,8 +227,19 @@ type TypeFailure<
   Mode extends IoTypeInferenceMode,
 > = Mode extends 'error' ? never & IoTypeError<Message> : unknown;
 
-type IsRecord<T> = [T] extends [Record<string, unknown>] ? true : false;
-type IsArray<T> = [T] extends [readonly unknown[]] ? true : false;
+type LinkValue<T> = T extends { get(): infer V } ? V : unknown;
+type NormalizeIoInput<T> = [T] extends [IoLink<infer U>]
+  ? LinkValue<U>
+  : [T] extends [{ get(): unknown }]
+    ? LinkValue<T>
+    : T;
+
+type IsRecord<T> = [NormalizeIoInput<T>] extends [Record<string, unknown>]
+  ? true
+  : false;
+type IsArray<T> = [NormalizeIoInput<T>] extends [readonly unknown[]]
+  ? true
+  : false;
 
 export type UnwrapIo<
   T,
@@ -216,25 +248,31 @@ export type UnwrapIo<
 > = MaxDepth extends 0
   ? TypeFailure<'UnwrapIo: exceeded MaxDepth', Mode>
   : IsArray<T> extends true
-    ? T extends readonly (infer U)[]
+    ? NormalizeIoInput<T> extends readonly (infer U)[]
       ? UnwrapIo<U, PrevDepth<MaxDepth>, Mode>[]
       : never
     : IsRecord<T> extends true
-      ? { [K in keyof T]: UnwrapIo<T[K], PrevDepth<MaxDepth>, Mode> }
-      : T;
+      ? {
+          [K in keyof NormalizeIoInput<T>]: UnwrapIo<
+            NormalizeIoInput<T>[K],
+            PrevDepth<MaxDepth>,
+            Mode
+          >;
+        }
+      : NormalizeIoInput<T>;
 
 type PathSegment = PropertyKey;
 
 type PathOfImpl<T, Depth extends number> = Depth extends 0
   ? never
-  : [T] extends [readonly (infer U)[]]
+  : [NormalizeIoInput<T>] extends [readonly (infer U)[]]
     ? [number] | [number, ...PathOfImpl<U, PrevDepth<Depth>>]
-    : [T] extends [Record<string, unknown>]
+    : [NormalizeIoInput<T>] extends [Record<string, unknown>]
       ? {
-          [K in Extract<keyof T, string>]:
+          [K in Extract<keyof NormalizeIoInput<T>, string>]:
             | [K]
-            | [K, ...PathOfImpl<T[K], PrevDepth<Depth>>];
-        }[Extract<keyof T, string>]
+            | [K, ...PathOfImpl<NormalizeIoInput<T>[K], PrevDepth<Depth>>];
+        }[Extract<keyof NormalizeIoInput<T>, string>]
       : never;
 
 export type IoPathOf<T, MaxDepth extends number = 5> =
@@ -257,15 +295,20 @@ export type IoPathValue<
   Mode extends IoTypeInferenceMode = 'unknown',
 > = T extends unknown
   ? P extends []
-    ? T
+    ? NormalizeIoInput<T>
     : MaxDepth extends 0
       ? TypeFailure<'IoPathValue: exceeded MaxDepth', Mode>
       : P[0] extends number
-        ? T extends readonly (infer U)[]
+        ? NormalizeIoInput<T> extends readonly (infer U)[]
           ? IoPathValue<U, Tail<P>, PrevDepth<MaxDepth>, Mode>
           : TypeFailure<'IoPathValue: invalid array path', Mode>
-        : P[0] extends keyof T
-          ? IoPathValue<T[P[0]], Tail<P>, PrevDepth<MaxDepth>, Mode>
+        : P[0] extends keyof NormalizeIoInput<T>
+          ? IoPathValue<
+              NormalizeIoInput<T>[P[0]],
+              Tail<P>,
+              PrevDepth<MaxDepth>,
+              Mode
+            >
           : TypeFailure<'IoPathValue: invalid object path', Mode>
   : never;
 

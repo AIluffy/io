@@ -26,12 +26,15 @@ type CommitDeps<
 > = {
   isPlainObject: (value: unknown) => boolean;
   isUnit: (node: TNode) => boolean;
+  isLink: (value: unknown) => boolean;
   getInternalKind: (
     node: TNode,
   ) => 'scope' | 'array' | 'unit' | 'derived' | undefined;
   getScopeState: (node: TNode) => TScopeState;
   getArrayState: (node: TNode) => TArrayState;
   setUnitValue: (node: TNode, next: unknown) => void;
+  getNodeValue: (node: TNode) => unknown;
+  resolvePatchValue: (value: unknown) => unknown;
   createTreeNode: (path: NodePath, next: unknown) => TNode;
   detachChildFromScope: (state: TScopeState, key: PropertyKey) => void;
   attachChildToScope: (
@@ -75,6 +78,45 @@ export function applyScopeCommitDiff<
     nextValue: unknown,
     relPath: PathSegment[],
   ): boolean => {
+    if (deps.isLink(nextValue)) {
+      const prevValue = deps.getNodeValue(node);
+      if (typeof segment === 'string') {
+        deps.detachChildFromScope(parentState as TScopeState, segment);
+        deps.unregisterSubtree([...parentState.path, segment], node);
+        const replaced = deps.createTreeNode(
+          [...parentState.path, segment],
+          nextValue,
+        );
+        (parentState as TScopeState).children.set(segment, replaced);
+        deps.attachChildToScope(parentState as TScopeState, segment, replaced);
+        patches.push({
+          op: 'set',
+          path: relPath,
+          prev: deps.cloneValue(prevValue),
+          next: deps.cloneValue(deps.getNodeValue(replaced)),
+        });
+        return true;
+      }
+
+      if (typeof segment !== 'number')
+        throw new Error('ioTree array: invalid segment');
+      deps.detachChildFromArray(parentState as TArrayState, node);
+      deps.unregisterSubtree([...parentState.path, segment], node);
+      const replaced = deps.createTreeNode(
+        [...parentState.path, segment],
+        nextValue,
+      );
+      (parentState as TArrayState).children[segment] = replaced;
+      deps.attachChildToArray(parentState as TArrayState, replaced);
+      patches.push({
+        op: 'set',
+        path: relPath,
+        prev: deps.cloneValue(prevValue),
+        next: deps.cloneValue(deps.getNodeValue(replaced)),
+      });
+      return true;
+    }
+
     if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
       const kind = deps.getInternalKind(node);
       if (kind === 'scope') {
@@ -251,8 +293,8 @@ export function applyScopeCommitDiff<
         path: relPath,
         start: 0,
         deleteCount: prevArr.length,
-        deleted: prevArr.map((v) => deps.cloneValue(v)),
-        items: nextArr.map((v) => deps.cloneValue(v)),
+        deleted: prevArr.map((v) => deps.resolvePatchValue(v)),
+        items: nextArr.map((v) => deps.resolvePatchValue(v)),
       });
       return true;
     }
@@ -420,8 +462,8 @@ export function applyArrayCommitDiff<
         path: relPath,
         start: 0,
         deleteCount: prevArr.length,
-        deleted: prevArr.map((v) => deps.cloneValue(v)),
-        items: nextArr.map((v) => deps.cloneValue(v)),
+        deleted: prevArr.map((v) => deps.resolvePatchValue(v)),
+        items: nextArr.map((v) => deps.resolvePatchValue(v)),
       });
       return true;
     }
@@ -485,6 +527,45 @@ export function applyArrayCommitDiff<
     nextValue: unknown,
     relPath: PathSegment[],
   ): boolean => {
+    if (deps.isLink(nextValue)) {
+      const prevValue = deps.getNodeValue(node);
+      if (typeof segment === 'string') {
+        deps.detachChildFromScope(parentState as TScopeState, segment);
+        deps.unregisterSubtree([...parentState.path, segment], node);
+        const replaced = deps.createTreeNode(
+          [...parentState.path, segment],
+          nextValue,
+        );
+        (parentState as TScopeState).children.set(segment, replaced);
+        deps.attachChildToScope(parentState as TScopeState, segment, replaced);
+        patches.push({
+          op: 'set',
+          path: relPath,
+          prev: deps.cloneValue(prevValue),
+          next: deps.cloneValue(deps.getNodeValue(replaced)),
+        });
+        return true;
+      }
+
+      if (typeof segment !== 'number')
+        throw new Error('ioTree array: invalid segment');
+      deps.detachChildFromArray(parentState as TArrayState, node);
+      deps.unregisterSubtree([...parentState.path, segment], node);
+      const replaced = deps.createTreeNode(
+        [...parentState.path, segment],
+        nextValue,
+      );
+      (parentState as TArrayState).children[segment] = replaced;
+      deps.attachChildToArray(parentState as TArrayState, replaced);
+      patches.push({
+        op: 'set',
+        path: relPath,
+        prev: deps.cloneValue(prevValue),
+        next: deps.cloneValue(deps.getNodeValue(replaced)),
+      });
+      return true;
+    }
+
     if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
       const kind = deps.getInternalKind(node);
       if (kind === 'scope') {

@@ -2,6 +2,7 @@ import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
 
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
+import { prependPatchPath } from '../utils/patch-path.js';
 import {
   subscribeIndexedChild,
   subscribeKeyedChild,
@@ -27,8 +28,8 @@ type ArrayStateLike<TNode> = {
   dirtyIndices: Set<number>;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
-  childValueUnsubs: Map<TNode, IoUnsubscribe>;
-  childUpdateUnsubs: Map<TNode, IoUnsubscribe>;
+  childValueUnsubs: Map<TNode, { unsub: IoUnsubscribe; count: number }>;
+  childUpdateUnsubs: Map<TNode, { unsub: IoUnsubscribe; count: number }>;
 };
 
 type SnapshotDeps<TScopeState, TArrayState> = {
@@ -110,38 +111,67 @@ export function createSubscriptions<
   };
 
   const attachChildToArray = (state: TArrayState, child: TNode): void => {
+    const valueEntry = state.childValueUnsubs.get(child);
+    const updateEntry = state.childUpdateUnsubs.get(child);
+    if (valueEntry && updateEntry) {
+      valueEntry.count += 1;
+      updateEntry.count += 1;
+      return;
+    }
+
     const { valueUnsub, updateUnsub } = subscribeIndexedChild(
       child,
-      (c) => state.children.indexOf(c as TNode),
+      (c) => {
+        const indices: number[] = [];
+        for (let i = 0; i < state.children.length; i += 1) {
+          if (state.children[i] === c) indices.push(i);
+        }
+        return indices;
+      },
       {
-        onValue: () => {
+        onValue: (indices) => {
           if (state.isCommitting) return;
-          const index = state.children.indexOf(child);
-          if (index >= 0) state.dirtyIndices.add(index);
+          for (const index of indices) state.dirtyIndices.add(index);
           state.valueEpoch += 1;
           emitArrayValue(state);
         },
-        onUpdate: (u, index) => {
-          if (index >= 0) state.dirtyIndices.add(index);
+        onUpdate: (u, indices) => {
+          for (const index of indices) state.dirtyIndices.add(index);
           const baseRevision = state.revision;
           state.revision += 1;
+          const patches = indices.flatMap((index) =>
+            u.patches.map((p) => prependPatchPath(index, p)),
+          );
           emitArrayUpdate(
             state,
-            createUpdate(baseRevision, state.revision, u.patches),
+            createUpdate(baseRevision, state.revision, patches),
           );
         },
       },
     );
 
-    state.childValueUnsubs.set(child, valueUnsub);
-    state.childUpdateUnsubs.set(child, updateUnsub);
+    state.childValueUnsubs.set(child, { unsub: valueUnsub, count: 1 });
+    state.childUpdateUnsubs.set(child, { unsub: updateUnsub, count: 1 });
   };
 
   const detachChildFromArray = (state: TArrayState, child: TNode): void => {
-    state.childValueUnsubs.get(child)?.();
-    state.childUpdateUnsubs.get(child)?.();
-    state.childValueUnsubs.delete(child);
-    state.childUpdateUnsubs.delete(child);
+    const valueEntry = state.childValueUnsubs.get(child);
+    if (valueEntry) {
+      valueEntry.count -= 1;
+      if (valueEntry.count <= 0) {
+        valueEntry.unsub();
+        state.childValueUnsubs.delete(child);
+      }
+    }
+
+    const updateEntry = state.childUpdateUnsubs.get(child);
+    if (updateEntry) {
+      updateEntry.count -= 1;
+      if (updateEntry.count <= 0) {
+        updateEntry.unsub();
+        state.childUpdateUnsubs.delete(child);
+      }
+    }
   };
 
   return {

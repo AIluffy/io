@@ -1,4 +1,4 @@
-import { applyUpdate, onError, undoUpdate } from 'io-store';
+import { applyUpdate, getLinkInfo, onError, undoUpdate } from 'io-store';
 import type { IoPatch, IoUpdate } from 'io-store';
 import { diffSnapshots } from './diff-snapshots.js';
 import { exportReduxDevToolsImportState } from './export-redux-devtools.js';
@@ -180,12 +180,20 @@ export function createIoDevtools(
 
   const getState = (): IoDevtoolsState => {
     const summary = computePerfSummary(perfRecent, perfWindowSize);
+    let links: ReturnType<typeof getLinkInfo> | undefined;
+    try {
+      links = getLinkInfo(target);
+    } catch (error) {
+      options?.onDevtoolsError?.(error);
+      links = undefined;
+    }
     return {
       enabled,
       paused,
       cursor,
       history,
       errors,
+      links,
       perf: perfEnabled
         ? {
             recent: perfRecent,

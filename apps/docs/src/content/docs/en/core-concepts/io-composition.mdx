@@ -1,43 +1,38 @@
 ---
-title: IO Composition (Design Draft)
-description: A proposal for reusing IO nodes inside Trees.
+title: IO Composition
+description: Reuse IO nodes with link().
 sidebar:
   order: 6
 ---
 
-:::caution
-Current releases do not support embedding `io()` nodes directly inside another `io()`.
-For example, `io({ akey: io(0) })` is treated as a plain object and fails during clone/snapshot.
-:::
+IO supports explicit composition via `link()`, so nodes are not mistaken for plain objects.
 
-## Goals
+## Usage
 
-- Allow existing `IoUnit` / `IoScope` / `IoArray` nodes to be reused inside a Tree.
-- Preserve identity: `b.akey === a`.
-- Bubble updates and subscriptions through the parent Tree with path prefixes.
-- Snapshots should read from the referenced node.
+```ts
+import { io, link } from 'io-store';
 
-## Proposal Summary
+const count = io(0);
+const store = io({ count: link(count) });
 
-- While building a Tree, `io()` detects IO nodes and mounts them as reference nodes.
-- Reference nodes are not deep-cloned or expanded; they only participate in bubbling and path mapping.
-- `set` / `commit` against a reference node writes through to the referenced node.
-- Reference nodes can come from other Trees or standalone Units.
+store.count === count; // true
+```
 
-## Implementation Notes (Draft)
+## Why Explicit
 
-- In `core/node-factory.ts`, `createTreeNode` should detect IO nodes first (`getInternal()?.kind`) and avoid treating them as plain objects.
-- Call `registerSubtree` and `setPathNode` for referenced nodes to keep devtools and path lookups working.
-- Type-level inference (`utils/types.ts`) should treat `IoUnit` / `IoScope` / `IoArray` as leaves to avoid re-expansion.
-- `utils/updates.ts` and `extensions/relocate.ts` can keep using the existing `getInternal()` dispatch logic.
+- IO nodes are objects with methods; implicit expansion would treat methods as fields and break clone/snapshot.
+- `link()` makes intent obvious: “reference a node” vs “plain value”.
+- Avoids accidental cycles or unexpected update paths from mixing external nodes.
 
-## Constraints (Initial)
+## Semantics
 
-- Disallow cycles (for example, linking a parent node back into its child subtree).
-- Define consistent patch path behavior when the same reference node appears in arrays.
-- The referenced node’s lifecycle remains owned by the creator.
+- **Preserve identity**: `store.count === count`.
+- **Bubble updates**: child updates bubble to the parent with prefixed patch paths.
+- **Snapshots**: `store.snapshot()` reads the referenced node’s snapshot value.
+- **Array reuse rule**: when the same node appears multiple times in an array, updates bubble to every index (multiple patch paths).
 
-## Open Questions
+## Constraints
 
-- Should we require an explicit API (for example, `link(a)`) to avoid accidental embedding.
-- How to visualize multi-parent references in devtools.
+- **`link()` is required**. Passing nodes directly (for example `io({ count })`) is treated as a plain object and will fail during clone/snapshot.
+- **Avoid cycles** (for example, linking a parent back into its child subtree).
+- **Cross-tree links** are treated as external nodes; DevTools only records the root path and does not expand child paths.

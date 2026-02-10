@@ -9,6 +9,7 @@ import type {
   UnitInternal,
 } from './io-tree-types.js';
 import type { NodeFactoryDeps } from './node-factory.js';
+import { getLinkTarget, isLink } from '../utils/link.js';
 
 export function createScopeNode(
   ctx: TreeContext,
@@ -138,6 +139,7 @@ export function createScopeNode(
         {
           isPlainObject: deps.isPlainObject,
           isUnit: deps.isUnit,
+          isLink,
           getInternalKind: (node: TreeNode) => deps.getInternal(node)?.kind,
           getScopeState: (node: TreeNode) =>
             deps.requireInternalOfKind(
@@ -158,6 +160,14 @@ export function createScopeNode(
               'ioTree commit: invalid unit internal',
             ) as UnitInternal;
             internal.setValue(value, { emitUpdate: false, emitValue: true });
+          },
+          getNodeValue: (node: TreeNode) => deps.getNodeValue(node, new WeakMap()),
+          resolvePatchValue: (value: unknown) => {
+            if (isLink(value)) {
+              const target = getLinkTarget(value) as TreeNode;
+              return deps.getNodeValue(target, new WeakMap());
+            }
+            return deps.cloneValue(value);
           },
           createTreeNode: (absPath: NodePath, value: unknown) =>
             createTreeNode(ctx, absPath, value),

@@ -92,8 +92,8 @@ export type TreeArrayState = {
   dirtyStructure: boolean;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
-  childValueUnsubs: Map<TreeNode, IoUnsubscribe>;
-  childUpdateUnsubs: Map<TreeNode, IoUnsubscribe>;
+  childValueUnsubs: Map<TreeNode, { unsub: IoUnsubscribe; count: number }>;
+  childUpdateUnsubs: Map<TreeNode, { unsub: IoUnsubscribe; count: number }>;
   ctx: TreeContext;
   path: NodePath;
 };

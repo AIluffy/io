@@ -90,12 +90,17 @@ function useDevtoolsState(devtools: IoDevtools) {
   const getSnapshot = () => {
     const state = devtools.getState();
     const perf = state.perf;
+    const linkKey =
+      state.links?.multiParents
+        .map((entry) => entry.paths.map((p) => p.join('.')).join('|'))
+        .join(';') ?? '';
     const key = [
       state.enabled ? 1 : 0,
       state.paused ? 1 : 0,
       state.cursor,
       state.history.length,
       state.errors.length,
+      linkKey,
       perf?.recent.length ?? 0,
       perf?.summary.avgTotalMs ?? '',
       perf?.summary.maxTotalMs ?? '',
@@ -123,6 +128,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
   const [selected, setSelected] = useState<number>(() =>
     Math.max(-1, Math.min(state.history.length - 1, state.cursor)),
   );
+  const multiParents = state.links?.multiParents ?? [];
 
   const selectedEntry: IoHistoryEntry | null =
     selected >= 0 && selected < state.history.length
@@ -416,6 +422,33 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                   >
                     {JSON.stringify(snapshotDiffs, null, 2)}
                   </pre>
+                </div>
+              ) : null}
+
+              {multiParents.length > 0 ? (
+                <div style={{ display: 'grid', gap: 6 }}>
+                  <div style={{ fontWeight: 700 }}>Multi-parent links</div>
+                  <div
+                    style={{
+                      margin: 0,
+                      padding: 10,
+                      borderRadius: 8,
+                      background: 'var(--io-devtools-surface-strong)',
+                      display: 'grid',
+                      gap: 8,
+                    }}
+                  >
+                    {multiParents.map((entry, index) => (
+                      <div key={`multi-parent-${index}`}>
+                        <div style={{ fontWeight: 600 }}>
+                          Multi-parent #{index + 1}
+                        </div>
+                        <div className="io-devtools-panel__muted">
+                          Paths: {entry.paths.map(formatPath).join(', ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>

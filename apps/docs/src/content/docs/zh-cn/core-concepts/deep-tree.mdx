@@ -41,7 +41,7 @@ shallow.name.set('Lin');
 
 - 深层模式只支持**纯对象**和**数组**。
 - 传入类实例或非 plain object 会抛出 `TypeError`。
-- 暂不支持把 `io()` 返回的节点直接作为值嵌入 Tree，详见 [IO 组合（设计草案）](/zh-cn/core-concepts/io-composition/)。
+- 如需复用已有 IO 节点，请用 `link()` 显式标记，详见 [IO 组合](/zh-cn/core-concepts/io-composition/)。
 
 如果你必须存放复杂对象，建议把它包在 plain object 内，再用 `io()` 创建。
 

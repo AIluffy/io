@@ -1,4 +1,4 @@
-import type { IoMutationOp, IoPatch, IoUpdate } from 'io-store';
+import type { IoLinkInfo, IoMutationOp, IoPatch, IoUpdate } from 'io-store';
 
 export type Unsubscribe = () => void;
 
@@ -115,6 +115,7 @@ export type IoDevtoolsState = {
   cursor: number;
   history: ReadonlyArray<IoHistoryEntry>;
   errors: ReadonlyArray<unknown>;
+  links?: IoLinkInfo;
   perf?: {
     recent: ReadonlyArray<IoDevtoolsPerfSample>;
     summary: IoDevtoolsPerfSummary;

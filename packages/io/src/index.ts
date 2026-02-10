@@ -5,6 +5,9 @@ export { isServerEnv } from './lib/utils/env.js';
 export { scheduleTask } from './lib/utils/schedule.js';
 export { onError, onMutation } from './lib/utils/debug.js';
 export { relocate } from './lib/extensions/relocate.js';
+export { link } from './lib/utils/link.js';
+export { getLinkInfo } from './lib/utils/link-info.js';
+export type { IoLinkInfo } from './lib/utils/link-info.js';
 export { createHistory } from './lib/utils/history.js';
 export type {
   IoArrayUnit,
@@ -26,6 +29,7 @@ export type {
   IoTreeScope,
   IoUnit,
   IoUpdate,
+  IoLink,
   Primitive,
   UnwrapIo,
 } from './lib/utils/types.js';

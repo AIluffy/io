@@ -5,6 +5,7 @@ import type {
   IoUpdate,
   IoUnsubscribe,
 } from '../utils/types.js';
+import { getLinkTarget, isLink } from '../utils/link.js';
 import type { NodePath } from './path-trie.js';
 import type {
   TreeArrayState,
@@ -72,6 +73,40 @@ export type NodeFactoryDeps = {
 };
 
 export function createNodeFactory(deps: NodeFactoryDeps) {
+  const resolvePatchValue = (value: unknown): unknown => {
+    if (isLink(value)) {
+      const target = getLinkTarget(value) as TreeNode;
+      return deps.getNodeValue(target, new WeakMap());
+    }
+    return deps.cloneValue(value);
+  };
+
+  const isPathPrefix = (prefix: NodePath, path: NodePath): boolean => {
+    if (prefix.length > path.length) return false;
+    for (let i = 0; i < prefix.length; i += 1) {
+      if (!Object.is(prefix[i], path[i])) return false;
+    }
+    return true;
+  };
+
+  const formatPath = (path: NodePath): string => {
+    if (path.length === 0) return '<root>';
+    return path.map((segment) => String(segment)).join('.');
+  };
+
+  const collectTargetPaths = (ctx: TreeContext, target: TreeNode): NodePath[] => {
+    if (!ctx.devtools) return [];
+    const paths: NodePath[] = [];
+    const walk = (node: { node: TreeNode | undefined; children: Map<PropertyKey, unknown> }, current: NodePath) => {
+      if (node.node === target) paths.push(current);
+      for (const [segment, child] of node.children.entries()) {
+        walk(child as { node: TreeNode | undefined; children: Map<PropertyKey, unknown> }, [...current, segment]);
+      }
+    };
+    walk(ctx.root as { node: TreeNode | undefined; children: Map<PropertyKey, unknown> }, []);
+    return paths;
+  };
+
   const createUnitNode = (
     ctx: TreeContext,
     path: NodePath,
@@ -213,6 +248,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           {
             isPlainObject: deps.isPlainObject,
             isUnit: deps.isUnit,
+            isLink,
             getInternalKind: (node: TreeNode) => deps.getInternal(node)?.kind,
             getScopeState: (node: TreeNode) =>
               deps.requireInternalOfKind(
@@ -234,6 +270,9 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
               ) as UnitInternal;
               internal.setValue(value, { emitUpdate: false, emitValue: true });
             },
+            getNodeValue: (node: TreeNode) =>
+              deps.getNodeValue(node, new WeakMap()),
+            resolvePatchValue,
             createTreeNode: (absPath: NodePath, value: unknown) =>
               createTreeNode(ctx, absPath, value),
             detachChildFromScope: deps.detachChildFromScope,
@@ -454,6 +493,34 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         const emitUpdate = options?.emitUpdate !== false;
         const baseRevision = state.revision;
 
+        if (isLink(next)) {
+          const prevValue = deps.getNodeValue(existing, new WeakMap());
+          deps.detachChildFromArray(state, existing);
+          deps.unregisterSubtree(ctx, [...path, index], existing);
+          const replaced = createTreeNode(ctx, [...path, index], next);
+          state.children[index] = replaced;
+          deps.attachChildToArray(state, replaced);
+          state.revision += 1;
+          state.dirtyIndices.add(index);
+          state.valueEpoch += 1;
+          if (emitUpdate) {
+            const nextValue = deps.getNodeValue(replaced, new WeakMap());
+            deps.emitArrayUpdate(
+              state,
+              deps.createUpdate(baseRevision, state.revision, [
+                {
+                  op: 'set',
+                  path: [index],
+                  prev: deps.cloneValue(prevValue),
+                  next: deps.cloneValue(nextValue),
+                },
+              ]),
+            );
+          }
+          if (emitValue) deps.emitArrayValue(state);
+          return;
+        }
+
         if (deps.isUnit(existing)) {
           const internal = deps.getInternal(existing);
           if (!internal || internal.kind !== 'unit')
@@ -532,7 +599,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           start,
           deleteCount: 0,
           deleted: [],
-          items: items.map((v) => deps.cloneValue(v)),
+          items: items.map((v) => resolvePatchValue(v)),
         };
         deps.emitArrayUpdate(
           state,
@@ -603,7 +670,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           start: normalizedStart,
           deleteCount: dc,
           deleted: removedValues.map((v) => deps.cloneValue(v)),
-          items: items.map((v) => deps.cloneValue(v)),
+          items: items.map((v) => resolvePatchValue(v)),
         };
         deps.emitArrayUpdate(
           state,
@@ -634,7 +701,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           op: 'set',
           path: [],
           prev: deps.cloneValue(prevValue),
-          next: deps.cloneValue(next),
+          next: deps.cloneValue(next.map((v) => resolvePatchValue(v))),
         };
         deps.emitArrayUpdate(
           state,
@@ -702,6 +769,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
           {
             isPlainObject: deps.isPlainObject,
             isUnit: deps.isUnit,
+            isLink,
             getInternalKind: (node: TreeNode) => deps.getInternal(node)?.kind,
             getScopeState: (node: TreeNode) =>
               deps.requireInternalOfKind(
@@ -723,6 +791,9 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
               ) as UnitInternal;
               internal.setValue(value, { emitUpdate: false, emitValue: true });
             },
+            getNodeValue: (node: TreeNode) =>
+              deps.getNodeValue(node, new WeakMap()),
+            resolvePatchValue,
             createTreeNode: (absPath: NodePath, value: unknown) =>
               createTreeNode(ctx, absPath, value),
             detachChildFromScope: deps.detachChildFromScope,
@@ -815,6 +886,43 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     path: NodePath,
     initial: unknown,
   ): TreeNode => {
+    if (isLink(initial)) {
+      const target = getLinkTarget(initial) as TreeNode;
+      const internal = deps.getInternal(target);
+      if (!internal)
+        throw new TypeError('ioTree: link target is not an IO node');
+
+      if (internal.kind === 'scope' || internal.kind === 'array') {
+        const state = (internal as { getState?: () => unknown }).getState?.();
+        const linkCtx = (state as { ctx?: unknown } | undefined)?.ctx;
+        const linkPath = (state as { path?: NodePath } | undefined)?.path;
+        if (linkCtx === ctx) {
+          const targetPaths = collectTargetPaths(ctx, target);
+          const pathsToCheck =
+            targetPaths.length > 0
+              ? targetPaths
+              : linkPath
+                ? [linkPath]
+                : [];
+          for (const candidate of pathsToCheck) {
+            if (!isPathPrefix(candidate, path)) continue;
+            throw new TypeError(
+              `ioTree link: cycle detected at ${formatPath(path)} -> ${formatPath(candidate)}`,
+            );
+          }
+        }
+        if (linkCtx === ctx) {
+          deps.registerSubtree(ctx, path, target);
+        } else {
+          deps.setPathNode(ctx, path, target);
+        }
+        return target;
+      }
+
+      deps.registerSubtree(ctx, path, target);
+      return target;
+    }
+
     if (typeof ctx.maxDepth === 'number' && path.length >= ctx.maxDepth) {
       return createUnitNode(ctx, path, initial);
     }

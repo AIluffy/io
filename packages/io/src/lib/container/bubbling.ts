@@ -1,6 +1,5 @@
-import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
-
 import { prependUpdatePath } from '../utils/patch-path.js';
+import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
 
 const noopUnsubscribe: IoUnsubscribe = () => {
   return undefined;
@@ -36,25 +35,25 @@ export function subscribeKeyedChild(
 
 export function subscribeIndexedChild(
   child: unknown,
-  resolveIndex: (child: unknown) => number,
+  resolveIndices: (child: unknown) => number[],
   handlers: {
-    onValue?: () => void;
-    onUpdate?: (u: IoUpdate, index: number) => void;
+    onValue?: (indices: number[]) => void;
+    onUpdate?: (u: IoUpdate, indices: number[]) => void;
   },
 ): { valueUnsub: IoUnsubscribe; updateUnsub: IoUnsubscribe } {
   const maybe = child as MaybeSubscribable;
 
   const valueUnsub =
     typeof maybe.subscribe === 'function' && handlers.onValue
-      ? maybe.subscribe(() => handlers.onValue?.())
+      ? maybe.subscribe(() => handlers.onValue?.(resolveIndices(child)))
       : noopUnsubscribe;
 
   const updateUnsub =
     typeof maybe.subscribeUpdate === 'function' && handlers.onUpdate
       ? maybe.subscribeUpdate((u) => {
-          const index = resolveIndex(child);
-          if (index < 0) return;
-          handlers.onUpdate?.(prependUpdatePath(index, u), index);
+          const indices = resolveIndices(child).filter((i) => i >= 0);
+          if (indices.length === 0) return;
+          handlers.onUpdate?.(u, indices);
         })
       : noopUnsubscribe;
 
