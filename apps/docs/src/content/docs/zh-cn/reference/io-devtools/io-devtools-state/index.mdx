@@ -1,0 +1,31 @@
+---
+title: "IoDevtoolsState"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoDevtoolsState
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| enabled | `boolean` |
+| paused | `boolean` |
+| cursor | `number` |
+| history | `readonly IoHistoryEntry[]` |
+| errors | `readonly unknown[]` |
+| perf | `{ recent: ReadonlyArray<IoDevtoolsPerfSample>; summary: IoDevtoolsPerfSummary; }` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/types.ts`

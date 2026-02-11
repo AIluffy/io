@@ -1,0 +1,29 @@
+---
+title: "IoUpdate"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoUpdate
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| id | `string` |
+| baseRevision | `number` |
+| revision | `number` |
+| patches | `IoPatch[]` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

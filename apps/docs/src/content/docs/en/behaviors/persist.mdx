@@ -1,0 +1,54 @@
+---
+title: Persist
+description: Persist state via behaviors.
+sidebar:
+  order: 2
+---
+
+Persist writes values to storage (defaults to `localStorage`).
+
+## Basic Usage
+
+```ts
+import { io } from 'io-store';
+import { persist, withBehaviors } from 'io-store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+## Custom Storage
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+## Serialization
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## Notes
+
+- Persist currently writes on `set()`.
+- Functional updates are also written through `set((prev) => next)`.
+
+## Next Steps
+
+- Combine with [Schedule](/en/behaviors/schedule/) to coalesce notifications.
+- See the [Behaviors Overview](/en/behaviors/overview/).

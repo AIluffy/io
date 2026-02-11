@@ -1,0 +1,38 @@
+---
+title: "io"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+<T>(target: T, options: { shallow: true }) => IoNode<T>
+<T>(target: T, options?: { shallow?: false }) => IoResult<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| target | `T` |
+| options | `{ shallow: true }` or `{ shallow?: false }` |
+
+## Returns
+
+`IoNode<T>`
+
+## Notes
+
+- `shallow: true` limits depth to 1 using the same tree engine as deep mode.
+- In shallow mode, `commit` rejects unknown keys to keep the shape stable.
+- Deep mode now only tracks plain objects and arrays; passing an opaque class instance throws `TypeError`. Wrap non-plain values in a shallow node if you need to include them.
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/core/io.ts`

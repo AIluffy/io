@@ -1,0 +1,35 @@
+---
+title: "IoTreeScope"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoTreeScope<T, MaxDepth>
+```
+
+## 说明
+
+- 用于深层对象 Scope（MaxDepth > 1）；`IoScope` 是浅层别名。
+- `commit` 不允许新增未知 key，以保持结构稳定。
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| commit | `(fn: (draft: T) => void) => void` |
+| get | `() => T` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

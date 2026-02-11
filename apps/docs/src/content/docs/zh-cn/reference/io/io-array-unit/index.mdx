@@ -1,0 +1,43 @@
+---
+title: "IoArrayUnit"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoArrayUnit<T>
+```
+
+## 说明
+
+- 等价于 `IoTreeArrayUnit<T, 1>`（浅层深度）。
+- 与深层 Tree 共享同一运行时实现，不再有独立的 array-unit 实现。
+- `set()` 会替换整个数组，并在数组路径上发出 `set` patch。
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| get | `() => T[]` |
+| set | `(next: T[]) => void` |
+| push | `(...items: T[]) => void` |
+| pop | `() => T \| undefined` |
+| splice | `(start: number, deleteCount: number, ...items: T[]) => void` |
+| sort | `(compareFn?: (a: T, b: T) => number) => void` |
+| commit | `(fn: (draft: T[]) => void) => void` |
+| reduce | `<R>(reducer: (acc: R, item: IoUnit<T>, index: number) => R, initialValue: R) => R` |
+| snapshot | `() => T[]` |
+| subscribe | `(fn: (v: T[]) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| __@iterator@349 | `() => Iterator<IoUnit<T>>` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

@@ -1,0 +1,63 @@
+---
+title: Welcome to IO
+description: Deep updates, fine-grained subscriptions, predictable snapshots.
+template: splash
+hero:
+  tagline: Fine-grained state designed for deep updates.
+  actions:
+    - text: Get Started
+      link: /en/getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: Read the Guide
+      link: /en/getting-started/introduction/
+      icon: right-arrow
+      variant: minimal
+    - text: View on GitHub
+      link: https://github.com/AIluffy/io-mono
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Quick Start
+
+```ts
+import { io, batch } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.user.name.set('Grace');
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.count.set((v) => v + 1);
+});
+```
+
+Framework adapters: [React](/en/integrations/react/) · [Vue](/en/integrations/vue/) · [Svelte](/en/integrations/svelte/)
+
+## Why IO
+
+<CardGrid stagger>
+  <Card title="Deep, direct" icon="seti:stylus">
+    Update nested paths without reducers or boilerplate.
+  </Card>
+  <Card title="Fine-grained" icon="sourcehut">
+    Subscriptions stay precise so work stays local.
+  </Card>
+  <Card title="Predictable" icon="approve-check-circle">
+    Frozen snapshots and patch-based writes for replay/undo.
+  </Card>
+  <Card title="Composable" icon="puzzle">
+    Persist, Schedule, and DevTools plug in as behaviors.
+  </Card>
+</CardGrid>
+
+## Next Steps
+
+- Start with [Introduction](/en/getting-started/introduction/).
+- Learn [Core Concepts](/en/core-concepts/units-scopes/).
+- Read [Architecture Overview](/en/core-concepts/architecture/).
+- For API details, see [Reference](/en/reference/).

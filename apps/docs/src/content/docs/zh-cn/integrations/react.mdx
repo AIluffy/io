@@ -1,0 +1,50 @@
+---
+title: React
+description: 使用 useIO Hook 接入 React。
+sidebar:
+  order: 2
+---
+
+`io-react` 提供 `useIO`，基于 `useSyncExternalStore` 实现。
+
+## 基础用法
+
+```tsx
+import { io } from 'io-store';
+import { useIO } from 'io-react';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
+}
+```
+
+## 派生值
+
+```tsx
+import { derived, io } from 'io-store';
+import { useIO } from 'io-react';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value}</span>;
+}
+```
+
+## 调度策略
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## 下一步
+
+- 了解 [TypeScript](/zh-cn/guides/typescript/) 的类型提示。
+- 结合 [Persist](/zh-cn/behaviors/persist/) 做持久化。

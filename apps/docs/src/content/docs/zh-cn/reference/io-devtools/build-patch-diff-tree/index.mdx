@@ -1,0 +1,30 @@
+---
+title: "buildPatchDiffTree"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(patches: ReadonlyArray<IoPatchDiff>) => IoPatchDiffTreeNode[]
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| patches | `readonly IoPatchDiff[]` |
+
+## 返回
+
+`IoPatchDiffTreeNode[]`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/patch-diff-tree.ts`

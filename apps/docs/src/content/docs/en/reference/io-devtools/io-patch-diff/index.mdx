@@ -1,0 +1,27 @@
+---
+title: "IoPatchDiff"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoPatchDiff
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| op | `"set" \| "splice" \| "sort"` |
+| path | `IoPath` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

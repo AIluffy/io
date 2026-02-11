@@ -1,0 +1,41 @@
+---
+title: 'Extensions'
+description: 'Behavior extensions for IO'
+---
+
+## Overview
+
+IO exposes a minimal behavior layer to enhance read/write/subscribe without modifying core state nodes.
+
+```ts
+import { withBehaviors, schedule, persist } from 'io-store/behavior';
+
+const view = withBehaviors(count, [
+  schedule('microtask'),
+  persist({ key: 'count' }),
+]);
+
+view.get(); // read
+view.set?.(1); // write
+```
+
+When the input is a tree node, the returned view preserves deep access (e.g. `view.user.age.set(2)`).
+
+## Exports
+
+From `io-store`:
+
+- `relocate`
+
+From `io-store/behavior`:
+
+- `withBehaviors`
+- `schedule`
+- `persist`
+- `devtools`
+
+## Built-in behaviors
+
+- [schedule](./schedule)
+- [persist](./persist)
+- [devtools](./devtools)

@@ -4,16 +4,22 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/strings"
+      "path": "./packages/io"
     },
     {
-      "path": "./packages/colors"
+      "path": "./packages/io-devtools-react"
     },
     {
-      "path": "./packages/async"
+      "path": "./packages/io-devtools"
     },
     {
-      "path": "./packages/utils"
+      "path": "./packages/io-svelte"
+    },
+    {
+      "path": "./packages/io-react"
+    },
+    {
+      "path": "./packages/io-vue"
     }
   ]
 }

@@ -1,0 +1,64 @@
+---
+title: Subscriptions
+description: Value subscriptions vs update subscriptions.
+sidebar:
+  order: 2
+---
+
+IO provides two subscription styles: value subscriptions and update subscriptions.
+
+## subscribe: Value Changes
+
+```ts
+const store = io({ count: 0 });
+
+const stop = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+```
+
+Use this for UI rendering or reactive updates.
+
+## subscribeUpdate: Patch Stream
+
+```ts
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+Use this for logs, replay, syncing, and auditing.
+
+## Subscription Granularity
+
+- Subscribe at leaves to react to specific fields.
+- Subscribe at root to capture a full update stream.
+
+It’s common to treat leaf subscriptions as “atomic subscriptions”: Trees organize structure, while you actually subscribe to path Units.
+
+```ts
+import { io } from 'io-store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+// Atom-like subscription: leaf unit
+const stopName = store.user.name.subscribe((v) => console.log('name', v));
+const stopCounter = store.counter.subscribe((v) => console.log('counter', v));
+```
+
+## Unsubscribe
+
+```ts
+const stop = store.count.subscribe(() => {});
+stop();
+```
+
+## Guidance
+
+- UI prefers `subscribe`.
+- Use `subscribeUpdate` when you need patch metadata.
+
+## Next Steps
+
+- Learn [Batching](/en/guides/batching/).
+- Explore the [Update Log](/en/core-concepts/update-log/).

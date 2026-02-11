@@ -1,0 +1,306 @@
+---
+title: Tic-Tac-Toe Tutorial
+description: Build a classic board game with IO and React.
+sidebar:
+  order: 2
+---
+
+This tutorial builds a simple Tic-Tac-Toe game while showcasing IO trees, derived values, and batched updates.
+
+## 1. Model the State
+
+Define the game state as an IO tree. A single scope keeps updates cohesive.
+
+```ts
+import { io } from 'io-store';
+
+type Player = 'X' | 'O';
+
+type GameState = {
+  squares: Array<Player | null>;
+  next: Player;
+};
+
+export const game = io<GameState>({
+  squares: Array(9).fill(null),
+  next: 'X',
+});
+```
+
+## 2. Derive the Winner
+
+Use `derived()` to compute read-only values from the board.
+
+```ts
+import { derived } from 'io-store';
+import { game } from './game';
+
+const LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+] as const;
+
+function calculateWinner(squares: Array<'X' | 'O' | null>) {
+  for (const [a, b, c] of LINES) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+export const winner = derived([game.squares], (squares) =>
+  calculateWinner(squares),
+);
+
+export const status = derived(() => {
+  const win = winner.get();
+  if (win) return `Winner: ${win}`;
+  if (game.squares.get().every(Boolean)) return 'Draw';
+  return `Next: ${game.next.get()}`;
+});
+```
+
+## 3. Render with React
+
+Use `useIO` to read state and update the game with a single commit.
+
+```tsx
+import { useIO } from 'io-react';
+import { game, status, winner } from './game';
+
+function handleClick(index: number) {
+  if (winner.get() || game.squares[index].get()) return;
+
+  game.commit((draft) => {
+    draft.squares[index] = draft.next;
+    draft.next = draft.next === 'X' ? 'O' : 'X';
+  });
+}
+
+function Square({ index }: { index: number }) {
+  const value = useIO(game.squares[index]);
+  return (
+    <button className="square" onClick={() => handleClick(index)}>
+      {value}
+    </button>
+  );
+}
+
+export function Board() {
+  const label = useIO(status);
+  return (
+    <div className="board">
+      <div className="status">{label}</div>
+      <div className="grid">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Square key={index} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## 4. Add a Reset Button
+
+A reset is just another commit. You can keep the UI logic the same.
+
+```ts
+export function resetGame() {
+  game.commit((draft) => {
+    draft.squares = Array(9).fill(null);
+    draft.next = 'X';
+  });
+}
+```
+
+## 5. History and Time Travel
+
+Capture updates and replay them into a fresh store. This keeps the UI logic unchanged.
+
+```ts
+import { io, replay } from 'io-store';
+import type { IoUpdate } from 'io-store';
+import { game } from './game';
+
+const updates: IoUpdate[] = [];
+const stop = game.subscribeUpdate((u) => updates.push(u));
+
+// When you want to time travel:
+export function replayFromStart() {
+  const nextGame = io({
+    squares: Array(9).fill(null),
+    next: 'X',
+  });
+
+  replay(nextGame, updates);
+  stop();
+  return nextGame;
+}
+```
+
+## Live Example
+
+```tsx live client:load
+import { batch, derived, io } from 'io-store';
+import { useIO } from 'io-react';
+
+type Player = 'X' | 'O';
+
+const game = io({
+  squares: Array<Player | null>(9).fill(null),
+  next: 'X' as Player,
+});
+
+const boardStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '12px',
+  fontFamily: 'system-ui, sans-serif',
+};
+
+const gridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 64px)',
+  gridAutoRows: '64px',
+  gap: '8px',
+};
+
+const squareStyle = {
+  width: '64px',
+  height: '64px',
+  fontSize: '24px',
+  lineHeight: '1',
+  boxSizing: 'border-box',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid #cbd5e1',
+  borderRadius: '8px',
+  background: '#fff',
+  cursor: 'pointer',
+};
+
+const resetStyle = {
+  padding: '6px 12px',
+  border: '1px solid #cbd5e1',
+  borderRadius: '6px',
+  background: '#f8fafc',
+  cursor: 'pointer',
+};
+
+const LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+] as const;
+
+function calculateWinner(squares: Array<Player | null>) {
+  for (const [a, b, c] of LINES) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+const winner = derived([game.squares], (squares) => calculateWinner(squares));
+
+const status = derived(() => {
+  const win = winner.get();
+  if (win) return `Winner: ${win}`;
+  if (game.squares.get().every(Boolean)) return 'Draw';
+  return `Next: ${game.next.get()}`;
+});
+
+function handleClick(index: number) {
+  if (winner.get() || game.squares[index].get()) return;
+
+  const current = game.next.get();
+  batch(() => {
+    game.squares[index].set(current);
+    game.next.set(current === 'X' ? 'O' : 'X');
+  });
+}
+
+function resetGame() {
+  batch(() => {
+    for (let i = 0; i < 9; i += 1) {
+      game.squares[i].set(null);
+    }
+    game.next.set('X');
+  });
+}
+
+function Square({ index }: { index: number }) {
+  const value = useIO(game.squares[index]);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      style={squareStyle}
+      onClick={() => handleClick(index)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClick(index);
+        }
+      }}
+    >
+      {value}
+    </div>
+  );
+}
+
+export default function TicTacToe() {
+  const label = useIO(status);
+  return (
+    <div style={boardStyle}>
+      <div>{label}</div>
+      <div style={gridStyle}>
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Square key={index} index={index} />
+        ))}
+      </div>
+      <div
+        role="button"
+        tabIndex={0}
+        style={resetStyle}
+        onClick={resetGame}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            resetGame();
+          }
+        }}
+      >
+        Reset
+      </div>
+    </div>
+  );
+}
+```
+
+:::caution
+Anti-pattern: `game.squares.set(Array(9).fill(null))` replaces all child units under the array. If a component subscribes to `game.squares[index]`, it stays bound to the old unit and can look stale until the next update.
+Recommendation: reset by setting each index (as above), or subscribe to the array itself and read by index.
+:::
+
+## Next Steps
+
+- Add history and time travel with an updates log.
+- Explore [Subscriptions](/en/guides/subscriptions/) and [Batching](/en/guides/batching/).
+- Connect to other frameworks like [Svelte](/en/integrations/svelte/) or [Vue](/en/integrations/vue/).

@@ -1,0 +1,31 @@
+---
+title: "derived"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+<const D extends readonly FormulaDep[], T>(deps: D, compute: (...args: { [K in keyof D]: DepArg<D[K]>; }) => T) => IoDerived<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| deps | `D` |
+| compute | `(...args: { [K in keyof D]: DepArg<D[K]>; }) => T` |
+
+## Returns
+
+`IoDerived<T>`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/core/derived.ts`

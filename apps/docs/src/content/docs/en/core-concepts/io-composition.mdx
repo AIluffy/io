@@ -1,0 +1,38 @@
+---
+title: IO Composition
+description: Reuse IO nodes with link().
+sidebar:
+  order: 6
+---
+
+IO supports explicit composition via `link()`, so nodes are not mistaken for plain objects.
+
+## Usage
+
+```ts
+import { io, link } from 'io-store';
+
+const count = io(0);
+const store = io({ count: link(count) });
+
+store.count === count; // true
+```
+
+## Why Explicit
+
+- IO nodes are objects with methods; implicit expansion would treat methods as fields and break clone/snapshot.
+- `link()` makes intent obvious: “reference a node” vs “plain value”.
+- Avoids accidental cycles or unexpected update paths from mixing external nodes.
+
+## Semantics
+
+- **Preserve identity**: `store.count === count`.
+- **Bubble updates**: child updates bubble to the parent with prefixed patch paths.
+- **Snapshots**: `store.snapshot()` reads the referenced node’s snapshot value.
+- **Array reuse rule**: when the same node appears multiple times in an array, updates bubble to every index (multiple patch paths).
+
+## Constraints
+
+- **`link()` is required**. Passing nodes directly (for example `io({ count })`) is treated as a plain object and will fail during clone/snapshot.
+- **Avoid cycles** (for example, linking a parent back into its child subtree).
+- **Cross-tree links** are treated as external nodes; DevTools only records the root path and does not expand child paths.

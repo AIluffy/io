@@ -1,0 +1,31 @@
+---
+title: "IoUnit"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoUnit<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| get | `() => T` |
+| set | `(next: T \| ((prev: T) => T)) => void` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| reset | `() => void` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

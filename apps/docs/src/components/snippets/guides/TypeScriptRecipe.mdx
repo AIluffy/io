@@ -1,0 +1,9 @@
+import { Code } from '@astrojs/starlight/components';
+import { commonStoreTs } from './common-store';
+
+export const code = `${commonStoreTs}
+
+store.user.name.set('Grace'); // typed
+store.count.set((v) => v + 1);`;
+
+<Code code={code} lang="ts" />

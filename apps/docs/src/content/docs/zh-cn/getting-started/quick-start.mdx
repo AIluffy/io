@@ -1,0 +1,141 @@
+---
+title: 快速开始
+description: 5 分钟完成安装与基础使用。
+sidebar:
+  order: 1
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## 安装
+
+<Steps>
+
+1. 安装核心包：
+
+   ```bash
+   npm install io-store
+   ```
+
+2. 安装框架适配（可选）：
+
+   ```bash
+   npm install io-react
+   ```
+
+</Steps>
+
+:::note
+如果你的项目已经在用框架，请安装对应适配包：
+`io-react`、`io-vue` 或 `io-svelte`。
+:::
+
+## 创建状态
+
+```ts
+import { io } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+```
+
+## 读取与更新
+
+```ts
+store.count.get();
+store.user.name.set('Grace');
+store.count.set((v) => v + 1);
+```
+
+## 订阅
+
+```ts
+const unsub = store.count.subscribe((value) => {
+  console.log('count changed', value);
+});
+
+unsub();
+```
+
+## 派生值
+
+```ts
+import { derived } from 'io-store';
+
+const doubled = derived(store, (s) => s.count * 2);
+```
+
+## 批处理
+
+```ts
+import { batch } from 'io-store';
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
+
+## 在框架中使用
+
+<Tabs default="React">
+  <TabItem label="React">
+    ```tsx
+    import { io } from 'io-store';
+    import { useIO } from 'io-react';
+
+    const count = io(0);
+
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.set((v) => v + 1)}>{value}</button>
+      );
+    }
+    ```
+
+  </TabItem>
+  <TabItem label="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { io } from 'io-store';
+    import { ioRef, useIO } from 'io-vue';
+
+    const count = io(0);
+    const value = useIO(count);
+    const model = ioRef(count);
+    const inc = () => count.set((v) => v + 1);
+    </script>
+
+    <template>
+      <button @click="inc">{{ value }}</button>
+      <input v-model="model" type="number" />
+    </template>
+    ```
+
+  </TabItem>
+  <TabItem label="Svelte">
+    ```svelte
+    <script lang="ts">
+      import { io } from 'io-store';
+      import { toWritable } from 'io-svelte';
+
+      const count = io(0);
+      const countStore = toWritable(count);
+      const inc = () => count.set((v) => v + 1);
+    </script>
+
+    <button on:click={inc}>{$countStore}</button>
+    ```
+
+  </TabItem>
+</Tabs>
+
+## 常见坑
+
+- 不要在数组里重复放同一个对象实例；每个元素都创建一个新的对象。
+
+## 下一步
+
+- 理解 [核心概念](/zh-cn/core-concepts/units-scopes/)。
+- 学习 [派生值](/zh-cn/guides/derived/) 与 [订阅](/zh-cn/guides/subscriptions/)。
+- 查看 [React](/zh-cn/integrations/react/) 或 [Vue](/zh-cn/integrations/vue/) 接入方式。

@@ -1,0 +1,50 @@
+---
+title: TypeScript
+description: 常用类型与类型推断。
+sidebar:
+  order: 4
+---
+
+IO 默认提供良好的类型推断，但你仍可以使用导出的类型做更精确的约束。
+
+## 推断示例
+
+```ts
+import { io } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.count.get();
+store.user.name.set('Lin');
+```
+
+## 常用类型
+
+- `IoUnit<T>`：叶子 Unit
+- `IoNode<T>`：Tree 节点
+- `IoScope<T>`：对象 Scope
+- `IoUpdate` / `IoPatch`：更新日志
+- `IoPathOf<T>` / `IoPathValue<T, P>`：路径工具
+- `UnwrapIo<T>`：从 `io()` 结果中提取普通数据结构
+
+## 类型工具示例
+
+```ts
+import type { IoPathOf, IoPathValue } from 'io-store';
+
+type Store = { user: { name: string }; count: number };
+
+type Path = IoPathOf<Store>; // ['user', 'name'] | ['count'] ...
+
+type NameValue = IoPathValue<Store, ['user', 'name']>; // string
+```
+
+## 建议
+
+- 用 `io()` 的推断结果作为默认类型来源。
+- 仅在需要跨层传递时显式标注类型。
+
+## 下一步
+
+- 了解 [派生值](/zh-cn/guides/derived/) 的类型推断。
+- 查看 [测试](/zh-cn/guides/testing/) 中的断言示例。

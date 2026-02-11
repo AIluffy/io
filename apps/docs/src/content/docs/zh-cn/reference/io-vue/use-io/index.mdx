@@ -1,0 +1,29 @@
+---
+title: 'useIO'
+description: 'function export'
+---
+
+## 签名
+
+```ts
+<T>(source: IoSource<T>) => ShallowRef<T>;
+```
+
+## 参数
+
+| Name   | Type          |
+| ------ | ------------- |
+| source | `IoSource<T>` |
+
+## 返回
+
+`ShallowRef<T>`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-vue/src/index.ts`

@@ -1,0 +1,36 @@
+---
+title: Batching
+description: Use batch() to merge writes.
+sidebar:
+  order: 3
+---
+
+`batch()` merges multiple writes into a single notification cycle.
+
+## Basic Usage
+
+```ts
+import { batch, io } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
+
+## What It Merges
+
+- Value notifications from `subscribe`.
+- Patch notifications from `subscribeUpdate` (merged internally).
+
+## When to Use
+
+- Multiple writes as one logical action.
+- Reduce render thrash or patch noise.
+
+## Next Steps
+
+- Read [Subscriptions](/en/guides/subscriptions/).
+- Learn how [Updates](/en/core-concepts/update-log/) are merged.

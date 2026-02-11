@@ -1,0 +1,74 @@
+---
+title: DevTools
+description: Debugging, time travel, and export.
+sidebar:
+  order: 4
+---
+
+## Create an Instance
+
+```ts
+import { io } from 'io-store';
+import { createIoDevtools } from 'io-devtools';
+
+const store = io({ counter: 0, user: { name: 'Ada' } });
+
+const devtools = createIoDevtools(store, {
+  name: 'IO Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## React Panel
+
+```tsx
+import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from 'io-devtools-react';
+
+export function DevtoolsDock({ devtools }) {
+  return (
+    <IoDevtoolsErrorBoundary>
+      <IoDevtoolsPanel devtools={devtools} height={420} />
+    </IoDevtoolsErrorBoundary>
+  );
+}
+```
+
+## Time Travel
+
+- `devtools.timeTravel.undo()`
+- `devtools.timeTravel.redo()`
+- `devtools.timeTravel.goTo(index)`
+
+## Diff
+
+- **Patch diff**: from `update.patches`
+- **Snapshot diff**: available with `captureSnapshots: 'always'`
+
+## Export
+
+```ts
+const json = devtools.export.json();
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## Behavior Integration
+
+```ts
+import { devtools, withBehaviors } from 'io-store/behavior';
+import { createIoDevtools } from 'io-devtools';
+import { io } from 'io-store';
+
+const store = io({ count: 0 });
+const view = withBehaviors(store, [
+  devtools({ target: store, create: createIoDevtools }),
+]);
+
+const dt = view.extensions?.devtools;
+```
+
+## Next Steps
+
+- Read the [Update Log](/en/core-concepts/update-log/).
+- Try the [Playground](/en/guides/playground/).

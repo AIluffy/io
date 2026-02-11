@@ -1,0 +1,74 @@
+---
+title: DevTools
+description: 调试、时间旅行与导出。
+sidebar:
+  order: 4
+---
+
+## 创建实例
+
+```ts
+import { io } from 'io-store';
+import { createIoDevtools } from 'io-devtools';
+
+const store = io({ counter: 0, user: { name: 'Ada' } });
+
+const devtools = createIoDevtools(store, {
+  name: 'IO Store',
+  maxHistory: 200,
+  captureSnapshots: 'always',
+  perf: { enabled: true, windowSize: 60 },
+});
+```
+
+## React 面板
+
+```tsx
+import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from 'io-devtools-react';
+
+export function DevtoolsDock({ devtools }) {
+  return (
+    <IoDevtoolsErrorBoundary>
+      <IoDevtoolsPanel devtools={devtools} height={420} />
+    </IoDevtoolsErrorBoundary>
+  );
+}
+```
+
+## 时间旅行
+
+- `devtools.timeTravel.undo()`
+- `devtools.timeTravel.redo()`
+- `devtools.timeTravel.goTo(index)`
+
+## Diff
+
+- **Patch diff**：来自 `update.patches`
+- **Snapshot diff**：`captureSnapshots: 'always'` 时可用
+
+## 导出
+
+```ts
+const json = devtools.export.json();
+const reduxImportState = devtools.export.reduxDevToolsImport();
+```
+
+## 行为扩展集成
+
+```ts
+import { devtools, withBehaviors } from 'io-store/behavior';
+import { createIoDevtools } from 'io-devtools';
+import { io } from 'io-store';
+
+const store = io({ count: 0 });
+const view = withBehaviors(store, [
+  devtools({ target: store, create: createIoDevtools }),
+]);
+
+const dt = view.extensions?.devtools;
+```
+
+## 下一步
+
+- 阅读 [更新日志](/zh-cn/core-concepts/update-log/)。
+- 在 [Playground](/zh-cn/guides/playground/) 中体验。

@@ -1,0 +1,34 @@
+---
+title: "IoDevtoolsOptions"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoDevtoolsOptions
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| name | `string` |
+| enabled | `boolean` |
+| maxHistory | `number` |
+| captureSnapshots | `IoDevtoolsSnapshotStrategy` |
+| perf | `IoDevtoolsPerfOptions` |
+| export | `IoDevtoolsExportOptions` |
+| reduxDevTools | `IoDevtoolsReduxBridgeOptions` |
+| filterPatch | `(patch: IoPatch, update: IoUpdate) => boolean` |
+| onDevtoolsError | `(error: unknown) => void` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/types.ts`

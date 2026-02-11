@@ -1,0 +1,40 @@
+{
+  "name": "io-devtools-react",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "io-devtools": "*"
+  },
+  "devDependencies": {
+    "io-devtools": "*",
+    "@types/react-test-renderer": "^19.1.0",
+    "@types/react": "^19.2.10",
+    "react": "^19.2.4",
+    "react-test-renderer": "^19.2.4",
+    "vite": "^7.3.1"
+  },
+  "nx": {
+    "tags": [
+      "scope:io-devtools-react"
+    ]
+  }
+}

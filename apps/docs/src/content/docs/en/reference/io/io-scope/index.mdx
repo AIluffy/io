@@ -1,0 +1,35 @@
+---
+title: "IoScope"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoScope<T>
+```
+
+## Notes
+
+- Alias of `IoTreeScope<T, 1>` (shallow depth).
+- `commit` rejects unknown keys to keep the scope shape stable.
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| commit | `(fn: (draft: T) => void) => void` |
+| get | `() => T` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

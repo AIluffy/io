@@ -1,0 +1,49 @@
+---
+title: Introduction
+description: What IO is, what it solves, and how to think about it.
+sidebar:
+  order: 1
+---
+
+IO is a TypeScript state library built for deep state. You update nested fields directly and subscribe only to the paths you use, keeping render work small.
+
+## When to Choose IO
+
+- Your state is deeply nested and changes are frequent.
+- You need precise subscriptions to avoid unnecessary renders.
+- You want an update log for replay/undo or auditing.
+- You want one state model shared across frameworks.
+
+## Core Concepts
+
+- **Unit**: the smallest writable cell, with `get/set`.
+- **Tree**: objects/arrays expanded into a deep, subscribable structure.
+- **Derived**: read-only computed values that track dependencies.
+- **Update Log**: patches generated on every write.
+
+You can also think of a Unit as “atomic state”: `io(0)` is an atom, and in deep Trees every path is also an atom-like, subscribable unit.
+
+## Design Goals
+
+- **Direct deep updates**: `store.user.name.set('Ada')` without reducers.
+- **Snapshot safety**: reads return frozen snapshots.
+- **Traceable updates**: patches are first-class.
+- **Unified adapters**: `snapshot()` + `subscribe()` across frameworks.
+
+## Minimal Example
+
+```ts
+import { io, derived } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const doubled = derived(store, (s) => s.count * 2);
+
+store.count.set((v) => v + 1);
+console.log(doubled.get());
+```
+
+## Next Steps
+
+- Jump to the [Quick Start](/en/getting-started/quick-start/).
+- Learn [Units & Scopes](/en/core-concepts/units-scopes/).
+- See [Integrations](/en/integrations/vanilla/) for framework usage.

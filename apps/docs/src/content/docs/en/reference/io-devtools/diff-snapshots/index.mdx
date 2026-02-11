@@ -1,0 +1,32 @@
+---
+title: "diffSnapshots"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+(prev: unknown, next: unknown, options?: DiffOptions) => IoSnapshotDiff[]
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| prev | `unknown` |
+| next | `unknown` |
+| options | `DiffOptions` |
+
+## Returns
+
+`IoSnapshotDiff[]`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io-devtools/src/lib/diff-snapshots.ts`

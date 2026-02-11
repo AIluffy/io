@@ -1,0 +1,306 @@
+---
+title: 井字棋教程
+description: 用 IO 和 React 构建经典井字棋。
+sidebar:
+  order: 2
+---
+
+本教程会用 IO 的 Tree、derived 以及批量更新，完成一个简洁的井字棋。
+
+## 1. 建模状态
+
+用一个 Scope 承载全部游戏状态，更新更集中。
+
+```ts
+import { io } from 'io-store';
+
+type Player = 'X' | 'O';
+
+type GameState = {
+  squares: Array<Player | null>;
+  next: Player;
+};
+
+export const game = io<GameState>({
+  squares: Array(9).fill(null),
+  next: 'X',
+});
+```
+
+## 2. 派生胜者
+
+用 `derived()` 计算只读派生值。
+
+```ts
+import { derived } from 'io-store';
+import { game } from './game';
+
+const LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+] as const;
+
+function calculateWinner(squares: Array<'X' | 'O' | null>) {
+  for (const [a, b, c] of LINES) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+export const winner = derived([game.squares], (squares) =>
+  calculateWinner(squares),
+);
+
+export const status = derived(() => {
+  const win = winner.get();
+  if (win) return `胜者：${win}`;
+  if (game.squares.get().every(Boolean)) return '平局';
+  return `下一手：${game.next.get()}`;
+});
+```
+
+## 3. 用 React 渲染
+
+用 `useIO` 读取状态，用一次 `commit` 完成落子和轮换。
+
+```tsx
+import { useIO } from 'io-react';
+import { game, status, winner } from './game';
+
+function handleClick(index: number) {
+  if (winner.get() || game.squares[index].get()) return;
+
+  game.commit((draft) => {
+    draft.squares[index] = draft.next;
+    draft.next = draft.next === 'X' ? 'O' : 'X';
+  });
+}
+
+function Square({ index }: { index: number }) {
+  const value = useIO(game.squares[index]);
+  return (
+    <button className="square" onClick={() => handleClick(index)}>
+      {value}
+    </button>
+  );
+}
+
+export function Board() {
+  const label = useIO(status);
+  return (
+    <div className="board">
+      <div className="status">{label}</div>
+      <div className="grid">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Square key={index} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## 4. 添加重置按钮
+
+重置也是一次 `commit`。
+
+```ts
+export function resetGame() {
+  game.commit((draft) => {
+    draft.squares = Array(9).fill(null);
+    draft.next = 'X';
+  });
+}
+```
+
+## 5. 历史记录与回放
+
+订阅更新日志并在新 Store 中回放，UI 逻辑无需更改。
+
+```ts
+import { io, replay } from 'io-store';
+import type { IoUpdate } from 'io-store';
+import { game } from './game';
+
+const updates: IoUpdate[] = [];
+const stop = game.subscribeUpdate((u) => updates.push(u));
+
+// 需要回放时：
+export function replayFromStart() {
+  const nextGame = io({
+    squares: Array(9).fill(null),
+    next: 'X',
+  });
+
+  replay(nextGame, updates);
+  stop();
+  return nextGame;
+}
+```
+
+## Live 示例
+
+```tsx live props={{ "client:load": true }}
+import { batch, derived, io } from 'io-store';
+import { useIO } from 'io-react';
+
+type Player = 'X' | 'O';
+
+const game = io({
+  squares: Array<Player | null>(9).fill(null),
+  next: 'X' as Player,
+});
+
+const boardStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '12px',
+  fontFamily: 'system-ui, sans-serif',
+};
+
+const gridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 64px)',
+  gridAutoRows: '64px',
+  gap: '8px',
+};
+
+const squareStyle = {
+  width: '64px',
+  height: '64px',
+  fontSize: '24px',
+  lineHeight: '1',
+  boxSizing: 'border-box',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid #cbd5e1',
+  borderRadius: '8px',
+  background: '#fff',
+  cursor: 'pointer',
+};
+
+const resetStyle = {
+  padding: '6px 12px',
+  border: '1px solid #cbd5e1',
+  borderRadius: '6px',
+  background: '#f8fafc',
+  cursor: 'pointer',
+};
+
+const LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+] as const;
+
+function calculateWinner(squares: Array<Player | null>) {
+  for (const [a, b, c] of LINES) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+const winner = derived([game.squares], (squares) => calculateWinner(squares));
+
+const status = derived(() => {
+  const win = winner.get();
+  if (win) return `胜者：${win}`;
+  if (game.squares.get().every(Boolean)) return '平局';
+  return `下一手：${game.next.get()}`;
+});
+
+function handleClick(index: number) {
+  if (winner.get() || game.squares[index].get()) return;
+
+  const current = game.next.get();
+  batch(() => {
+    game.squares[index].set(current);
+    game.next.set(current === 'X' ? 'O' : 'X');
+  });
+}
+
+function resetGame() {
+  batch(() => {
+    for (let i = 0; i < 9; i += 1) {
+      game.squares[i].set(null);
+    }
+    game.next.set('X');
+  });
+}
+
+function Square({ index }: { index: number }) {
+  const value = useIO(game.squares[index]);
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      style={squareStyle}
+      onClick={() => handleClick(index)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClick(index);
+        }
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+export default function TicTacToe() {
+  const label = useIO(status);
+  return (
+    <div style={boardStyle}>
+      <div>{label}</div>
+      <div style={gridStyle}>
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Square key={index} index={index} />
+        ))}
+      </div>
+      <div
+        role="button"
+        tabIndex={0}
+        style={resetStyle}
+        onClick={resetGame}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            resetGame();
+          }
+        }}
+      >
+        重置
+      </div>
+    </div>
+  );
+}
+```
+
+:::caution
+反面教材：`game.squares.set(Array(9).fill(null))` 会替换数组节点下的子 Unit。若组件订阅的是 `game.squares[index]`，它仍绑定旧 Unit，可能出现“重置后仍显示旧值，直到下一次更新才刷新”的现象。
+推荐：重置时逐格 `game.squares[i].set(null)`（如上），或让组件订阅数组本身再按索引读取。
+:::
+
+## 下一步
+
+- 用更新日志实现历史记录和回放。
+- 阅读 [Subscriptions](/zh-cn/guides/subscriptions/) 和 [Batching](/zh-cn/guides/batching/)。
+- 连接其他框架，例如 [Svelte](/zh-cn/integrations/svelte/) 或 [Vue](/zh-cn/integrations/vue/)。

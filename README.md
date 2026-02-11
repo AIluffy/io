@@ -1,205 +1,260 @@
-# Nx TypeScript Repository
+# Io - 细粒度响应式状态管理库
 
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 
-✨ A repository showcasing key [Nx](https://nx.dev) features for TypeScript monorepos ✨
-<!-- BEGIN: nx-cloud -->
-🚀 If you haven't connected to Nx Cloud yet, [complete your setup here](https://cloud.nx.app/setup/connect-workspace/guide). Get faster builds with remote caching, distributed task execution, and self-healing CI. [See how your workspace can benefit](#nx-cloud).
-<!-- END: nx-cloud -->
-## 📦 Project Overview
+✨ 基于 Nx 的 TypeScript monorepo，提供细粒度响应式状态管理 ✨
 
-This repository demonstrates a production-ready TypeScript monorepo with:
+## 📦 项目概述
 
-- **3 Publishable Packages** - Ready for NPM publishing
+本仓库包含以下 6 个包：
 
-  - `@org/strings` - String manipulation utilities
-  - `@org/async` - Async utility functions with retry logic
-  - `@org/colors` - Color conversion and manipulation utilities
+- **核心包**
+  - `io-store` - 细粒度响应式状态管理核心库
 
-- **1 Internal Library**
-  - `@org/utils` - Shared utilities (private, not published)
+- **框架集成包**
+  - `io-react` - React 集成（Hooks）
+  - `io-svelte` - Svelte 集成（Stores）
+  - `io-vue` - Vue 集成（Refs）
 
-## 🚀 Quick Start
+- **DevTools**
+  - `io-devtools` - 运行时观察与导出能力
+  - `io-devtools-react` - React 面板组件
+
+## 🚀 快速开始
 
 ```bash
-# Clone the repository
-git clone <your-fork-url>
-cd typescript-template
-
-# Install dependencies
+# 安装依赖
 npm install
 
-# Build all packages
-npx nx run-many -t build
+# 构建所有包
+nx run-many -t build
 
-# Run tests
-npx nx run-many -t test
+# 运行测试
+nx run-many -t test
 
-# Lint all projects
-npx nx run-many -t lint
+# 检查所有项目
+nx run-many -t lint
 
-# Run everything in parallel
-npx nx run-many -t lint test build --parallel=3
+# 并行运行所有任务
+nx run-many -t lint test build --parallel=3
 
-# Visualize the project graph
-npx nx graph
+# 可视化项目依赖图
+nx graph
 ```
 
-## ⭐ Featured Nx Capabilities
+## 💡 核心功能
 
-This repository showcases several powerful Nx features:
+### 1. 细粒度响应式
 
-### 1. 🔒 Module Boundaries
+```typescript
+import { derived, io } from 'io-store';
 
-Enforces architectural constraints using tags. Each package has specific dependencies it can use:
+// 基础单元
+const count = io(0);
+count.set(10); // 设置值
+count.set((v) => v + 1); // 更新
 
-- `scope:shared` (utils) - Can be used by all packages
-- `scope:strings` - Can only depend on shared utilities
-- `scope:async` - Can only depend on shared utilities
-- `scope:colors` - Can only depend on shared utilities
+// 对象作用域
+const user = io({ name: 'Alice', age: 25 });
+user.name.set('Bob'); // 仅触发 name 相关订阅
 
-**Try it out:**
+// 深度树形结构（默认）
+const app = io({
+  user: { profile: { name: 'Alice' } },
+  items: [{ id: 1, count: 0 }],
+});
+app.items[0].count.set((v) => v + 1); // 精确的叶子节点更新
 
-```bash
-# See the current project graph and boundaries
-npx nx graph
-
-# View a specific project's details
-npx nx show project strings --web
+// 仅第一层变成 Unit（同一 Tree 引擎，深度限制为 1）
+const shallow = io({ name: 'Alice', age: 25 }, { shallow: true });
+shallow.name.set('Bob');
+// shallow.commit(...) 不允许新增未知 key
 ```
 
-[Learn more about module boundaries →](https://nx.dev/features/enforce-module-boundaries)
+### 2. 数组操作
 
-### 2. 🛠️ Custom Run Commands
-
-Packages can define custom commands beyond standard build/test/lint:
-
-```bash
-# Run the custom build-base command for strings package
-npx nx run strings:build-base
-
-# See all available targets for a project
-npx nx show project strings
+```typescript
+const list = io([1, 2, 3]);
+list.push(4);
+list.splice(1, 1, 9);
+list.sort((a, b) => a - b);
 ```
 
-[Learn more about custom run commands →](https://nx.dev/concepts/executors-and-configurations)
+### 3. 计算属性
 
-### 3. 🔧 Self-Healing CI
-
-The CI pipeline includes `nx fix-ci` which automatically identifies and suggests fixes for common issues. To test it, you can make a change to `async-retry.spec.ts` so that it fails, and create a PR.
-
-```bash
-# Run tests and see the failure
-npx nx test async
-
-# In CI, this command provides automated fixes
-npx nx fix-ci
+```typescript
+const double = derived([count], (c) => c * 2);
 ```
 
-[Learn more about self-healing CI →](https://nx.dev/ci/features/self-healing-ci)
+### 4. 更新历史与回放
 
-### 4. 📦 Package Publishing
+```typescript
+import { applyUpdate, replay, undoUpdate } from 'io-store';
 
-Manage releases and publishing with Nx Release:
+const updates: IoUpdate[] = [];
+state.subscribeUpdate((u) => updates.push(u));
 
-```bash
-# Dry run to see what would be published
-npx nx release --dry-run
+// 回放更新
+replay(newState, updates);
 
-# Version and release packages
-npx nx release
-
-# Publish only specific packages
-npx nx release publish --projects=strings,colors
+// 撤销
+applyUpdate(state, undoUpdate(update));
 ```
 
-[Learn more about Nx Release →](https://nx.dev/features/manage-releases)
+## 🔧 框架集成
 
-## 📁 Project Structure
+### React
+
+```typescript
+import { useIO } from 'io-react';
+
+function Counter({ count }) {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
+}
+```
+
+### Svelte
+
+```typescript
+import { toReadable, toWritable } from 'io-svelte';
+
+// 只读 store
+const store = toReadable(state);
+
+// 可写 store
+const writable = toWritable(unit);
+```
+
+### Vue
+
+```typescript
+import { useIO, ioRef } from 'io-vue';
+
+// 组合式函数
+const state = useIO(source);
+
+// 双向绑定 ref
+const ref = ioRef(unit);
+```
+
+## 📁 项目结构
 
 ```
 ├── packages/
-│   ├── strings/     [scope:strings] - String utilities (publishable)
-│   ├── async/       [scope:async]   - Async utilities (publishable)
-│   ├── colors/      [scope:colors]  - Color utilities (publishable)
-│   └── utils/       [scope:shared]  - Shared utilities (private)
-├── nx.json          - Nx configuration
-├── tsconfig.json    - TypeScript configuration
-└── eslint.config.mjs - ESLint with module boundary rules
+│   ├── io/           [scope:io]       核心响应式库
+│   ├── io-react/     [scope:io-react] React 集成
+│   ├── io-svelte/    [scope:io-svelte] Svelte 集成
+│   └── io-vue/       [scope:io-vue]   Vue 集成
+├── nx.json            - Nx 配置
+├── tsconfig.json      - TypeScript 配置
+└── eslint.config.mjs  - ESLint 模块边界规则
 ```
 
-## 🏷️ Understanding Tags
+## 🏷️ 模块边界
 
-This repository uses tags to enforce module boundaries:
+本项目使用标签强制模块边界：
 
-| Package        | Tag             | Can Import From        |
-| -------------- | --------------- | ---------------------- |
-| `@org/utils`   | `scope:shared`  | Nothing (base library) |
-| `@org/strings` | `scope:strings` | `scope:shared`         |
-| `@org/async`   | `scope:async`   | `scope:shared`         |
-| `@org/colors`  | `scope:colors`  | `scope:shared`         |
+| 包                  | 标签                      | 可依赖的包          |
+| ------------------- | ------------------------- | ------------------- |
+| `io-store`          | `scope:io`                | 无（基础库）        |
+| `io-react`          | `scope:io-react`          | `scope:io`          |
+| `io-svelte`         | `scope:io-svelte`         | `scope:io`          |
+| `io-vue`            | `scope:io-vue`            | `scope:io`          |
+| `io-devtools`       | `scope:io-devtools`       | `scope:io`          |
+| `io-devtools-react` | `scope:io-devtools-react` | `scope:io-devtools` |
 
-The ESLint configuration enforces these boundaries, preventing circular dependencies and maintaining clean architecture.
+ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
-## 🧪 Testing Module Boundaries
-
-To see module boundary enforcement in action:
-
-1. Try importing `@org/colors` into `@org/strings`
-2. Run `npx nx lint strings`
-3. You'll see an error about violating module boundaries
-
-## 📚 Useful Commands
+## 📚 常用命令
 
 ```bash
-# Project exploration
-npx nx graph                                    # Interactive dependency graph
-npx nx list                                     # List installed plugins
-npx nx show project strings --web              # View project details
+# 项目探索
+nx graph                                    # 交互式依赖图
+nx list                                     # 列出已安装插件
+nx show project io-store --web                  # 查看项目详情
 
-# Development
-npx nx build strings                           # Build a specific package
-npx nx test async                              # Test a specific package
-npx nx lint colors                             # Lint a specific package
+# 开发
+nx build io-store                               # 构建特定包
+nx test io-store                                # 测试特定包
+nx lint io-react                          # 检查特定包
 
-# Running multiple tasks
-npx nx run-many -t build                       # Build all projects
-npx nx run-many -t test --parallel=3          # Test in parallel
-npx nx run-many -t lint test build            # Run multiple targets
+# 批量任务
+nx run-many -t build                       # 构建所有项目
+nx run-many -t test --parallel=3          # 并行测试
+nx affected -t build                       # 仅构建受影响项目
 
-# Affected commands (great for CI)
-npx nx affected -t build                       # Build only affected projects
-npx nx affected -t test                        # Test only affected projects
-
-# Release management
-npx nx release --dry-run                       # Preview release changes
-npx nx release                                 # Create a new release
+# 发布管理
+nx release --dry-run                       # 预览发布变更
+nx release                                 # 创建新发布
 ```
 
-## Nx Cloud
+## 📦 发布流程
 
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+本仓库使用 `nx release` 统一管理多包版本、变更日志和发布。
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+发布前检查（本地）：
 
-## 🔗 Learn More
+```bash
+git status --porcelain
+nx run-many -t lint test typecheck build
+```
 
-- [Nx Documentation](https://nx.dev)
-- [Module Boundaries](https://nx.dev/features/enforce-module-boundaries)
-- [Custom Commands](https://nx.dev/concepts/executors-and-configurations)
-- [Self-Healing CI](https://nx.dev/ci/features/self-healing-ci)
-- [Releasing Packages](https://nx.dev/features/manage-releases)
-- [Nx Cloud](https://nx.dev/ci/intro/why-nx-cloud)
+本地发布（手动）：
 
-## 💬 Community
+```bash
+nx release --dry-run        # 预览
+nx release patch            # 实际发布，示例为 patch
+```
 
-Join the Nx community:
+只生成版本/变更日志、不发布：
 
-- [Discord](https://go.nx.dev/community)
-- [X (Twitter)](https://twitter.com/nxdevtools)
-- [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [YouTube](https://www.youtube.com/@nxdevtools)
-- [Blog](https://nx.dev/blog)
+```bash
+nx release patch --skip-publish
+```
+
+仅发布已有版本（例如已完成版本/打 tag）：
+
+```bash
+nx release publish --access public
+```
+
+本地 Verdaccio 验证发布：
+
+```bash
+# 启动本地 registry
+nx run io-source:local-registry
+
+# 发布到本地 registry
+nx release publish --registry http://localhost:4873 --tag next --access public
+
+# 在示例项目中验证安装（示例）
+npm i io-store@next --registry http://localhost:4873
+```
+
+CI 发布（GitHub Actions）：
+
+```text
+.github/workflows/release.yml   # 生成 Release PR
+.github/workflows/publish.yml   # 合并到 main 后自动发布
+```
+
+1. 在 GitHub Secrets 中设置 `NPM_TOKEN`。
+2. 通过 Actions -> Release PR 手动触发，输入 `specifier`（如 `patch`/`minor`/`major`/`1.2.3`）。
+3. 合并 Release PR 到 `main` 后，`Publish` workflow 会自动发包。
+
+## 🧪 测试模块边界
+
+尝试在 `io-react` 中导入 `io-svelte`：
+
+```typescript
+import { toReadable } from 'io-svelte'; // 错误！
+```
+
+运行 `nx lint io-react` 会报错：违反模块边界规则。
+
+## 🔗 了解更多
+
+- [Nx 文档](https://nx.dev)
+- [模块边界](https://nx.dev/features/enforce-module-boundaries)
+- [发布包](https://nx.dev/features/manage-releases)

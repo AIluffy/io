@@ -1,0 +1,30 @@
+---
+title: "exportReduxDevToolsImportState"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(args: { initialState: unknown; history: ReadonlyArray<IoHistoryEntry>; cursor: number; }) => ReduxDevToolsImportState
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| args | `{ initialState: unknown; history: ReadonlyArray<IoHistoryEntry>; cursor: number; }` |
+
+## 返回
+
+`ReduxDevToolsImportState`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/export-redux-devtools.ts`

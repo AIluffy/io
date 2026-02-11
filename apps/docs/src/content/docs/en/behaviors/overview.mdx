@@ -1,0 +1,45 @@
+---
+title: Behaviors Overview
+description: Compose extra capabilities with withBehaviors().
+sidebar:
+  order: 1
+---
+
+Behaviors add capabilities without changing the core API: persistence, scheduling, DevTools, and more.
+
+## Basic Usage
+
+```ts
+import { io } from 'io-store';
+import { persist, schedule, withBehaviors } from 'io-store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  schedule('microtask'),
+]);
+
+view.subscribe((value) => {
+  console.log(value);
+});
+```
+
+## IoView Interface
+
+`withBehaviors` adapts nodes to an `IoView`:
+
+- `get()` / `set()`
+- `subscribe()` / `snapshot()`
+- `extensions` for behavior instances
+- `destroy()` for cleanup
+
+## Composition Tips
+
+- Apply `persist` before `schedule` or `devtools`.
+- Order matters when behaviors wrap each other.
+
+## Next Steps
+
+- Use [Persist](/en/behaviors/persist/) to store state.
+- Explore [Schedule](/en/behaviors/schedule/) to control notification cadence.
+- Hook up [DevTools](/en/behaviors/devtools/) for debugging.

@@ -1,0 +1,29 @@
+---
+title: "IoUpdate"
+description: "type export"
+---
+
+
+## Signature
+
+```ts
+IoUpdate
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| id | `string` |
+| baseRevision | `number` |
+| revision | `number` |
+| patches | `IoPatch[]` |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

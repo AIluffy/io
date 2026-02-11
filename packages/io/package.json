@@ -1,0 +1,43 @@
+{
+  "name": "io-store",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    "./behavior": {
+      "types": "./dist/behavior.d.ts",
+      "import": "./dist/behavior.js",
+      "default": "./dist/behavior.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "nx": {
+    "tags": [
+      "scope:io"
+    ],
+    "targets": {
+      "bench": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "vitest bench --config vite.config.ts",
+          "cwd": "packages/io"
+        }
+      }
+    }
+  }
+}

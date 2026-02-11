@@ -1,0 +1,39 @@
+---
+title: Svelte
+description: 使用 toReadable 与 toWritable 接入 Svelte。
+sidebar:
+  order: 4
+---
+
+`io-svelte` 提供与 Svelte Stores 兼容的适配器。
+
+## toReadable
+
+```ts
+import { io } from 'io-store';
+import { toReadable } from 'io-svelte';
+
+const store = io({ count: 0 });
+const readable = toReadable(store.count);
+```
+
+## toWritable
+
+```ts
+import { toWritable } from 'io-svelte';
+
+const writable = toWritable(store.count);
+```
+
+## 调度策略
+
+```ts
+const readable = toReadable(store.count, { schedule: 'sync' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## 下一步
+
+- 学习 [订阅](/zh-cn/guides/subscriptions/) 的值与更新区别。
+- 结合 [Persist](/zh-cn/behaviors/persist/) 做持久化。

@@ -1,0 +1,50 @@
+---
+title: React
+description: Connect IO with useIO.
+sidebar:
+  order: 2
+---
+
+`io-react` provides `useIO`, built on `useSyncExternalStore`.
+
+## Basic Usage
+
+```tsx
+import { io } from 'io-store';
+import { useIO } from 'io-react';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
+}
+```
+
+## Derived Values
+
+```tsx
+import { derived, io } from 'io-store';
+import { useIO } from 'io-react';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value}</span>;
+}
+```
+
+## Scheduling
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## Next Steps
+
+- Learn about [TypeScript](/en/guides/typescript/).
+- Combine with [Persist](/en/behaviors/persist/).

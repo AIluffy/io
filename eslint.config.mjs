@@ -7,7 +7,11 @@ export default [
   {
     ignores: [
       '**/dist',
+      '**/dist-types',
       '**/build',
+      '**/.astro/**',
+      '**/vite.config.*',
+      '**/vitest.config.*',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
     ],
@@ -19,23 +23,44 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          allow: ['^.*/eslint(.base)?.config.[cm]?[jt]s$'],
           depConstraints: [
             {
-              sourceTag: 'scope:shared',
-              onlyDependOnLibsWithTags: ['scope:shared'],
+              sourceTag: 'scope:io',
+              onlyDependOnLibsWithTags: ['scope:io'],
             },
             {
-              sourceTag: 'scope:async',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:async'],
+              sourceTag: 'scope:io-devtools',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-devtools'],
             },
             {
-              sourceTag: 'scope:colors',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:colors'],
+              sourceTag: 'scope:io-react',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-react'],
             },
             {
-              sourceTag: 'scope:strings',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:strings'],
+              sourceTag: 'scope:io-devtools-react',
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-devtools',
+                'scope:io-devtools-react',
+              ],
+            },
+            {
+              sourceTag: 'scope:io-svelte',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-svelte'],
+            },
+            {
+              sourceTag: 'scope:io-vue',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-vue'],
+            },
+            {
+              sourceTag: 'scope:io-example',
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-react',
+                'scope:io-svelte',
+                'scope:io-vue',
+              ],
             },
           ],
         },

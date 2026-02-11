@@ -1,0 +1,31 @@
+---
+title: "onMutation"
+description: "function export"
+---
+
+
+## Signature
+
+```ts
+(target: unknown, fn: (patch: IoPatch, path: IoPath, update: IoUpdate) => void) => IoUnsubscribe
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| fn | `(patch: IoPatch, path: IoPath, update: IoUpdate) => void` |
+
+## Returns
+
+`IoUnsubscribe`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/debug.ts`

@@ -1,0 +1,38 @@
+---
+title: Schedule
+description: Control notification timing.
+sidebar:
+  order: 3
+---
+
+Schedule coalesces or delays subscription notifications to reduce render thrash.
+
+## Basic Usage
+
+```ts
+import { io } from 'io-store';
+import { schedule, withBehaviors } from 'io-store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [schedule('microtask')]);
+
+view.subscribe((value) => {
+  console.log('notified', value);
+});
+```
+
+## Strategies
+
+- `sync`: notify immediately
+- `microtask`: coalesce within the same tick
+- `animationFrame`: notify before the next frame (if available)
+
+## When to Use
+
+- Frequent writes that can be delayed slightly
+- UI jitter caused by many rapid updates
+
+## Next Steps
+
+- Combine with [Persist](/en/behaviors/persist/).
+- Explore [DevTools](/en/behaviors/devtools/) for time travel.

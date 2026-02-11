@@ -1,0 +1,28 @@
+---
+title: "IoDerived"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoDerived<T>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| get | `() => T` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

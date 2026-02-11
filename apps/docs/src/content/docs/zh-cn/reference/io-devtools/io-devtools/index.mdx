@@ -1,0 +1,35 @@
+---
+title: "IoDevtools"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoDevtools
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| getState | `() => IoDevtoolsState` |
+| subscribe | `(listener: (event: IoDevtoolsEvent) => void) => Unsubscribe` |
+| setEnabled | `(enabled: boolean) => void` |
+| pause | `() => void` |
+| resume | `() => void` |
+| destroy | `() => void` |
+| clear | `() => void` |
+| timeTravel | `{ undo: () => boolean; redo: () => boolean; goTo: (index: number) => boolean; }` |
+| export | `{ json: () => string; reduxDevToolsImport: () => ReduxDevToolsImportState; }` |
+| connectReduxDevToolsExtension | `(options?: { window?: unknown; name?: string; }) => IoDevtoolsBridge \| null` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io-devtools/src/lib/types.ts`

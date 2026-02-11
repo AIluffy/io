@@ -1,0 +1,13 @@
+import { Code } from '@astrojs/starlight/components';
+import { commonStoreTs } from './common-store';
+
+export const code = `import { expect, it } from 'vitest';
+${commonStoreTs}
+
+it('updates store', () => {
+  store.user.name.set('Grace');
+  store.count.set(1);
+  expect(store.snapshot()).toEqual({ count: 1, user: { name: 'Grace' } });
+});`;
+
+<Code code={code} lang="ts" />

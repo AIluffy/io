@@ -1,0 +1,76 @@
+---
+title: 派生值
+description: 用 derived 构建只读计算结果。
+sidebar:
+  order: 1
+---
+
+派生值是基于 IO 状态计算出的只读结果，依赖变化时自动更新。
+
+## 方式一：显式依赖
+
+```ts
+import { derived, io } from 'io-store';
+
+const count = io(0);
+const doubled = derived([count], (value) => value * 2);
+```
+
+当你的状态来自 Tree 时，也可以把“路径 Unit”当作原子依赖传入：
+
+```ts
+import { derived, io } from 'io-store';
+
+const store = io({ user: { name: 'Ada' }, count: 0 });
+const summary = derived(
+  [store.user.name, store.count],
+  (name, count) => `${name} · ${count}`,
+);
+```
+
+## 方式二：树选择器
+
+```ts
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+const summary = derived(store, (s) => `${s.user.name} · ${s.count}`);
+```
+
+## 方式三：自动追踪
+
+```ts
+const store = io({ count: 0, rate: 2 });
+
+const total = derived(() => store.count.get() * store.rate.get());
+```
+
+## 为什么不做“隐式自动追踪”
+
+`derived()` 提供三种方式，是为了保持依赖语义清晰：
+
+- **显式依赖**：订阅来自传入的依赖对象，最稳定、最可控。
+- **树选择器**：订阅来自传入的树节点（不是 selector 内的访问路径）。
+- **自动追踪**：依赖来自 `get()` 的运行时读取，适合需要信号式追踪的场景。
+
+如果把它们合并成“隐式自动追踪”，就会让依赖来源变得不透明，
+既难以解释订阅范围，也不利于性能与调试。因此 IO 保持显式语义，
+并将“自动追踪”限定在 `derived(() => ...)` 这种明确表达上。
+
+## 订阅派生值
+
+```ts
+const stop = doubled.subscribe((value) => {
+  console.log(value);
+});
+```
+
+## 注意事项
+
+- 派生值只读，不能 `set`。
+- 使用 `get()` 读取时会参与依赖追踪。
+- 依赖链过长时建议拆分为多个派生值。
+
+## 下一步
+
+- 学习 [订阅](/zh-cn/guides/subscriptions/) 与 [批处理](/zh-cn/guides/batching/)。
+- 在 [React](/zh-cn/integrations/react/) 或 [Vue](/zh-cn/integrations/vue/) 中使用派生值。

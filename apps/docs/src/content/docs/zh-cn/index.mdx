@@ -1,0 +1,63 @@
+---
+title: 欢迎使用 IO
+description: 深层更新、细粒度订阅、可预测快照。
+template: splash
+hero:
+  tagline: 面向深层状态的细粒度响应式方案。
+  actions:
+    - text: 快速开始
+      link: /zh-cn/getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: 阅读指南
+      link: /zh-cn/getting-started/introduction/
+      icon: right-arrow
+      variant: minimal
+    - text: 查看 GitHub
+      link: https://github.com/AIluffy/io-mono
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## 上手示例
+
+```ts
+import { io, batch } from 'io-store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.user.name.set('Grace');
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.count.set((v) => v + 1);
+});
+```
+
+框架适配：[React](/zh-cn/integrations/react/) · [Vue](/zh-cn/integrations/vue/) · [Svelte](/zh-cn/integrations/svelte/)
+
+## 为什么是 IO
+
+<CardGrid stagger>
+  <Card title="深层直改" icon="seti:stylus">
+    直接写任意层级字段，减少 reducer/样板代码。
+  </Card>
+  <Card title="细粒度订阅" icon="sourcehut">
+    订阅只覆盖真正使用的路径，更新更精确。
+  </Card>
+  <Card title="可预测快照" icon="approve-check-circle">
+    冻结快照 + patch 更新，便于回放、撤销与审计。
+  </Card>
+  <Card title="可组合扩展" icon="puzzle">
+    Persist、Schedule、DevTools 以行为扩展方式装配。
+  </Card>
+</CardGrid>
+
+## 下一步
+
+- 从 [介绍](/zh-cn/getting-started/introduction/) 开始。
+- 学习 [核心概念](/zh-cn/core-concepts/units-scopes/)。
+- 了解 [架构概览](/zh-cn/core-concepts/architecture/)。
+- 需要 API 细节请查看 [参考](/zh-cn/reference/)。

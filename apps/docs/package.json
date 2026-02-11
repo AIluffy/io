@@ -1,0 +1,61 @@
+{
+  "name": "apps-docs",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/starlight": "^0.37.5",
+    "@astrojs/vue": "^5.0.9",
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/jetbrains-mono": "^5.2.6",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@reduxjs/toolkit": "^2.9.0",
+    "@six-tech/starlight-theme-six": "^1.0.16",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^5.17.1",
+    "astro-mermaid": "^1.3.1",
+    "io-devtools": "*",
+    "io-devtools-react": "*",
+    "io-store": "*",
+    "mermaid": "^11.12.2",
+    "pinia": "^3.0.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
+    "sharp": "^0.34.5",
+    "three": "^0.182.0",
+    "vue": "^3.5.13",
+    "zustand": "^5.0.11"
+  },
+  "nx": {
+    "targets": {
+      "generate-api": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/docs/generate-api-docs.mjs",
+          "cwd": "{workspaceRoot}"
+        }
+      },
+      "generate-bench": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/docs/generate-bench-docs.mjs",
+          "cwd": "{workspaceRoot}"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "astro-live-code": "^0.0.6"
+  }
+}
