@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exportReduxDevToolsImportState } from './export-redux-devtools.js';
-import type { IoHistoryEntry } from './types.js';
+import { exportReduxDevToolsImportState } from '../export-redux-devtools.js';
+import type { IoHistoryEntry } from '../types.js';
 
 const entry: IoHistoryEntry = {
   id: 'u1',

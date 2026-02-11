@@ -14,14 +14,19 @@ import { getInternal, registerInternal } from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 
 type Subscribable = {
-  subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
+  subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
+};
+
+type FormulaReadableDep = {
+  get: () => unknown;
+  subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
 };
 
 type FormulaDep =
   | IoArrayUnit<unknown>
   | IoUnit<unknown>
   | IoDerived<unknown>
-  | { get: () => unknown };
+  | FormulaReadableDep;
 type DepArg<D> = D extends IoArrayUnit<infer U>
   ? IoArrayUnit<U>
   : D extends { get: () => infer R }
@@ -43,6 +48,14 @@ function hasGet(value: unknown): value is { get: () => unknown } {
     typeof value === 'object' &&
     value !== null &&
     typeof (value as { get?: unknown }).get === 'function'
+  );
+}
+
+function hasSubscribe(value: unknown): value is Subscribable {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { subscribe?: unknown }).subscribe === 'function'
   );
 }
 
@@ -142,12 +155,18 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
   deps: D,
   compute: (...args: { [K in keyof D]: DepArg<D[K]> }) => T
 ): IoDerived<T> {
+  const depSubs = deps.map((dep, index) => {
+    if (!hasSubscribe(dep))
+      throw new Error(`derived: deps[${index}] must implement subscribe()`);
+    return dep;
+  });
+
   const readArgs = (): { [K in keyof D]: DepArg<D[K]> } =>
-    deps.map((dep) => {
+    deps.map((dep, index) => {
       const internal = getInternal(dep);
       if (internal?.kind === 'array') return dep;
       if (hasGet(dep)) return dep.get();
-      return undefined;
+      throw new Error(`derived: deps[${index}] must implement get()`);
     }) as unknown as { [K in keyof D]: DepArg<D[K]> };
 
   let current = compute(...readArgs());
@@ -172,8 +191,8 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
   const start = (): void => {
     if (active) return;
     active = true;
-    depUnsubs = deps.flatMap((dep) => {
-      const sub = (dep as unknown as Subscribable).subscribe?.(() => {
+    depUnsubs = depSubs.flatMap((dep) => {
+      const sub = dep.subscribe(() => {
         recompute();
       });
       return typeof sub === 'function' ? [sub] : [];

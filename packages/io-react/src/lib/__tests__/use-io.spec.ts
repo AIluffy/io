@@ -4,7 +4,7 @@ import { act } from 'react';
 import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
 
-import { useIO } from './index.js';
+import { useIO } from '../use-io.js';
 
 async function setup(schedule: 'sync' | 'microtask') {
   const count = io(0);

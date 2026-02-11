@@ -3,7 +3,7 @@ import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
 import { createIoDevtools } from 'io-devtools';
-import { IoDevtoolsPanel } from './io-devtools-panel.js';
+import { IoDevtoolsPanel } from '../io-devtools-panel.js';
 
 describe('io-devtools-react: IoDevtoolsPanel', () => {
   it('renders controls and reacts to history updates', () => {

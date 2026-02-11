@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Ref, ShallowRef } from 'vue';
 import { effectScope } from 'vue';
 import { io } from 'io-store';
-import { ioRef, useIO } from './index.js';
+import { ioRef, useIO } from '../adapters.js';
 
 describe('@org/io-vue', () => {
   it('exports adapters', () => {

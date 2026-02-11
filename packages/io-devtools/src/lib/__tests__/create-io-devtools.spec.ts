@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { io, link } from 'io-store';
-import { createIoDevtools } from './create-io-devtools.js';
+import { createIoDevtools } from '../create-io-devtools.js';
 
 describe('io-devtools: createIoDevtools', () => {
   it('records updates and snapshots', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { io } from 'io-store';
-import { toReadable, toWritable } from './index.js';
+import { toReadable, toWritable } from '../stores.js';
 
 describe('@org/io-svelte', () => {
   it('creates readable and writable stores', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diffSnapshots } from './diff-snapshots.js';
+import { diffSnapshots } from '../diff-snapshots.js';
 
 describe('io-devtools: diffSnapshots', () => {
   it('respects maxDepth by collapsing deeper diffs', () => {

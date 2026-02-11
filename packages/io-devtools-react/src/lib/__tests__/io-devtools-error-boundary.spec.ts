@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IoDevtoolsErrorBoundary } from './io-devtools-error-boundary.js';
+import { IoDevtoolsErrorBoundary } from '../io-devtools-error-boundary.js';
 
 describe('io-devtools-react: IoDevtoolsErrorBoundary', () => {
   it('derives state from error', () => {
@@ -7,4 +7,3 @@ describe('io-devtools-react: IoDevtoolsErrorBoundary', () => {
     expect(state.error).toBeInstanceOf(Error);
   });
 });
-

@@ -3,6 +3,7 @@ import { applyUpdate } from '../utils/updates.js';
 import { deepFreeze } from '../utils/snapshot.js';
 import { relocate } from '../extensions/relocate.js';
 import { io } from '../core/io.js';
+import { derived } from '../core/derived.js';
 import { link } from '../utils/link.js';
 import type { IoUpdate } from '../utils/types.js';
 
@@ -101,6 +102,32 @@ describe('edge cases: applyUpdate', () => {
       }),
     ).toThrow(/unsupported root set/);
   });
+
+  it('accepts updates with non-contiguous revision metadata', () => {
+    const store = io(1);
+    applyUpdate(store, {
+      id: 'u5',
+      baseRevision: 2,
+      revision: 3,
+      patches: [{ op: 'set', path: [], prev: 1, next: 2 }],
+    });
+    expect(store.get()).toBe(2);
+  });
+
+  it('rejects malformed sort permutations during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 0, 2] }],
+      }),
+    ).toThrow(/invalid sort order permutation/);
+
+    expect(arr.get()).toEqual([3, 1, 2]);
+  });
 });
 
 describe('edge cases: deepFreeze', () => {
@@ -177,5 +204,45 @@ describe('edge cases: commit and linked-array subscriptions', () => {
     expect(updates).toHaveLength(1);
     expect(updates[0].patches).toHaveLength(1);
     expect(updates[0].patches[0]).toMatchObject({ path: ['items', 0] });
+  });
+
+  it('rejects unknown keys in deep scope commits', () => {
+    const store = io({ a: 1 });
+    expect(() =>
+      store.commit((draft) => {
+        (draft as Record<string, unknown>).b = 2;
+      }),
+    ).toThrow(/unknown key/);
+  });
+});
+
+describe('edge cases: array proxy mutation behavior', () => {
+  it('supports bracket index assignment and emits update path', () => {
+    const arr = io([1, 2, 3]);
+    const updates: IoUpdate[] = [];
+    arr.subscribeUpdate((u) => updates.push(u));
+
+    (arr as unknown as Record<number, number>)[1] = 20;
+
+    expect(arr.get()).toEqual([1, 20, 3]);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: [1] });
+  });
+
+  it('keeps length read-only on array proxy', () => {
+    const arr = io([1, 2, 3]);
+    expect(() => {
+      (arr as unknown as { length: number }).length = 1;
+    }).toThrow(/length is read-only/);
+    expect(arr.get()).toEqual([1, 2, 3]);
+  });
+});
+
+describe('edge cases: derived deps contract', () => {
+  it('rejects deps without subscribe()', () => {
+    const dep = { get: () => 1 };
+    expect(() =>
+      derived([dep as any], (v) => Number(v) + 1),
+    ).toThrow(/must implement subscribe/);
   });
 });

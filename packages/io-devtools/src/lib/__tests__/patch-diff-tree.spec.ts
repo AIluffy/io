@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPatchDiffTree } from './patch-diff-tree.js';
+import { buildPatchDiffTree } from '../patch-diff-tree.js';
 
 const patches = [
   { op: 'set', path: ['user', 'name'], prev: 'a', next: 'b' },
