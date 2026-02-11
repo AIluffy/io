@@ -1,7 +1,7 @@
-import type { IoPatch } from '../utils/types.js';
+import type { IoPatch } from '../../../utils/types.js';
 
-import type { CreateArrayMutationsOptions } from './node-factory-array-mutate-types.js';
-import { clearDirtyIndices, resetDirtyIndices } from './dirty-indices.js';
+import type { CreateArrayMutationsOptions } from './mutate-types.js';
+import { clearDirtyIndices, resetDirtyIndices } from '../../dirty-indices.js';
 
 function validateSortPermutation(order: number[], length: number): void {
   if (order.length !== length)

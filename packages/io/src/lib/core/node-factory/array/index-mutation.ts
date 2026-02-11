@@ -1,7 +1,7 @@
-import { isLink } from '../utils/link.js';
+import { isLink } from '../../../utils/link.js';
 
-import type { CreateArrayMutationsOptions } from './node-factory-array-mutate-types.js';
-import { markDirtyIndex } from './dirty-indices.js';
+import type { CreateArrayMutationsOptions } from './mutate-types.js';
+import { markDirtyIndex } from '../../dirty-indices.js';
 
 export function createArrayIndexMutation(
   options: CreateArrayMutationsOptions,

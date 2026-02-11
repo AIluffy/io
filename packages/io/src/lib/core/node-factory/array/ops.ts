@@ -1,13 +1,13 @@
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeInternal,
   TreeNode,
-} from './io-tree-types.js';
-import { createArrayCommit } from './node-factory-array-commit.js';
-import { createArrayMutations } from './node-factory-array-mutate.js';
+} from '../../io-tree-types.js';
+import { createArrayCommit } from './commit.js';
+import { createArrayMutations } from './mutate.js';
 
 type CreateArrayOpsOptions = {
   deps: NodeFactoryDeps;

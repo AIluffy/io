@@ -1,15 +1,15 @@
-import type { IoUpdate, IoUnsubscribe } from '../utils/types.js';
+import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeContext,
   TreeInternal,
   TreeNode,
   TreeScopeState,
-} from './io-tree-types.js';
-import { createScopeCommit } from './node-factory-scope-commit.js';
-import { createScopeMutations } from './node-factory-scope-mutate.js';
+} from '../../io-tree-types.js';
+import { createScopeCommit } from './commit.js';
+import { createScopeMutations } from './mutate.js';
 
 type CreateScopeNodeOptions = {
   deps: NodeFactoryDeps;

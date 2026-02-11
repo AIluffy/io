@@ -1,5 +1,5 @@
-import type { NodePath } from './path-trie.js';
-import type { TreeContext, TreeNode } from './io-tree-types.js';
+import type { NodePath } from '../path-trie.js';
+import type { TreeContext, TreeNode } from '../io-tree-types.js';
 
 type TrieNode = {
   node: TreeNode | undefined;

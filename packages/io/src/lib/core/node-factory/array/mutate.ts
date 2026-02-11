@@ -1,6 +1,6 @@
-import type { CreateArrayMutationsOptions } from './node-factory-array-mutate-types.js';
-import { createArrayIndexMutation } from './node-factory-array-index.js';
-import { createArrayStructuralMutations } from './node-factory-array-structural.js';
+import type { CreateArrayMutationsOptions } from './mutate-types.js';
+import { createArrayIndexMutation } from './index-mutation.js';
+import { createArrayStructuralMutations } from './structural-mutations.js';
 
 export function createArrayMutations(options: CreateArrayMutationsOptions): {
   applySplice: (

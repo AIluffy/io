@@ -1,11 +1,11 @@
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeContext,
   TreeNode,
   TreeScopeState,
   UnitInternal,
-} from './io-tree-types.js';
+} from '../../io-tree-types.js';
 
 type CreateScopeMutationsOptions = {
   deps: NodeFactoryDeps;

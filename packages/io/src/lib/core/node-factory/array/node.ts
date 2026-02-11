@@ -1,16 +1,16 @@
-import type { IoUpdate, IoUnsubscribe } from '../utils/types.js';
+import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeNode,
-} from './io-tree-types.js';
+} from '../../io-tree-types.js';
 import {
   createDirtyIndexState,
-} from './dirty-indices.js';
-import { createArrayOps } from './node-factory-array-ops.js';
+} from '../../dirty-indices.js';
+import { createArrayOps } from './ops.js';
 
 type CreateArrayNodeOptions = {
   deps: NodeFactoryDeps;

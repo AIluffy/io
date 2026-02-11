@@ -1,10 +1,10 @@
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeNode,
-} from './io-tree-types.js';
+} from '../../io-tree-types.js';
 
 export type CreateArrayMutationsOptions = {
   deps: NodeFactoryDeps;

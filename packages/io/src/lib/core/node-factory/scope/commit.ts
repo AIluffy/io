@@ -1,13 +1,13 @@
-import { isLink } from '../utils/link.js';
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import type { NodePath } from './path-trie.js';
+import { isLink } from '../../../utils/link.js';
+import type { NodeFactoryDeps } from '../types.js';
+import type { NodePath } from '../../path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeNode,
   TreeScopeState,
   UnitInternal,
-} from './io-tree-types.js';
+} from '../../io-tree-types.js';
 
 type CreateScopeCommitOptions = {
   deps: NodeFactoryDeps;

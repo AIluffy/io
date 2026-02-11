@@ -4,16 +4,16 @@ import type {
   TreeContext,
   TreeNode,
 } from './io-tree-types.js';
-import type { NodeFactoryDeps } from './node-factory-types.js';
-import { createArrayNode as createArrayNodeImpl } from './node-factory-array.js';
-import { createScopeNode as createScopeNodeImpl } from './node-factory-scope.js';
+import type { NodeFactoryDeps } from './node-factory/types.js';
+import { createArrayNode as createArrayNodeImpl } from './node-factory/array/node.js';
+import { createScopeNode as createScopeNodeImpl } from './node-factory/scope/node.js';
 import {
   collectTargetPaths,
   formatPath,
   isPathPrefix,
-} from './node-factory-link.js';
+} from './node-factory/link.js';
 
-export type { NodeFactoryDeps } from './node-factory-types.js';
+export type { NodeFactoryDeps } from './node-factory/types.js';
 
 export function createNodeFactory(deps: NodeFactoryDeps) {
   // Patch payloads must be immutable snapshots. Linked nodes need resolving to

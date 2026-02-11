@@ -4,15 +4,15 @@ import type {
   IoPath,
   IoUpdate,
   IoUnsubscribe,
-} from '../utils/types.js';
-import type { NodePath } from './path-trie.js';
+} from '../../utils/types.js';
+import type { NodePath } from '../path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeInternal,
   TreeNode,
   TreeScopeState,
-} from './io-tree-types.js';
+} from '../io-tree-types.js';
 
 export type NodeFactoryDeps = {
   isPlainObject: (value: unknown) => boolean;
@@ -28,8 +28,8 @@ export type NodeFactoryDeps = {
   createDraft: <T>(value: T) => T;
   finishDraft: <T>(draft: T) => T;
   createUpdate: (base: number, next: number, patches: IoPatch[]) => IoUpdate;
-  applyScopeCommitDiff: typeof import('./commit.js').applyScopeCommitDiff;
-  applyArrayCommitDiff: typeof import('./commit.js').applyArrayCommitDiff;
+  applyScopeCommitDiff: typeof import('../commit.js').applyScopeCommitDiff;
+  applyArrayCommitDiff: typeof import('../commit.js').applyArrayCommitDiff;
   getInternal: (value: unknown) => TreeInternal | undefined;
   requireInternalOfKind: (
     value: unknown,
