@@ -95,15 +95,16 @@ export function createSubscriptions<
         state.valueEpoch += 1;
         emitScopeValue(state);
       },
-      onUpdate: (u) => {
-        state.dirtyKeys.add(key);
-        const baseRevision = state.revision;
-        state.revision += 1;
-        emitScopeUpdate(
-          state,
-          createUpdate(baseRevision, state.revision, u.patches),
-        );
-      },
+    onUpdate: (u) => {
+      state.dirtyKeys.add(key);
+      const baseRevision = state.revision;
+      state.revision += 1;
+      state.valueEpoch += 1;
+      emitScopeUpdate(
+        state,
+        createUpdate(baseRevision, state.revision, u.patches),
+      );
+    },
     });
 
     state.childValueUnsubs.set(key, valueUnsub);
@@ -148,6 +149,7 @@ export function createSubscriptions<
             markDirtyIndex(state.dirtyIndices, index, state.children.length);
           const baseRevision = state.revision;
           state.revision += 1;
+          state.valueEpoch += 1;
           const patches = indices.flatMap((index) =>
             u.patches.map((p) => prependPatchPath(index, p)),
           );

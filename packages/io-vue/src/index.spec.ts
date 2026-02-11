@@ -67,4 +67,23 @@ describe('@org/io-vue', () => {
     expect(ref?.value).toBe(7);
     scope.stop();
   });
+
+  it('drops queued microtask updates after scope dispose', async () => {
+    const scope = effectScope();
+    let state: ShallowRef<number> | undefined;
+    let countRef: { get(): number } | undefined;
+
+    scope.run(() => {
+      const count = io(0);
+      countRef = count;
+      state = useIO(count, { schedule: 'microtask' });
+      count.set(1);
+      expect(state?.value).toBe(0);
+    });
+    scope.stop();
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+    expect(countRef?.get()).toBe(1);
+    expect(state?.value).toBe(0);
+  });
 });

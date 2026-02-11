@@ -79,6 +79,8 @@ export type NodeFactoryDeps = {
 };
 
 export function createNodeFactory(deps: NodeFactoryDeps) {
+  // Patch payloads must be immutable snapshots. Linked nodes need resolving to
+  // values so update logs stay serializable and replay-safe.
   const resolvePatchValue = (value: unknown): unknown => {
     if (isLink(value)) {
       const target = getLinkTarget(value) as TreeNode;
@@ -150,6 +152,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     ctx.seen.set(initial as unknown as object, scope as unknown as TreeNode);
 
     const initialAny = initial as unknown as Record<PropertyKey, unknown>;
+    // Reflect.ownKeys keeps symbol/non-enumerable branches in the tree model.
     for (const key of Reflect.ownKeys(initialAny)) {
       const child = createTreeNode(ctx, [...path, key], initialAny[key]);
       state.children.set(key, child);

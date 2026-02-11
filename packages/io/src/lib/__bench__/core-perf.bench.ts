@@ -15,6 +15,8 @@ type DeepState = {
   list: Array<{ id: string; meta: { n: number } }>;
 };
 
+type DeepNestedNode = { value: number; child?: DeepNestedNode };
+
 function buildDeepState(listSize = 200): DeepState {
   return {
     level1: {
@@ -27,6 +29,24 @@ function buildDeepState(listSize = 200): DeepState {
       meta: { n: i },
     })),
   };
+}
+
+function buildDeepNested(depth: number): DeepNestedNode {
+  const root: DeepNestedNode = { value: 0 };
+  let current = root;
+  for (let i = 1; i < depth; i += 1) {
+    current.child = { value: i };
+    current = current.child;
+  }
+  return root;
+}
+
+function mutateDeepNested(root: DeepNestedNode, next: number): void {
+  let current = root;
+  while (current.child) {
+    current = current.child;
+  }
+  current.value = next;
 }
 
 function mutateDeep(state: DeepState, n: number): void {
@@ -84,6 +104,20 @@ describe('core: snapshot', () => {
       list.snapshot();
     }
   });
+
+  bench('snapshot: array (20k boundary)', () => {
+    const list = io(Array.from({ length: 20_000 }, (_, i) => i));
+    for (let i = 0; i < 2_000; i += 1) {
+      list.snapshot();
+    }
+  });
+
+  bench('snapshot: depth (80 boundary)', () => {
+    const store = io(buildDeepNested(80));
+    for (let i = 0; i < 5_000; i += 1) {
+      store.snapshot();
+    }
+  });
 });
 
 describe('core: createDraft/finishDraft', () => {
@@ -103,6 +137,15 @@ describe('core: deep updates', () => {
     for (let i = 0; i < 200; i += 1) {
       store.commit((draft) => {
         mutateDeep(draft, i);
+      });
+    }
+  });
+
+  bench('commit deep update (80 boundary)', () => {
+    const store = io(buildDeepNested(80));
+    for (let i = 0; i < 1_000; i += 1) {
+      store.commit((draft) => {
+        mutateDeepNested(draft as DeepNestedNode, i);
       });
     }
   });

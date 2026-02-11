@@ -41,4 +41,16 @@ describe('@org/io-svelte', () => {
     unsub();
     expect(seen).toEqual([0, 1]);
   });
+
+  it('drops queued microtask updates after unsubscribe', async () => {
+    const unit = io(0);
+    const writable = toWritable(unit, { schedule: 'microtask' });
+    const seen: number[] = [];
+    const unsub = writable.subscribe((v) => seen.push(v));
+    writable.set(1);
+    unsub();
+
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(seen).toEqual([0]);
+  });
 });

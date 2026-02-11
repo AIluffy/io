@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
-import { derived } from '../core/derived.js';
+import { describe, expect, it } from 'vitest';
 import { io } from '../core/io.js';
 import { withBehaviors } from '../extensions/with-behaviors.js';
 import { schedule } from '../extensions/behaviors/schedule.js';
 import { persist } from '../extensions/behaviors/persist.js';
 import { devtools } from '../extensions/behaviors/devtools.js';
+import { derived } from '../core/derived.js';
 
 describe('extensions: behaviors', () => {
   it('schedules subscriber updates', () => {
@@ -16,6 +16,19 @@ describe('extensions: behaviors', () => {
     view.set?.(2);
     unsub();
     expect(seen).toEqual([1, 2]);
+  });
+
+  it('drops queued microtask callbacks after unsubscribe', async () => {
+    const unit = io(0);
+    const view = withBehaviors(unit, [schedule('microtask')]);
+    const seen: number[] = [];
+    const unsub = view.subscribe((v) => seen.push(v));
+
+    view.set?.(1);
+    unsub();
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+    expect(seen).toEqual([]);
   });
 
   it('persists values via storage adapter', () => {

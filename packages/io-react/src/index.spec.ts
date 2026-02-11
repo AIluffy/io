@@ -60,4 +60,32 @@ describe('io-react', () => {
     expect(getText()).toBe('2');
     expect(renders).toContain(1);
   });
+
+  it('does not flush stale microtask notifications after unmount', async () => {
+    const count = io(0);
+    const renders: number[] = [];
+
+    const App = () => {
+      const value = useIO(count, { schedule: 'microtask' });
+      renders.push(value);
+      return React.createElement('span', null, String(value));
+    };
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = TestRenderer.create(React.createElement(App));
+    });
+
+    act(() => {
+      count.set(1);
+    });
+    await act(async () => {
+      renderer.unmount();
+    });
+    await act(async () => {
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+    });
+
+    expect(renders).toEqual([0]);
+  });
 });

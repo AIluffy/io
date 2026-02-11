@@ -42,6 +42,8 @@ function shallowCopy(base: object): object {
 }
 
 function ensureCopy(state: DraftState): object {
+  // Copy-on-write: we only allocate a shallow clone after the first mutation.
+  // Pure reads keep sharing the frozen base snapshot.
   if (!state.modified) {
     state.modified = true;
     state.copy = shallowCopy(state.base);
@@ -84,6 +86,8 @@ function createProxy(base: object): object {
 
       const source = currentSource(state) as Record<PropertyKey, unknown>;
 
+      // Array mutators must run against the writable copy. Calling the method
+      // directly on base would mutate frozen snapshots and break sharing.
       if (Array.isArray(source) && arrayMutators.has(prop)) {
         const fn = (source as unknown as Record<PropertyKey, unknown>)[prop];
         if (typeof fn !== 'function') return fn;
@@ -99,7 +103,7 @@ function createProxy(base: object): object {
               ? args.map(toImmutableIfNeeded)
               : prop === 'splice'
                 ? [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)]
-                : args;
+              : args;
           return (method as (...a: unknown[]) => unknown).apply(
             copy,
             immutableArgs,
@@ -167,6 +171,7 @@ export function finishDraft<T>(draft: T): T {
   if (!isDraft(draft)) return draft;
   const state = getState(draft);
 
+  // No local writes means full structural sharing is valid.
   if (!state.modified) return state.base as T;
 
   const result = state.copy as Record<PropertyKey, unknown>;

@@ -23,18 +23,25 @@ function createSubscriber<T>(
       return source.subscribe(() => onStoreChange());
     }
 
+    let active = true;
     let pending = false;
+    let token = 0;
     const scheduleNotify = () => {
       if (pending) return;
       pending = true;
+      token += 1;
+      const currentToken = token;
       scheduleTask(schedule, () => {
+        if (!active || !pending || currentToken !== token) return;
         pending = false;
         onStoreChange();
       });
     };
     const unsub = source.subscribe(() => scheduleNotify());
     return () => {
+      active = false;
       pending = false;
+      token += 1;
       unsub();
     };
   };

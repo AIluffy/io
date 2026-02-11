@@ -15,19 +15,36 @@ type IoSvelteOptions = {
 function createUpdater<T>(
   schedule: IoSchedule,
   apply: (value: T) => void,
-): (value: T) => void {
-  if (schedule === 'sync') return (value) => apply(value);
+): { push: (value: T) => void; cancel: () => void } {
+  if (schedule === 'sync') {
+    return {
+      push: (value) => apply(value),
+      cancel: () => undefined,
+    };
+  }
 
+  let active = true;
   let pending = false;
+  let token = 0;
   let last: T;
-  return (value: T) => {
-    last = value;
-    if (pending) return;
-    pending = true;
-    scheduleTask(schedule, () => {
+  return {
+    push: (value: T) => {
+      last = value;
+      if (pending) return;
+      pending = true;
+      token += 1;
+      const currentToken = token;
+      scheduleTask(schedule, () => {
+        if (!active || !pending || currentToken !== token) return;
+        pending = false;
+        apply(last);
+      });
+    },
+    cancel: () => {
+      active = false;
       pending = false;
-      apply(last);
-    });
+      token += 1;
+    },
   };
 }
 
@@ -39,11 +56,12 @@ export function toReadable<T>(
     subscribe(run) {
       run(source.snapshot());
       const schedule = options?.schedule ?? 'sync';
-      const update = createUpdater<T>(schedule, (value) => {
+      const updater = createUpdater<T>(schedule, (value) => {
         run(value);
       });
-      const unsub = source.subscribe((v) => update(v));
+      const unsub = source.subscribe((v) => updater.push(v));
       return () => {
+        updater.cancel();
         unsub();
       };
     },
@@ -58,11 +76,12 @@ export function toWritable<T>(
     subscribe(run) {
       run(unit.get());
       const schedule = options?.schedule ?? 'sync';
-      const update = createUpdater<T>(schedule, (value) => {
+      const updater = createUpdater<T>(schedule, (value) => {
         run(value);
       });
-      const unsub = unit.subscribe((v) => update(v));
+      const unsub = unit.subscribe((v) => updater.push(v));
       return () => {
+        updater.cancel();
         unsub();
       };
     },

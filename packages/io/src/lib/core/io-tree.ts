@@ -45,7 +45,6 @@ import {
   unregisterSubtree as unregisterSubtreeWithAccess,
 } from './path-trie.js';
 
-
 function getInternal(value: unknown): TreeInternal | undefined {
   return getAnyInternal(value) as unknown as TreeInternal | undefined;
 }
@@ -115,6 +114,32 @@ function getNodeValue(
   return snapshotValue(node, { owned: false });
 }
 
+function defineLazyValue(
+  target: object,
+  key: PropertyKey,
+  compute: () => unknown,
+): void {
+  let resolved = false;
+  let cached: unknown;
+  Object.defineProperty(target, key, {
+    enumerable: true,
+    configurable: true,
+    get: () => {
+      if (!resolved) {
+        cached = compute();
+        resolved = true;
+      }
+      return cached;
+    },
+  });
+}
+
+function materializeKeys(target: Record<PropertyKey, unknown>): void {
+  for (const key of Reflect.ownKeys(target)) {
+    void target[key];
+  }
+}
+
 function getScopeSnapshot(
   state: TreeScopeState,
   cache?: WeakMap<object, unknown>,
@@ -133,21 +158,24 @@ function getScopeSnapshot(
       return prev;
     }
 
+    // We cache this container before filling values so cycle reads can resolve
+    // back to the in-progress snapshot root instead of recursing forever.
     const base: Record<PropertyKey, unknown> =
       prev && !state.dirtyStructure ? { ...prev } : {};
     local.set(state.node as unknown as object, base);
 
     if (!prev || state.dirtyStructure) {
       for (const [key, node] of state.children.entries()) {
-        base[key] = getNodeValue(node, local);
+        defineLazyValue(base, key, () => getNodeValue(node, local));
       }
     } else {
       for (const key of state.dirtyKeys) {
         const node = state.children.get(key);
-        if (node) base[key] = getNodeValue(node, local);
+        if (node) defineLazyValue(base, key, () => getNodeValue(node, local));
       }
     }
 
+    materializeKeys(base);
     state.dirtyKeys.clear();
     state.dirtyStructure = false;
     const value = freezeRootShallow(base) as Record<string, unknown>;
@@ -160,6 +188,9 @@ function getArraySnapshot(
   state: TreeArrayState,
   cache?: WeakMap<object, unknown>,
 ): unknown[] {
+  // If enough indices are dirty, rebuilding the full container is cheaper than
+  // patching a long list of sparse writes. The threshold is tuned for runtime
+  // work, not semantic behavior.
   const fullRebuildThreshold = 0.5;
   return readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
     const local = cache ?? new WeakMap<object, unknown>();
@@ -218,15 +249,22 @@ function getArraySnapshot(
       prev.length !== state.children.length
     ) {
       for (let i = 0; i < state.children.length; i += 1) {
-        values[i] = getNodeValue(state.children[i], local);
+        defineLazyValue(values, i, () =>
+          getNodeValue(state.children[i], local),
+        );
       }
     } else {
       for (const index of state.dirtyIndices.items) {
         if (index < 0 || index >= state.children.length) continue;
-        values[index] = getNodeValue(state.children[index], local);
+        defineLazyValue(values, index, () =>
+          getNodeValue(state.children[index], local),
+        );
       }
     }
 
+    for (let i = 0; i < state.children.length; i += 1) {
+      if (i in values) void values[i];
+    }
     clearDirtyIndices(state.dirtyIndices);
     state.dirtyStructure = false;
     const frozen = freezeRootShallow(values) as unknown[];

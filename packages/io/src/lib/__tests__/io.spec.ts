@@ -104,6 +104,24 @@ describe('io: array', () => {
     arr.sort((a, b) => a - b);
     expect(arr.get()).toEqual([2, 3, 9]);
   });
+
+  it('only marks dirty indices as lazy getters on incremental array rebuild', () => {
+    const arr = io([1, 2, 3]);
+    const s1 = arr.snapshot() as number[];
+
+    arr[1].set(20);
+    const s2 = arr.snapshot() as number[];
+    const d0 = Object.getOwnPropertyDescriptor(s2, '0');
+    const d1 = Object.getOwnPropertyDescriptor(s2, '1');
+    const d2 = Object.getOwnPropertyDescriptor(s2, '2');
+
+    expect(d0?.get).toBeUndefined();
+    expect(typeof d1?.get).toBe('function');
+    expect(d2?.get).toBeUndefined();
+    expect(s2[0]).toBe(s1[0]);
+    expect(s2[2]).toBe(s1[2]);
+    expect(s2[1]).toBe(20);
+  });
 });
 
 describe('io: scope', () => {
@@ -118,6 +136,31 @@ describe('io: scope', () => {
     expect(inside).toBe(0);
     expect(counter.count.get()).toBe(1);
     expect(counter.step.get()).toBe(2);
+  });
+
+  it('builds first rebuilt scope snapshot with lazy getters', () => {
+    const store = io({ a: { n: 1 }, b: { n: 2 } });
+    const snap = store.snapshot() as Record<string, unknown>;
+    const aDesc = Object.getOwnPropertyDescriptor(snap, 'a');
+    const bDesc = Object.getOwnPropertyDescriptor(snap, 'b');
+
+    expect(typeof aDesc?.get).toBe('function');
+    expect(typeof bDesc?.get).toBe('function');
+  });
+
+  it('only marks dirty keys as lazy getters on incremental scope rebuild', () => {
+    const store = io({ a: { n: 1 }, b: { n: 2 } });
+    const s1 = store.snapshot() as { a: { n: number }; b: { n: number } };
+
+    store.a.n.set(3);
+    const s2 = store.snapshot() as { a: { n: number }; b: { n: number } };
+    const aDesc = Object.getOwnPropertyDescriptor(s2, 'a');
+    const bDesc = Object.getOwnPropertyDescriptor(s2, 'b');
+
+    expect(typeof aDesc?.get).toBe('function');
+    expect(bDesc?.get).toBeUndefined();
+    expect(s2.b).toBe(s1.b);
+    expect(s2.a.n).toBe(3);
   });
 
   it('emits a single scope update for commit', () => {

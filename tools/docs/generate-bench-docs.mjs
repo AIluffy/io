@@ -37,6 +37,24 @@ function buildDeepState(listSize = 200) {
   };
 }
 
+function buildDeepNested(depth) {
+  let root = { value: 0 };
+  let current = root;
+  for (let i = 1; i < depth; i += 1) {
+    current.child = { value: i };
+    current = current.child;
+  }
+  return root;
+}
+
+function mutateDeepNested(root, next) {
+  let current = root;
+  while (current.child) {
+    current = current.child;
+  }
+  current.value = next;
+}
+
 function mutateDeep(state, n) {
   state.level1.level2.level3.level4.level5.value = n;
   state.level1.level2.level3.level4.extra = n;
@@ -103,6 +121,20 @@ async function runBenchmarks() {
     }
   });
 
+  bench.add('snapshot: array (20k boundary)', () => {
+    const list = io(Array.from({ length: 20_000 }, (_, i) => i));
+    for (let i = 0; i < 2_000; i += 1) {
+      list.snapshot();
+    }
+  });
+
+  bench.add('snapshot: depth (80 boundary)', () => {
+    const store = io(buildDeepNested(80));
+    for (let i = 0; i < 5_000; i += 1) {
+      store.snapshot();
+    }
+  });
+
   bench.add('draft/finish: deep object (200)', () => {
     let before = buildDeepState(200);
     for (let i = 0; i < 200; i += 1) {
@@ -117,6 +149,15 @@ async function runBenchmarks() {
     for (let i = 0; i < 200; i += 1) {
       store.commit((draft) => {
         mutateDeep(draft, i);
+      });
+    }
+  });
+
+  bench.add('commit deep update (80 boundary)', () => {
+    const store = io(buildDeepNested(80));
+    for (let i = 0; i < 1_000; i += 1) {
+      store.commit((draft) => {
+        mutateDeepNested(draft, i);
       });
     }
   });
