@@ -10,19 +10,14 @@ description: "type export"
 IoTreeScope<T, MaxDepth>
 ```
 
-## Notes
-
-- Used for deep object scopes (MaxDepth > 1); `IoScope` is the shallow alias.
-- `commit` rejects unknown keys to keep the scope shape stable.
-
 ## Properties
 
 | Name | Type |
 | --- | --- |
-| commit | `(fn: (draft: T) => void) => void` |
-| get | `() => T` |
-| snapshot | `() => T` |
-| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+| get | `() => UnwrapIo<T>` |
+| commit | `(fn: (draft: UnwrapIo<T>) => void) => void` |
+| snapshot | `() => UnwrapIo<T>` |
+| subscribe | `(fn: (v: UnwrapIo<T>) => void) => IoUnsubscribe` |
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
 
 ## Errors

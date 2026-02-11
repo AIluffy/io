@@ -10,15 +10,6 @@ description: "type export"
 IoNode<T>
 ```
 
-## Properties
-
-| Name | Type |
-| --- | --- |
-| get | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| subscribe | `((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
-| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
-
 ## Errors
 
 - This library does not define standardized error codes.

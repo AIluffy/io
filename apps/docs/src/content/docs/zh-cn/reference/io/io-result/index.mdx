@@ -10,15 +10,6 @@ description: "type export"
 IoResult<T, MaxDepth>
 ```
 
-## 属性
-
-| Name | Type |
-| --- | --- |
-| get | `(() => T) \| (() => unknown[]) \| (() => T)` |
-| snapshot | `(() => T) \| (() => unknown[]) \| (() => T)` |
-| subscribe | `((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
-| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
-
 ## 错误
 
 - 本库未定义标准化错误码。

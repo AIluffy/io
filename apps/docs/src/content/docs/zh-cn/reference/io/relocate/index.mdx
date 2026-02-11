@@ -1,19 +1,20 @@
 ---
-title: 'relocate'
-description: 'function export'
+title: "relocate"
+description: "function export"
 ---
+
 
 ## 签名
 
 ```ts
-<T>(root: IoTreeNode<unknown>, path: ReadonlyArray<PropertyKey>) => IoView<T>;
+<T>(root: unknown, path: ReadonlyArray<PropertyKey>) => IoView<T>
 ```
 
 ## 参数
 
-| Name | Type                     |
-| ---- | ------------------------ |
-| root | `IoUnit<unknown>`        |
+| Name | Type |
+| --- | --- |
+| root | `unknown` |
 | path | `readonly PropertyKey[]` |
 
 ## 返回

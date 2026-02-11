@@ -7,7 +7,7 @@ description: "function export"
 ## 签名
 
 ```ts
-<T>(source: IoSource<T>) => Readable<T>
+<T>(source: IoSource<T>, options?: IoSvelteOptions) => Readable<T>
 ```
 
 ## 参数
@@ -15,6 +15,7 @@ description: "function export"
 | Name | Type |
 | --- | --- |
 | source | `IoSource<T>` |
+| options | `IoSvelteOptions` |
 
 ## 返回
 
@@ -27,4 +28,4 @@ description: "function export"
 
 ## 源码
 
-- `packages/io-svelte/src/index.ts`
+- `packages/io-svelte/src/lib/stores.ts`

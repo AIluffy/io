@@ -1,19 +1,21 @@
 ---
-title: 'useIO'
-description: 'function export'
+title: "useIO"
+description: "function export"
 ---
+
 
 ## Signature
 
 ```ts
-<T>(source: IoSource<T>) => ShallowRef<T>;
+<T>(source: IoSource<T>, options?: IoVueOptions) => ShallowRef<T>
 ```
 
 ## Parameters
 
-| Name   | Type          |
-| ------ | ------------- |
+| Name | Type |
+| --- | --- |
 | source | `IoSource<T>` |
+| options | `IoVueOptions` |
 
 ## Returns
 
@@ -26,4 +28,4 @@ description: 'function export'
 
 ## Source
 
-- `packages/io-vue/src/index.ts`
+- `packages/io-vue/src/lib/adapters.ts`

@@ -10,15 +10,6 @@ description: "type export"
 IoNode<T>
 ```
 
-## 属性
-
-| Name | Type |
-| --- | --- |
-| get | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| subscribe | `((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
-| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
-
 ## 错误
 
 - 本库未定义标准化错误码。

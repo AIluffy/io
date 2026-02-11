@@ -1,19 +1,21 @@
 ---
-title: 'useIO'
-description: 'function export'
+title: "useIO"
+description: "function export"
 ---
+
 
 ## Signature
 
 ```ts
-<T>(source: IoSource<T>) => T;
+<T>(source: IoSource<T>, options?: IoReactOptions) => T
 ```
 
 ## Parameters
 
-| Name   | Type          |
-| ------ | ------------- |
+| Name | Type |
+| --- | --- |
 | source | `IoSource<T>` |
+| options | `IoReactOptions` |
 
 ## Returns
 
@@ -26,4 +28,4 @@ description: 'function export'
 
 ## Source
 
-- `packages/io-react/src/index.ts`
+- `packages/io-react/src/lib/use-io.ts`

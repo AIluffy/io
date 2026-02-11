@@ -11,7 +11,7 @@ sidebar:
 
 ## 运行环境
 
-- Date: 2026-02-10T13:28:00.859Z
+- Date: 2026-02-11T17:25:45.941Z
 - Node: v25.5.0
 - Platform: darwin 25.2.0 (arm64)
 - CPU: Apple M4
@@ -21,15 +21,18 @@ sidebar:
 
 | 场景 | ops/sec | mean (ms/op) |
 | --- | --- | --- |
-| createUnit: primitive (1k) | 0.00 | 939.24 |
-| createUnit: object (1k) | 0.00 | 3824.71 |
-| subscribe/unsubscribe: value (10k) | 0.00 | 401.10 |
-| subscribe/unsubscribe: update (10k) | 0.00 | 440.23 |
-| snapshot: scope (10k) | 0.00 | 2141.97 |
-| snapshot: array (10k) | 0.00 | 2845.55 |
-| draft/finish: deep object (200) | 0.00 | 596.39 |
+| createUnit: primitive (1k) | 0.00 | 658.65 |
+| createUnit: object (1k) | 0.00 | 2616.73 |
+| subscribe/unsubscribe: value (10k) | 0.00 | 300.76 |
+| subscribe/unsubscribe: update (10k) | 0.00 | 297.62 |
+| snapshot: scope (10k) | 0.00 | 1438.93 |
+| snapshot: array (10k) | 0.00 | 2066.36 |
+| snapshot: array (20k boundary) | 0.00 | 93944.14 |
+| snapshot: depth (80 boundary) | 0.00 | 706.37 |
+| draft/finish: deep object (200) | 0.00 | 466.86 |
 | commit deep update (200) | 0.00 | 0.00 |
-| batch: 40k updates | 0.00 | 6299.77 |
-| no batch: 40k updates | 0.00 | 6910.30 |
-| batch update 200 units | 0.00 | 367282.94 |
-| sequential update 200 units | 0.00 | 364054.34 |
+| commit deep update (80 boundary) | 0.00 | 0.00 |
+| batch: 40k updates | 0.00 | 4526.38 |
+| no batch: 40k updates | 0.00 | 4280.54 |
+| batch update 200 units | 0.00 | 822770.15 |
+| sequential update 200 units | 0.00 | 748207.17 |

@@ -7,7 +7,7 @@ description: "function export"
 ## Signature
 
 ```ts
-<T>(source: IoSource<T>) => Readable<T>
+<T>(source: IoSource<T>, options?: IoSvelteOptions) => Readable<T>
 ```
 
 ## Parameters
@@ -15,6 +15,7 @@ description: "function export"
 | Name | Type |
 | --- | --- |
 | source | `IoSource<T>` |
+| options | `IoSvelteOptions` |
 
 ## Returns
 
@@ -27,4 +28,4 @@ description: "function export"
 
 ## Source
 
-- `packages/io-svelte/src/index.ts`
+- `packages/io-svelte/src/lib/stores.ts`

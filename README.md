@@ -170,23 +170,23 @@ ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
 ```bash
 # 项目探索
-nx graph                                    # 交互式依赖图
-nx list                                     # 列出已安装插件
-nx show project io-store --web                  # 查看项目详情
+npm exec nx graph                           # 交互式依赖图
+npm exec nx list                            # 列出已安装插件
+npm exec nx show project io-store --web     # 查看项目详情
 
 # 开发
-nx build io-store                               # 构建特定包
-nx test io-store                                # 测试特定包
-nx lint io-react                          # 检查特定包
+npm exec nx build io-store                 # 构建特定包
+npm exec nx test io-store                  # 测试特定包
+npm exec nx lint io-react                  # 检查特定包
 
 # 批量任务
-nx run-many -t build                       # 构建所有项目
-nx run-many -t test --parallel=3          # 并行测试
-nx affected -t build                       # 仅构建受影响项目
+npm exec nx run-many -t build              # 构建所有项目
+npm exec nx run-many -t test --parallel=3  # 并行测试
+npm exec nx affected -t build              # 仅构建受影响项目
 
 # 发布管理
-nx release --dry-run                       # 预览发布变更
-nx release                                 # 创建新发布
+npm exec nx release --dry-run              # 预览发布变更
+npm exec nx release                        # 创建新发布
 ```
 
 ## 📦 发布流程
@@ -197,36 +197,36 @@ nx release                                 # 创建新发布
 
 ```bash
 git status --porcelain
-nx run-many -t lint test typecheck build
+npm exec nx run-many -t lint test typecheck build
 ```
 
 本地发布（手动）：
 
 ```bash
-nx release --dry-run        # 预览
-nx release patch            # 实际发布，示例为 patch
+npm exec nx release --dry-run  # 预览
+npm exec nx release patch      # 实际发布，示例为 patch
 ```
 
 只生成版本/变更日志、不发布：
 
 ```bash
-nx release patch --skip-publish
+npm exec nx release patch --skip-publish
 ```
 
 仅发布已有版本（例如已完成版本/打 tag）：
 
 ```bash
-nx release publish --access public
+npm exec nx release publish --access public
 ```
 
 本地 Verdaccio 验证发布：
 
 ```bash
 # 启动本地 registry
-nx run io-source:local-registry
+npm exec nx run io-source:local-registry
 
 # 发布到本地 registry
-nx release publish --registry http://localhost:4873 --tag next --access public
+npm exec nx release publish --registry http://localhost:4873 --tag next --access public
 
 # 在示例项目中验证安装（示例）
 npm i io-store@next --registry http://localhost:4873
@@ -236,12 +236,91 @@ CI 发布（GitHub Actions）：
 
 ```text
 .github/workflows/release.yml   # 生成 Release PR
-.github/workflows/publish.yml   # 合并到 main 后自动发布
+.github/workflows/publish.yml   # 合并到 main 后自动发布（npm + JSR）
 ```
 
-1. 在 GitHub Secrets 中设置 `NPM_TOKEN`。
+1. 在 GitHub Secrets 中设置 `NPM_TOKEN`、`JSR_TOKEN`。
 2. 通过 Actions -> Release PR 手动触发，输入 `specifier`（如 `patch`/`minor`/`major`/`1.2.3`）。
-3. 合并 Release PR 到 `main` 后，`Publish` workflow 会自动发包。
+3. 合并 Release PR 到 `main` 后，`Publish` workflow 会自动发包到 npm，并尝试发布到 JSR。
+4. JSR 发布仅处理“本次版本变更且包含 `jsr.json` 的包”；未配置 `jsr.json` 会自动跳过。
+
+## 🧭 开发到发包全流程（Feature -> npm）
+
+以下流程是推荐的团队协作路径，适用于新增 feature、修复 bug、或对外发布。
+
+1. 新建功能分支（从 `main` 拉取）。
+2. 开发并补齐测试（单测/类型/文档）。
+3. 本地自检通过后提交 PR。
+4. 合并 feature PR 到 `main`。
+5. 手动触发 `Release PR` workflow 生成版本 PR。
+6. 合并版本 PR 到 `main`。
+7. `Publish` workflow 自动发布 npm 包。
+
+关键命令清单（本地开发阶段）：
+
+```bash
+# 安装依赖
+npm ci
+
+# 基础质量检查
+npm exec nx run-many -t lint test typecheck build
+
+# 文档生成检查（API/bench 文档是否需要更新）
+npm run docs:check
+
+# 仅检查受影响项目（可选，加快迭代）
+npm exec nx affected -t lint test build typecheck
+```
+
+Release PR 阶段（GitHub Actions）：
+
+```text
+.github/workflows/release.yml
+```
+
+- 手动触发，输入 `specifier`（`patch` / `minor` / `major` / `1.2.3`）
+- 自动创建 release 分支与版本 PR（执行 `npm exec nx release <specifier> --skip-publish`）
+
+自动发包阶段（GitHub Actions）：
+
+```text
+.github/workflows/publish.yml
+```
+
+- 仅当检测到 `packages/*/package.json` 版本变化时执行发布
+- 使用 `NPM_TOKEN` 执行 `npm exec nx release publish --access public`
+- 使用 `JSR_TOKEN` 扫描并发布“本次版本变更且包含 `jsr.json`”的包到 JSR
+
+常见故障排查：
+
+- `Publish` 没有发包：
+  - 检查 release PR 是否真的修改了 `packages/*/package.json` 的 `version`
+  - 检查 `NPM_TOKEN` 是否有效、是否有 npm publish 权限
+- `Publish` 没有发到 JSR：
+  - 检查 `JSR_TOKEN` 是否有效
+  - 检查目标包目录是否存在 `jsr.json`
+  - 检查 `jsr.json` 内包名与导出配置是否有效
+- `Release PR` 失败：
+  - 本地先跑 `npm exec nx run-many -t lint test typecheck build`
+  - 确认 `main` 最新并解决冲突后重跑 workflow
+- 合并后文档未更新：
+  - 检查 `.github/workflows/deploy-docs.yml` 是否触发
+  - 检查 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`
+
+## 🌐 文档站部署（Vercel）
+
+文档站由 **单一入口** workflow 负责部署：
+
+```text
+.github/workflows/deploy-docs.yml
+```
+
+- 触发条件：`push` 到 `main`（命中 `apps/docs/**`、`packages/**`、`tools/docs/**`、`package.json`）或手动 `workflow_dispatch`
+- 部署方式：GitHub Actions 使用 Vercel CLI 生产部署（`vercel pull` + `vercel build --prod` + `vercel deploy --prebuilt --prod`）
+- 必需 Secrets：
+  - `VERCEL_TOKEN`
+  - `VERCEL_ORG_ID`
+  - `VERCEL_PROJECT_ID`
 
 ## 🧪 测试模块边界
 
