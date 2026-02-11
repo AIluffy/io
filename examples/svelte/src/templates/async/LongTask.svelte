@@ -19,7 +19,7 @@
 
     if (timer) clearInterval(timer);
     timer = setInterval(() => {
-      store.progress.update((value) => {
+      store.progress.set((value) => {
         const next = Math.min(value + 8, 100);
         if (next >= 100) {
           store.status.set('done');

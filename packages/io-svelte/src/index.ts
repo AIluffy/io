@@ -70,7 +70,7 @@ export function toWritable<T>(
       unit.set(value);
     },
     update(updater) {
-      unit.update((prev) => updater(prev));
+      unit.set((prev) => updater(prev));
     },
   };
 }

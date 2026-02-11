@@ -16,7 +16,7 @@ import { io } from 'io-store';
 describe('counter', () => {
   it('increments', () => {
     const store = io({ count: 0 });
-    store.count.update((v) => v + 1);
+    store.count.set((v) => v + 1);
     expect(store.count.snapshot()).toBe(1);
   });
 });

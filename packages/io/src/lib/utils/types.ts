@@ -57,8 +57,7 @@ export type IoHistory = {
 
 export type IoUnit<T> = {
   get(): T;
-  set(next: T): void;
-  update(fn: (prev: T) => T): void;
+  set(next: T | ((prev: T) => T)): void;
   snapshot(): T;
   subscribe(fn: (v: T) => void): IoUnsubscribe;
   subscribeUpdate(fn: (u: IoUpdate) => void): IoUnsubscribe;

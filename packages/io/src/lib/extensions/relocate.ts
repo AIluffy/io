@@ -62,15 +62,13 @@ export function relocate<T>(
   if (internal.kind === 'unit') {
     const unit = node as {
       get(): T;
-      set(next: T): void;
-      update(fn: (prev: T) => T): void;
+      set(next: T | ((prev: T) => T)): void;
       subscribe(fn: (v: T) => void): () => void;
       snapshot(): T;
     };
     return {
       get: () => unit.get(),
       set: (next) => unit.set(next),
-      update: (fn) => unit.update(fn),
       subscribe: (fn) => unit.subscribe(fn),
       snapshot: () => unit.snapshot(),
     };

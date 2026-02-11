@@ -24,12 +24,12 @@ import {
 } from '../utils/updates.js';
 
 describe('io: unit', () => {
-  it('supports get/set/update/reset', () => {
+  it('supports get/set/reset', () => {
     const count = io(1);
     expect(count.get()).toBe(1);
     count.set(2);
     expect(count.get()).toBe(2);
-    count.update((v) => v + 1);
+    count.set((v) => v + 1);
     expect(count.get()).toBe(3);
     count.reset();
     expect(count.get()).toBe(1);
@@ -263,7 +263,7 @@ describe('ioTree: nested split', () => {
   it('splits nested objects into leaf nodes', () => {
     const user = ioTree({ profile: { name: 'a', age: 1 } });
     expect(user.profile.age.get()).toBe(1);
-    user.profile.age.update((v) => v + 1);
+    user.profile.age.set((v) => v + 1);
     expect(user.profile.age.get()).toBe(2);
   });
 
@@ -552,7 +552,7 @@ describe('derived: unit-level deps and release', () => {
     user.profile.name.set('b');
     expect(calls).toBe(before);
 
-    user.profile.age.update((v) => v + 1);
+    user.profile.age.set((v) => v + 1);
     expect(calls).toBeGreaterThan(before);
     expect(d.get()).toBe(4);
 
@@ -601,7 +601,7 @@ describe('updates: replay/invert consistency', () => {
       for (let i = 0; i < 80; i += 1) {
         if (rng() < 0.6) {
           const delta = randInt(rng, 11) - 5;
-          u1.update((v) => v + delta);
+          u1.set((v) => v + delta);
         } else {
           u1.set(randInt(rng, 200) - 100);
         }
@@ -631,7 +631,7 @@ describe('updates: replay/invert consistency', () => {
         const op = randInt(rng, 3);
         if (op === 0) s1.a.set(randInt(rng, 100));
         else if (op === 1)
-          s1.b.update((v) => v + (randInt(rng, 7) - 3));
+          s1.b.set((v) => v + (randInt(rng, 7) - 3));
         else {
           s1.commit((draft) => {
             draft.a = randInt(rng, 100);
@@ -709,12 +709,12 @@ describe('updates: replay/invert consistency', () => {
           const name = String.fromCharCode(97 + randInt(rng, 3));
           t1.user.name.set(name);
         } else if (op === 1) {
-          t1.user.age.update((v) => v + 1);
+          t1.user.age.set((v) => v + 1);
         } else if (op === 2) {
           const len = t1.items.get().length;
           if (len > 0) {
             const idx = randInt(rng, len);
-            t1.items[idx].count.update(
+            t1.items[idx].count.set(
               (v) => v + (randInt(rng, 5) - 2),
             );
           }
@@ -748,7 +748,7 @@ describe('snapshot reuse', () => {
     });
 
     const s1 = store.snapshot();
-    store.items[0].count.update((v) => v + 1);
+    store.items[0].count.set((v) => v + 1);
     const s2 = store.snapshot();
 
     expect(s1).not.toBe(s2);

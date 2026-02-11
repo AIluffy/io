@@ -16,7 +16,7 @@ IO is a TypeScript state library built for deep state. You update nested fields 
 
 ## Core Concepts
 
-- **Unit**: the smallest writable cell, with `get/set/update`.
+- **Unit**: the smallest writable cell, with `get/set`.
 - **Tree**: objects/arrays expanded into a deep, subscribable structure.
 - **Derived**: read-only computed values that track dependencies.
 - **Update Log**: patches generated on every write.
@@ -38,7 +38,7 @@ import { io, derived } from 'io-store';
 const store = io({ count: 0, user: { name: 'Ada' } });
 const doubled = derived(store, (s) => s.count * 2);
 
-store.count.update((v) => v + 1);
+store.count.set((v) => v + 1);
 console.log(doubled.get());
 ```
 

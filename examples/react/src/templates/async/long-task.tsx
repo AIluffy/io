@@ -22,7 +22,7 @@ export function AsyncLongTaskTemplate(): ReactElement {
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      taskStore.progress.update((value) => {
+      taskStore.progress.set((value) => {
         const next = Math.min(value + 8, 100);
         if (next >= 100) {
           taskStore.status.set('done');

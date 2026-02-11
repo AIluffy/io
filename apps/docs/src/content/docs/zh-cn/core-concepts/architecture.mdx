@@ -18,7 +18,7 @@ IO 的运行时由四个核心层组成：
 
 ```mermaid
 flowchart TD
-  A[Write: set/update/commit] --> B[Create patches]
+  A[Write: set/commit] --> B[Create patches]
   B --> C[Mark dirty & bump revision]
   C --> D[Emit update]
   D --> E[Emit value]
@@ -44,7 +44,7 @@ flowchart TD
 
 ## 写入路径（Write）
 
-- `set/update/commit` 会生成 `patch`，递增 revision。
+- `set/commit` 会生成 `patch`，递增 revision。
 - 写入过程会标记脏节点，并触发 `subscribeUpdate` 与 `subscribe`。
 - 批处理 `batch()` 会合并多次更新，减少重复通知。
 

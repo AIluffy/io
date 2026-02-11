@@ -120,31 +120,31 @@ export function DeepTreeDashboard(): JSX.Element {
     {
       label: '切换主题',
       onClick: (s) =>
-        s.app.config.theme.update((v) => (v === 'Aurora' ? 'Nimbus' : 'Aurora')),
+        s.app.config.theme.set((v) => (v === 'Aurora' ? 'Nimbus' : 'Aurora')),
       flash: triggerTheme,
     },
     {
       label: '切换密度',
       onClick: (s) =>
-        s.app.config.density.update((v) =>
+        s.app.config.density.set((v) =>
           v === 'Comfort' ? 'Compact' : 'Comfort',
         ),
       flash: triggerDensity,
     },
     {
       label: '提升 FPS',
-      onClick: (s) => s.app.runtime.fps.update((v) => v + 5),
+      onClick: (s) => s.app.runtime.fps.set((v) => v + 5),
       flash: triggerFps,
     },
     {
       label: '内存 +64',
-      onClick: (s) => s.app.runtime.mem.update((v) => v + 64),
+      onClick: (s) => s.app.runtime.mem.set((v) => v + 64),
       flash: triggerMem,
     },
     {
       label: '切换项目名',
       onClick: (s) =>
-        s.project.meta.name.update((v) =>
+        s.project.meta.name.set((v) =>
           v === 'Deep Tree' ? 'Atlas Tree' : 'Deep Tree',
         ),
       flash: triggerName,
@@ -152,7 +152,7 @@ export function DeepTreeDashboard(): JSX.Element {
     {
       label: '版本 +1',
       onClick: (s) =>
-        s.project.meta.version.update((v) => {
+        s.project.meta.version.set((v) => {
           const [a, b, c] = v.split('.').map(Number);
           return [a, b, (c ?? 0) + 1].join('.');
         }),
@@ -160,36 +160,36 @@ export function DeepTreeDashboard(): JSX.Element {
     },
     {
       label: '问题 -1',
-      onClick: (s) => s.project.stats.issues.update((v) => Math.max(0, v - 1)),
+      onClick: (s) => s.project.stats.issues.set((v) => Math.max(0, v - 1)),
       flash: triggerIssues,
     },
     {
       label: '速度 +3',
-      onClick: (s) => s.project.stats.velocity.update((v) => v + 3),
+      onClick: (s) => s.project.stats.velocity.set((v) => v + 3),
       flash: triggerVelocity,
     },
     {
       label: '切换用户',
       onClick: (s) =>
-        s.user.profile.name.update((v) => (v === 'Ada' ? 'Grace' : 'Ada')),
+        s.user.profile.name.set((v) => (v === 'Ada' ? 'Grace' : 'Ada')),
       flash: triggerUserName,
     },
     {
       label: '切换角色',
       onClick: (s) =>
-        s.user.profile.role.update((v) =>
+        s.user.profile.role.set((v) =>
           v === 'Maintainer' ? 'Reviewer' : 'Maintainer',
         ),
       flash: triggerRole,
     },
     {
       label: '得分 +5',
-      onClick: (s) => s.user.activity.score.update((v) => v + 5),
+      onClick: (s) => s.user.activity.score.set((v) => v + 5),
       flash: triggerScore,
     },
     {
       label: '连胜 +1',
-      onClick: (s) => s.user.activity.streak.update((v) => v + 1),
+      onClick: (s) => s.user.activity.streak.set((v) => v + 1),
       flash: triggerStreak,
     },
   ];

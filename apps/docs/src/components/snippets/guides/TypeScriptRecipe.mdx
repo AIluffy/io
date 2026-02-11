@@ -4,6 +4,6 @@ import { commonStoreTs } from './common-store';
 export const code = `${commonStoreTs}
 
 store.user.name.set('Grace'); // typed
-store.count.update((v) => v + 1);`;
+store.count.set((v) => v + 1);`;
 
 <Code code={code} lang="ts" />

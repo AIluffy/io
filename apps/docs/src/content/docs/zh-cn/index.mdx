@@ -31,8 +31,8 @@ const store = io({ count: 0, user: { name: 'Ada' } });
 store.user.name.set('Grace');
 
 batch(() => {
-  store.count.update((v) => v + 1);
-  store.count.update((v) => v + 1);
+  store.count.set((v) => v + 1);
+  store.count.set((v) => v + 1);
 });
 ```
 

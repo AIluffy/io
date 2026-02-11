@@ -46,7 +46,7 @@ persist({
 ## Notes
 
 - Persist currently writes on `set()`.
-- If you primarily use `update()`, ensure it results in `set()` or extend the behavior.
+- Functional updates are also written through `set((prev) => next)`.
 
 ## Next Steps
 

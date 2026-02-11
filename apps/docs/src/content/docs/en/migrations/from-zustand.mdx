@@ -24,7 +24,7 @@ IO:
 import { io } from 'io-store';
 
 const store = io({ count: 0 });
-const inc = () => store.count.update((v) => v + 1);
+const inc = () => store.count.set((v) => v + 1);
 ```
 
 ## Selectors

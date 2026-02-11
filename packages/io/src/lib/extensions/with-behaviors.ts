@@ -4,8 +4,7 @@ import type { IoBehavior, IoView } from './types.js';
 type WithBehaviorsNode<T> = object & {
   subscribe(fn: (v: T) => void): () => void;
 } & ({ get(): T } | { snapshot(): T }) & {
-    set?(next: T): void;
-    update?(fn: (prev: T) => T): void;
+    set?(next: T | ((prev: T) => T)): void;
   };
 
 type IoLike<T> = IoUnit<T> | IoDerived<T> | WithBehaviorsNode<T>;
@@ -26,10 +25,7 @@ function isView<T>(value: unknown): value is IoView<T> {
 }
 
 function isWritable<T>(node: IoLike<T>): node is IoUnit<T> {
-  return (
-    typeof (node as { set?: unknown }).set === 'function' ||
-    typeof (node as { update?: unknown }).update === 'function'
-  );
+  return typeof (node as { set?: unknown }).set === 'function';
 }
 
 function adaptIo<T>(node: IoLike<T>): IoView<T> {
@@ -48,23 +44,17 @@ function adaptIo<T>(node: IoLike<T>): IoView<T> {
       fn,
     );
   };
-  const set = (next: T) => {
+  const set = (next: T | ((prev: T) => T)) => {
     if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
-    const setter = (node as { set?: (value: T) => void }).set;
+    const setter = (
+      node as { set?: (value: T | ((prev: T) => T)) => void }
+    ).set;
     if (!setter) throw new Error('withBehaviors: node is read-only');
     setter(next);
-  };
-  const update = (fn: (prev: T) => T) => {
-    if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
-    const updater = (node as { update?: (next: (prev: T) => T) => void })
-      .update;
-    if (!updater) throw new Error('withBehaviors: node does not support update');
-    updater(fn);
   };
   return {
     get,
     set: isWritable(node) ? set : undefined,
-    update: isWritable(node) ? update : undefined,
     subscribe,
     snapshot: hasSnapshot
       ? () => (node as { snapshot: () => T }).snapshot()
@@ -79,7 +69,6 @@ function createViewProxy<T, N extends object>(
   const overrides = new Map<string | symbol, unknown>([
     ['get', view.get],
     ['set', view.set],
-    ['update', view.update],
     ['subscribe', view.subscribe],
     ['snapshot', view.snapshot],
     ['extensions', view.extensions],

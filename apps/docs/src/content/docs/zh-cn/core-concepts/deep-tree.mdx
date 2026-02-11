@@ -20,7 +20,7 @@ const store = io({
 });
 
 store.user.profile.name.set('Grace');
-store.items[0].count.update((v) => v + 1);
+store.items[0].count.set((v) => v + 1);
 ```
 
 每条路径都像 Unit 一样读写，因此订阅也可以精确到叶子。

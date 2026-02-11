@@ -55,7 +55,7 @@ export function IoPlayground() {
         <div className="io-playground__buttons">
           <button
             className="io-playground__button"
-            onClick={() => store.counter.update((v) => v + 1)}
+            onClick={() => store.counter.set((v) => v + 1)}
           >
           counter +1
           </button>
@@ -63,8 +63,8 @@ export function IoPlayground() {
             className="io-playground__button"
             onClick={() =>
               batch(() => {
-                store.counter.update((v) => v + 1);
-                store.counter.update((v) => v + 1);
+                store.counter.set((v) => v + 1);
+                store.counter.set((v) => v + 1);
               })
             }
           >
@@ -73,7 +73,7 @@ export function IoPlayground() {
           <button
             className="io-playground__button"
             onClick={() =>
-              store.user.name.update((n) => (n === 'Ada' ? 'Grace' : 'Ada'))
+              store.user.name.set((n) => (n === 'Ada' ? 'Grace' : 'Ada'))
             }
           >
           toggle name

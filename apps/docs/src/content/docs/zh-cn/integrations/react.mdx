@@ -17,7 +17,7 @@ const count = io(0);
 
 export function Counter() {
   const value = useIO(count);
-  return <button onClick={() => count.update((v) => v + 1)}>{value}</button>;
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
 }
 ```
 

@@ -126,7 +126,7 @@ export function App() {
                     <input
                       type="checkbox"
                       checked={todo.done}
-                      onChange={() => store.todos[index].done.update((v) => !v)}
+                      onChange={() => store.todos[index].done.set((v) => !v)}
                       className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
                     />
                     <div className="flex-1">

@@ -52,7 +52,7 @@ import { derived, io } from 'io-store';
 // 基础单元
 const count = io(0);
 count.set(10); // 设置值
-count.update((v) => v + 1); // 更新
+count.set((v) => v + 1); // 更新
 
 // 对象作用域
 const user = io({ name: 'Alice', age: 25 });
@@ -63,7 +63,7 @@ const app = io({
   user: { profile: { name: 'Alice' } },
   items: [{ id: 1, count: 0 }],
 });
-app.items[0].count.update((v) => v + 1); // 精确的叶子节点更新
+app.items[0].count.set((v) => v + 1); // 精确的叶子节点更新
 
 // 仅第一层变成 Unit（同一 Tree 引擎，深度限制为 1）
 const shallow = io({ name: 'Alice', age: 25 }, { shallow: true });
@@ -110,7 +110,7 @@ import { useIO } from 'io-react';
 
 function Counter({ count }) {
   const value = useIO(count);
-  return <button onClick={() => count.update((v) => v + 1)}>{value}</button>;
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
 }
 ```
 

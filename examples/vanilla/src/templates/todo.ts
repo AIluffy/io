@@ -119,7 +119,7 @@ export function createTodoSection(): SectionHandle {
       checkbox.className =
         'h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400';
       checkbox.addEventListener('change', () => {
-        todoStore.todos[index].done.update((value) => !value);
+        todoStore.todos[index].done.set((value) => !value);
       });
 
       const title = document.createElement('p');

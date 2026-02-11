@@ -120,12 +120,8 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     return readCachedValue(state);
   };
 
-  const set = (next: T): void => {
+  const set = (next: T | ((prev: T) => T)): void => {
     setValue(next);
-  };
-
-  const update = (fn: (prev: T) => T): void => {
-    setValue(fn);
   };
 
   const snapshot = (): T => readCachedValue(state);
@@ -164,7 +160,6 @@ export function createUnit<T>(initial: T): IoUnit<T> {
   Object.defineProperties(unit, {
     get: { value: get },
     set: { value: set },
-    update: { value: update },
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     subscribeUpdate: { value: subscribeUpdate },

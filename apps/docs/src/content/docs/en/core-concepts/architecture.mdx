@@ -18,7 +18,7 @@ IO is built from four layers:
 
 ```mermaid
 flowchart TD
-  A[Write: set/update/commit] --> B[Create patches]
+  A[Write: set/commit] --> B[Create patches]
   B --> C[Mark dirty & bump revision]
   C --> D[Emit update]
   D --> E[Emit value]
@@ -44,7 +44,7 @@ Code lives under `packages/io/src/lib/`.
 
 ## Write Path
 
-- `set/update/commit` produces patches and increments revision.
+- `set/commit` produces patches and increments revision.
 - Dirty nodes are marked and both update and value subscribers are notified.
 - `batch()` merges multiple updates and reduces redundant notifications.
 

@@ -76,7 +76,7 @@ describe('snapshot perf (tree reuse)', () => {
     });
 
     const s1 = store.snapshot();
-    store.items[0].count.update((v) => v + 1);
+    store.items[0].count.set((v) => v + 1);
     const s2 = store.snapshot();
 
     if (s1 === s2) throw new Error('expected new snapshot root');

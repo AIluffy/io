@@ -149,7 +149,7 @@ describe('io: shallow', () => {
     expect(typeof o.a.get).toBe('function');
     expect(o.a.get()).toEqual({ b: 1 });
     expect(o.snapshot()).toEqual({ a: { b: 1 }, n: 1 });
-    o.a.update((prev: any) => ({ ...prev, b: 2 }));
+    o.a.set((prev: any) => ({ ...prev, b: 2 }));
     expect(o.snapshot()).toEqual({ a: { b: 2 }, n: 1 });
   });
 

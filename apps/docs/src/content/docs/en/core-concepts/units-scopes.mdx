@@ -18,7 +18,7 @@ const count = io(0);
 
 count.get();
 count.set(1);
-count.update((v) => v + 1);
+count.set((v) => v + 1);
 ```
 
 Units also support subscriptions and snapshots:
@@ -35,8 +35,7 @@ unsub();
 Common APIs:
 
 - `get()`
-- `set(next)`
-- `update(fn)`
+- `set(next | updater)`
 - `subscribe(fn)`
 - `subscribeUpdate(fn)`
 - `snapshot()`
@@ -60,7 +59,7 @@ const name = store.user.name;
 const counter = store.counter;
 
 name.subscribe((v) => console.log('name', v));
-counter.update((v) => v + 1);
+counter.set((v) => v + 1);
 ```
 
 ## Scope (Objects)
@@ -71,7 +70,7 @@ When `io()` receives an object, it creates a Scope. Every key becomes a Unit.
 const user = io({ name: 'Ada', age: 36 });
 
 user.name.set('Grace');
-user.age.update((v) => v + 1);
+user.age.set((v) => v + 1);
 ```
 
 Scopes support `commit` for grouped updates:

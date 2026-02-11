@@ -18,7 +18,7 @@ const count = io(0);
 
 count.get();
 count.set(1);
-count.update((v) => v + 1);
+count.set((v) => v + 1);
 ```
 
 Unit 同时提供订阅与快照：
@@ -35,8 +35,7 @@ unsub();
 常用能力：
 
 - `get()`：读取当前值
-- `set(next)`：写入值
-- `update(fn)`：基于旧值更新
+- `set(next | updater)`：写入值，或基于旧值更新
 - `subscribe(fn)`：订阅值变化
 - `subscribeUpdate(fn)`：订阅 patch 更新
 - `snapshot()`：冻结快照
@@ -60,7 +59,7 @@ const name = store.user.name;
 const counter = store.counter;
 
 name.subscribe((v) => console.log('name', v));
-counter.update((v) => v + 1);
+counter.set((v) => v + 1);
 ```
 
 ## Scope（对象）
@@ -71,7 +70,7 @@ counter.update((v) => v + 1);
 const user = io({ name: 'Ada', age: 36 });
 
 user.name.set('Grace');
-user.age.update((v) => v + 1);
+user.age.set((v) => v + 1);
 ```
 
 Scope 支持 `commit` 批量更新，并保持结构稳定：

@@ -43,7 +43,7 @@ const store = io({ count: 0, user: { name: 'Ada' } });
 ```ts
 store.count.get();
 store.user.name.set('Grace');
-store.count.update((v) => v + 1);
+store.count.set((v) => v + 1);
 ```
 
 ## 订阅
@@ -70,7 +70,7 @@ const doubled = derived(store, (s) => s.count * 2);
 import { batch } from 'io-store';
 
 batch(() => {
-  store.count.update((v) => v + 1);
+  store.count.set((v) => v + 1);
   store.user.name.set('Lin');
 });
 ```
@@ -88,7 +88,7 @@ batch(() => {
     export function Counter() {
       const value = useIO(count);
       return (
-        <button onClick={() => count.update((v) => v + 1)}>{value}</button>
+        <button onClick={() => count.set((v) => v + 1)}>{value}</button>
       );
     }
     ```
@@ -103,7 +103,7 @@ batch(() => {
     const count = io(0);
     const value = useIO(count);
     const model = ioRef(count);
-    const inc = () => count.update((v) => v + 1);
+    const inc = () => count.set((v) => v + 1);
     </script>
 
     <template>
@@ -121,7 +121,7 @@ batch(() => {
 
       const count = io(0);
       const countStore = toWritable(count);
-      const inc = () => count.update((v) => v + 1);
+      const inc = () => count.set((v) => v + 1);
     </script>
 
     <button on:click={inc}>{$countStore}</button>

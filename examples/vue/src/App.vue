@@ -47,7 +47,7 @@ const addTodo = () => {
 };
 
 const toggleTodo = (index: number) => {
-  store.todos[index].done.update((value) => !value);
+  store.todos[index].done.set((value) => !value);
 };
 
 const removeTodo = (index: number) => {

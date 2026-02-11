@@ -16,7 +16,7 @@ IO 是一个面向“深层状态”的 TypeScript 状态库。你可以直接�
 
 ## 核心概念
 
-- **Unit**：最小可写单元，提供 `get/set/update`。
+- **Unit**：最小可写单元，提供 `get/set`。
 - **Tree**：对象/数组形成的深层状态树，每条路径都像 Unit。
 - **Derived**：只读派生值，依赖变化自动更新。
 - **Update Log**：每次写入生成 `patch`，可回放与撤销。
@@ -38,7 +38,7 @@ import { io, derived } from 'io-store';
 const store = io({ count: 0, user: { name: 'Ada' } });
 const doubled = derived(store, (s) => s.count * 2);
 
-store.count.update((v) => v + 1);
+store.count.set((v) => v + 1);
 console.log(doubled.get());
 ```
 
