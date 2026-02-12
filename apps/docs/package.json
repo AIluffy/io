@@ -40,6 +40,13 @@
   },
   "nx": {
     "targets": {
+      "build-deps": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npm exec nx -- run-many --targets=build --projects=io-store,io-react,io-vue,io-svelte,io-devtools,io-devtools-react",
+          "cwd": "{workspaceRoot}"
+        }
+      },
       "generate-api": {
         "executor": "nx:run-commands",
         "options": {
