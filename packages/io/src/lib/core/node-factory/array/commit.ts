@@ -2,10 +2,11 @@ import { isLink } from '../../../utils/link.js';
 import type { NodeFactoryDeps } from '../types.js';
 import type { NodePath } from '../../path-trie.js';
 import type {
+  TreeArrayInternal,
   TreeArrayState,
   TreeContext,
   TreeNode,
-  TreeScopeState,
+  TreeScopeInternal,
   UnitInternal,
 } from '../../io-tree-types.js';
 
@@ -39,6 +40,7 @@ export function createArrayCommit(
   } = options;
 
   return (fn: (draft: unknown[]) => void): void => {
+    state.isCommitting = true;
     try {
       const before = snapshot();
       const draft = deps.createDraft(before);
@@ -56,17 +58,21 @@ export function createArrayCommit(
           isLink,
           getInternalKind: (n: TreeNode) => deps.getInternal(n)?.kind,
           getScopeState: (n: TreeNode) =>
-            deps.requireInternalOfKind(
+            (
+              deps.requireInternalOfKind(
               n,
               'scope',
               'ioTree commit: invalid scope internal',
-            ) as TreeScopeState,
+              ) as TreeScopeInternal
+            ).getState(),
           getArrayState: (n: TreeNode) =>
-            deps.requireInternalOfKind(
+            (
+              deps.requireInternalOfKind(
               n,
               'array',
               'ioTree commit: invalid array internal',
-            ) as TreeArrayState,
+              ) as TreeArrayInternal
+            ).getState(),
           setUnitValue: (n: TreeNode, value: unknown) => {
             const internal = deps.requireInternalOfKind(
               n,
@@ -102,12 +108,12 @@ export function createArrayCommit(
         state,
         deps.createUpdate(baseRevision, state.revision, patches),
       );
-      state.valueEpoch += 1;
       deps.emitArrayValue(state);
     } catch (error) {
-      state.isCommitting = false;
       deps.emitError(getNode(), error, path, 'commit');
       throw error;
+    } finally {
+      state.isCommitting = false;
     }
   };
 }

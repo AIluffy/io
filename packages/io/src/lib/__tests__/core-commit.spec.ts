@@ -14,6 +14,7 @@ type Path = PropertyKey[];
 type FakeScopeState = {
   children: Map<PropertyKey, FakeNode>;
   path: readonly PropertyKey[];
+  valueEpoch: number;
   dirtyKeys: Set<PropertyKey>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -22,6 +23,7 @@ type FakeScopeState = {
 type FakeArrayState = {
   children: FakeNode[];
   path: readonly PropertyKey[];
+  valueEpoch: number;
   dirtyIndices: ReturnType<typeof createDirtyIndexState>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -48,6 +50,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeArrayState = {
         children,
         path,
+        valueEpoch: 0,
         dirtyIndices: createDirtyIndexState(children.length),
         dirtyStructure: false,
         isCommitting: false,
@@ -71,6 +74,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeScopeState = {
         children,
         path,
+        valueEpoch: 0,
         dirtyKeys: new Set(),
         dirtyStructure: false,
         isCommitting: false,

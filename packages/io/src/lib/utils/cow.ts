@@ -169,18 +169,39 @@ function finalize(value: unknown): unknown {
 
 export function finishDraft<T>(draft: T): T {
   if (!isDraft(draft)) return draft;
-  const state = getState(draft);
+  const draftObject = draft as unknown as object;
+  const state = getState(draftObject);
 
-  // No local writes means full structural sharing is valid.
-  if (!state.modified) return state.base as T;
+  const release = (): void => {
+    draftToState.delete(draftObject);
+    baseToDraft.delete(state.base);
+  };
 
-  const result = state.copy as Record<PropertyKey, unknown>;
+  // No local writes and no child drafts means full structural sharing is valid.
+  if (!state.modified && state.drafts.size === 0) {
+    release();
+    return state.base as T;
+  }
+
+  const result = (state.modified
+    ? state.copy
+    : shallowCopy(state.base)) as Record<PropertyKey, unknown>;
+  let changed = state.modified;
   for (const [prop, child] of state.drafts.entries()) {
     const finalized = finalize(child);
-    if (result[prop] !== finalized) result[prop] = finalized;
+    if (!Object.is(result[prop], finalized)) {
+      result[prop] = finalized;
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    release();
+    return state.base as T;
   }
 
   Object.freeze(result);
+  release();
   return result as T;
 }
 

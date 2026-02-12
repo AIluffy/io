@@ -190,6 +190,106 @@ describe('edge cases: commit and linked-array subscriptions', () => {
     expect(updates).toHaveLength(0);
   });
 
+  it('supports deep nested scope commit recursion', () => {
+    const store = io({
+      level1: { level2: { level3: { value: 0, extra: 0 } } },
+      list: [
+        { id: '0', meta: { n: 0 } },
+        { id: '1', meta: { n: 1 } },
+      ],
+    });
+
+    expect(() => {
+      store.commit((draft) => {
+        draft.level1.level2.level3.value = 7;
+        draft.level1.level2.level3.extra = 9;
+        draft.list[1].meta.n = 42;
+      });
+    }).not.toThrow();
+
+    expect(store.snapshot()).toMatchObject({
+      level1: { level2: { level3: { value: 7, extra: 9 } } },
+      list: [{ id: '0', meta: { n: 0 } }, { id: '1', meta: { n: 42 } }],
+    });
+  });
+
+  it('supports deep nested array commit recursion', () => {
+    const store = io([
+      { item: { count: 0 } },
+      { item: { count: 1 } },
+    ]);
+
+    expect(() => {
+      store.commit((draft) => {
+        draft[0].item.count = 10;
+        draft[1].item.count = 11;
+      });
+    }).not.toThrow();
+
+    expect(store.snapshot()).toEqual([
+      { item: { count: 10 } },
+      { item: { count: 11 } },
+    ]);
+  });
+
+  it('supports repeated deep scope commits with array splice mutation', () => {
+    const store = io({
+      level1: {
+        level2: {
+          level3: {
+            level4: {
+              level5: { value: 0 },
+              extra: 0,
+            },
+          },
+        },
+      },
+      list: Array.from({ length: 20 }, (_, i) => ({
+        id: String(i),
+        meta: { n: i },
+      })),
+    });
+
+    for (let i = 0; i < 50; i += 1) {
+      store.commit((draft) => {
+        draft.level1.level2.level3.level4.level5.value = i;
+        draft.level1.level2.level3.level4.extra = i;
+        const idx = i % draft.list.length;
+        draft.list.splice(idx, 1, { id: String(i), meta: { n: i } });
+      });
+    }
+
+    const snapshot = store.snapshot();
+    expect(snapshot.level1.level2.level3.level4.level5.value).toBe(49);
+    expect(snapshot.level1.level2.level3.level4.extra).toBe(49);
+    expect(snapshot.list).toHaveLength(20);
+  });
+
+  it('supports repeated deep scope commits on depth boundary structures', () => {
+    type Node = { value: number; child?: Node };
+
+    const root: Node = { value: 0 };
+    let current = root;
+    for (let i = 1; i < 80; i += 1) {
+      current.child = { value: i };
+      current = current.child;
+    }
+
+    const store = io(root);
+
+    for (let i = 0; i < 200; i += 1) {
+      store.commit((draft) => {
+        let node = draft;
+        while (node.child) node = node.child;
+        node.value = i;
+      });
+    }
+
+    let leaf = store.snapshot();
+    while (leaf.child) leaf = leaf.child;
+    expect(leaf.value).toBe(199);
+  });
+
   it('keeps repeated-link subscriptions in sync after removing one index', () => {
     const count = io(0);
     const store = io({ items: [link(count), link(count)] });
