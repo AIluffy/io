@@ -64,6 +64,38 @@ const stop = doubled.subscribe((value) => {
 });
 ```
 
+## Case: Run a Function from Multiple Stores / Keys
+
+When you want to run a function whenever any dependency changes, compose a `derived` and subscribe to it:
+
+```ts
+import { batch, derived, io } from 'io-store';
+
+const user = io({ age: 18, level: 1 });
+const order = io({ amount: 99 });
+
+const trigger = derived(
+  [user.age, user.level, order.amount],
+  (age, level, amount) => ({ age, level, amount }),
+);
+
+const run = ({ age, level, amount }: { age: number; level: number; amount: number }) => {
+  // Your business function
+  console.log('run with', { age, level, amount });
+};
+
+// If needed, run once on init
+run(trigger.get());
+
+const stop = trigger.subscribe(run);
+
+// Use batch when multiple deps change in one transaction
+batch(() => {
+  user.age.set(19);
+  order.amount.set(199);
+});
+```
+
 ## Notes
 
 - Derived values are read-only.
