@@ -2,81 +2,41 @@ name: Publish
 
 on:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: read
-  id-token: write
+    tags:
+      - v*.*.*
 
 jobs:
-  publish:
+  test:
+    name: Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # needed for provenance data generation
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          filter: tree:0
 
-      - name: Detect version bump
-        id: detect
-        run: |
-          node <<'NODE'
-          const { execSync } = require('node:child_process');
-          const fs = require('node:fs');
-
-          const output = process.env.GITHUB_OUTPUT;
-          if (!output) {
-            process.exit(0);
-          }
-
-          try {
-            execSync('git rev-parse --verify HEAD^1');
-          } catch {
-            process.exit(0);
-          }
-
-          const diff = execSync('git diff --name-only HEAD^1 HEAD')
-            .toString()
-            .trim()
-            .split('\n')
-            .filter(Boolean);
-          const pkgFiles = diff.filter((f) => /^packages\/[^/]+\/package\.json$/.test(f));
-          if (!pkgFiles.length) {
-            process.exit(0);
-          }
-
-          let changed = false;
-          for (const file of pkgFiles) {
-            const before = JSON.parse(execSync(`git show HEAD^1:${file}`).toString()).version;
-            const after = JSON.parse(execSync(`git show HEAD:${file}`).toString()).version;
-            if (before !== after) {
-              changed = true;
-              break;
-            }
-          }
-
-          if (changed) {
-            fs.appendFileSync(output, 'should_publish=true\n');
-          }
-          NODE
-
-      - uses: actions/setup-node@v4
-        if: steps.detect.outputs.should_publish == 'true'
+      - name: Install Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: https://registry.npmjs.org/
 
-      - run: npm ci
-        if: steps.detect.outputs.should_publish == 'true'
+      - name: Install dependencies
+        run: npm install
+        shell: bash
 
-      - run: npm exec nx run-many -t build
-        if: steps.detect.outputs.should_publish == 'true'
+      - name: Print Environment Info
+        run: npx nx report
+        shell: bash
 
-      - name: Publish to npm
-        if: steps.detect.outputs.should_publish == 'true'
+      - name: Publish packages
+        run: npx nx release publish
+        shell: bash
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
-        run: |
-          npm exec nx release publish --access public

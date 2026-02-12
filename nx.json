@@ -9,13 +9,15 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": { "targetName": "typecheck" },
+        "typecheck": {
+          "targetName": "typecheck"
+        },
         "build": {
           "targetName": "build",
           "configName": "tsconfig.lib.json",
@@ -37,8 +39,18 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
-    { "plugin": "@nx/vitest", "options": { "testTargetName": "test" } }
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "test"
+      }
+    }
   ],
   "release": {
     "projects": [
@@ -56,8 +68,14 @@
       "push": true,
       "commitMessage": "chore(release): publish {version}"
     },
-    "version": { "preVersionCommand": "npx nx run-many -t build" }
+    "version": {
+      "preVersionCommand": "npx nx run-many -t build"
+    }
   },
-  "targetDefaults": { "test": { "dependsOn": ["^build"] } },
+  "targetDefaults": {
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  },
   "nxCloudId": "698e0815dc84b58d0e33bf26"
 }
