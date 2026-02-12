@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
-  "buildCommand": "npm exec nx run apps-docs:generate-api && npm exec nx run apps-docs:build",
+  "buildCommand": "npm exec nx run apps-docs:build-deps && npm exec nx run apps-docs:generate-api && npm exec nx run apps-docs:build",
   "outputDirectory": "apps/docs/dist"
 }
