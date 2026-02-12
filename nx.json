@@ -56,7 +56,8 @@
       "push": true,
       "commitMessage": "chore(release): publish {version}"
     },
-    "version": { "preVersionCommand": "npm exec nx run-many -t build" }
+    "version": { "preVersionCommand": "npx nx run-many -t build" }
   },
-  "targetDefaults": { "test": { "dependsOn": ["^build"] } }
+  "targetDefaults": { "test": { "dependsOn": ["^build"] } },
+  "nxCloudId": "698e0815dc84b58d0e33bf26"
 }
