@@ -24,6 +24,8 @@ type ScopeStateLike<TNode> = {
 
 type ArrayStateLike<TNode> = {
   children: TNode[];
+  childIndices?: Map<TNode, Set<number>>;
+  childIndicesDirty?: boolean;
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
@@ -52,6 +54,36 @@ export function createSubscriptions<
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
 >(deps: SnapshotDeps<TScopeState, TArrayState>) {
+  const rebuildArrayChildIndices = (state: TArrayState): void => {
+    if (!state.childIndices) return;
+    state.childIndices.clear();
+    for (let i = 0; i < state.children.length; i += 1) {
+      const child = state.children[i];
+      const indices = state.childIndices.get(child);
+      if (indices) {
+        indices.add(i);
+      } else {
+        state.childIndices.set(child, new Set([i]));
+      }
+    }
+    if ('childIndicesDirty' in state) state.childIndicesDirty = false;
+  };
+
+  const resolveArrayChildIndices = (state: TArrayState, child: TNode): number[] => {
+    if (!state.childIndices) {
+      const indices: number[] = [];
+      for (let i = 0; i < state.children.length; i += 1) {
+        if (state.children[i] === child) indices.push(i);
+      }
+      return indices;
+    }
+
+    if (state.childIndicesDirty !== false) rebuildArrayChildIndices(state);
+    const indices = state.childIndices.get(child);
+    if (!indices) return [];
+    return [...indices];
+  };
+
   /**
    * Emits latest scope snapshot to value listeners.
    */
@@ -160,6 +192,7 @@ export function createSubscriptions<
    * subscription is active per child instance.
    */
   const attachChildToArray = (state: TArrayState, child: TNode): void => {
+    if ('childIndicesDirty' in state) state.childIndicesDirty = true;
     const valueEntry = state.childValueUnsubs.get(child);
     const updateEntry = state.childUpdateUnsubs.get(child);
     if (valueEntry && updateEntry) {
@@ -170,13 +203,7 @@ export function createSubscriptions<
 
     const { valueUnsub, updateUnsub } = subscribeIndexedChild(
       child,
-      (c) => {
-        const indices: number[] = [];
-        for (let i = 0; i < state.children.length; i += 1) {
-          if (state.children[i] === c) indices.push(i);
-        }
-        return indices;
-      },
+      (c) => resolveArrayChildIndices(state, c as TNode),
       {
         onValue: (indices) => {
           if (state.isCommitting) return;
@@ -210,6 +237,7 @@ export function createSubscriptions<
    * Decrements array child subscription refs and unsubscribes when count hits 0.
    */
   const detachChildFromArray = (state: TArrayState, child: TNode): void => {
+    if ('childIndicesDirty' in state) state.childIndicesDirty = true;
     const valueEntry = state.childValueUnsubs.get(child);
     if (valueEntry) {
       valueEntry.count -= 1;

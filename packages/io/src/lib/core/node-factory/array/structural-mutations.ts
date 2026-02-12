@@ -108,6 +108,7 @@ export function createArrayStructuralMutations(
       validateSortPermutation(order, state.children.length);
       const old = state.children.slice();
       state.children = order.map((oldIndex) => old[oldIndex]);
+      state.childIndicesDirty = true;
       rebuildMapping();
       state.revision += 1;
       state.dirtyStructure = true;
@@ -285,6 +286,7 @@ export function createArrayStructuralMutations(
       });
       const order = decorated.map((d) => d.index);
       state.children = decorated.map((d) => d.child);
+      state.childIndicesDirty = true;
       rebuildMapping();
 
       deps.emitArrayUpdate(

@@ -61,7 +61,7 @@ describe('core/node-factory/array/index-mutation', () => {
       state: state as never,
       createTreeNode: (_ctx, _path, initial) => {
         const target = getLinkTarget(initial as never) as { get: () => unknown };
-        return createUnit(target.get());
+        return createUnit(target.get()) as unknown as never;
       },
       resolvePatchValue: (value) => value,
       snapshot: () => state.children.map((child) => child.value),
@@ -114,7 +114,8 @@ describe('core/node-factory/array/index-mutation', () => {
       ctx: {} as never,
       path: ['items'],
       state: state as never,
-      createTreeNode: (_ctx, _path, initial) => createUnit(initial),
+      createTreeNode: (_ctx, _path, initial) =>
+        createUnit(initial) as unknown as never,
       resolvePatchValue: (value) => value,
       snapshot: () => [],
       rebuildMapping: () => {

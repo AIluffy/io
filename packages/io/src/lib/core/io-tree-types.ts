@@ -84,6 +84,8 @@ export type TreeScopeState = {
 
 export type TreeArrayState = {
   children: TreeNode[];
+  childIndices: Map<TreeNode, Set<number>>;
+  childIndicesDirty: boolean;
   node: TreeNode;
   revision: number;
   isCommitting: boolean;

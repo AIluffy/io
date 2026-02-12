@@ -86,4 +86,28 @@ describe('@org/io-vue', () => {
     expect(countRef?.get()).toBe(1);
     expect(state?.value).toBe(0);
   });
+
+  it('works in SSR-like environment without window/document', () => {
+    const ioGlobal = globalThis as unknown as {
+      window?: unknown;
+      document?: unknown;
+    };
+    const previousWindow = ioGlobal.window;
+    const previousDocument = ioGlobal.document;
+    delete ioGlobal.window;
+    delete ioGlobal.document;
+
+    const scope = effectScope();
+    let state: ShallowRef<number> | undefined;
+    scope.run(() => {
+      const count = io(1);
+      state = useIO(count, { schedule: 'sync' });
+      count.set(2);
+    });
+    scope.stop();
+
+    expect(state?.value).toBe(2);
+    ioGlobal.window = previousWindow;
+    ioGlobal.document = previousDocument;
+  });
 });

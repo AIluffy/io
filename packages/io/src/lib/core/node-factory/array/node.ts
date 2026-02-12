@@ -30,6 +30,8 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
 
   const state: TreeArrayState = {
     children: new Array(initial.length),
+    childIndices: new Map(),
+    childIndicesDirty: true,
     node: undefined as unknown as TreeNode,
     revision: 0,
     isCommitting: false,
