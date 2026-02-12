@@ -11,7 +11,7 @@ Numbers vary by hardware, load, and Node version.
 
 ## Environment
 
-- Date: 2026-02-12T14:31:11.863Z
+- Date: 2026-02-12T14:47:54.420Z
 - Node: v25.5.0
 - Platform: darwin 25.2.0 (arm64)
 - CPU: Apple M4
@@ -22,18 +22,18 @@ Numbers vary by hardware, load, and Node version.
 
 | Scenario | ops/sec | mean (ms/op) | Error (±rme %) |
 | --- | --- | --- | --- |
-| createUnit: primitive (1k) | 737.29 | 1.36 | 9.46 |
-| createUnit: object (1k) | 191.31 | 5.23 | 9.34 |
-| subscribe/unsubscribe: value (10k) | 1570.49 | 0.64 | 9.98 |
-| subscribe/unsubscribe: update (10k) | 1875.94 | 0.53 | 6.05 |
-| snapshot: scope (10k) | 442.20 | 2.26 | 11.22 |
-| snapshot: array (10k) | 235.74 | 4.24 | 16.82 |
-| snapshot: array (20k boundary) | 7.47 | 133.82 | 16.32 |
-| snapshot: depth (80 boundary) | 798.17 | 1.25 | 23.29 |
-| draft/finish: deep object (200) | 1263.59 | 0.79 | 9.06 |
-| commit deep update (200) | 11.46 | 87.27 | 13.79 |
-| commit deep update (80 boundary) | 2.60 | 384.01 | 9.49 |
-| batch: 40k updates | 121.25 | 8.25 | 12.32 |
-| no batch: 40k updates | 138.24 | 7.23 | 6.98 |
-| batch update 200 units | 0.80 | 1243.26 | 19.93 |
-| sequential update 200 units | 1.13 | 881.76 | 3.75 |
+| createUnit: primitive (1k) | 768.10 | 1.30 | 7.83 |
+| createUnit: object (1k) | 213.49 | 4.68 | 7.73 |
+| subscribe/unsubscribe: value (10k) | 1958.43 | 0.51 | 6.95 |
+| subscribe/unsubscribe: update (10k) | 1987.87 | 0.50 | 7.46 |
+| snapshot: scope (10k) | 374.11 | 2.67 | 14.58 |
+| snapshot: array (10k) | 246.08 | 4.06 | 18.88 |
+| snapshot: array (20k boundary) | 8.25 | 121.27 | 18.88 |
+| snapshot: depth (80 boundary) | 909.93 | 1.10 | 12.71 |
+| draft/finish: deep object (200) | 1178.65 | 0.85 | 10.16 |
+| commit deep update (200) | 10.90 | 91.78 | 12.81 |
+| commit deep update (80 boundary) | 2.36 | 422.96 | 14.61 |
+| batch: 40k updates | 117.44 | 8.52 | 9.04 |
+| no batch: 40k updates | 114.72 | 8.72 | 11.23 |
+| batch update 200 units | 0.86 | 1156.20 | 18.11 |
+| sequential update 200 units | 1.06 | 942.99 | 1.15 |
