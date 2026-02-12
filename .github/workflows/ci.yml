@@ -34,7 +34,13 @@ jobs:
 
       # Prepend any command with "nx record --" to record its logs to Nx Cloud
       - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
-      - run: npx nx run-many -t lint test build typecheck
+      - run: npx nx run-many -t lint build typecheck
+      - run: npx nx run-many -t test -- --coverage
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
       - run: npm run docs:check
       - run: npm run build -w apps/docs
         env:
