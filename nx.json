@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "origin/main",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
@@ -68,7 +69,7 @@
       "commitMessage": "chore(release): publish {version}"
     },
     "version": {
-      "preVersionCommand": "npx nx run-many -t build"
+      "preVersionCommand": "npm exec nx run-many -t build"
     }
   },
   "targetDefaults": {
