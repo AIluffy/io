@@ -5,6 +5,8 @@ sidebar:
   order: 4
 ---
 
+import { IoDevtoolsTodoExample } from '../../../../components/IoDevtoolsTodoExample';
+
 ## Create an Instance
 
 ```ts
@@ -35,6 +37,10 @@ export function DevtoolsDock({ devtools }) {
 }
 ```
 
+## Interactive Example (Todo List)
+
+<IoDevtoolsTodoExample client:load />
+
 ## Time Travel
 
 - `devtools.timeTravel.undo()`
@@ -54,6 +60,17 @@ const reduxImportState = devtools.export.reduxDevToolsImport();
 ```
 
 ## Behavior Integration
+
+The `devtools()` behavior does not add new debugging features by itself.  
+Core capabilities (time travel, diff, export, panel data) come from the instance created by `createIoDevtools(...)`.
+
+Its role is to integrate that instance into the `withBehaviors()` pipeline for consistent wiring:
+
+- Attach the instance to `view.extensions.devtools` (or a custom `key`)
+- Compose it in the same way as other behaviors (`persist`, `schedule`)
+- Auto-clean it via `devtools.destroy()` when `view.destroy()` is called
+
+If you do not need unified behavior composition or lifecycle handling, calling `createIoDevtools(store, options)` directly is also valid.
 
 ```ts
 import { devtools, withBehaviors } from 'io-store/behavior';
