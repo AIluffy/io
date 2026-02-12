@@ -92,12 +92,16 @@ export function createArraySnapshotReader(deps: {
         prev.length !== state.children.length
       ) {
         for (let i = 0; i < state.children.length; i += 1) {
-          defineLazyValue(values, i, () => deps.getNodeValue(state.children[i], local));
+          defineLazyValue(values, i, () =>
+            deps.getNodeValue(state.children[i], local),
+          );
         }
       } else {
         for (const index of state.dirtyIndices.items) {
           if (index < 0 || index >= state.children.length) continue;
-          defineLazyValue(values, index, () => deps.getNodeValue(state.children[index], local));
+          defineLazyValue(values, index, () =>
+            deps.getNodeValue(state.children[index], local),
+          );
         }
       }
 

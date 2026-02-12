@@ -15,9 +15,10 @@ describe('@org/io-svelte', () => {
     unsub();
     expect(seen).toEqual([1, 2, 3]);
 
-    const readable = toReadable(
-      { snapshot: () => 1, subscribe: (fn) => unit.subscribe(fn) },
-    );
+    const readable = toReadable({
+      snapshot: () => 1,
+      subscribe: (fn) => unit.subscribe(fn),
+    });
     expect(typeof readable.subscribe).toBe('function');
   });
 

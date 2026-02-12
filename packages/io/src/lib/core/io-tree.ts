@@ -58,11 +58,19 @@ const subtreeAccess = {
   },
 };
 
-function registerSubtree(ctx: TreeContext, path: NodePath, node: TreeNode): void {
+function registerSubtree(
+  ctx: TreeContext,
+  path: NodePath,
+  node: TreeNode,
+): void {
   registerSubtreeWithAccess(ctx, path, node, subtreeAccess);
 }
 
-function unregisterSubtree(ctx: TreeContext, path: NodePath, node: TreeNode): void {
+function unregisterSubtree(
+  ctx: TreeContext,
+  path: NodePath,
+  node: TreeNode,
+): void {
   unregisterSubtreeWithAccess(ctx, path, node, subtreeAccess);
 }
 

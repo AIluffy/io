@@ -103,7 +103,7 @@ function createProxy(base: object): object {
               ? args.map(toImmutableIfNeeded)
               : prop === 'splice'
                 ? [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)]
-              : args;
+                : args;
           return (method as (...a: unknown[]) => unknown).apply(
             copy,
             immutableArgs,
@@ -183,9 +183,9 @@ export function finishDraft<T>(draft: T): T {
     return state.base as T;
   }
 
-  const result = (state.modified
-    ? state.copy
-    : shallowCopy(state.base)) as Record<PropertyKey, unknown>;
+  const result = (
+    state.modified ? state.copy : shallowCopy(state.base)
+  ) as Record<PropertyKey, unknown>;
   let changed = state.modified;
   for (const [prop, child] of state.drafts.entries()) {
     const finalized = finalize(child);

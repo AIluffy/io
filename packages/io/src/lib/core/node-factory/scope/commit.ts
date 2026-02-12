@@ -66,17 +66,17 @@ export function createScopeCommit(
           getScopeState: (node: TreeNode) =>
             (
               deps.requireInternalOfKind(
-              node,
-              'scope',
-              'ioTree commit: invalid scope internal',
+                node,
+                'scope',
+                'ioTree commit: invalid scope internal',
               ) as TreeScopeInternal
             ).getState(),
           getArrayState: (node: TreeNode) =>
             (
               deps.requireInternalOfKind(
-              node,
-              'array',
-              'ioTree commit: invalid array internal',
+                node,
+                'array',
+                'ioTree commit: invalid array internal',
               ) as TreeArrayInternal
             ).getState(),
           setUnitValue: (node: TreeNode, value: unknown) => {

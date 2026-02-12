@@ -108,7 +108,8 @@ describe('core/snapshot readers', () => {
 
 describe('core/tree-context', () => {
   it('uses explicit and fallback devtools flags', () => {
-    const previous = (globalThis as Record<PropertyKey, unknown>).__IO_DEVTOOLS__;
+    const previous = (globalThis as Record<PropertyKey, unknown>)
+      .__IO_DEVTOOLS__;
 
     (globalThis as Record<PropertyKey, unknown>).__IO_DEVTOOLS__ = false;
     expect(createTreeContext().devtools).toBe(false);

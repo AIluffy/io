@@ -27,10 +27,7 @@ export function createArrayStructuralMutations(
     items: unknown[],
     options?: { emitValue?: boolean },
   ) => void;
-  applySortOrder: (
-    order: number[],
-    options?: { emitValue?: boolean },
-  ) => void;
+  applySortOrder: (order: number[], options?: { emitValue?: boolean }) => void;
   set: (next: unknown[]) => void;
   push: (...items: unknown[]) => void;
   pop: () => unknown;
@@ -127,7 +124,10 @@ export function createArrayStructuralMutations(
       const baseRevision = state.revision;
       state.revision += 1;
       state.dirtyStructure = true;
-      resetDirtyIndices(state.dirtyIndices, state.children.length + items.length);
+      resetDirtyIndices(
+        state.dirtyIndices,
+        state.children.length + items.length,
+      );
 
       const start = state.children.length;
       const created = items.map((v, i) =>

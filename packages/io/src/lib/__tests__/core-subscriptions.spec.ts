@@ -4,7 +4,9 @@ import { createSubscriptions } from '../core/subscriptions.js';
 
 type FakeChild = {
   subscribe?: (fn: (value: unknown) => void) => () => void;
-  subscribeUpdate?: (fn: (update: { patches: unknown[] }) => void) => () => void;
+  subscribeUpdate?: (
+    fn: (update: { patches: unknown[] }) => void,
+  ) => () => void;
 };
 
 function createArrayState() {
@@ -16,8 +18,14 @@ function createArrayState() {
     dirtyIndices: createDirtyIndexState(2),
     valueListeners: new Set<(value: unknown[]) => void>(),
     updateListeners: new Set<(update: { patches: unknown[] }) => void>(),
-    childValueUnsubs: new Map<FakeChild, { unsub: () => void; count: number }>(),
-    childUpdateUnsubs: new Map<FakeChild, { unsub: () => void; count: number }>(),
+    childValueUnsubs: new Map<
+      FakeChild,
+      { unsub: () => void; count: number }
+    >(),
+    childUpdateUnsubs: new Map<
+      FakeChild,
+      { unsub: () => void; count: number }
+    >(),
   };
 }
 

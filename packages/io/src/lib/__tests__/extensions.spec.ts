@@ -72,7 +72,9 @@ describe('extensions: behaviors', () => {
         throw new Error('quota');
       },
     };
-    const view = withBehaviors(unit, [persist({ key: 'count', storage, onError })]);
+    const view = withBehaviors(unit, [
+      persist({ key: 'count', storage, onError }),
+    ]);
 
     view.set?.(1);
 

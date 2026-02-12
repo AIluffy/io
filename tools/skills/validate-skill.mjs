@@ -9,7 +9,9 @@ const warnings = [];
 const target = process.argv[2];
 
 if (!target) {
-  console.error('Usage: node tools/skills/validate-skill.mjs <path-to-skill-folder>');
+  console.error(
+    'Usage: node tools/skills/validate-skill.mjs <path-to-skill-folder>',
+  );
   process.exit(1);
 }
 
@@ -166,7 +168,10 @@ if (ensureFile(skillMdPath)) {
       );
     }
 
-    const description = (frontmatter.description ?? '').replace(/^"(.*)"$/, '$1');
+    const description = (frontmatter.description ?? '').replace(
+      /^"(.*)"$/,
+      '$1',
+    );
     if (!description) {
       pushError('SKILL.md frontmatter description cannot be empty.');
     }

@@ -209,15 +209,15 @@ describe('edge cases: commit and linked-array subscriptions', () => {
 
     expect(store.snapshot()).toMatchObject({
       level1: { level2: { level3: { value: 7, extra: 9 } } },
-      list: [{ id: '0', meta: { n: 0 } }, { id: '1', meta: { n: 42 } }],
+      list: [
+        { id: '0', meta: { n: 0 } },
+        { id: '1', meta: { n: 42 } },
+      ],
     });
   });
 
   it('supports deep nested array commit recursion', () => {
-    const store = io([
-      { item: { count: 0 } },
-      { item: { count: 1 } },
-    ]);
+    const store = io([{ item: { count: 0 } }, { item: { count: 1 } }]);
 
     expect(() => {
       store.commit((draft) => {
@@ -341,8 +341,8 @@ describe('edge cases: array proxy mutation behavior', () => {
 describe('edge cases: derived deps contract', () => {
   it('rejects deps without subscribe()', () => {
     const dep = { get: () => 1 };
-    expect(() =>
-      derived([dep as any], (v) => Number(v) + 1),
-    ).toThrow(/must implement subscribe/);
+    expect(() => derived([dep as any], (v) => Number(v) + 1)).toThrow(
+      /must implement subscribe/,
+    );
   });
 });

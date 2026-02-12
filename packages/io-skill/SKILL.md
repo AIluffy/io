@@ -96,6 +96,7 @@ function Counter({ count }: { count: IoUnit<number> }) {
 ```
 
 Notes:
+
 - `useIO` is SSR-safe; in server env it avoids client subscriptions.
 
 ### Vue (`io-vue`)
@@ -117,11 +118,13 @@ const ageStore = toWritable(user.age, { schedule: 'sync' });
 ```
 
 Svelte 5:
+
 - `toReadable`/`toWritable` are compatible with runes helpers like `fromStore`.
 
 ## Behaviors
 
 From `io-store/behavior`:
+
 - `withBehaviors`
 - `schedule`
 - `persist`

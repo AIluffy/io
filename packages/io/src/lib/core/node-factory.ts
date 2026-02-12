@@ -1,9 +1,6 @@
 import { getLinkTarget, isLink } from '../utils/link.js';
 import type { NodePath } from './path-trie.js';
-import type {
-  TreeContext,
-  TreeNode,
-} from './io-tree-types.js';
+import type { TreeContext, TreeNode } from './io-tree-types.js';
 import type { NodeFactoryDeps } from './node-factory/types.js';
 import { createArrayNode as createArrayNodeImpl } from './node-factory/array/node.js';
 import { createScopeNode as createScopeNodeImpl } from './node-factory/scope/node.js';
@@ -116,11 +113,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         if (linkCtx === ctx) {
           const targetPaths = collectTargetPaths(ctx, target);
           const pathsToCheck =
-            targetPaths.length > 0
-              ? targetPaths
-              : linkPath
-                ? [linkPath]
-                : [];
+            targetPaths.length > 0 ? targetPaths : linkPath ? [linkPath] : [];
           for (const candidate of pathsToCheck) {
             if (!isPathPrefix(candidate, path)) continue;
             throw new TypeError(

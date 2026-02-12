@@ -60,7 +60,9 @@ describe('core/node-factory/array/index-mutation', () => {
       path: ['items'],
       state: state as never,
       createTreeNode: (_ctx, _path, initial) => {
-        const target = getLinkTarget(initial as never) as { get: () => unknown };
+        const target = getLinkTarget(initial as never) as {
+          get: () => unknown;
+        };
         return createUnit(target.get()) as unknown as never;
       },
       resolvePatchValue: (value) => value,

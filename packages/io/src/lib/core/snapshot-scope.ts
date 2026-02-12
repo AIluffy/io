@@ -61,8 +61,10 @@ export function createNodeValueReader(deps: {
   return (node: TreeNode, cache: SnapshotCache): unknown => {
     const internal = getTreeInternal(node);
     if (isUnitInternal(internal)) return (node as IoUnit<unknown>).snapshot();
-    if (isScopeInternal(internal)) return deps.getScopeSnapshot(internal.getState(), cache);
-    if (isArrayInternal(internal)) return deps.getArraySnapshot(internal.getState(), cache);
+    if (isScopeInternal(internal))
+      return deps.getScopeSnapshot(internal.getState(), cache);
+    if (isArrayInternal(internal))
+      return deps.getArraySnapshot(internal.getState(), cache);
     if (hasSnapshot(node)) return node.snapshot();
     return snapshotValue(node, { owned: false });
   };
@@ -97,7 +99,10 @@ function materializeKeys(target: Record<PropertyKey, unknown>): void {
 export function createScopeSnapshotReader(deps: {
   getNodeValue: GetNodeValue;
 }): ScopeSnapshotReader {
-  return (state: TreeScopeState, cache?: SnapshotCache): Record<string, unknown> =>
+  return (
+    state: TreeScopeState,
+    cache?: SnapshotCache,
+  ): Record<string, unknown> =>
     readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
       const local = cache ?? new WeakMap<object, unknown>();
       const cached = local.get(state.node as unknown as object);
@@ -123,7 +128,8 @@ export function createScopeSnapshotReader(deps: {
       } else {
         for (const key of state.dirtyKeys) {
           const node = state.children.get(key);
-          if (node) defineLazyValue(base, key, () => deps.getNodeValue(node, local));
+          if (node)
+            defineLazyValue(base, key, () => deps.getNodeValue(node, local));
         }
       }
 

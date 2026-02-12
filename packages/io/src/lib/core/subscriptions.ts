@@ -69,7 +69,10 @@ export function createSubscriptions<
     if ('childIndicesDirty' in state) state.childIndicesDirty = false;
   };
 
-  const resolveArrayChildIndices = (state: TArrayState, child: TNode): number[] => {
+  const resolveArrayChildIndices = (
+    state: TArrayState,
+    child: TNode,
+  ): number[] => {
     if (!state.childIndices) {
       const indices: number[] = [];
       for (let i = 0; i < state.children.length; i += 1) {

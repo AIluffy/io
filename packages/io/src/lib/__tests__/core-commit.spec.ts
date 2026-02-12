@@ -4,10 +4,7 @@ import {
   createDirtyIndexState,
   markDirtyIndex,
 } from '../core/dirty-indices.js';
-import {
-  applyArrayCommitDiff,
-  applyScopeCommitDiff,
-} from '../core/commit.js';
+import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/commit.js';
 
 type Path = PropertyKey[];
 
@@ -46,7 +43,9 @@ function createGraph(rootValue: unknown): {
 
   const createNode = (value: unknown, path: Path): FakeNode => {
     if (Array.isArray(value)) {
-      const children = value.map((item, index) => createNode(item, [...path, index]));
+      const children = value.map((item, index) =>
+        createNode(item, [...path, index]),
+      );
       const state: FakeArrayState = {
         children,
         path,
@@ -92,7 +91,8 @@ function createGraph(rootValue: unknown): {
 
 function nodeValue(node: FakeNode): unknown {
   if (node.kind === 'unit') return node.value;
-  if (node.kind === 'array') return node.state.children.map((child) => nodeValue(child));
+  if (node.kind === 'array')
+    return node.state.children.map((child) => nodeValue(child));
   const out: Record<PropertyKey, unknown> = {};
   for (const [key, child] of node.state.children.entries()) {
     out[key] = nodeValue(child);
@@ -110,11 +110,14 @@ function createDeps(
     isPlainObject,
     isUnit: (node: FakeNode) => node.kind === 'unit',
     isLink: (value: unknown) =>
-      isPlainObject(value) && (value as { __isLink?: boolean }).__isLink === true,
+      isPlainObject(value) &&
+      (value as { __isLink?: boolean }).__isLink === true,
     getInternalKind: (node: FakeNode) =>
       options?.getInternalKind ? options.getInternalKind(node) : node.kind,
-    getScopeState: (node: FakeNode) => (node as { state: FakeScopeState }).state,
-    getArrayState: (node: FakeNode) => (node as { state: FakeArrayState }).state,
+    getScopeState: (node: FakeNode) =>
+      (node as { state: FakeScopeState }).state,
+    getArrayState: (node: FakeNode) =>
+      (node as { state: FakeArrayState }).state,
     setUnitValue: (node: FakeNode, next: unknown) => {
       (node as { value: unknown }).value = next;
     },
@@ -157,7 +160,10 @@ function createDeps(
     emitArrayValue: () => {
       return undefined;
     },
-    markDirty: (state: FakeScopeState | FakeArrayState, segment: PropertyKey) => {
+    markDirty: (
+      state: FakeScopeState | FakeArrayState,
+      segment: PropertyKey,
+    ) => {
       if ('dirtyKeys' in state) {
         state.dirtyKeys.add(segment);
         return;

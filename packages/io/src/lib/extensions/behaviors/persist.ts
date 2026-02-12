@@ -26,7 +26,10 @@ export function persist<T>(options: PersistOptions): IoBehavior<T> {
   const reportError = (error: unknown, phase: 'hydrate' | 'persist'): void => {
     options.onError?.(error, phase);
     if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-      console.warn(`[io-store/persist] ${phase} failed for key "${options.key}"`, error);
+      console.warn(
+        `[io-store/persist] ${phase} failed for key "${options.key}"`,
+        error,
+      );
     }
   };
 

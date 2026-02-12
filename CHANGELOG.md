@@ -3,7 +3,7 @@
 ### 🚀 Features
 
 - 添加文档站点、示例工程与开发工具包 ([c640865](https://github.com/AIluffy/oin/commit/c640865))
-- 统一包名从 @org/* 改为 @oin/* 并更新相关配置 ([3e7ecc1](https://github.com/AIluffy/oin/commit/3e7ecc1))
+- 统一包名从 @org/_ 改为 @oin/_ 并更新相关配置 ([3e7ecc1](https://github.com/AIluffy/oin/commit/3e7ecc1))
 - 添加 OIN Babel 插件以优化访问链性能 ([c2f499c](https://github.com/AIluffy/oin/commit/c2f499c))
 - 引入行为扩展层并移除实验性信号导出 ([7d648aa](https://github.com/AIluffy/oin/commit/7d648aa))
 - 统一浅层模式实现并添加集成框架调度选项 ([90987a1](https://github.com/AIluffy/oin/commit/90987a1))

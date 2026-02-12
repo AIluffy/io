@@ -1,6 +1,6 @@
 ---
-title: "Benchmark"
-description: "Performance benchmarks for core IO paths (generated)."
+title: 'Benchmark'
+description: 'Performance benchmarks for core IO paths (generated).'
 sidebar:
   order: 6
 ---
@@ -20,20 +20,20 @@ Numbers vary by hardware, load, and Node version.
 
 ## Benchmark Results
 
-| Scenario | ops/sec | mean (ms/op) | Error (±rme %) |
-| --- | --- | --- | --- |
-| createUnit: primitive (1k) | 768.10 | 1.30 | 7.83 |
-| createUnit: object (1k) | 213.49 | 4.68 | 7.73 |
-| subscribe/unsubscribe: value (10k) | 1958.43 | 0.51 | 6.95 |
-| subscribe/unsubscribe: update (10k) | 1987.87 | 0.50 | 7.46 |
-| snapshot: scope (10k) | 374.11 | 2.67 | 14.58 |
-| snapshot: array (10k) | 246.08 | 4.06 | 18.88 |
-| snapshot: array (20k boundary) | 8.25 | 121.27 | 18.88 |
-| snapshot: depth (80 boundary) | 909.93 | 1.10 | 12.71 |
-| draft/finish: deep object (200) | 1178.65 | 0.85 | 10.16 |
-| commit deep update (200) | 10.90 | 91.78 | 12.81 |
-| commit deep update (80 boundary) | 2.36 | 422.96 | 14.61 |
-| batch: 40k updates | 117.44 | 8.52 | 9.04 |
-| no batch: 40k updates | 114.72 | 8.72 | 11.23 |
-| batch update 200 units | 0.86 | 1156.20 | 18.11 |
-| sequential update 200 units | 1.06 | 942.99 | 1.15 |
+| Scenario                            | ops/sec | mean (ms/op) | Error (±rme %) |
+| ----------------------------------- | ------- | ------------ | -------------- |
+| createUnit: primitive (1k)          | 768.10  | 1.30         | 7.83           |
+| createUnit: object (1k)             | 213.49  | 4.68         | 7.73           |
+| subscribe/unsubscribe: value (10k)  | 1958.43 | 0.51         | 6.95           |
+| subscribe/unsubscribe: update (10k) | 1987.87 | 0.50         | 7.46           |
+| snapshot: scope (10k)               | 374.11  | 2.67         | 14.58          |
+| snapshot: array (10k)               | 246.08  | 4.06         | 18.88          |
+| snapshot: array (20k boundary)      | 8.25    | 121.27       | 18.88          |
+| snapshot: depth (80 boundary)       | 909.93  | 1.10         | 12.71          |
+| draft/finish: deep object (200)     | 1178.65 | 0.85         | 10.16          |
+| commit deep update (200)            | 10.90   | 91.78        | 12.81          |
+| commit deep update (80 boundary)    | 2.36    | 422.96       | 14.61          |
+| batch: 40k updates                  | 117.44  | 8.52         | 9.04           |
+| no batch: 40k updates               | 114.72  | 8.72         | 11.23          |
+| batch update 200 units              | 0.86    | 1156.20      | 18.11          |
+| sequential update 200 units         | 1.06    | 942.99       | 1.15           |

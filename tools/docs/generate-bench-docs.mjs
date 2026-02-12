@@ -15,7 +15,7 @@ async function ensureDistExists() {
     await fs.stat(ioDistRoot);
   } catch (error) {
     throw new Error(
-      `io-store dist not found at ${ioDistRoot}. Run "nx run io-store:build" first.`
+      `io-store dist not found at ${ioDistRoot}. Run "nx run io-store:build" first.`,
     );
   }
 }
@@ -213,8 +213,7 @@ async function runBenchmarks() {
     const hasError = task.result?.error !== undefined;
     const hz = task.result?.hz ?? 0;
     const meanMs =
-      task.result?.mean ??
-      (Number.isFinite(hz) && hz > 0 ? 1000 / hz : 0);
+      task.result?.mean ?? (Number.isFinite(hz) && hz > 0 ? 1000 / hz : 0);
     const rme = task.result?.rme ?? 0;
     return {
       name: task.name,
@@ -254,7 +253,7 @@ function buildMarkdown({ locale, results, runtime }) {
         };
 
   const frontmatter = `---\ntitle: ${JSON.stringify(
-    labels.title
+    labels.title,
   )}\ndescription: ${JSON.stringify(labels.description)}\nsidebar:\n  order: 6\n---\n`;
 
   const envLines = [
@@ -269,7 +268,7 @@ function buildMarkdown({ locale, results, runtime }) {
   const rows = results
     .map(
       (row) =>
-        `| ${row.name} | ${formatNumber(row.hz)} | ${formatNumber(row.meanMs)} | ${formatNumber(row.rme)} |`
+        `| ${row.name} | ${formatNumber(row.hz)} | ${formatNumber(row.meanMs)} | ${formatNumber(row.rme)} |`,
     )
     .join('\n');
 

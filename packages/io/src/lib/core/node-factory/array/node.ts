@@ -7,9 +7,7 @@ import type {
   TreeContext,
   TreeNode,
 } from '../../io-tree-types.js';
-import {
-  createDirtyIndexState,
-} from '../../dirty-indices.js';
+import { createDirtyIndexState } from '../../dirty-indices.js';
 import { createArrayOps } from './ops.js';
 
 type CreateArrayNodeOptions = {
@@ -26,7 +24,8 @@ type CreateArrayNodeOptions = {
 };
 
 export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
-  const { deps, ctx, path, initial, createTreeNode, resolvePatchValue } = options;
+  const { deps, ctx, path, initial, createTreeNode, resolvePatchValue } =
+    options;
 
   const state: TreeArrayState = {
     children: new Array(initial.length),

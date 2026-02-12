@@ -79,7 +79,15 @@ const trigger = derived(
   (age, level, amount) => ({ age, level, amount }),
 );
 
-const run = ({ age, level, amount }: { age: number; level: number; amount: number }) => {
+const run = ({
+  age,
+  level,
+  amount,
+}: {
+  age: number;
+  level: number;
+  amount: number;
+}) => {
   // Your business function
   console.log('run with', { age, level, amount });
 };

@@ -417,10 +417,14 @@ function createDiffHelpers<
           }
         }
 
-        const nodeChanged = applyNodeDiff(arrayState, i, node, prev, nextValue, [
-          ...relPath,
+        const nodeChanged = applyNodeDiff(
+          arrayState,
           i,
-        ]);
+          node,
+          prev,
+          nextValue,
+          [...relPath, i],
+        );
         changed = changed || nodeChanged;
       }
     }

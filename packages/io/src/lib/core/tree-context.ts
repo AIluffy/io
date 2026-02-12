@@ -17,7 +17,9 @@ export function createTreeContext(options?: IoTreeOptions): TreeContext {
   };
 }
 
-function resolveDevtoolsEnabled(options?: Pick<IoTreeOptions, 'devtools'>): boolean {
+function resolveDevtoolsEnabled(
+  options?: Pick<IoTreeOptions, 'devtools'>,
+): boolean {
   if (options?.devtools === true) return true;
   if (options?.devtools === false) return false;
   const flag = (globalThis as Record<PropertyKey, unknown>).__IO_DEVTOOLS__;
