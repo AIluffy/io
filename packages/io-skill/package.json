@@ -1,0 +1,55 @@
+{
+  "name": "io-skill",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "description": "Reusable IO monorepo skill for coding agents",
+  "files": [
+    "SKILL.md",
+    "agents"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "nx": {
+    "tags": [
+      "scope:io"
+    ],
+    "targets": {
+      "validate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/skills/validate-skill.mjs packages/io-skill"
+        }
+      },
+      "pack": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npm_config_cache=/tmp/.npm-cache npm pack --dry-run",
+          "cwd": "packages/io-skill"
+        }
+      },
+      "publish-dry-run": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npm_config_cache=/tmp/.npm-cache npm publish --dry-run --access public",
+          "cwd": "packages/io-skill"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "validate": "node ../../tools/skills/validate-skill.mjs .",
+    "pack": "npm_config_cache=/tmp/.npm-cache npm pack --dry-run",
+    "publish:dry-run": "npm_config_cache=/tmp/.npm-cache npm publish --dry-run --access public"
+  },
+  "keywords": [
+    "skill",
+    "agent",
+    "codex",
+    "nx",
+    "io"
+  ],
+  "license": "MIT",
+  "homepage": "https://skills.sh"
+}

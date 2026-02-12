@@ -58,7 +58,8 @@
       "io-vue",
       "io-svelte",
       "io-devtools",
-      "io-devtools-react"
+      "io-devtools-react",
+      "io-skill"
     ],
     "git": {
       "commit": true,

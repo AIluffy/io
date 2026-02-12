@@ -33,6 +33,7 @@
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
     "sharp": "^0.34.5",
+    "starlight-llms-txt": "^0.7.0",
     "three": "^0.182.0",
     "vue": "^3.5.13",
     "zustand": "^5.0.11"
