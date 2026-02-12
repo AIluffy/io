@@ -34,6 +34,7 @@ Implementation anchors:
 - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/node-factory.ts`
 - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/path-trie.ts`
 - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+- `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/tree-context.ts`
 
 ## 2) Subscription Bubbling (Value + Update)
 
@@ -94,7 +95,8 @@ sequenceDiagram
 
 Implementation anchors:
 
-- `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+- `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-scope.ts`
+- `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-array.ts`
 - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/dirty-indices.ts`
 
 ## 4) Commit Diff Lifecycle
@@ -126,7 +128,8 @@ This section defines what can change safely vs what is considered a core invaria
 - `ioTree` node-kind classification rules in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/node-factory.ts`
 - patch generation behavior in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/commit.ts`
 - bubbling semantics in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/subscriptions.ts`
-- snapshot cache invalidation and freeze behavior in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+- snapshot cache invalidation and freeze behavior in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-scope.ts`
+- snapshot cache invalidation and freeze behavior in `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-array.ts`
 
 ### Must-hold invariants
 
@@ -145,7 +148,8 @@ Use existing hooks before introducing new node taxonomy:
 - node creation policy: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/node-factory.ts`
 - subscription semantics: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/subscriptions.ts`
 - commit strategy: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/commit.ts`
-- snapshot materialization: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+- snapshot materialization: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-scope.ts`
+- snapshot materialization: `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-array.ts`
 
 Recommended sequence:
 
@@ -163,7 +167,7 @@ Touchpoints you must update:
 
 1. tree internal types and kind guards:
    - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree-types.ts`
-   - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+   - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-scope.ts`
 2. node factory classification and creation:
    - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/node-factory.ts`
 3. commit diff handling:
@@ -171,7 +175,8 @@ Touchpoints you must update:
 4. subscription attach/detach + bubbling:
    - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/subscriptions.ts`
 5. snapshot read path + cache behavior:
-   - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/io-tree.ts`
+   - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-scope.ts`
+   - `/Users/zhangxueai/Projects/idea/oin/packages/io/src/lib/core/snapshot-array.ts`
 
 If any of the five touchpoints is skipped, behavior will become inconsistent.
 
