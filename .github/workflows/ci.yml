@@ -13,21 +13,11 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
-    env:
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
           filter: tree:0
           fetch-depth: 0
-
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      - name: Start Nx Cloud CI Run (fallback to local)
-        run: |
-          npm exec nx@22.4.5 start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="typecheck" \
-            || npm exec nx@22.4.5 start-ci-run --no-distribution
 
       # Cache node_modules
       - uses: actions/setup-node@v4
@@ -37,8 +27,7 @@ jobs:
 
       - run: npm ci
 
-      # Prepend any command with "nx record --" to record its logs to Nx Cloud
-      - run: npm exec nx record -- npm exec nx format:check --base="origin/main" --head="HEAD"
+      - run: npm exec nx format:check --base="origin/main" --head="HEAD"
       - run: npm exec nx -- run-many --targets=lint,build,typecheck
       - run: npm exec nx -- run-many --targets=test -- --coverage
       - uses: codecov/codecov-action@v4
@@ -50,6 +39,3 @@ jobs:
       - run: npm run build -w apps/docs
         env:
           ASTRO_TELEMETRY_DISABLED: 1
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/ci/features/self-healing-ci
-      - run: npm exec nx fix-ci
-        if: always()

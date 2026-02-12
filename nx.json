@@ -58,6 +58,5 @@
     },
     "version": { "preVersionCommand": "npm exec nx run-many -t build" }
   },
-  "targetDefaults": { "test": { "dependsOn": ["^build"] } },
-  "nxCloudId": "698e0388ffbfdca918ba5563"
+  "targetDefaults": { "test": { "dependsOn": ["^build"] } }
 }
