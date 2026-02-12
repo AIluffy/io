@@ -2,9 +2,10 @@ import { isLink } from '../../../utils/link.js';
 import type { NodeFactoryDeps } from '../types.js';
 import type { NodePath } from '../../path-trie.js';
 import type {
-  TreeArrayState,
+  TreeArrayInternal,
   TreeContext,
   TreeNode,
+  TreeScopeInternal,
   TreeScopeState,
   UnitInternal,
 } from '../../io-tree-types.js';
@@ -39,6 +40,7 @@ export function createScopeCommit(
   } = options;
 
   return (fn: (draft: Record<string, unknown>) => void): void => {
+    state.isCommitting = true;
     try {
       const before = snapshot();
       const draft = deps.createDraft(before);
@@ -62,17 +64,21 @@ export function createScopeCommit(
           isLink,
           getInternalKind: (node: TreeNode) => deps.getInternal(node)?.kind,
           getScopeState: (node: TreeNode) =>
-            deps.requireInternalOfKind(
-              node,
-              'scope',
-              'ioTree commit: invalid scope internal',
-            ) as TreeScopeState,
+            (
+              deps.requireInternalOfKind(
+                node,
+                'scope',
+                'ioTree commit: invalid scope internal',
+              ) as TreeScopeInternal
+            ).getState(),
           getArrayState: (node: TreeNode) =>
-            deps.requireInternalOfKind(
-              node,
-              'array',
-              'ioTree commit: invalid array internal',
-            ) as TreeArrayState,
+            (
+              deps.requireInternalOfKind(
+                node,
+                'array',
+                'ioTree commit: invalid array internal',
+              ) as TreeArrayInternal
+            ).getState(),
           setUnitValue: (node: TreeNode, value: unknown) => {
             const internal = deps.requireInternalOfKind(
               node,
@@ -104,16 +110,16 @@ export function createScopeCommit(
 
       if (!changed) return;
       state.revision += 1;
-      state.valueEpoch += 1;
       deps.emitScopeUpdate(
         state,
         deps.createUpdate(baseRevision, state.revision, patches),
       );
       deps.emitScopeValue(state);
     } catch (error) {
-      state.isCommitting = false;
       deps.emitError(getNode(), error, path, 'commit');
       throw error;
+    } finally {
+      state.isCommitting = false;
     }
   };
 }

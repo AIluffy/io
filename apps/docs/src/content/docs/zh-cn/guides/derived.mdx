@@ -64,6 +64,46 @@ const stop = doubled.subscribe((value) => {
 });
 ```
 
+## 场景：依赖多个 store / key 触发函数执行
+
+当你需要“任一依赖变化就执行某个函数”时，可以先组合一个 `derived`，再订阅它：
+
+```ts
+import { batch, derived, io } from 'io-store';
+
+const user = io({ age: 18, level: 1 });
+const order = io({ amount: 99 });
+
+const trigger = derived(
+  [user.age, user.level, order.amount],
+  (age, level, amount) => ({ age, level, amount }),
+);
+
+const run = ({
+  age,
+  level,
+  amount,
+}: {
+  age: number;
+  level: number;
+  amount: number;
+}) => {
+  // 你的业务函数
+  console.log('run with', { age, level, amount });
+};
+
+// 如果需要初始化立即执行一次
+run(trigger.get());
+
+const stop = trigger.subscribe(run);
+
+// 一次事务里改多个依赖时，使用 batch 合并通知，避免重复触发
+batch(() => {
+  user.age.set(19);
+  order.amount.set(199);
+});
+```
+
 ## 注意事项
 
 - 派生值只读，不能 `set`。

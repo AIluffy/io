@@ -1,9 +1,6 @@
 import { getLinkTarget, isLink } from '../utils/link.js';
 import type { NodePath } from './path-trie.js';
-import type {
-  TreeContext,
-  TreeNode,
-} from './io-tree-types.js';
+import type { TreeContext, TreeNode } from './io-tree-types.js';
 import type { NodeFactoryDeps } from './node-factory/types.js';
 import { createArrayNode as createArrayNodeImpl } from './node-factory/array/node.js';
 import { createScopeNode as createScopeNodeImpl } from './node-factory/scope/node.js';
@@ -15,9 +12,21 @@ import {
 
 export type { NodeFactoryDeps } from './node-factory/types.js';
 
+/**
+ * Builds the tree-node constructor used by `ioTree`.
+ *
+ * The factory chooses node kind (scope/array/unit), maintains path mappings,
+ * and enforces constraints around links, cycles, and shared references.
+ */
 export function createNodeFactory(deps: NodeFactoryDeps) {
   // Patch payloads must be immutable snapshots. Linked nodes need resolving to
   // values so update logs stay serializable and replay-safe.
+  /**
+   * Converts values stored in patches to immutable/replay-safe payloads.
+   *
+   * Link values are resolved to snapshots so patches do not depend on runtime
+   * object identity.
+   */
   const resolvePatchValue = (value: unknown): unknown => {
     if (isLink(value)) {
       const target = getLinkTarget(value) as TreeNode;
@@ -26,6 +35,9 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     return deps.cloneValue(value);
   };
 
+  /**
+   * Creates a unit leaf and registers it under the current path subtree index.
+   */
   const createUnitNode = (
     ctx: TreeContext,
     path: NodePath,
@@ -36,6 +48,9 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
     return unit;
   };
 
+  /**
+   * Creates a scope node wrapper and injects recursive creation callbacks.
+   */
   const createScopeNode = (
     ctx: TreeContext,
     path: NodePath,
@@ -50,6 +65,9 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       resolvePatchValue,
     });
 
+  /**
+   * Creates an array node wrapper and injects recursive creation callbacks.
+   */
   const createArrayNode = (
     ctx: TreeContext,
     path: NodePath,
@@ -64,6 +82,19 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
       resolvePatchValue,
     });
 
+  /**
+   * Recursively creates a tree node at `path`.
+   *
+   * Rules:
+   * - Links reuse target nodes, but reject prefix cycles in same context.
+   * - `maxDepth` forces leaf-unit nodes to cap recursion.
+   * - Arrays/scopes are expanded recursively.
+   * - Non-plain objects in deep mode are rejected.
+   *
+   * Invariants:
+   * - Every returned node is reachable through trie/path mapping.
+   * - Shared object references are forbidden for array elements.
+   */
   const createTreeNode = (
     ctx: TreeContext,
     path: NodePath,
@@ -82,11 +113,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
         if (linkCtx === ctx) {
           const targetPaths = collectTargetPaths(ctx, target);
           const pathsToCheck =
-            targetPaths.length > 0
-              ? targetPaths
-              : linkPath
-                ? [linkPath]
-                : [];
+            targetPaths.length > 0 ? targetPaths : linkPath ? [linkPath] : [];
           for (const candidate of pathsToCheck) {
             if (!isPathPrefix(candidate, path)) continue;
             throw new TypeError(

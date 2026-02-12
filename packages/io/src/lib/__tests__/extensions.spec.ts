@@ -45,6 +45,45 @@ describe('extensions: behaviors', () => {
     expect(stored).toBe('3');
   });
 
+  it('reports hydrate failures from corrupt storage data', () => {
+    const unit = io(0);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const onError = vi.fn();
+    const storage = {
+      getItem: () => '{broken json',
+      setItem: () => undefined,
+    };
+
+    withBehaviors(unit, [persist({ key: 'count', storage, onError })]);
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][1]).toBe('hydrate');
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it('reports persist failures from storage write errors', () => {
+    const unit = io(0);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const onError = vi.fn();
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota');
+      },
+    };
+    const view = withBehaviors(unit, [
+      persist({ key: 'count', storage, onError }),
+    ]);
+
+    view.set?.(1);
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][1]).toBe('persist');
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
   it('reads via view getter', () => {
     const unit = io(1);
     const view = withBehaviors(unit, [schedule('sync')]);

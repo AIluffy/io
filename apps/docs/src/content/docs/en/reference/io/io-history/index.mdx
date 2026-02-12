@@ -1,0 +1,32 @@
+---
+title: 'IoHistory'
+description: 'type export'
+---
+
+## Signature
+
+```ts
+IoHistory;
+```
+
+## Properties
+
+| Name    | Type         |
+| ------- | ------------ |
+| undo    | `() => void` |
+| redo    | `() => void` |
+| clear   | `() => void` |
+| destroy | `() => void` |
+| canUndo | `boolean`    |
+| canRedo | `boolean`    |
+| length  | `number`     |
+| cursor  | `number`     |
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/types.ts`

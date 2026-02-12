@@ -1,20 +1,20 @@
 ---
-title: "toWritable"
-description: "function export"
+title: 'toWritable'
+description: 'function export'
 ---
-
 
 ## 签名
 
 ```ts
-<T>(unit: IoUnit<T>) => Writable<T>
+<T>(unit: IoUnit<T>, options?: IoSvelteOptions) => Writable<T>;
 ```
 
 ## 参数
 
-| Name | Type |
-| --- | --- |
-| unit | `IoUnit<T>` |
+| Name    | Type              |
+| ------- | ----------------- |
+| unit    | `IoUnit<T>`       |
+| options | `IoSvelteOptions` |
 
 ## 返回
 
@@ -27,4 +27,4 @@ description: "function export"
 
 ## 源码
 
-- `packages/io-svelte/src/index.ts`
+- `packages/io-svelte/src/lib/stores.ts`

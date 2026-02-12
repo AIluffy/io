@@ -1,23 +1,13 @@
 ---
-title: "IoResult"
-description: "type export"
+title: 'IoResult'
+description: 'type export'
 ---
-
 
 ## 签名
 
 ```ts
-IoResult<T, MaxDepth>
+IoResult<T, MaxDepth>;
 ```
-
-## 属性
-
-| Name | Type |
-| --- | --- |
-| get | `(() => T) \| (() => unknown[]) \| (() => T)` |
-| snapshot | `(() => T) \| (() => unknown[]) \| (() => T)` |
-| subscribe | `((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
-| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
 
 ## 错误
 

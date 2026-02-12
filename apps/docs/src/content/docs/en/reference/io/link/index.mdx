@@ -1,0 +1,29 @@
+---
+title: 'link'
+description: 'function export'
+---
+
+## Signature
+
+```ts
+<T>(target: T) => IoLink<T>;
+```
+
+## Parameters
+
+| Name   | Type |
+| ------ | ---- |
+| target | `T`  |
+
+## Returns
+
+`IoLink<T>`
+
+## Errors
+
+- This library does not define standardized error codes.
+- Mutations can report failures through `onError(listener)` (operation, path, value).
+
+## Source
+
+- `packages/io/src/lib/utils/link.ts`

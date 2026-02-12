@@ -10,6 +10,7 @@ export type PersistOptions = {
   storage?: IoStorageLike;
   serialize?: (value: unknown) => string;
   deserialize?: (raw: string) => unknown;
+  onError?: (error: unknown, phase: 'hydrate' | 'persist') => void;
 };
 
 const defaultSerialize = (value: unknown) => JSON.stringify(value);
@@ -22,6 +23,16 @@ function resolveStorage(custom?: IoStorageLike): IoStorageLike | null {
 }
 
 export function persist<T>(options: PersistOptions): IoBehavior<T> {
+  const reportError = (error: unknown, phase: 'hydrate' | 'persist'): void => {
+    options.onError?.(error, phase);
+    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `[io-store/persist] ${phase} failed for key "${options.key}"`,
+        error,
+      );
+    }
+  };
+
   return (view) => {
     const storage = resolveStorage(options.storage);
     const serialize = options.serialize ?? defaultSerialize;
@@ -31,8 +42,8 @@ export function persist<T>(options: PersistOptions): IoBehavior<T> {
       if (raw !== null && view.set) {
         try {
           view.set(deserialize(raw) as T);
-        } catch {
-          // ignore corrupt data
+        } catch (error) {
+          reportError(error, 'hydrate');
         }
       }
     }
@@ -44,8 +55,8 @@ export function persist<T>(options: PersistOptions): IoBehavior<T> {
         if (!storage) return;
         try {
           storage.setItem(options.key, serialize(view.get()));
-        } catch {
-          // ignore storage failures
+        } catch (error) {
+          reportError(error, 'persist');
         }
       },
     };

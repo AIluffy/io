@@ -1,23 +1,13 @@
 ---
-title: "IoTreeNode"
-description: "type export"
+title: 'IoTreeNode'
+description: 'type export'
 ---
-
 
 ## Signature
 
 ```ts
-IoTreeNode<T, MaxDepth>
+IoTreeNode<T, MaxDepth>;
 ```
-
-## Properties
-
-| Name | Type |
-| --- | --- |
-| get | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| snapshot | `(() => unknown[]) \| (() => T) \| (() => T)` |
-| subscribe | `((fn: (v: unknown[]) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe) \| ((fn: (v: T) => void) => IoUnsubscribe)` |
-| subscribeUpdate | `((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe) \| ((fn: (u: IoUpdate) => void) => IoUnsubscribe)` |
 
 ## Errors
 

@@ -24,6 +24,8 @@ type ScopeStateLike<TNode> = {
 
 type ArrayStateLike<TNode> = {
   children: TNode[];
+  childIndices?: Map<TNode, Set<number>>;
+  childIndicesDirty?: boolean;
   revision: number;
   isCommitting: boolean;
   valueEpoch: number;
@@ -39,28 +41,88 @@ type SnapshotDeps<TScopeState, TArrayState> = {
   getArraySnapshot: (state: TArrayState) => unknown[];
 };
 
+/**
+ * Creates subscription wiring helpers for scope/array nodes.
+ *
+ * Responsibilities:
+ * - Emit value/update notifications with revision/valueEpoch updates.
+ * - Bubble child events to parent paths (keyed/indexed).
+ * - Track dirty keys/indices so snapshot rebuild stays incremental.
+ */
 export function createSubscriptions<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
 >(deps: SnapshotDeps<TScopeState, TArrayState>) {
+  const rebuildArrayChildIndices = (state: TArrayState): void => {
+    if (!state.childIndices) return;
+    state.childIndices.clear();
+    for (let i = 0; i < state.children.length; i += 1) {
+      const child = state.children[i];
+      const indices = state.childIndices.get(child);
+      if (indices) {
+        indices.add(i);
+      } else {
+        state.childIndices.set(child, new Set([i]));
+      }
+    }
+    if ('childIndicesDirty' in state) state.childIndicesDirty = false;
+  };
+
+  const resolveArrayChildIndices = (
+    state: TArrayState,
+    child: TNode,
+  ): number[] => {
+    if (!state.childIndices) {
+      const indices: number[] = [];
+      for (let i = 0; i < state.children.length; i += 1) {
+        if (state.children[i] === child) indices.push(i);
+      }
+      return indices;
+    }
+
+    if (state.childIndicesDirty !== false) rebuildArrayChildIndices(state);
+    const indices = state.childIndices.get(child);
+    if (!indices) return [];
+    return [...indices];
+  };
+
+  /**
+   * Emits latest scope snapshot to value listeners.
+   */
   const emitScopeValue = (state: TScopeState): void => {
     const value = deps.getScopeSnapshot(state);
     notifyValue(state.valueListeners, value);
   };
 
+  /**
+   * Emits a scope update event without modifying listeners.
+   */
   const emitScopeUpdate = (state: TScopeState, update: IoUpdate): void => {
     notifyUpdate(state.updateListeners, update);
   };
 
+  /**
+   * Emits latest array snapshot to value listeners.
+   */
   const emitArrayValue = (state: TArrayState): void => {
     notifyValue(state.valueListeners, deps.getArraySnapshot(state));
   };
 
+  /**
+   * Emits an array update event without modifying listeners.
+   */
   const emitArrayUpdate = (state: TArrayState, update: IoUpdate): void => {
     notifyUpdate(state.updateListeners, update);
   };
 
+  /**
+   * Marks a child segment as dirty on the parent container.
+   *
+   * Invariants:
+   * - Scope parents track keys in `dirtyKeys`.
+   * - Array parents track numeric indices in `dirtyIndices`.
+   */
   const markDirty = (
     parentState: TScopeState | TArrayState,
     segment: PropertyKey,
@@ -83,6 +145,10 @@ export function createSubscriptions<
     }
   };
 
+  /**
+   * Subscribes a scope child and bubbles child value/update events as parent
+   * key-scoped notifications.
+   */
   const attachChildToScope = (
     state: TScopeState,
     key: PropertyKey,
@@ -95,22 +161,25 @@ export function createSubscriptions<
         state.valueEpoch += 1;
         emitScopeValue(state);
       },
-    onUpdate: (u) => {
-      state.dirtyKeys.add(key);
-      const baseRevision = state.revision;
-      state.revision += 1;
-      state.valueEpoch += 1;
-      emitScopeUpdate(
-        state,
-        createUpdate(baseRevision, state.revision, u.patches),
-      );
-    },
+      onUpdate: (u) => {
+        state.dirtyKeys.add(key);
+        const baseRevision = state.revision;
+        state.revision += 1;
+        state.valueEpoch += 1;
+        emitScopeUpdate(
+          state,
+          createUpdate(baseRevision, state.revision, u.patches),
+        );
+      },
     });
 
     state.childValueUnsubs.set(key, valueUnsub);
     state.childUpdateUnsubs.set(key, updateUnsub);
   };
 
+  /**
+   * Removes both value/update subscriptions for a scope child key.
+   */
   const detachChildFromScope = (state: TScopeState, key: PropertyKey): void => {
     state.childValueUnsubs.get(key)?.();
     state.childUpdateUnsubs.get(key)?.();
@@ -118,7 +187,15 @@ export function createSubscriptions<
     state.childUpdateUnsubs.delete(key);
   };
 
+  /**
+   * Subscribes an array child and bubbles events for every index where the same
+   * child instance appears.
+   *
+   * Duplicate references are ref-counted so only one underlying child
+   * subscription is active per child instance.
+   */
   const attachChildToArray = (state: TArrayState, child: TNode): void => {
+    if ('childIndicesDirty' in state) state.childIndicesDirty = true;
     const valueEntry = state.childValueUnsubs.get(child);
     const updateEntry = state.childUpdateUnsubs.get(child);
     if (valueEntry && updateEntry) {
@@ -129,13 +206,7 @@ export function createSubscriptions<
 
     const { valueUnsub, updateUnsub } = subscribeIndexedChild(
       child,
-      (c) => {
-        const indices: number[] = [];
-        for (let i = 0; i < state.children.length; i += 1) {
-          if (state.children[i] === c) indices.push(i);
-        }
-        return indices;
-      },
+      (c) => resolveArrayChildIndices(state, c as TNode),
       {
         onValue: (indices) => {
           if (state.isCommitting) return;
@@ -165,7 +236,11 @@ export function createSubscriptions<
     state.childUpdateUnsubs.set(child, { unsub: updateUnsub, count: 1 });
   };
 
+  /**
+   * Decrements array child subscription refs and unsubscribes when count hits 0.
+   */
   const detachChildFromArray = (state: TArrayState, child: TNode): void => {
+    if ('childIndicesDirty' in state) state.childIndicesDirty = true;
     const valueEntry = state.childValueUnsubs.get(child);
     if (valueEntry) {
       valueEntry.count -= 1;

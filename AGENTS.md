@@ -37,6 +37,9 @@ nx run-many -t build
 - Preview build: `nx run apps-docs:preview`
 - API docs generation: `nx run apps-docs:generate-api` (runs `tools/docs/generate-api-docs.mjs`)
 - Root route currently redirects via `apps/docs/src/pages/index.astro` to `/zh-cn/`
+- CI deploy entry (single source): `.github/workflows/deploy-docs.yml`
+- CI deploy target: Vercel production (triggered by GitHub Actions)
+- Required GitHub Secrets for docs deploy: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
 ### Available Projects
 
@@ -138,7 +141,8 @@ Projects use Nx tags for dependency constraints:
 
 - For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
 - When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- Do not use `pnpm` to execute commands in this workspace
+- Prefix nx commands with a non-pnpm runner (e.g., `npm exec nx build`, `npx nx test`) - avoids using globally installed CLI
 - You have access to the Nx MCP server and its tools, use them to help the user
 - For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
 - NEVER guess CLI flags - always check nx_docs or `--help` first when unsure

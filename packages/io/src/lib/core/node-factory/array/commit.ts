@@ -2,10 +2,11 @@ import { isLink } from '../../../utils/link.js';
 import type { NodeFactoryDeps } from '../types.js';
 import type { NodePath } from '../../path-trie.js';
 import type {
+  TreeArrayInternal,
   TreeArrayState,
   TreeContext,
   TreeNode,
-  TreeScopeState,
+  TreeScopeInternal,
   UnitInternal,
 } from '../../io-tree-types.js';
 
@@ -39,6 +40,7 @@ export function createArrayCommit(
   } = options;
 
   return (fn: (draft: unknown[]) => void): void => {
+    state.isCommitting = true;
     try {
       const before = snapshot();
       const draft = deps.createDraft(before);
@@ -56,17 +58,21 @@ export function createArrayCommit(
           isLink,
           getInternalKind: (n: TreeNode) => deps.getInternal(n)?.kind,
           getScopeState: (n: TreeNode) =>
-            deps.requireInternalOfKind(
-              n,
-              'scope',
-              'ioTree commit: invalid scope internal',
-            ) as TreeScopeState,
+            (
+              deps.requireInternalOfKind(
+                n,
+                'scope',
+                'ioTree commit: invalid scope internal',
+              ) as TreeScopeInternal
+            ).getState(),
           getArrayState: (n: TreeNode) =>
-            deps.requireInternalOfKind(
-              n,
-              'array',
-              'ioTree commit: invalid array internal',
-            ) as TreeArrayState,
+            (
+              deps.requireInternalOfKind(
+                n,
+                'array',
+                'ioTree commit: invalid array internal',
+              ) as TreeArrayInternal
+            ).getState(),
           setUnitValue: (n: TreeNode, value: unknown) => {
             const internal = deps.requireInternalOfKind(
               n,
@@ -75,8 +81,7 @@ export function createArrayCommit(
             ) as UnitInternal;
             internal.setValue(value, { emitUpdate: false, emitValue: true });
           },
-          getNodeValue: (n: TreeNode) =>
-            deps.getNodeValue(n, new WeakMap()),
+          getNodeValue: (n: TreeNode) => deps.getNodeValue(n, new WeakMap()),
           resolvePatchValue,
           createTreeNode: (absPath: NodePath, value: unknown) =>
             createTreeNode(ctx, absPath, value),
@@ -102,12 +107,12 @@ export function createArrayCommit(
         state,
         deps.createUpdate(baseRevision, state.revision, patches),
       );
-      state.valueEpoch += 1;
       deps.emitArrayValue(state);
     } catch (error) {
-      state.isCommitting = false;
       deps.emitError(getNode(), error, path, 'commit');
       throw error;
+    } finally {
+      state.isCommitting = false;
     }
   };
 }

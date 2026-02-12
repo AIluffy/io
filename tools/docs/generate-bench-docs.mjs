@@ -7,13 +7,15 @@ import { Bench } from 'tinybench';
 const repoRoot = process.cwd();
 const docsRoot = path.join(repoRoot, 'apps', 'docs', 'src', 'content', 'docs');
 const ioDistRoot = path.join(repoRoot, 'packages', 'io', 'dist');
+const BENCH_TIME_MS = 2000;
+const BENCH_WARMUP_MS = 250;
 
 async function ensureDistExists() {
   try {
     await fs.stat(ioDistRoot);
   } catch (error) {
     throw new Error(
-      `io-store dist not found at ${ioDistRoot}. Run "nx run io-store:build" first.`
+      `io-store dist not found at ${ioDistRoot}. Run "nx run io-store:build" first.`,
     );
   }
 }
@@ -75,7 +77,10 @@ async function runBenchmarks() {
     pathToFileURL(path.join(ioDistRoot, 'lib', 'cow.js')).href
   );
 
-  const bench = new Bench({ time: 2000 });
+  const bench = new Bench({
+    time: BENCH_TIME_MS,
+    warmupTime: BENCH_WARMUP_MS,
+  });
 
   bench.add('createUnit: primitive (1k)', () => {
     for (let i = 0; i < 1_000; i += 1) {
@@ -205,15 +210,16 @@ async function runBenchmarks() {
   await bench.run();
 
   return bench.tasks.map((task) => {
-    const hz = task.hz ?? 0;
+    const hasError = task.result?.error !== undefined;
+    const hz = task.result?.hz ?? 0;
     const meanMs =
-      Number.isFinite(hz) && hz > 0
-        ? 1000 / hz
-        : (task.result?.mean ?? 0) * 1000;
+      task.result?.mean ?? (Number.isFinite(hz) && hz > 0 ? 1000 / hz : 0);
+    const rme = task.result?.rme ?? 0;
     return {
       name: task.name,
-      hz,
-      meanMs,
+      hz: hasError ? Number.NaN : hz,
+      meanMs: hasError ? Number.NaN : meanMs,
+      rme: hasError ? Number.NaN : rme,
     };
   });
 }
@@ -231,6 +237,7 @@ function buildMarkdown({ locale, results, runtime }) {
           scenario: '场景',
           ops: 'ops/sec',
           mean: 'mean (ms/op)',
+          rme: '误差 (±rme %)',
         }
       : {
           title: 'Benchmark',
@@ -242,10 +249,11 @@ function buildMarkdown({ locale, results, runtime }) {
           scenario: 'Scenario',
           ops: 'ops/sec',
           mean: 'mean (ms/op)',
+          rme: 'Error (±rme %)',
         };
 
   const frontmatter = `---\ntitle: ${JSON.stringify(
-    labels.title
+    labels.title,
   )}\ndescription: ${JSON.stringify(labels.description)}\nsidebar:\n  order: 6\n---\n`;
 
   const envLines = [
@@ -254,12 +262,13 @@ function buildMarkdown({ locale, results, runtime }) {
     `- Platform: ${runtime.platform}`,
     `- CPU: ${runtime.cpu}`,
     `- Benchmark time: ${runtime.timeMs}ms per task`,
+    `- Warmup time: ${runtime.warmupMs}ms per task`,
   ].join('\n');
 
   const rows = results
     .map(
       (row) =>
-        `| ${row.name} | ${formatNumber(row.hz)} | ${formatNumber(row.meanMs)} |`
+        `| ${row.name} | ${formatNumber(row.hz)} | ${formatNumber(row.meanMs)} | ${formatNumber(row.rme)} |`,
     )
     .join('\n');
 
@@ -275,8 +284,8 @@ function buildMarkdown({ locale, results, runtime }) {
     '',
     `## ${labels.heading}`,
     '',
-    `| ${labels.scenario} | ${labels.ops} | ${labels.mean} |`,
-    '| --- | --- | --- |',
+    `| ${labels.scenario} | ${labels.ops} | ${labels.mean} | ${labels.rme} |`,
+    '| --- | --- | --- | --- |',
     rows,
     '',
   ].join('\n');
@@ -288,7 +297,8 @@ async function writeDocs(results) {
     node: process.version,
     platform: `${os.platform()} ${os.release()} (${os.arch()})`,
     cpu: os.cpus()?.[0]?.model ?? 'unknown',
-    timeMs: 2000,
+    timeMs: BENCH_TIME_MS,
+    warmupMs: BENCH_WARMUP_MS,
   };
 
   const locales = ['en', 'zh-cn'];

@@ -1,37 +1,30 @@
 ---
-title: "IoTreeArrayUnit"
-description: "type export"
+title: 'IoTreeArrayUnit'
+description: 'type export'
 ---
-
 
 ## Signature
 
 ```ts
-IoTreeArrayUnit<T, MaxDepth>
+IoTreeArrayUnit<T, MaxDepth>;
 ```
-
-## Notes
-
-- Used for deep arrays (MaxDepth > 1); `IoArrayUnit` is the shallow alias.
-- `commit` updates array contents via draft diffs.
-- `set()` replaces the entire array and emits a `set` patch for the array path.
 
 ## Properties
 
-| Name | Type |
-| --- | --- |
-| get | `() => T[]` |
-| set | `(next: T[]) => void` |
-| push | `(...items: T[]) => void` |
-| pop | `() => T \| undefined` |
-| splice | `(start: number, deleteCount: number, ...items: T[]) => void` |
-| sort | `(compareFn?: (a: T, b: T) => number) => void` |
-| commit | `(fn: (draft: T[]) => void) => void` |
-| reduce | `<R>(reducer: (acc: R, item: IoTreeNode<T, MaxDepth>, index: number) => R, initialValue: R) => R` |
-| snapshot | `() => T[]` |
-| subscribe | `(fn: (v: T[]) => void) => IoUnsubscribe` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
-| __@iterator@349 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
+| Name              | Type                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| get               | `() => UnwrapIo<T>[]`                                                                             |
+| set               | `(next: UnwrapIo<T>[]) => void`                                                                   |
+| push              | `(...items: UnwrapIo<T>[]) => void`                                                               |
+| pop               | `() => UnwrapIo<T> \| undefined`                                                                  |
+| splice            | `(start: number, deleteCount: number, ...items: UnwrapIo<T>[]) => void`                           |
+| sort              | `(compareFn?: (a: UnwrapIo<T>, b: UnwrapIo<T>) => number) => void`                                |
+| commit            | `(fn: (draft: UnwrapIo<T>[]) => void) => void`                                                    |
+| reduce            | `<R>(reducer: (acc: R, item: IoTreeNode<T, MaxDepth>, index: number) => R, initialValue: R) => R` |
+| snapshot          | `() => UnwrapIo<T>[]`                                                                             |
+| subscribe         | `(fn: (v: UnwrapIo<T>[]) => void) => IoUnsubscribe`                                               |
+| subscribeUpdate   | `(fn: (u: IoUpdate) => void) => IoUnsubscribe`                                                    |
+| \_\_@iterator@386 | `() => Iterator<IoTreeNode<T, MaxDepth>>`                                                         |
 
 ## Errors
 
