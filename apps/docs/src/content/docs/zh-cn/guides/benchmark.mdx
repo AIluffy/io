@@ -11,10 +11,10 @@ sidebar:
 
 ## 运行环境
 
-- Date: 2026-02-12T14:11:53.697Z
+- Date: 2026-02-12T14:31:11.863Z
 - Node: v25.5.0
 - Platform: darwin 25.2.0 (arm64)
-- CPU: unknown
+- CPU: Apple M4
 - Benchmark time: 2000ms per task
 - Warmup time: 250ms per task
 
@@ -22,18 +22,18 @@ sidebar:
 
 | 场景 | ops/sec | mean (ms/op) | 误差 (±rme %) |
 | --- | --- | --- | --- |
-| createUnit: primitive (1k) | 821.76 | 1.22 | 7.87 |
-| createUnit: object (1k) | 249.53 | 4.01 | 5.58 |
-| subscribe/unsubscribe: value (10k) | 1539.47 | 0.65 | 12.39 |
-| subscribe/unsubscribe: update (10k) | 2048.21 | 0.49 | 4.85 |
-| snapshot: scope (10k) | 396.80 | 2.52 | 13.43 |
-| snapshot: array (10k) | 312.82 | 3.20 | 11.83 |
-| snapshot: array (20k boundary) | 8.53 | 117.30 | 17.80 |
-| snapshot: depth (80 boundary) | 904.36 | 1.11 | 12.88 |
-| draft/finish: deep object (200) | 911.49 | 1.10 | 15.05 |
-| commit deep update (200) | 4.97 | 201.15 | 44.10 |
-| commit deep update (80 boundary) | 1.07 | 938.21 | 27.53 |
-| batch: 40k updates | 71.95 | 13.90 | 19.94 |
-| no batch: 40k updates | 103.61 | 9.65 | 10.28 |
-| batch update 200 units | 0.51 | 1945.53 | 31.20 |
-| sequential update 200 units | 0.46 | 2194.63 | 24.69 |
+| createUnit: primitive (1k) | 737.29 | 1.36 | 9.46 |
+| createUnit: object (1k) | 191.31 | 5.23 | 9.34 |
+| subscribe/unsubscribe: value (10k) | 1570.49 | 0.64 | 9.98 |
+| subscribe/unsubscribe: update (10k) | 1875.94 | 0.53 | 6.05 |
+| snapshot: scope (10k) | 442.20 | 2.26 | 11.22 |
+| snapshot: array (10k) | 235.74 | 4.24 | 16.82 |
+| snapshot: array (20k boundary) | 7.47 | 133.82 | 16.32 |
+| snapshot: depth (80 boundary) | 798.17 | 1.25 | 23.29 |
+| draft/finish: deep object (200) | 1263.59 | 0.79 | 9.06 |
+| commit deep update (200) | 11.46 | 87.27 | 13.79 |
+| commit deep update (80 boundary) | 2.60 | 384.01 | 9.49 |
+| batch: 40k updates | 121.25 | 8.25 | 12.32 |
+| no batch: 40k updates | 138.24 | 7.23 | 6.98 |
+| batch update 200 units | 0.80 | 1243.26 | 19.93 |
+| sequential update 200 units | 1.13 | 881.76 | 3.75 |

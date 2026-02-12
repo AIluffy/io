@@ -11,8 +11,6 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    outputs:
-      should_publish: ${{ steps.detect.outputs.should_publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,83 +79,3 @@ jobs:
         run: |
           npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
           npm exec nx release publish --access public
-
-  publish-jsr:
-    needs: publish
-    if: needs.publish.outputs.should_publish == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      JSR_TOKEN: ${{ secrets.JSR_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - run: npm ci
-
-      - run: npm exec nx run-many -t build
-
-      - name: Publish changed packages to JSR
-        run: |
-          node <<'NODE'
-          const { execSync } = require('node:child_process');
-          const fs = require('node:fs');
-          const path = require('node:path');
-
-          if (!process.env.JSR_TOKEN) {
-            console.log('JSR_TOKEN is not set; skipping JSR publish.');
-            process.exit(0);
-          }
-
-          try {
-            execSync('git rev-parse --verify HEAD^1', { stdio: 'ignore' });
-          } catch {
-            console.log('No previous commit; skipping JSR publish.');
-            process.exit(0);
-          }
-
-          const changedFiles = execSync('git diff --name-only HEAD^1 HEAD')
-            .toString()
-            .trim()
-            .split('\n')
-            .filter(Boolean);
-
-          const changedPackageDirs = changedFiles
-            .filter((file) => /^packages\/[^/]+\/package\.json$/.test(file))
-            .filter((file) => {
-              const before = JSON.parse(execSync(`git show HEAD^1:${file}`).toString()).version;
-              const after = JSON.parse(execSync(`git show HEAD:${file}`).toString()).version;
-              return before !== after;
-            })
-            .map((file) => path.dirname(file));
-
-          if (!changedPackageDirs.length) {
-            console.log('No version-bumped packages found; skipping JSR publish.');
-            process.exit(0);
-          }
-
-          const jsrPackageDirs = changedPackageDirs.filter((dir) =>
-            fs.existsSync(path.join(process.cwd(), dir, 'jsr.json')),
-          );
-
-          if (!jsrPackageDirs.length) {
-            console.log('No changed packages with jsr.json; skipping JSR publish.');
-            process.exit(0);
-          }
-
-          for (const dir of jsrPackageDirs) {
-            console.log(`Publishing ${dir} to JSR...`);
-            execSync('npm exec jsr publish', {
-              cwd: path.join(process.cwd(), dir),
-              stdio: 'inherit',
-              env: process.env,
-            });
-          }
-          NODE
