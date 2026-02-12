@@ -100,6 +100,14 @@ function hasSnapshot(value: unknown): value is { snapshot(): unknown } {
   return typeof (value as { snapshot?: unknown }).snapshot === 'function';
 }
 
+/**
+ * Reads a node into an immutable snapshot-compatible value.
+ *
+ * Invariants:
+ * - Returned value is safe to place into a parent snapshot.
+ * - Scope/array nodes delegate to memoized subtree snapshotters.
+ * - Unit nodes always read through their public `snapshot()` boundary.
+ */
 function getNodeValue(
   node: TreeNode,
   cache: WeakMap<object, unknown>,
@@ -140,6 +148,19 @@ function materializeKeys(target: Record<PropertyKey, unknown>): void {
   }
 }
 
+/**
+ * Builds or reuses a frozen object snapshot for a scope node.
+ *
+ * Algorithm:
+ * - Reuse cached snapshot when structure and keys are clean.
+ * - Pre-register the in-progress container in `cache` to break cycles.
+ * - Lazily define changed keys, then force materialization once.
+ *
+ * Invariants:
+ * - Returned object is shallow-frozen.
+ * - `dirtyKeys` and `dirtyStructure` are cleared after rebuild.
+ * - `snapshotCache` is versioned by `valueEpoch`.
+ */
 function getScopeSnapshot(
   state: TreeScopeState,
   cache?: WeakMap<object, unknown>,
@@ -184,6 +205,19 @@ function getScopeSnapshot(
   });
 }
 
+/**
+ * Builds or reuses a frozen array snapshot for an array node.
+ *
+ * Algorithm:
+ * - Fast-path returns previous snapshot when no structural/index dirtiness.
+ * - Chooses partial patching vs full rebuild using dirty-index ratio.
+ * - Uses lazy index getters and a single materialization pass.
+ *
+ * Invariants:
+ * - Returned array is shallow-frozen.
+ * - `dirtyIndices` and `dirtyStructure` are cleared after rebuild.
+ * - Snapshot cache keys by `valueEpoch`.
+ */
 function getArraySnapshot(
   state: TreeArrayState,
   cache?: WeakMap<object, unknown>,
@@ -323,6 +357,19 @@ const { createTreeNode } = createNodeFactory({
   detachChildFromArray,
 });
 
+/**
+ * Creates the root IO tree and initializes shared traversal context.
+ *
+ * @param initial Root value to normalize into scope/array/unit tree nodes.
+ * @param options Runtime options:
+ * - `devtools`: explicit devtools toggle; falls back to env-based default.
+ * - `maxDepth`: converts deeper branches to unit nodes after this depth.
+ * @returns Root node that exposes IO tree APIs and immutable snapshots.
+ *
+ * Invariants:
+ * - Root path is `[]`.
+ * - Every created node is registered in trie/path mapping.
+ */
 export function ioTree<T>(
   initial: T,
   options?: { devtools?: boolean; maxDepth?: number },
@@ -338,6 +385,11 @@ export function ioTree<T>(
   return createTreeNode(ctx, [], initial) as unknown as IoTreeNode<T>;
 }
 
+/**
+ * Resolves whether devtools hooks should be enabled for this tree.
+ *
+ * Priority: explicit option > global flag > environment heuristic.
+ */
 function resolveDevtoolsEnabled(options?: { devtools?: boolean }): boolean {
   if (options?.devtools === true) return true;
   if (options?.devtools === false) return false;
@@ -346,6 +398,9 @@ function resolveDevtoolsEnabled(options?: { devtools?: boolean }): boolean {
   return isDevEnv();
 }
 
+/**
+ * Returns `true` in non-production environments.
+ */
 function isDevEnv(): boolean {
   if (typeof process !== 'undefined') {
     const env = (

@@ -87,6 +87,10 @@ type DiffHelpers<
   ) => boolean;
 };
 
+/**
+ * Creates recursive diff appliers that mutate the live tree in-place while
+ * accumulating deterministic patch records.
+ */
 function createDiffHelpers<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
@@ -95,6 +99,15 @@ function createDiffHelpers<
   deps: CommitDeps<TNode, TScopeState, TArrayState>,
   patches: IoPatch[],
 ): DiffHelpers<TNode, TScopeState, TArrayState> {
+  /**
+   * Replaces a child node in parent scope/array while preserving subscriptions
+   * and path-index mappings, then records a `set` patch.
+   *
+   * Invariants:
+   * - Old child is detached and subtree-unregistered before replacement.
+   * - New child is created at the same absolute path.
+   * - Patch payloads are cloned/resolved for immutability.
+   */
   const replaceChild = (
     parentState: TScopeState | TArrayState,
     segment: PathSegment,
@@ -141,6 +154,14 @@ function createDiffHelpers<
     return true;
   };
 
+  /**
+   * Rebuilds an entire array branch when length changes.
+   *
+   * Invariants:
+   * - Child list is recreated in index order.
+   * - Dirty state marks structure-level change.
+   * - Emits a single `splice` patch that can replay previous -> next.
+   */
   const rebuildArrayChildren = (
     arrayState: TArrayState,
     prevArr: unknown[],
@@ -176,6 +197,15 @@ function createDiffHelpers<
     return true;
   };
 
+  /**
+   * Applies a diff for a single child slot.
+   *
+   * Strategy:
+   * - Link value: force replacement.
+   * - Same shape (scope/array): recurse and emit child value event on change.
+   * - Unit: set value in-place.
+   * - Fallback: replace child node.
+   */
   const applyNodeDiff = (
     parentState: TScopeState | TArrayState,
     segment: PathSegment,
@@ -251,6 +281,14 @@ function createDiffHelpers<
     );
   };
 
+  /**
+   * Recursively applies commit diff for a scope node.
+   *
+   * Invariants:
+   * - Next object cannot introduce unknown keys.
+   * - `changed` reflects whether any descendant mutation occurred.
+   * - Parent dirty keys are marked for changed child segments.
+   */
   const applyScopeDiff = (
     scopeState: TScopeState,
     prevObj: Record<PropertyKey, unknown>,
@@ -317,6 +355,14 @@ function createDiffHelpers<
     return changed;
   };
 
+  /**
+   * Recursively applies commit diff for an array node.
+   *
+   * Invariants:
+   * - Length mismatch triggers full child rebuild.
+   * - Same-length arrays diff by index and preserve existing nodes when possible.
+   * - Parent dirty indices are marked for changed slots.
+   */
   const applyArrayDiff = (
     arrayState: TArrayState,
     prevArr: unknown[],
@@ -381,6 +427,14 @@ function createDiffHelpers<
   return { applyScopeDiff, applyArrayDiff, applyNodeDiff };
 }
 
+/**
+ * Entry point for scope commit diff.
+ *
+ * @param state Scope state being mutated.
+ * @param before Snapshot before mutation.
+ * @param next Snapshot after mutation.
+ * @returns `{ changed, patches }` where patches replay the same mutation.
+ */
 export function applyScopeCommitDiff<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
@@ -397,6 +451,14 @@ export function applyScopeCommitDiff<
   return { changed, patches };
 }
 
+/**
+ * Entry point for array commit diff.
+ *
+ * @param state Array state being mutated.
+ * @param before Snapshot before mutation.
+ * @param next Snapshot after mutation.
+ * @returns `{ changed, patches }` where patches replay the same mutation.
+ */
 export function applyArrayCommitDiff<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,

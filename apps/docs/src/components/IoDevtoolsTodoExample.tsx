@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { createIoDevtools } from 'io-devtools';
-import {
-  IoDevtoolsErrorBoundary,
-  IoDevtoolsPanel,
-} from 'io-devtools-react';
+import { IoDevtoolsErrorBoundary, IoDevtoolsPanel } from 'io-devtools-react';
 import { io } from 'io-store';
 
 type Filter = 'all' | 'active' | 'done';
@@ -126,7 +123,9 @@ export function IoDevtoolsTodoExample() {
                 <input
                   type="checkbox"
                   checked={todo.done}
-                  onChange={() => store.todos[index].done.set((value) => !value)}
+                  onChange={() =>
+                    store.todos[index].done.set((value) => !value)
+                  }
                 />
                 <span
                   className="io-devtools-todo__title"
