@@ -1,6 +1,6 @@
 ---
 name: io-skill
-description: Usage guide for IO packages. Use when an agent needs to explain or implement app-level usage of io-store, io-react, io-vue, io-svelte, and io-devtools (including state modeling, subscriptions, batching, framework adapters, SSR-safe usage, and debugging integration).
+description: Usage guide for IO packages. Use when an agent needs to explain or implement app-level usage of io-store, io-react, io-solid, io-vue, io-svelte, and io-devtools (including state modeling, subscriptions, batching, framework adapters, SSR-safe usage, and debugging integration).
 ---
 
 # IO Package Usage Skill
@@ -12,6 +12,8 @@ Use this skill to guide consumers of IO packages, not monorepo contributors.
 - `io-store`: core state primitives and utilities.
   - Main exports: `io`, `derived`, `batch`, `applyUpdate`, `replay`, `undoUpdate`, `mergeUpdates`, `createHistory`, `onError`, `onMutation`, `link`.
 - `io-react`: React adapter.
+  - Main export: `useIO`.
+- `io-solid`: Solid adapter.
   - Main export: `useIO`.
 - `io-vue`: Vue adapter.
   - Main exports: `useIO`, `ioRef`.
@@ -99,6 +101,18 @@ Notes:
 
 - `useIO` is SSR-safe; in server env it avoids client subscriptions.
 
+### Solid (`io-solid`)
+
+```tsx
+import { useIO } from 'io-solid';
+import type { IoUnit } from 'io-store';
+
+function Counter({ count }: { count: IoUnit<number> }) {
+  const value = useIO(count, { schedule: 'microtask' });
+  return <button onClick={() => count.set((v) => v + 1)}>{value()}</button>;
+}
+```
+
 ### Vue (`io-vue`)
 
 ```ts
@@ -161,7 +175,7 @@ import { IoDevtoolsPanel } from 'io-devtools-react';
 
 ## Guidance Rules For Agents
 
-- Prefer minimal examples that directly match user stack (React/Vue/Svelte/vanilla).
+- Prefer minimal examples that directly match user stack (React/Solid/Vue/Svelte/vanilla).
 - Always include unsubscribe/cleanup in examples with subscriptions.
 - For persistence examples, include error handling callback via `persist({ onError })`.
 - For SSR questions, explicitly mention behavior in server env and avoid DOM assumptions.

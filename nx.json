@@ -56,6 +56,7 @@
     "projects": [
       "io-store",
       "io-react",
+      "io-solid",
       "io-vue",
       "io-svelte",
       "io-devtools",
@@ -77,6 +78,5 @@
       "dependsOn": ["^build"]
     }
   },
-  "nxCloudId": "698e0815dc84b58d0e33bf26",
-  "useDaemonProcess": false
+  "nxCloudId": "698e0815dc84b58d0e33bf26"
 }

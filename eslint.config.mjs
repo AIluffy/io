@@ -50,6 +50,10 @@ export default [
               onlyDependOnLibsWithTags: ['scope:io', 'scope:io-svelte'],
             },
             {
+              sourceTag: 'scope:io-solid',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-solid'],
+            },
+            {
               sourceTag: 'scope:io-vue',
               onlyDependOnLibsWithTags: ['scope:io', 'scope:io-vue'],
             },
@@ -58,6 +62,7 @@ export default [
               onlyDependOnLibsWithTags: [
                 'scope:io',
                 'scope:io-react',
+                'scope:io-solid',
                 'scope:io-svelte',
                 'scope:io-vue',
               ],

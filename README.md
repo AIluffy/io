@@ -6,13 +6,14 @@
 
 ## 📦 项目概述
 
-本仓库包含以下 6 个包：
+本仓库包含以下 7 个包：
 
 - **核心包**
   - `io-store` - 细粒度响应式状态管理核心库
 
 - **框架集成包**
   - `io-react` - React 集成（Hooks）
+  - `io-solid` - Solid 集成（Accessor）
   - `io-svelte` - Svelte 集成（Stores）
   - `io-vue` - Vue 集成（Refs）
 
@@ -114,6 +115,17 @@ function Counter({ count }) {
 }
 ```
 
+### Solid
+
+```typescript
+import { useIO } from 'io-solid';
+
+function Counter({ count }) {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value()}</button>;
+}
+```
+
 ### Svelte
 
 ```typescript
@@ -144,6 +156,7 @@ const ref = ioRef(unit);
 ├── packages/
 │   ├── io/           [scope:io]       核心响应式库
 │   ├── io-react/     [scope:io-react] React 集成
+│   ├── io-solid/     [scope:io-solid] Solid 集成
 │   ├── io-svelte/    [scope:io-svelte] Svelte 集成
 │   └── io-vue/       [scope:io-vue]   Vue 集成
 ├── nx.json            - Nx 配置
@@ -159,6 +172,7 @@ const ref = ioRef(unit);
 | ------------------- | ------------------------- | ------------------- |
 | `io-store`          | `scope:io`                | 无（基础库）        |
 | `io-react`          | `scope:io-react`          | `scope:io`          |
+| `io-solid`          | `scope:io-solid`          | `scope:io`          |
 | `io-svelte`         | `scope:io-svelte`         | `scope:io`          |
 | `io-vue`            | `scope:io-vue`            | `scope:io`          |
 | `io-devtools`       | `scope:io-devtools`       | `scope:io`          |

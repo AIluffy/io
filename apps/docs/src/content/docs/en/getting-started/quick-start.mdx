@@ -27,7 +27,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::note
 If your project already uses a framework, install its adapter:
-`io-react`, `io-vue`, or `io-svelte`.
+`io-react`, `io-solid`, `io-vue`, or `io-svelte`.
 :::
 
 ## Create State
@@ -113,6 +113,22 @@ batch(() => {
     ```
 
   </TabItem>
+  <TabItem label="Solid">
+    ```tsx
+    import { io } from 'io-store';
+    import { useIO } from 'io-solid';
+
+    const count = io(0);
+
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.set((v) => v + 1)}>{value()}</button>
+      );
+    }
+    ```
+
+  </TabItem>
   <TabItem label="Svelte">
     ```svelte
     <script lang="ts">
@@ -138,4 +154,4 @@ batch(() => {
 
 - Learn the [Core Concepts](/en/core-concepts/units-scopes/).
 - Read about [Derived Values](/en/guides/derived/) and [Subscriptions](/en/guides/subscriptions/).
-- See [React](/en/integrations/react/) or [Vue](/en/integrations/vue/) usage.
+- See [React](/en/integrations/react/), [Solid](/en/integrations/solid/), or [Vue](/en/integrations/vue/) usage.

@@ -27,7 +27,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::note
 如果你的项目已经在用框架，请安装对应适配包：
-`io-react`、`io-vue` 或 `io-svelte`。
+`io-react`、`io-solid`、`io-vue` 或 `io-svelte`。
 :::
 
 ## 创建状态
@@ -113,6 +113,22 @@ batch(() => {
     ```
 
   </TabItem>
+  <TabItem label="Solid">
+    ```tsx
+    import { io } from 'io-store';
+    import { useIO } from 'io-solid';
+
+    const count = io(0);
+
+    export function Counter() {
+      const value = useIO(count);
+      return (
+        <button onClick={() => count.set((v) => v + 1)}>{value()}</button>
+      );
+    }
+    ```
+
+  </TabItem>
   <TabItem label="Svelte">
     ```svelte
     <script lang="ts">
@@ -138,4 +154,4 @@ batch(() => {
 
 - 理解 [核心概念](/core-concepts/units-scopes/)。
 - 学习 [派生值](/guides/derived/) 与 [订阅](/guides/subscriptions/)。
-- 查看 [React](/integrations/react/) 或 [Vue](/integrations/vue/) 接入方式。
+- 查看 [React](/integrations/react/)、[Solid](/integrations/solid/) 或 [Vue](/integrations/vue/) 接入方式。

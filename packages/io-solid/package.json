@@ -1,0 +1,37 @@
+{
+  "name": "io-solid",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "solid-js": ">=1.9",
+    "io-store": "*"
+  },
+  "devDependencies": {
+    "solid-js": "^1.9.9",
+    "vite": "^7.3.1",
+    "io-store": "*"
+  },
+  "nx": {
+    "tags": [
+      "scope:io-solid"
+    ]
+  }
+}
