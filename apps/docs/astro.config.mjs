@@ -33,7 +33,7 @@ export default defineConfig({
         alt: 'IO',
       },
       favicon: '/favicon.ico',
-      defaultLocale: 'en',
+      defaultLocale: 'zh-cn',
       locales: {
         en: {
           label: 'English',

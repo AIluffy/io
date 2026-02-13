@@ -36,7 +36,7 @@ nx run-many -t build
 - Production build: `nx run apps-docs:build`
 - Preview build: `nx run apps-docs:preview`
 - API docs generation: `nx run apps-docs:generate-api` (runs `tools/docs/generate-api-docs.mjs`)
-- Root route currently redirects via `apps/docs/src/pages/index.astro` to `/zh-cn/`
+- Root route serves `zh-cn` docs by default (no redirect page)
 - CI deploy entry (single source): `.github/workflows/deploy-docs.yml`
 - CI deploy target: Vercel production (triggered by GitHub Actions)
 - Required GitHub Secrets for docs deploy: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
