@@ -40,7 +40,7 @@ function buildDeepState(listSize = 200) {
 }
 
 function buildDeepNested(depth) {
-  let root = { value: 0 };
+  const root = { value: 0 };
   let current = root;
   for (let i = 1; i < depth; i += 1) {
     current.child = { value: i };
@@ -71,10 +71,10 @@ async function runBenchmarks() {
     pathToFileURL(path.join(ioDistRoot, 'index.js')).href
   );
   const { createUnit } = await import(
-    pathToFileURL(path.join(ioDistRoot, 'lib', 'unit.js')).href
+    pathToFileURL(path.join(ioDistRoot, 'lib', 'units', 'unit.js')).href
   );
   const { createDraft, finishDraft } = await import(
-    pathToFileURL(path.join(ioDistRoot, 'lib', 'cow.js')).href
+    pathToFileURL(path.join(ioDistRoot, 'lib', 'utils', 'cow.js')).href
   );
 
   const bench = new Bench({
@@ -96,7 +96,7 @@ async function runBenchmarks() {
 
   bench.add('subscribe/unsubscribe: value (10k)', () => {
     const unit = createUnit(0);
-    const onValue = () => {};
+    const onValue = () => undefined;
     for (let i = 0; i < 10_000; i += 1) {
       const unsub = unit.subscribe(onValue);
       unsub();
@@ -105,7 +105,7 @@ async function runBenchmarks() {
 
   bench.add('subscribe/unsubscribe: update (10k)', () => {
     const unit = createUnit(0);
-    const onUpdate = () => {};
+    const onUpdate = () => undefined;
     for (let i = 0; i < 10_000; i += 1) {
       const unsub = unit.subscribeUpdate(onUpdate);
       unsub();
@@ -304,7 +304,8 @@ async function writeDocs(results) {
   const locales = ['en', 'zh-cn'];
   for (const locale of locales) {
     const markdown = buildMarkdown({ locale, results, runtime });
-    const filePath = path.join(docsRoot, locale, 'guides', 'benchmark.mdx');
+    const localeDir = locale === 'zh-cn' ? '' : locale;
+    const filePath = path.join(docsRoot, localeDir, 'guides', 'benchmark.mdx');
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, markdown);
   }

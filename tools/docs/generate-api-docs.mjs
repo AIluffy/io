@@ -437,7 +437,8 @@ async function generate() {
   }
 
   for (const locale of LOCALES) {
-    const referenceDir = path.join(docsRoot, locale.id, 'reference');
+    const localeDir = locale.id === 'zh-cn' ? '' : locale.id;
+    const referenceDir = path.join(docsRoot, localeDir, 'reference');
     await ensureDir(referenceDir);
     await fs.writeFile(
       path.join(referenceDir, 'versions.mdx'),

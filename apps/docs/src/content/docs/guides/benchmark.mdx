@@ -1,6 +1,6 @@
 ---
-title: 'Benchmark'
-description: 'IO 核心链路性能基准（自动生成）。'
+title: "Benchmark"
+description: "IO 核心链路性能基准（自动生成）。"
 sidebar:
   order: 6
 ---
@@ -11,8 +11,8 @@ sidebar:
 
 ## 运行环境
 
-- Date: 2026-02-12T14:47:54.420Z
-- Node: v25.5.0
+- Date: 2026-02-13T13:43:10.392Z
+- Node: v22.22.0
 - Platform: darwin 25.2.0 (arm64)
 - CPU: Apple M4
 - Benchmark time: 2000ms per task
@@ -20,20 +20,20 @@ sidebar:
 
 ## Benchmark 结果
 
-| 场景                                | ops/sec | mean (ms/op) | 误差 (±rme %) |
-| ----------------------------------- | ------- | ------------ | ------------- |
-| createUnit: primitive (1k)          | 768.10  | 1.30         | 7.83          |
-| createUnit: object (1k)             | 213.49  | 4.68         | 7.73          |
-| subscribe/unsubscribe: value (10k)  | 1958.43 | 0.51         | 6.95          |
-| subscribe/unsubscribe: update (10k) | 1987.87 | 0.50         | 7.46          |
-| snapshot: scope (10k)               | 374.11  | 2.67         | 14.58         |
-| snapshot: array (10k)               | 246.08  | 4.06         | 18.88         |
-| snapshot: array (20k boundary)      | 8.25    | 121.27       | 18.88         |
-| snapshot: depth (80 boundary)       | 909.93  | 1.10         | 12.71         |
-| draft/finish: deep object (200)     | 1178.65 | 0.85         | 10.16         |
-| commit deep update (200)            | 10.90   | 91.78        | 12.81         |
-| commit deep update (80 boundary)    | 2.36    | 422.96       | 14.61         |
-| batch: 40k updates                  | 117.44  | 8.52         | 9.04          |
-| no batch: 40k updates               | 114.72  | 8.72         | 11.23         |
-| batch update 200 units              | 0.86    | 1156.20      | 18.11         |
-| sequential update 200 units         | 1.06    | 942.99       | 1.15          |
+| 场景 | ops/sec | mean (ms/op) | 误差 (±rme %) |
+| --- | --- | --- | --- |
+| createUnit: primitive (1k) | 257.87 | 3.88 | 15.60 |
+| createUnit: object (1k) | 170.42 | 5.87 | 10.71 |
+| subscribe/unsubscribe: value (10k) | 1495.95 | 0.67 | 5.46 |
+| subscribe/unsubscribe: update (10k) | 1395.52 | 0.72 | 12.02 |
+| snapshot: scope (10k) | 318.79 | 3.14 | 13.35 |
+| snapshot: array (10k) | 316.79 | 3.16 | 8.94 |
+| snapshot: array (20k boundary) | 8.14 | 122.84 | 11.90 |
+| snapshot: depth (80 boundary) | 662.43 | 1.51 | 11.30 |
+| draft/finish: deep object (200) | 97.42 | 10.27 | 13.56 |
+| commit deep update (200) | 8.61 | 116.16 | 24.46 |
+| commit deep update (80 boundary) | 1.81 | 553.31 | 10.56 |
+| batch: 40k updates | 86.25 | 11.59 | 11.23 |
+| no batch: 40k updates | 83.49 | 11.98 | 7.64 |
+| batch update 200 units | 0.51 | 1942.92 | 6.40 |
+| sequential update 200 units | 0.54 | 1835.41 | 3.29 |
