@@ -200,11 +200,11 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
     fontSize: 12,
-    border: '1px solid var(--@iostore/devtools-border)',
+    border: '1px solid var(--io-devtools-border)',
     borderRadius: 10,
     padding: 10,
-    background: 'var(--@iostore/devtools-panel-bg)',
-    color: 'var(--@iostore/devtools-text)',
+    background: 'var(--io-devtools-panel-bg)',
+    color: 'var(--io-devtools-text)',
     height: props.height ?? 420,
     display: 'grid',
     gridTemplateRows: 'auto 1fr',
@@ -212,25 +212,25 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
   };
 
   return (
-    <div className="@iostore/devtools-panel" style={panelStyle}>
+    <div className="io-devtools-panel" style={panelStyle}>
       <div style={headerStyle}>
-        <div className="@iostore/devtools-panel__toolbar">
+        <div className="io-devtools-panel__toolbar">
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => props.devtools.timeTravel.undo()}
             disabled={state.cursor < 0}
           >
             Undo
           </button>
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => props.devtools.timeTravel.redo()}
             disabled={state.cursor >= state.history.length - 1}
           >
             Redo
           </button>
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => {
               if (selected >= 0) props.devtools.timeTravel.goTo(selected);
             }}
@@ -239,7 +239,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             Go
           </button>
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() =>
               state.paused ? props.devtools.resume() : props.devtools.pause()
             }
@@ -247,24 +247,24 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             {state.paused ? 'Resume' : 'Pause'}
           </button>
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => props.devtools.clear()}
             disabled={state.history.length === 0}
           >
             Clear
           </button>
-          <div className="@iostore/devtools-panel__toolbar-divider" />
+          <div className="io-devtools-panel__toolbar-divider" />
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => {
               const json = props.devtools.export.json();
-              downloadText('@iostore/devtools.json', json);
+              downloadText('io-devtools.json', json);
             }}
           >
             Export JSON
           </button>
           <button
-            className="@iostore/devtools-panel__button"
+            className="io-devtools-panel__button"
             onClick={() => {
               const payload = props.devtools.export.reduxDevToolsImport();
               downloadText(
@@ -277,8 +277,8 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
           </button>
         </div>
 
-        <div className="@iostore/devtools-panel__seek-row">
-          <label className="@iostore/devtools-panel__seek">
+        <div className="io-devtools-panel__seek-row">
+          <label className="io-devtools-panel__seek">
             <span>Seek</span>
             <input
               type="range"
@@ -290,7 +290,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             />
           </label>
 
-          <div className="@iostore/devtools-panel__meta">
+          <div className="io-devtools-panel__meta">
             <div>Cursor: {state.cursor}</div>
             <div>History: {state.history.length}</div>
             {state.perf ? (
@@ -310,9 +310,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
       >
         <div
           style={{
-            border: '1px solid var(--@iostore/devtools-border)',
+            border: '1px solid var(--io-devtools-border)',
             borderRadius: 10,
-            background: 'var(--@iostore/devtools-surface)',
+            background: 'var(--io-devtools-surface)',
             overflow: 'auto',
           }}
         >
@@ -320,9 +320,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             style={{
               padding: 8,
               fontWeight: 700,
-              borderBottom: '1px solid var(--@iostore/devtools-divider)',
+              borderBottom: '1px solid var(--io-devtools-divider)',
             }}
-            className="@iostore/devtools-panel__section-title"
+            className="io-devtools-panel__section-title"
           >
             Timeline
           </div>
@@ -336,7 +336,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             return (
               <button
                 key={e.id}
-                className={`@iostore/devtools-panel__timeline-item${active ? ' is-active' : ''}${cursorHere ? ' is-cursor' : ''}`}
+                className={`io-devtools-panel__timeline-item${active ? ' is-active' : ''}${cursorHere ? ' is-cursor' : ''}`}
                 onClick={() => setSelected(idx)}
                 style={{
                   display: 'grid',
@@ -346,20 +346,20 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                   textAlign: 'left',
                   padding: '8px 10px',
                   border: 'none',
-                  borderBottom: '1px solid var(--@iostore/devtools-divider)',
+                  borderBottom: '1px solid var(--io-devtools-divider)',
                   background: active
-                    ? 'var(--@iostore/devtools-timeline-active-bg)'
-                    : 'var(--@iostore/devtools-timeline-bg)',
+                    ? 'var(--io-devtools-timeline-active-bg)'
+                    : 'var(--io-devtools-timeline-bg)',
                   cursor: 'pointer',
                 }}
               >
-                <div className="@iostore/devtools-panel__muted">{idx}</div>
+                <div className="io-devtools-panel__muted">{idx}</div>
                 <div style={{ display: 'grid', gap: 2 }}>
                   <div style={{ fontWeight: 600 }}>
                     {cursorHere ? '▶ ' : ''}
                     {label}
                   </div>
-                  <div className="@iostore/devtools-panel__muted">
+                  <div className="io-devtools-panel__muted">
                     {formatTimestamp(e.timestamp)}
                     {e.perf
                       ? ` · ${e.perf.totalMs.toFixed(2)}ms · ${e.perf.patchCount} patches`
@@ -373,9 +373,9 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
 
         <div
           style={{
-            border: '1px solid var(--@iostore/devtools-border)',
+            border: '1px solid var(--io-devtools-border)',
             borderRadius: 10,
-            background: 'var(--@iostore/devtools-surface)',
+            background: 'var(--io-devtools-surface)',
             overflow: 'auto',
             minHeight: 0,
             marginTop: 0,
@@ -385,14 +385,14 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
             style={{
               padding: 8,
               fontWeight: 700,
-              borderBottom: '1px solid var(--@iostore/devtools-divider)',
+              borderBottom: '1px solid var(--io-devtools-divider)',
             }}
-            className="@iostore/devtools-panel__section-title"
+            className="io-devtools-panel__section-title"
           >
             Details
           </div>
           {!selectedEntry ? (
-            <div style={{ padding: 10 }} className="@iostore/devtools-panel__muted">
+            <div style={{ padding: 10 }} className="io-devtools-panel__muted">
               Select an entry to inspect diffs.
             </div>
           ) : (
@@ -401,14 +401,14 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                 <div style={{ fontWeight: 700 }}>Patch diffs</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
-                    className="@iostore/devtools-panel__button"
+                    className="io-devtools-panel__button"
                     onClick={() => setPatchView('tree')}
                     disabled={patchView === 'tree'}
                   >
                     Tree
                   </button>
                   <button
-                    className="@iostore/devtools-panel__button"
+                    className="io-devtools-panel__button"
                     onClick={() => setPatchView('list')}
                     disabled={patchView === 'list'}
                   >
@@ -421,7 +421,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'var(--@iostore/devtools-surface-strong)',
+                      background: 'var(--io-devtools-surface-strong)',
                       overflowX: 'auto',
                     }}
                   >
@@ -433,7 +433,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'var(--@iostore/devtools-surface-strong)',
+                      background: 'var(--io-devtools-surface-strong)',
                       display: 'grid',
                       gap: 6,
                     }}
@@ -448,7 +448,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                   <div style={{ fontWeight: 700 }}>Snapshot diffs</div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
-                      className="@iostore/devtools-panel__button"
+                      className="io-devtools-panel__button"
                       onClick={() =>
                         setSnapshotDiffMode((current) =>
                           current === 'collapsed' ? 'sample' : 'collapsed',
@@ -460,7 +460,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                         : 'Hide'}
                     </button>
                     <button
-                      className="@iostore/devtools-panel__button"
+                      className="io-devtools-panel__button"
                       onClick={() => setSnapshotDiffMode('full')}
                       disabled={snapshotDiffMode === 'full'}
                     >
@@ -468,16 +468,16 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                     </button>
                   </div>
                   {snapshotDiffMode === 'collapsed' ? (
-                    <div className="@iostore/devtools-panel__muted">
-                      Snapshot diffs are computed on demand. Use sample for quick
-                      checks, deep diff for full detail.
+                    <div className="io-devtools-panel__muted">
+                      Snapshot diffs are computed on demand. Use sample for
+                      quick checks, deep diff for full detail.
                     </div>
                   ) : (
                     <>
                       {snapshotDiffMode === 'sample' ? (
-                        <div className="@iostore/devtools-panel__muted">
-                          Sampled diff (depth {SNAPSHOT_SAMPLE_OPTIONS.maxDepth},
-                          max {SNAPSHOT_SAMPLE_OPTIONS.maxChanges} changes).
+                        <div className="io-devtools-panel__muted">
+                          Sampled diff (depth {SNAPSHOT_SAMPLE_OPTIONS.maxDepth}
+                          , max {SNAPSHOT_SAMPLE_OPTIONS.maxChanges} changes).
                         </div>
                       ) : null}
                       <pre
@@ -485,7 +485,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                           margin: 0,
                           padding: 10,
                           borderRadius: 8,
-                          background: 'var(--@iostore/devtools-surface-strong)',
+                          background: 'var(--io-devtools-surface-strong)',
                           overflowX: 'auto',
                         }}
                       >
@@ -504,7 +504,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                       margin: 0,
                       padding: 10,
                       borderRadius: 8,
-                      background: 'var(--@iostore/devtools-surface-strong)',
+                      background: 'var(--io-devtools-surface-strong)',
                       display: 'grid',
                       gap: 8,
                     }}
@@ -514,7 +514,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                         <div style={{ fontWeight: 600 }}>
                           Multi-parent #{index + 1}
                         </div>
-                        <div className="@iostore/devtools-panel__muted">
+                        <div className="io-devtools-panel__muted">
                           Paths: {entry.paths.map(formatPath).join(', ')}
                         </div>
                       </div>

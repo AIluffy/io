@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { createIoDevtools } from '@iostore/devtools';
-import { IoDevtoolsErrorBoundary, IoDevtoolsPanel } from '@iostore/devtools-react';
+import {
+  IoDevtoolsErrorBoundary,
+  IoDevtoolsPanel,
+} from '@iostore/devtools-react';
 import { io } from '@iostore/store';
 
 type Filter = 'all' | 'active' | 'done';
@@ -64,20 +67,20 @@ export function IoDevtoolsTodoExample() {
   const remaining = snapshot.todos.filter((todo) => !todo.done).length;
 
   return (
-    <div className="@iostore/devtools-todo">
-      <section className="io-playground__card @iostore/devtools-todo__panel">
-        <div className="@iostore/devtools-todo__head">
+    <div className="io-devtools-todo">
+      <section className="io-playground__card io-devtools-todo__panel">
+        <div className="io-devtools-todo__head">
           <div>
             <div className="io-playground__kicker">Todo List</div>
-            <p className="@iostore/devtools-todo__hint">
+            <p className="io-devtools-todo__hint">
               Based on the example todo list, connected to IO DevTools.
             </p>
           </div>
-          <span className="@iostore/devtools-todo__badge">{remaining} left</span>
+          <span className="io-devtools-todo__badge">{remaining} left</span>
         </div>
 
         <form
-          className="@iostore/devtools-todo__form"
+          className="io-devtools-todo__form"
           onSubmit={(event) => {
             event.preventDefault();
             const title = store.draft.get().trim();
@@ -87,7 +90,7 @@ export function IoDevtoolsTodoExample() {
           }}
         >
           <input
-            className="@iostore/devtools-todo__input"
+            className="io-devtools-todo__input"
             value={snapshot.draft}
             onChange={(event) => store.draft.set(event.currentTarget.value)}
             placeholder="What needs to be done?"
@@ -97,13 +100,13 @@ export function IoDevtoolsTodoExample() {
           </button>
         </form>
 
-        <div className="@iostore/devtools-todo__filters">
+        <div className="io-devtools-todo__filters">
           {filters.map((key) => (
             <button
               key={key}
               type="button"
               aria-pressed={snapshot.filter === key}
-              className="@iostore/devtools-todo__filter"
+              className="io-devtools-todo__filter"
               data-active={snapshot.filter === key}
               onClick={() => store.filter.set(key)}
             >
@@ -112,14 +115,14 @@ export function IoDevtoolsTodoExample() {
           ))}
         </div>
 
-        <div className="@iostore/devtools-todo__list">
+        <div className="io-devtools-todo__list">
           {filteredTodos.length === 0 ? (
-            <div className="@iostore/devtools-todo__empty">
+            <div className="io-devtools-todo__empty">
               Nothing here yet. Add your first task.
             </div>
           ) : (
             filteredTodos.map(({ todo, index }) => (
-              <div className="@iostore/devtools-todo__item" key={todo.id}>
+              <div className="io-devtools-todo__item" key={todo.id}>
                 <input
                   type="checkbox"
                   checked={todo.done}
@@ -128,14 +131,14 @@ export function IoDevtoolsTodoExample() {
                   }
                 />
                 <span
-                  className="@iostore/devtools-todo__title"
+                  className="io-devtools-todo__title"
                   data-done={todo.done ? 'true' : undefined}
                 >
                   {todo.title}
                 </span>
                 <button
                   type="button"
-                  className="@iostore/devtools-todo__remove"
+                  className="io-devtools-todo__remove"
                   onClick={() => store.todos.splice(index, 1)}
                 >
                   Remove
