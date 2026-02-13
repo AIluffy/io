@@ -4,6 +4,7 @@
       "ref": "2f6ae50a1d4973c665f7a8c002dee088ace6c1bb",
       "subject": "Merge pull request #6 from AIluffy/feat/publish"
     },
-    "targetVersion": "latest"
+    "targetVersion": "latest",
+    "confirmedPackageUpdates": true
   }
 }
