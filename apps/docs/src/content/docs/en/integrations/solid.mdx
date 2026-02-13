@@ -5,13 +5,13 @@ sidebar:
   order: 5
 ---
 
-`io-solid` provides `useIO`, returning a Solid `Accessor`.
+The npm package `@iostore/solid` provides `useIO` to adapt IO sources into a Solid `Accessor`.
 
 ## Basic Usage
 
 ```tsx
-import { io } from 'io-store';
-import { useIO } from 'io-solid';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/solid';
 
 const count = io(0);
 
@@ -24,8 +24,8 @@ export function Counter() {
 ## Derived Values
 
 ```tsx
-import { derived, io } from 'io-store';
-import { useIO } from 'io-solid';
+import { derived, io } from '@iostore/store';
+import { useIO } from '@iostore/solid';
 
 const store = io({ count: 0 });
 const doubled = derived([store.count], (value) => value * 2);

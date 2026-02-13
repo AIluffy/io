@@ -17,7 +17,7 @@ const entry: IoHistoryEntry = {
   snapshotAfter: { value: 2 },
 };
 
-describe('io-devtools: exportReduxDevToolsImportState', () => {
+describe('@iostore/devtools: exportReduxDevToolsImportState', () => {
   it('builds actions and computed states', () => {
     const payload = exportReduxDevToolsImportState({
       initialState: { value: 1 },

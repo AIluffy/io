@@ -1,7 +1,7 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 import { onCleanup } from 'solid-js';
 
-import { useIO } from 'io-solid';
+import { useIO } from '@iostore/solid';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 type Submission = { name: string; email: string; note: string };

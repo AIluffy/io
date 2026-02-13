@@ -19,8 +19,8 @@ const LOCALES = [
       errors: 'Errors',
       source: 'Source',
       indexTitle: 'API Reference',
-      experimentalTitle: 'Experimental (io-store/experimental)',
-      experimentalNote: '**Experimental**: import from `io-store/experimental`.',
+      experimentalTitle: 'Experimental (@iostore/store/experimental)',
+      experimentalNote: '**Experimental**: import from `@iostore/store/experimental`.',
       none: '(none)',
       errorsBody: [
         '- This library does not define standardized error codes.',
@@ -40,8 +40,8 @@ const LOCALES = [
       errors: '错误',
       source: '源码',
       indexTitle: 'API 参考',
-      experimentalTitle: '实验特性（io-store/experimental）',
-      experimentalNote: '**实验特性**：请从 `io-store/experimental` 引入。',
+      experimentalTitle: '实验特性（@iostore/store/experimental）',
+      experimentalNote: '**实验特性**：请从 `@iostore/store/experimental` 引入。',
       none: '（无）',
       errorsBody: [
         '- 本库未定义标准化错误码。',

@@ -35,7 +35,7 @@ IO 既有原子态（Unit），又有结构态（Tree）。它的“原子化优
 - **组合：原子之间直接组合**：`derived([unit...])` 组合多个 Unit，既适合 selector，也适合把多个原子拼成一个 view-model。
 
 ```ts
-import { derived, io } from 'io-store';
+import { derived, io } from '@iostore/store';
 
 const store = io({
   user: { name: 'Ada' },

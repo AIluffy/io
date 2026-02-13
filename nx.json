@@ -53,16 +53,7 @@
     }
   ],
   "release": {
-    "projects": [
-      "io-store",
-      "io-react",
-      "io-solid",
-      "io-vue",
-      "io-svelte",
-      "io-devtools",
-      "io-devtools-react",
-      "io-skill"
-    ],
+    "projects": ["packages/*"],
     "git": {
       "commit": true,
       "tag": true,

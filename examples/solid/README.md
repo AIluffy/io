@@ -10,8 +10,8 @@ npm run dev
 ## What it demonstrates
 
 - Todo demo (add / toggle / remove / filter)
-- `io-store`: tree nodes for object + array state
-- `io-solid`: `useIO(source)` returns Solid accessors from `snapshot() + subscribe()`
+- `@iostore/store`: tree nodes for object + array state
+- `@iostore/solid`: `useIO(source)` returns Solid accessors from `snapshot() + subscribe()`
 
 ## Async templates
 

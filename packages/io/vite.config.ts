@@ -6,7 +6,7 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/io',
   test: {
-    name: 'io-store',
+    name: '@iostore/store',
     watch: false,
     globals: true,
     environment: 'node',

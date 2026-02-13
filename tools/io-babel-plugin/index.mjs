@@ -2,7 +2,7 @@ export default function ioAccessPlugin({ types: t }) {
   function isIoImport(path, state) {
     const node = path.node;
     if (!t.isImportDeclaration(node)) return;
-    if (node.source.value !== 'io-store') return;
+    if (node.source.value !== '@iostore/store') return;
     for (const spec of node.specifiers) {
       if (t.isImportSpecifier(spec) && spec.imported.name === 'io') {
         state.ioNames.add(spec.local.name);
@@ -69,7 +69,7 @@ export default function ioAccessPlugin({ types: t }) {
                 internalId,
                 t.callExpression(
                   t.memberExpression(t.identifier('Symbol'), t.identifier('for')),
-                  [t.stringLiteral('io-store/internal')]
+                  [t.stringLiteral('@iostore/store/internal')]
                 )
               ),
             ])

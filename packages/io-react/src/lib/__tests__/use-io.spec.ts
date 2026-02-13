@@ -2,7 +2,7 @@ import React from 'react';
 import TestRenderer from 'react-test-renderer';
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 import { useIO } from '../use-io.js';
 
@@ -29,7 +29,7 @@ async function setup(schedule: 'sync' | 'microtask') {
   return { count, renders, getText };
 }
 
-describe('io-react', () => {
+describe('@iostore/react', () => {
   it('batches microtask updates and skips intermediate renders', async () => {
     const { count, renders, getText } = await setup('microtask');
 

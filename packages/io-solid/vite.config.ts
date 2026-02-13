@@ -5,7 +5,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/io-solid',
   plugins: [],
   test: {
-    name: '@org/io-solid',
+    name: '@iostore/solid',
     passWithNoTests: true,
     watch: false,
     globals: true,

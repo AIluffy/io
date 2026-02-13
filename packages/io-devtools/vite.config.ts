@@ -5,7 +5,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/io-devtools',
   plugins: [],
   test: {
-    name: '@org/io-devtools',
+    name: '@iostore/devtools',
     passWithNoTests: true,
     watch: false,
     globals: true,

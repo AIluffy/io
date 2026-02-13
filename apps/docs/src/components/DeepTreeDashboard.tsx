@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 
 type TreeState = {
   app: {

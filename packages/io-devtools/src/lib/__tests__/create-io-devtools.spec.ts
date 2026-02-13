@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { io, link } from 'io-store';
+import { io, link } from '@iostore/store';
 import { createIoDevtools } from '../create-io-devtools.js';
 
-describe('io-devtools: createIoDevtools', () => {
+describe('@iostore/devtools: createIoDevtools', () => {
   it('records updates and snapshots', () => {
     const store = io({ count: 0, user: { name: 'a' } });
     const devtools = createIoDevtools(store, { captureSnapshots: 'always' });

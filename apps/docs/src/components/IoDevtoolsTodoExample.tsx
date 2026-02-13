@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { createIoDevtools } from 'io-devtools';
-import { IoDevtoolsErrorBoundary, IoDevtoolsPanel } from 'io-devtools-react';
-import { io } from 'io-store';
+import { createIoDevtools } from '@iostore/devtools';
+import { IoDevtoolsErrorBoundary, IoDevtoolsPanel } from '@iostore/devtools-react';
+import { io } from '@iostore/store';
 
 type Filter = 'all' | 'active' | 'done';
 type Todo = { id: string; title: string; done: boolean };
@@ -64,20 +64,20 @@ export function IoDevtoolsTodoExample() {
   const remaining = snapshot.todos.filter((todo) => !todo.done).length;
 
   return (
-    <div className="io-devtools-todo">
-      <section className="io-playground__card io-devtools-todo__panel">
-        <div className="io-devtools-todo__head">
+    <div className="@iostore/devtools-todo">
+      <section className="io-playground__card @iostore/devtools-todo__panel">
+        <div className="@iostore/devtools-todo__head">
           <div>
             <div className="io-playground__kicker">Todo List</div>
-            <p className="io-devtools-todo__hint">
+            <p className="@iostore/devtools-todo__hint">
               Based on the example todo list, connected to IO DevTools.
             </p>
           </div>
-          <span className="io-devtools-todo__badge">{remaining} left</span>
+          <span className="@iostore/devtools-todo__badge">{remaining} left</span>
         </div>
 
         <form
-          className="io-devtools-todo__form"
+          className="@iostore/devtools-todo__form"
           onSubmit={(event) => {
             event.preventDefault();
             const title = store.draft.get().trim();
@@ -87,7 +87,7 @@ export function IoDevtoolsTodoExample() {
           }}
         >
           <input
-            className="io-devtools-todo__input"
+            className="@iostore/devtools-todo__input"
             value={snapshot.draft}
             onChange={(event) => store.draft.set(event.currentTarget.value)}
             placeholder="What needs to be done?"
@@ -97,13 +97,13 @@ export function IoDevtoolsTodoExample() {
           </button>
         </form>
 
-        <div className="io-devtools-todo__filters">
+        <div className="@iostore/devtools-todo__filters">
           {filters.map((key) => (
             <button
               key={key}
               type="button"
               aria-pressed={snapshot.filter === key}
-              className="io-devtools-todo__filter"
+              className="@iostore/devtools-todo__filter"
               data-active={snapshot.filter === key}
               onClick={() => store.filter.set(key)}
             >
@@ -112,14 +112,14 @@ export function IoDevtoolsTodoExample() {
           ))}
         </div>
 
-        <div className="io-devtools-todo__list">
+        <div className="@iostore/devtools-todo__list">
           {filteredTodos.length === 0 ? (
-            <div className="io-devtools-todo__empty">
+            <div className="@iostore/devtools-todo__empty">
               Nothing here yet. Add your first task.
             </div>
           ) : (
             filteredTodos.map(({ todo, index }) => (
-              <div className="io-devtools-todo__item" key={todo.id}>
+              <div className="@iostore/devtools-todo__item" key={todo.id}>
                 <input
                   type="checkbox"
                   checked={todo.done}
@@ -128,14 +128,14 @@ export function IoDevtoolsTodoExample() {
                   }
                 />
                 <span
-                  className="io-devtools-todo__title"
+                  className="@iostore/devtools-todo__title"
                   data-done={todo.done ? 'true' : undefined}
                 >
                   {todo.title}
                 </span>
                 <button
                   type="button"
-                  className="io-devtools-todo__remove"
+                  className="@iostore/devtools-todo__remove"
                   onClick={() => store.todos.splice(index, 1)}
                 >
                   Remove

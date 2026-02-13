@@ -20,7 +20,7 @@ export const countAtom = atom(0);
 IO:
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 export const count = io(0);
 ```
@@ -36,7 +36,7 @@ const doubleAtom = atom((get) => get(countAtom) * 2);
 IO:
 
 ```ts
-import { derived } from 'io-store';
+import { derived } from '@iostore/store';
 
 const double = derived([count], (v) => v * 2);
 ```
@@ -68,7 +68,7 @@ const [count, setCount] = useAtom(countAtom);
 IO:
 
 ```tsx
-import { useIO } from 'io-react';
+import { useIO } from '@iostore/react';
 
 function Counter() {
   const value = useIO(count);

@@ -6,20 +6,23 @@
 
 ## 📦 项目概述
 
-本仓库包含以下 7 个包：
+本仓库包含以下 8 个包：
 
 - **核心包**
-  - `io-store` - 细粒度响应式状态管理核心库
+  - `@iostore/store` - 细粒度响应式状态管理核心库
 
 - **框架集成包**
-  - `io-react` - React 集成（Hooks）
-  - `io-solid` - Solid 集成（Accessor）
-  - `io-svelte` - Svelte 集成（Stores）
-  - `io-vue` - Vue 集成（Refs）
+  - `@iostore/react` - React 集成（Hooks）
+  - `@iostore/solid` - Solid 集成（Accessor）
+  - `@iostore/svelte` - Svelte 集成（Stores）
+  - `@iostore/vue` - Vue 集成（Refs）
 
 - **DevTools**
-  - `io-devtools` - 运行时观察与导出能力
-  - `io-devtools-react` - React 面板组件
+  - `@iostore/devtools` - 运行时观察与导出能力
+  - `@iostore/devtools-react` - React 面板组件
+
+- **能力扩展包**
+  - `@iostore/skill` - 技能模型与上下文编排能力
 
 ## 🚀 快速开始
 
@@ -48,7 +51,7 @@ nx graph
 ### 1. 细粒度响应式
 
 ```typescript
-import { derived, io } from 'io-store';
+import { derived, io } from '@iostore/store';
 
 // 基础单元
 const count = io(0);
@@ -90,7 +93,7 @@ const double = derived([count], (c) => c * 2);
 ### 4. 更新历史与回放
 
 ```typescript
-import { applyUpdate, replay, undoUpdate } from 'io-store';
+import { applyUpdate, replay, undoUpdate } from '@iostore/store';
 
 const updates: IoUpdate[] = [];
 state.subscribeUpdate((u) => updates.push(u));
@@ -107,7 +110,7 @@ applyUpdate(state, undoUpdate(update));
 ### React
 
 ```typescript
-import { useIO } from 'io-react';
+import { useIO } from '@iostore/react';
 
 function Counter({ count }) {
   const value = useIO(count);
@@ -118,7 +121,7 @@ function Counter({ count }) {
 ### Solid
 
 ```typescript
-import { useIO } from 'io-solid';
+import { useIO } from '@iostore/solid';
 
 function Counter({ count }) {
   const value = useIO(count);
@@ -129,7 +132,7 @@ function Counter({ count }) {
 ### Svelte
 
 ```typescript
-import { toReadable, toWritable } from 'io-svelte';
+import { toReadable, toWritable } from '@iostore/svelte';
 
 // 只读 store
 const store = toReadable(state);
@@ -141,7 +144,7 @@ const writable = toWritable(unit);
 ### Vue
 
 ```typescript
-import { useIO, ioRef } from 'io-vue';
+import { useIO, ioRef } from '@iostore/vue';
 
 // 组合式函数
 const state = useIO(source);
@@ -154,11 +157,11 @@ const ref = ioRef(unit);
 
 ```
 ├── packages/
-│   ├── io/           [scope:io]       核心响应式库
-│   ├── io-react/     [scope:io-react] React 集成
-│   ├── io-solid/     [scope:io-solid] Solid 集成
-│   ├── io-svelte/    [scope:io-svelte] Svelte 集成
-│   └── io-vue/       [scope:io-vue]   Vue 集成
+│   ├── io/           [scope:io]       @iostore/store（核心响应式库）
+│   ├── io-react/     [scope:io-react] @iostore/react（React 集成）
+│   ├── io-solid/     [scope:io-solid] @iostore/solid（Solid 集成）
+│   ├── io-svelte/    [scope:io-svelte] @iostore/svelte（Svelte 集成）
+│   └── io-vue/       [scope:io-vue]   @iostore/vue（Vue 集成）
 ├── nx.json            - Nx 配置
 ├── tsconfig.json      - TypeScript 配置
 └── eslint.config.mjs  - ESLint 模块边界规则
@@ -170,28 +173,30 @@ const ref = ioRef(unit);
 
 | 包                  | 标签                      | 可依赖的包          |
 | ------------------- | ------------------------- | ------------------- |
-| `io-store`          | `scope:io`                | 无（基础库）        |
-| `io-react`          | `scope:io-react`          | `scope:io`          |
-| `io-solid`          | `scope:io-solid`          | `scope:io`          |
-| `io-svelte`         | `scope:io-svelte`         | `scope:io`          |
-| `io-vue`            | `scope:io-vue`            | `scope:io`          |
-| `io-devtools`       | `scope:io-devtools`       | `scope:io`          |
-| `io-devtools-react` | `scope:io-devtools-react` | `scope:io-devtools` |
+| `@iostore/store`          | `scope:io`                | 无（基础库）        |
+| `@iostore/react`          | `scope:io-react`          | `scope:io`          |
+| `@iostore/solid`          | `scope:io-solid`          | `scope:io`          |
+| `@iostore/svelte`         | `scope:io-svelte`         | `scope:io`          |
+| `@iostore/vue`            | `scope:io-vue`            | `scope:io`          |
+| `@iostore/devtools`       | `scope:io-devtools`       | `scope:io`          |
+| `@iostore/devtools-react` | `scope:io-devtools-react` | `scope:io-devtools` |
 
 ESLint 配置会自动阻止循环依赖和错误的模块依赖。
 
 ## 📚 常用命令
 
+术语约定：本文中的 npm 包名统一写作 `@iostore/*`；Nx 命令参数使用 `Nx 项目名（project id）`（例如 `io-store`）。
+
 ```bash
 # 项目探索
 npm exec nx graph                           # 交互式依赖图
 npm exec nx list                            # 列出已安装插件
-npm exec nx show project io-store --web     # 查看项目详情
+npm exec nx show project io-store --web     # 查看项目详情（io-store 为 Nx 项目名，对应 npm 包 @iostore/store）
 
 # 开发
-npm exec nx build io-store                 # 构建特定包
-npm exec nx test io-store                  # 测试特定包
-npm exec nx lint io-react                  # 检查特定包
+npm exec nx build io-store                 # 构建 @iostore/store（Nx 项目名：io-store）
+npm exec nx test io-store                  # 测试 @iostore/store（Nx 项目名：io-store）
+npm exec nx lint io-react                  # 检查 @iostore/react（Nx 项目名：io-react）
 
 # 批量任务
 npm exec nx run-many -t build              # 构建所有项目
@@ -243,7 +248,7 @@ npm exec nx run io-source:local-registry
 npm exec nx release publish --registry http://localhost:4873 --tag next --access public
 
 # 在示例项目中验证安装（示例）
-npm i io-store@next --registry http://localhost:4873
+npm i @iostore/store@next --registry http://localhost:4873
 ```
 
 CI 发布（GitHub Actions）：
@@ -338,13 +343,13 @@ Release PR 阶段（GitHub Actions）：
 
 ## 🧪 测试模块边界
 
-尝试在 `io-react` 中导入 `io-svelte`：
+尝试在 `@iostore/react` 中导入 `@iostore/svelte`：
 
 ```typescript
-import { toReadable } from 'io-svelte'; // 错误！
+import { toReadable } from '@iostore/svelte'; // 错误！
 ```
 
-运行 `nx lint io-react` 会报错：违反模块边界规则。
+运行 `npm exec nx lint io-react` 会报错：违反模块边界规则（`io-react` 为 Nx 项目名，对应 `@iostore/react`）。
 
 ## 🔗 了解更多
 

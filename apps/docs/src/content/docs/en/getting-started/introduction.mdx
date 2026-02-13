@@ -33,7 +33,7 @@ You can also think of a Unit as “atomic state”: `io(0)` is an atom, and in d
 ## Minimal Example
 
 ```ts
-import { io, derived } from 'io-store';
+import { io, derived } from '@iostore/store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 const doubled = derived(store, (s) => s.count * 2);

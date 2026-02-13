@@ -5,13 +5,13 @@ sidebar:
   order: 3
 ---
 
-`io-vue` 提供 `useIO`（只读）与 `ioRef`（双向绑定）。
+npm 包 `@iostore/vue` 提供 `useIO`（只读）与 `ioRef`（双向绑定），用于适配 Vue `ref` 体系。
 
 ## useIO
 
 ```ts
-import { io } from 'io-store';
-import { useIO } from 'io-vue';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/vue';
 
 const store = io({ count: 0 });
 
@@ -23,7 +23,7 @@ const state = useIO(store.count);
 ## ioRef（双向绑定）
 
 ```ts
-import { ioRef } from 'io-vue';
+import { ioRef } from '@iostore/vue';
 
 const countRef = ioRef(store.count);
 ```

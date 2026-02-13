@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "io-store": "*",
-    "io-solid": "*",
+    "@iostore/store": "*",
+    "@iostore/solid": "*",
     "solid-js": "^1.9.9"
   },
   "devDependencies": {

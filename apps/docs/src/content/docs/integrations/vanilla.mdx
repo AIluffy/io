@@ -5,12 +5,12 @@ sidebar:
   order: 1
 ---
 
-IO 的核心 API 与框架无关，直接使用 `snapshot()` + `subscribe()` 即可。
+npm 包 `@iostore/store` 的核心 API 与框架无关，可直接使用 `snapshot()` + `subscribe()`。
 
 ## 基础示例
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
 
@@ -35,7 +35,7 @@ const stopUpdate = store.subscribeUpdate((update) => {
 如果需要合并通知，请使用 `batch()` 或行为扩展 `schedule()`：
 
 ```ts
-import { batch } from 'io-store';
+import { batch } from '@iostore/store';
 
 batch(() => {
   store.count.set(1);

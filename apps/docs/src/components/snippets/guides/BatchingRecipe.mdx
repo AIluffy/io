@@ -2,8 +2,8 @@ import { Code } from '@astrojs/starlight/components';
 import { commonStoreTs } from './common-store';
 
 export const code = `${commonStoreTs.replace(
-  "import { io } from 'io-store';",
-  "import { batch, io } from 'io-store';"
+  "import { io } from '@iostore/store';",
+  "import { batch, io } from '@iostore/store';"
 )}
 
 batch(() => {

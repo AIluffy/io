@@ -37,7 +37,7 @@ const stop = store.subscribeUpdate((update) => {
 把叶子节点当作“原子订阅”很常见：Tree 负责组织结构，而你真正订阅的是路径 Unit。
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ user: { name: 'Ada' }, counter: 0 });
 

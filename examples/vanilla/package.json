@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "io-store": "*"
+    "@iostore/store": "*"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",

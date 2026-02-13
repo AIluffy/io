@@ -5,13 +5,13 @@ sidebar:
   order: 4
 ---
 
-`io-svelte` 提供与 Svelte Stores 兼容的适配器。
+npm 包 `@iostore/svelte` 提供与 Svelte Stores 兼容的 `toReadable` / `toWritable` 适配器。
 
 ## toReadable
 
 ```ts
-import { io } from 'io-store';
-import { toReadable } from 'io-svelte';
+import { io } from '@iostore/store';
+import { toReadable } from '@iostore/svelte';
 
 const store = io({ count: 0 });
 const readable = toReadable(store.count);
@@ -20,7 +20,7 @@ const readable = toReadable(store.count);
 ## toWritable
 
 ```ts
-import { toWritable } from 'io-svelte';
+import { toWritable } from '@iostore/svelte';
 
 const writable = toWritable(store.count);
 ```

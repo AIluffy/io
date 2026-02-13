@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "io-store": "*",
-    "io-svelte": "*",
+    "@iostore/store": "*",
+    "@iostore/svelte": "*",
     "svelte": "^5.49.1"
   },
   "devDependencies": {

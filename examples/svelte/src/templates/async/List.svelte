@@ -1,6 +1,6 @@
 <script>
-  import { io } from 'io-store';
-  import { toReadable } from 'io-svelte';
+  import { io } from '@iostore/store';
+  import { toReadable } from '@iostore/svelte';
   import { onDestroy } from 'svelte';
 
   const baseItems = [

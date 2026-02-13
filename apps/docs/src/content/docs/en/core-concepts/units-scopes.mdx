@@ -12,7 +12,7 @@ This page explains the two foundational shapes in IO: Units (values) and Scopes 
 A Unit is the smallest writable cell with clear read/write APIs.
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const count = io(0);
 
@@ -50,7 +50,7 @@ IO’s “atomic state” comes from `Unit`, while `Tree` lets you organize thos
 - **Structure stays intact**: you get atom-level subscriptions without giving up a coherent nested model.
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ user: { name: 'Ada' }, counter: 0 });
 

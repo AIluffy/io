@@ -1,5 +1,5 @@
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 import { AsyncDetailTemplate } from './templates/async/detail';
 import { AsyncFormTemplate } from './templates/async/form';
 import { AsyncListTemplate } from './templates/async/list';

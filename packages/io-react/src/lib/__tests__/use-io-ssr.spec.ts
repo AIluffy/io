@@ -5,7 +5,7 @@ type IoGlobal = {
   document?: unknown;
 };
 
-describe('io-react SSR', () => {
+describe('@iostore/react SSR', () => {
   it('treats missing window/document as server environment', async () => {
     const ioGlobal = globalThis as unknown as IoGlobal;
     const previousWindow = ioGlobal.window;

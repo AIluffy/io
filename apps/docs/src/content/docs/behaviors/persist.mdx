@@ -10,8 +10,8 @@ Persist 将写入后的值同步到存储（默认 `localStorage`）。
 ## 基础用法
 
 ```ts
-import { io } from 'io-store';
-import { persist, withBehaviors } from 'io-store/behavior';
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);

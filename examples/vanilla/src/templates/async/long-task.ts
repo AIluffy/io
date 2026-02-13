@@ -1,4 +1,4 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 type Status = 'idle' | 'running' | 'done' | 'error';
 

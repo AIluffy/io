@@ -1,4 +1,4 @@
-# io-devtools
+# @iostore/devtools
 
 IO DevTools 不是 Redux DevTools 的替代品， 而是一个 状态运行时观察系统。
 

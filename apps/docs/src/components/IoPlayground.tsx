@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { createIoDevtools } from 'io-devtools';
+import { createIoDevtools } from '@iostore/devtools';
 import {
   IoDevtoolsErrorBoundary,
   IoDevtoolsPanel,
-} from 'io-devtools-react';
-import { batch, io } from 'io-store';
+} from '@iostore/devtools-react';
+import { batch, io } from '@iostore/store';
 
 export function IoPlayground() {
   const store = useMemo(

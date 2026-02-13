@@ -1,6 +1,6 @@
 ---
-name: io-skill
-description: Usage guide for IO packages. Use when an agent needs to explain or implement app-level usage of io-store, io-react, io-solid, io-vue, io-svelte, and io-devtools (including state modeling, subscriptions, batching, framework adapters, SSR-safe usage, and debugging integration).
+name: @iostore/skill
+description: Usage guide for IO packages. Use when an agent needs to explain or implement app-level usage of @iostore/store, @iostore/react, @iostore/solid, @iostore/vue, @iostore/svelte, and @iostore/devtools (including state modeling, subscriptions, batching, framework adapters, SSR-safe usage, and debugging integration).
 ---
 
 # IO Package Usage Skill
@@ -9,25 +9,25 @@ Use this skill to guide consumers of IO packages, not monorepo contributors.
 
 ## Packages And Roles
 
-- `io-store`: core state primitives and utilities.
+- `@iostore/store`: core state primitives and utilities.
   - Main exports: `io`, `derived`, `batch`, `applyUpdate`, `replay`, `undoUpdate`, `mergeUpdates`, `createHistory`, `onError`, `onMutation`, `link`.
-- `io-react`: React adapter.
+- `@iostore/react`: React adapter.
   - Main export: `useIO`.
-- `io-solid`: Solid adapter.
+- `@iostore/solid`: Solid adapter.
   - Main export: `useIO`.
-- `io-vue`: Vue adapter.
+- `@iostore/vue`: Vue adapter.
   - Main exports: `useIO`, `ioRef`.
-- `io-svelte`: Svelte adapter.
+- `@iostore/svelte`: Svelte adapter.
   - Main exports: `toReadable`, `toWritable`.
-- `io-devtools`: runtime devtools engine and diff helpers.
-- `io-devtools-react`: React UI components for devtools panel.
+- `@iostore/devtools`: runtime devtools engine and diff helpers.
+- `@iostore/devtools-react`: React UI components for devtools panel.
 
-## Core Usage Patterns (`io-store`)
+## Core Usage Patterns (`@iostore/store`)
 
 ### 1) Create state
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const count = io(0);
 const user = io({ name: 'Ada', age: 20 });
@@ -58,7 +58,7 @@ unsub();
 ### 4) Derived values and batching
 
 ```ts
-import { derived, batch } from 'io-store';
+import { derived, batch } from '@iostore/store';
 
 const total = derived([count], (c) => c * 2);
 
@@ -71,7 +71,7 @@ batch(() => {
 ### 5) Commit/update history
 
 ```ts
-import { createHistory, applyUpdate, undoUpdate } from 'io-store';
+import { createHistory, applyUpdate, undoUpdate } from '@iostore/store';
 
 const history = createHistory(user);
 // user mutations...
@@ -85,11 +85,11 @@ applyUpdate(user, undoUpdate(someUpdate));
 
 ## Framework Adapters
 
-### React (`io-react`)
+### React (`@iostore/react`)
 
 ```tsx
-import { useIO } from 'io-react';
-import type { IoUnit } from 'io-store';
+import { useIO } from '@iostore/react';
+import type { IoUnit } from '@iostore/store';
 
 function Counter({ count }: { count: IoUnit<number> }) {
   const value = useIO(count, { schedule: 'microtask' });
@@ -101,11 +101,11 @@ Notes:
 
 - `useIO` is SSR-safe; in server env it avoids client subscriptions.
 
-### Solid (`io-solid`)
+### Solid (`@iostore/solid`)
 
 ```tsx
-import { useIO } from 'io-solid';
-import type { IoUnit } from 'io-store';
+import { useIO } from '@iostore/solid';
+import type { IoUnit } from '@iostore/store';
 
 function Counter({ count }: { count: IoUnit<number> }) {
   const value = useIO(count, { schedule: 'microtask' });
@@ -113,19 +113,19 @@ function Counter({ count }: { count: IoUnit<number> }) {
 }
 ```
 
-### Vue (`io-vue`)
+### Vue (`@iostore/vue`)
 
 ```ts
-import { useIO, ioRef } from 'io-vue';
+import { useIO, ioRef } from '@iostore/vue';
 
 const state = useIO(user, { schedule: 'microtask' });
 const age = ioRef(user.age);
 ```
 
-### Svelte (`io-svelte`)
+### Svelte (`@iostore/svelte`)
 
 ```ts
-import { toReadable, toWritable } from 'io-svelte';
+import { toReadable, toWritable } from '@iostore/svelte';
 
 const userStore = toReadable(user);
 const ageStore = toWritable(user.age, { schedule: 'sync' });
@@ -137,7 +137,7 @@ Svelte 5:
 
 ## Behaviors
 
-From `io-store/behavior`:
+From `@iostore/store/behavior`:
 
 - `withBehaviors`
 - `schedule`
@@ -147,8 +147,8 @@ From `io-store/behavior`:
 Example:
 
 ```ts
-import { io } from 'io-store';
-import { withBehaviors, persist, schedule } from 'io-store/behavior';
+import { io } from '@iostore/store';
+import { withBehaviors, persist, schedule } from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [
@@ -162,7 +162,7 @@ const view = withBehaviors(count, [
 Engine:
 
 ```ts
-import { createIoDevtools } from 'io-devtools';
+import { createIoDevtools } from '@iostore/devtools';
 
 const devtools = createIoDevtools({ target: user });
 ```
@@ -170,7 +170,7 @@ const devtools = createIoDevtools({ target: user });
 React panel:
 
 ```tsx
-import { IoDevtoolsPanel } from 'io-devtools-react';
+import { IoDevtoolsPanel } from '@iostore/devtools-react';
 ```
 
 ## Guidance Rules For Agents

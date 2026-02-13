@@ -1,4 +1,4 @@
 interface:
   display_name: 'IO Skill'
-  short_description: 'Usage guide for io-store and framework adapters'
-  default_prompt: 'Use $io-skill to explain or implement app-level usage of io-store, io-react, io-solid, io-vue, io-svelte, and io-devtools with practical examples and SSR-safe guidance.'
+  short_description: 'Usage guide for @iostore/store and framework adapters'
+  default_prompt: 'Use $@iostore/skill to explain or implement app-level usage of @iostore/store, @iostore/react, @iostore/solid, @iostore/vue, @iostore/svelte, and @iostore/devtools with practical examples and SSR-safe guidance.'

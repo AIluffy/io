@@ -7,7 +7,7 @@ Transforms `io()` access chains into a runtime helper to avoid proxy/deep tracki
 Input:
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const s = io({ user: { profile: { age: 1 } }, items: [{ count: 0 }] });
 s.user.profile.age.get();
@@ -22,7 +22,7 @@ __oin_get(s, ['user', 'profile', 'age']).get();
 __oin_get(s, ['items', 0, 'count']).set((v) => v + 1);
 ```
 
-The helper uses IO internals (`Symbol.for('io-store/internal')`) to resolve children without proxy access.
+The helper uses IO internals (`Symbol.for('@iostore/store/internal')`) to resolve children without proxy access.
 
 ## Usage
 

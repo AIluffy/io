@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { io } from 'io-store';
-import { useIO } from 'io-vue';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/vue';
 import { computed } from 'vue';
 import AsyncDetail from './templates/async/Detail.vue';
 import AsyncForm from './templates/async/Form.vue';

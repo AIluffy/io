@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 import { createRoot } from 'solid-js';
 
 import { useIO } from '../adapters.js';
 
-describe('@org/io-solid', () => {
+describe('@iostore/solid', () => {
   it('exports adapters', () => {
     expect(typeof useIO).toBe('function');
   });

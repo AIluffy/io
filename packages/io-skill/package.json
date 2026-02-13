@@ -1,5 +1,5 @@
 {
-  "name": "io-skill",
+  "name": "@iostore/skill",
   "version": "0.0.1",
   "private": false,
   "type": "module",

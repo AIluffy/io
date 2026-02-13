@@ -1,6 +1,6 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
-import { useIO } from 'io-solid';
+import { useIO } from '@iostore/solid';
 import { AsyncDetailTemplate } from './templates/async/detail';
 import { AsyncFormTemplate } from './templates/async/form';
 import { AsyncListTemplate } from './templates/async/list';

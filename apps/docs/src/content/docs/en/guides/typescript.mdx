@@ -10,7 +10,7 @@ IO ships with strong inference, but you can also use exported types for precisio
 ## Inference Example
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 
@@ -30,7 +30,7 @@ store.user.name.set('Lin');
 ## Type Helper Example
 
 ```ts
-import type { IoPathOf, IoPathValue } from 'io-store';
+import type { IoPathOf, IoPathValue } from '@iostore/store';
 
 type Store = { user: { name: string }; count: number };
 

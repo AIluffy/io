@@ -5,13 +5,13 @@ sidebar:
   order: 2
 ---
 
-`io-react` 提供 `useIO`，基于 `useSyncExternalStore` 实现。
+npm 包 `@iostore/react` 提供 `useIO`，并基于 `useSyncExternalStore` 与 React 渲染模型对齐。
 
 ## 基础用法
 
 ```tsx
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 
 const count = io(0);
 
@@ -24,8 +24,8 @@ export function Counter() {
 ## 派生值
 
 ```tsx
-import { derived, io } from 'io-store';
-import { useIO } from 'io-react';
+import { derived, io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 
 const store = io({ count: 0 });
 const doubled = derived([store.count], (value) => value * 2);

@@ -1,7 +1,7 @@
-import type { IoSchedule } from 'io-store';
+import type { IoSchedule } from '@iostore/store';
 import type { Accessor } from 'solid-js';
 
-import { scheduleTask } from 'io-store';
+import { scheduleTask } from '@iostore/store';
 import { createSignal, onCleanup } from 'solid-js';
 
 type IoSource<T> = {

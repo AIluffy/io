@@ -14,26 +14,26 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 1. 安装核心包：
 
    ```bash
-   npm install io-store
+   npm install @iostore/store
    ```
 
 2. 安装框架适配（可选）：
 
    ```bash
-   npm install io-react
+   npm install @iostore/react
    ```
 
 </Steps>
 
 :::note
 如果你的项目已经在用框架，请安装对应适配包：
-`io-react`、`io-solid`、`io-vue` 或 `io-svelte`。
+`@iostore/react`、`@iostore/solid`、`@iostore/vue` 或 `@iostore/svelte`。
 :::
 
 ## 创建状态
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 ```
@@ -59,7 +59,7 @@ unsub();
 ## 派生值
 
 ```ts
-import { derived } from 'io-store';
+import { derived } from '@iostore/store';
 
 const doubled = derived(store, (s) => s.count * 2);
 ```
@@ -67,7 +67,7 @@ const doubled = derived(store, (s) => s.count * 2);
 ## 批处理
 
 ```ts
-import { batch } from 'io-store';
+import { batch } from '@iostore/store';
 
 batch(() => {
   store.count.set((v) => v + 1);
@@ -80,8 +80,8 @@ batch(() => {
 <Tabs default="React">
   <TabItem label="React">
     ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-react';
+    import { io } from '@iostore/store';
+    import { useIO } from '@iostore/react';
 
     const count = io(0);
 
@@ -97,8 +97,8 @@ batch(() => {
   <TabItem label="Vue">
     ```vue
     <script setup lang="ts">
-    import { io } from 'io-store';
-    import { ioRef, useIO } from 'io-vue';
+    import { io } from '@iostore/store';
+    import { ioRef, useIO } from '@iostore/vue';
 
     const count = io(0);
     const value = useIO(count);
@@ -115,8 +115,8 @@ batch(() => {
   </TabItem>
   <TabItem label="Solid">
     ```tsx
-    import { io } from 'io-store';
-    import { useIO } from 'io-solid';
+    import { io } from '@iostore/store';
+    import { useIO } from '@iostore/solid';
 
     const count = io(0);
 
@@ -132,8 +132,8 @@ batch(() => {
   <TabItem label="Svelte">
     ```svelte
     <script lang="ts">
-      import { io } from 'io-store';
-      import { toWritable } from 'io-svelte';
+      import { io } from '@iostore/store';
+      import { toWritable } from '@iostore/svelte';
 
       const count = io(0);
       const countStore = toWritable(count);

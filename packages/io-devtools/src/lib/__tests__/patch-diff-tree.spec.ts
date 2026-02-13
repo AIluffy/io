@@ -7,7 +7,7 @@ const patches = [
   { op: 'splice', path: ['items'], start: 0, deleteCount: 0, deleted: [], items: [1] },
 ] as const;
 
-describe('io-devtools: buildPatchDiffTree', () => {
+describe('@iostore/devtools: buildPatchDiffTree', () => {
   it('groups patches by path prefixes', () => {
     const tree = buildPatchDiffTree(patches);
     const userNode = tree.find((n) => n.key === 'user');

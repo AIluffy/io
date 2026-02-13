@@ -43,9 +43,9 @@ nx run-many -t build
 
 ### Available Projects
 
-- Core library: `io-store` (`packages/io`)
-- Framework adapters: `io-react`, `io-vue`, `io-svelte`
-- DevTools: `io-devtools`, `io-devtools-react`
+- Core library: `@iostore/store` (`packages/io`)
+- Framework adapters: `@iostore/react`, `@iostore/vue`, `@iostore/svelte`
+- DevTools: `@iostore/devtools`, `@iostore/devtools-react`
 - Docs site: `apps-docs` (`apps/docs`)
 - Examples: `io-example-vanilla`, `io-example-react`, `io-example-vue`, `io-example-svelte`
 - Workspace root project: `io-source` (root `package.json`)

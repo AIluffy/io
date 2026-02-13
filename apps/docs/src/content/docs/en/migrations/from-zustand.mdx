@@ -21,7 +21,7 @@ const useStore = create((set) => ({
 IO:
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
 const inc = () => store.count.set((v) => v + 1);
@@ -38,7 +38,7 @@ const count = useStore((s) => s.count);
 IO (derived):
 
 ```ts
-import { derived } from 'io-store';
+import { derived } from '@iostore/store';
 
 const count = derived(store, (s) => s.count);
 ```
@@ -46,8 +46,8 @@ const count = derived(store, (s) => s.count);
 ## Middleware → Behaviors
 
 ```ts
-import { persist, devtools, withBehaviors } from 'io-store/behavior';
-import { createIoDevtools } from 'io-devtools';
+import { persist, devtools, withBehaviors } from '@iostore/store/behavior';
+import { createIoDevtools } from '@iostore/devtools';
 
 const view = withBehaviors(store, [
   persist({ key: 'store' }),
@@ -58,7 +58,7 @@ const view = withBehaviors(store, [
 ## React Usage
 
 ```tsx
-import { useIO } from 'io-react';
+import { useIO } from '@iostore/react';
 
 function Counter() {
   const value = useIO(store.count);

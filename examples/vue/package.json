@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "io-store": "*",
-    "io-vue": "*",
+    "@iostore/store": "*",
+    "@iostore/vue": "*",
     "vue": "^3.5.27"
   },
   "devDependencies": {

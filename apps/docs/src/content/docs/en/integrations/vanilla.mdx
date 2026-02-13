@@ -5,12 +5,12 @@ sidebar:
   order: 1
 ---
 
-IO is framework-agnostic. Use `snapshot()` + `subscribe()` directly.
+The npm package `@iostore/store` is framework-agnostic; use `snapshot()` + `subscribe()` directly.
 
 ## Basic Example
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
 
@@ -35,7 +35,7 @@ const stopUpdate = store.subscribeUpdate((update) => {
 Use `batch()` or the `schedule()` behavior to coalesce notifications.
 
 ```ts
-import { batch } from 'io-store';
+import { batch } from '@iostore/store';
 
 batch(() => {
   store.count.set(1);

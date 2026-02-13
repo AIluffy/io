@@ -15,7 +15,7 @@ async function ensureDistExists() {
     await fs.stat(ioDistRoot);
   } catch (error) {
     throw new Error(
-      `io-store dist not found at ${ioDistRoot}. Run "nx run io-store:build" first.`,
+      `@iostore/store dist not found at ${ioDistRoot}. Run "nx run @iostore/store:build" first.`,
     );
   }
 }

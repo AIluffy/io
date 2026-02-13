@@ -11,7 +11,7 @@ Numbers vary by hardware, load, and Node version.
 
 ## Environment
 
-- Date: 2026-02-13T14:04:33.562Z
+- Date: 2026-02-13T15:15:48.627Z
 - Node: v22.22.0
 - Platform: darwin 25.2.0 (arm64)
 - CPU: Apple M4
@@ -22,18 +22,18 @@ Numbers vary by hardware, load, and Node version.
 
 | Scenario | ops/sec | mean (ms/op) | Error (±rme %) |
 | --- | --- | --- | --- |
-| createUnit: primitive (1k) | 242.78 | 4.12 | 13.19 |
-| createUnit: object (1k) | 153.86 | 6.50 | 9.77 |
-| subscribe/unsubscribe: value (10k) | 1414.26 | 0.71 | 5.21 |
-| subscribe/unsubscribe: update (10k) | 1322.21 | 0.76 | 5.12 |
-| snapshot: scope (10k) | 275.03 | 3.64 | 12.78 |
-| snapshot: array (10k) | 246.18 | 4.06 | 10.24 |
-| snapshot: array (20k boundary) | 7.52 | 133.02 | 16.96 |
-| snapshot: depth (80 boundary) | 678.99 | 1.47 | 12.56 |
-| draft/finish: deep object (200) | 99.16 | 10.08 | 9.88 |
-| commit deep update (200) | 9.45 | 105.77 | 9.95 |
-| commit deep update (80 boundary) | 1.81 | 553.05 | 12.52 |
-| batch: 40k updates | 91.86 | 10.89 | 6.89 |
-| no batch: 40k updates | 83.94 | 11.91 | 22.98 |
-| batch update 200 units | 0.48 | 2067.75 | 8.37 |
-| sequential update 200 units | 0.42 | 2398.97 | 14.52 |
+| createUnit: primitive (1k) | 97.36 | 10.27 | 31.20 |
+| createUnit: object (1k) | 61.84 | 16.17 | 26.66 |
+| subscribe/unsubscribe: value (10k) | 478.70 | 2.09 | 27.85 |
+| subscribe/unsubscribe: update (10k) | 582.99 | 1.72 | 29.29 |
+| snapshot: scope (10k) | 102.05 | 9.80 | 29.50 |
+| snapshot: array (10k) | 86.92 | 11.50 | 27.27 |
+| snapshot: array (20k boundary) | 3.23 | 309.60 | 18.85 |
+| snapshot: depth (80 boundary) | 275.91 | 3.62 | 27.93 |
+| draft/finish: deep object (200) | 51.48 | 19.42 | 25.31 |
+| commit deep update (200) | 5.10 | 196.18 | 36.87 |
+| commit deep update (80 boundary) | 0.87 | 1148.47 | 13.74 |
+| batch: 40k updates | 42.88 | 23.32 | 28.81 |
+| no batch: 40k updates | 50.40 | 19.84 | 16.35 |
+| batch update 200 units | 0.24 | 4129.31 | 7.64 |
+| sequential update 200 units | 0.30 | 3363.84 | 7.70 |

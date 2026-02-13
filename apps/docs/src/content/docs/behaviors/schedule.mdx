@@ -10,8 +10,8 @@ Schedule 用于合并或延迟订阅通知，降低渲染抖动。
 ## 基础用法
 
 ```ts
-import { io } from 'io-store';
-import { schedule, withBehaviors } from 'io-store/behavior';
+import { io } from '@iostore/store';
+import { schedule, withBehaviors } from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [schedule('microtask')]);
