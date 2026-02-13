@@ -1,0 +1,62 @@
+---
+title: 深层 Tree
+description: 默认深度、路径访问与浅层模式。
+sidebar:
+  order: 2
+---
+
+import { DeepTreeDashboard } from '../../../components/DeepTreeDashboard';
+
+IO 默认工作在深层模式：对象与数组会被展开成可订阅的树结构。
+
+## 深层访问
+
+```ts
+import { io } from 'io-store';
+
+const store = io({
+  user: { profile: { name: 'Ada' } },
+  items: [{ id: 1, count: 0 }],
+});
+
+store.user.profile.name.set('Grace');
+store.items[0].count.set((v) => v + 1);
+```
+
+每条路径都像 Unit 一样读写，因此订阅也可以精确到叶子。
+
+你可以把这理解为“自动原子化”：Tree 负责组织结构，路径 Unit 负责提供原子粒度的读写与订阅。
+
+## 复杂对象示例（React 可视化）
+
+下面示例定义一个包含用户、看板与提醒的深层 Tree，并用 React 拆成多个小组件。每个组件只订阅自己用到的路径，并在 UI 上显示渲染次数，便于观察更新范围。
+
+<DeepTreeDashboard client:load />
+
+点击按钮观察：改名只会刷新 Profile 面板，切换卡片只会刷新对应行，批量更新会合并通知。
+
+## 浅层模式（shallow）
+
+当你只需要第一层变成 Unit，可以启用浅层模式：
+
+```ts
+const shallow = io({ name: 'Ada', age: 36 }, { shallow: true });
+
+shallow.name.set('Lin');
+```
+
+浅层模式深度限制为 1，结构更稳定，适合“扁平 store”。
+
+## 结构约束
+
+- 深层模式只支持**纯对象**和**数组**。
+- 传入类实例或非 plain object 会抛出 `TypeError`。
+- 如需复用已有 IO 节点，请用 `link()` 显式标记，详见 [IO 组合](/core-concepts/io-composition/)。
+
+如果你必须存放复杂对象，建议把它包在 plain object 内，再用 `io()` 创建。
+
+## 下一步
+
+- 了解 [快照](/core-concepts/snapshots/) 的冻结与缓存。
+- 查看 [更新日志](/core-concepts/update-log/) 的 patch 结构。
+- 学习 [派生值](/guides/derived/) 如何读取 Tree。

@@ -1,0 +1,54 @@
+---
+title: Persist
+description: 使用行为扩展持久化状态。
+sidebar:
+  order: 2
+---
+
+Persist 将写入后的值同步到存储（默认 `localStorage`）。
+
+## 基础用法
+
+```ts
+import { io } from 'io-store';
+import { persist, withBehaviors } from 'io-store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+## 自定义存储
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+## 序列化
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## 注意事项
+
+- Persist 目前基于 `set()` 写入存储。
+- 函数式写法 `set((prev) => next)` 也会走同一持久化流程。
+
+## 下一步
+
+- 结合 [Schedule](/behaviors/schedule/) 合并通知。
+- 查看 [行为扩展概览](/behaviors/overview/)。

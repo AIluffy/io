@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "url": [
-        "/zh-cn/state-management/comparison/"
+        "/getting-started/comparison/"
       ],
       "staticDistDir": "apps/docs/dist",
       "numberOfRuns": 1

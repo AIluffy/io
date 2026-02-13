@@ -1,0 +1,45 @@
+---
+title: 行为扩展概览
+description: 用 withBehaviors 组合扩展能力。
+sidebar:
+  order: 1
+---
+
+行为扩展（Behavior）用于在不改变核心 API 的前提下增加能力，例如持久化、调度、DevTools。
+
+## 基础用法
+
+```ts
+import { io } from 'io-store';
+import { persist, schedule, withBehaviors } from 'io-store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  schedule('microtask'),
+]);
+
+view.subscribe((value) => {
+  console.log(value);
+});
+```
+
+## IoView 接口
+
+`withBehaviors` 会把原始节点适配成 `IoView`：
+
+- `get()` / `set()`
+- `subscribe()` / `snapshot()`
+- `extensions`：扩展实例容器
+- `destroy()`：统一清理
+
+## 组合策略
+
+- 先接入 `persist`，再接入 `schedule` 或 `devtools`。
+- 行为顺序决定包装顺序，按依赖关系排列。
+
+## 下一步
+
+- 使用 [Persist](/behaviors/persist/) 做持久化。
+- 了解 [Schedule](/behaviors/schedule/) 控制通知节奏。
+- 连接 [DevTools](/behaviors/devtools/) 做调试与回放。
