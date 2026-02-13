@@ -1,4 +1,4 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 type Filter = 'all' | 'active' | 'done';
 type Todo = { id: string; title: string; done: boolean };

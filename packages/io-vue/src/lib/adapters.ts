@@ -1,7 +1,7 @@
-import type { IoSchedule, IoUnit } from 'io-store';
+import type { IoSchedule, IoUnit } from '@iostore/store';
 import type { Ref, ShallowRef } from 'vue';
 
-import { scheduleTask } from 'io-store';
+import { scheduleTask } from '@iostore/store';
 import { customRef, onScopeDispose, shallowRef } from 'vue';
 
 type IoSource<T> = {

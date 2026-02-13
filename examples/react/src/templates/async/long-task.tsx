@@ -1,5 +1,5 @@
-import { io } from 'io-store';
-import { useIO } from 'io-react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 import { useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
 

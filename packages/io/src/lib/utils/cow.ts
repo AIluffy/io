@@ -10,7 +10,7 @@ type DraftState = {
 const draftToState = new WeakMap<object, DraftState>();
 const baseToDraft = new WeakMap<object, object>();
 
-const DRAFT_STATE = Symbol.for('io-store/draftState');
+const DRAFT_STATE = Symbol.for('@iostore/store/draftState');
 
 function isDraft(value: unknown): value is object {
   if (value === null || value === undefined) return false;

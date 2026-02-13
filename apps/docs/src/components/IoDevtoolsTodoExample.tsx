@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { createIoDevtools } from 'io-devtools';
-import { IoDevtoolsErrorBoundary, IoDevtoolsPanel } from 'io-devtools-react';
-import { io } from 'io-store';
+import { createIoDevtools } from '@iostore/devtools';
+import {
+  IoDevtoolsErrorBoundary,
+  IoDevtoolsPanel,
+} from '@iostore/devtools-react';
+import { io } from '@iostore/store';
 
 type Filter = 'all' | 'active' | 'done';
 type Todo = { id: string; title: string; done: boolean };

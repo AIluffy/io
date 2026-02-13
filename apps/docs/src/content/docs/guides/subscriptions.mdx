@@ -1,0 +1,66 @@
+---
+title: 订阅
+description: 值订阅与更新订阅的差异。
+sidebar:
+  order: 2
+---
+
+IO 提供两类订阅：值订阅与更新订阅。它们解决不同问题。
+
+## subscribe：订阅值变化
+
+```ts
+const store = io({ count: 0 });
+
+const stop = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+```
+
+适合 UI 渲染与派生更新。
+
+## subscribeUpdate：订阅 patch
+
+```ts
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+适合日志、审计、同步、回放等场景。
+
+## 订阅粒度
+
+- 订阅叶子：只关心某个字段。
+- 订阅根节点：捕获整棵树的更新流。
+
+把叶子节点当作“原子订阅”很常见：Tree 负责组织结构，而你真正订阅的是路径 Unit。
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+// Atom-like subscription: leaf unit
+const stopName = store.user.name.subscribe((v) => console.log('name', v));
+const stopCounter = store.counter.subscribe((v) => console.log('counter', v));
+```
+
+## 退订
+
+所有订阅都返回取消函数：
+
+```ts
+const stop = store.count.subscribe(() => {});
+stop();
+```
+
+## 建议
+
+- UI 层优先用 `subscribe`。
+- 需要回放/同步时再用 `subscribeUpdate`。
+
+## 下一步
+
+- 学习 [批处理](/guides/batching/) 合并通知。
+- 了解 [更新日志](/core-concepts/update-log/)。

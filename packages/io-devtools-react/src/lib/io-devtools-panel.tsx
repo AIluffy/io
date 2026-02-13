@@ -3,8 +3,8 @@ import type {
   IoHistoryEntry,
   IoPatchDiffTreeNode,
   IoSnapshotDiff,
-} from 'io-devtools';
-import { buildPatchDiffTree, diffSnapshots } from 'io-devtools';
+} from '@iostore/devtools';
+import { buildPatchDiffTree, diffSnapshots } from '@iostore/devtools';
 import type { CSSProperties, MutableRefObject, ReactElement } from 'react';
 import {
   useEffect,
@@ -469,15 +469,15 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
                   </div>
                   {snapshotDiffMode === 'collapsed' ? (
                     <div className="io-devtools-panel__muted">
-                      Snapshot diffs are computed on demand. Use sample for quick
-                      checks, deep diff for full detail.
+                      Snapshot diffs are computed on demand. Use sample for
+                      quick checks, deep diff for full detail.
                     </div>
                   ) : (
                     <>
                       {snapshotDiffMode === 'sample' ? (
                         <div className="io-devtools-panel__muted">
-                          Sampled diff (depth {SNAPSHOT_SAMPLE_OPTIONS.maxDepth},
-                          max {SNAPSHOT_SAMPLE_OPTIONS.maxChanges} changes).
+                          Sampled diff (depth {SNAPSHOT_SAMPLE_OPTIONS.maxDepth}
+                          , max {SNAPSHOT_SAMPLE_OPTIONS.maxChanges} changes).
                         </div>
                       ) : null}
                       <pre

@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "io-store": "*",
-    "io-react": "*",
+    "@iostore/store": "*",
+    "@iostore/react": "*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

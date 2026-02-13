@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { diffSnapshots } from '../diff-snapshots.js';
 
-describe('io-devtools: diffSnapshots', () => {
+describe('@iostore/devtools: diffSnapshots', () => {
   it('respects maxDepth by collapsing deeper diffs', () => {
     const prev = { a: { b: { c: 1 } } };
     const next = { a: { b: { c: 2 } } };

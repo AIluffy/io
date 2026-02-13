@@ -1,0 +1,37 @@
+---
+title: "IoTreeArrayUnit"
+description: "type export"
+---
+
+
+## 签名
+
+```ts
+IoTreeArrayUnit<T, MaxDepth>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| get | `() => UnwrapIo<T>[]` |
+| set | `(next: UnwrapIo<T>[]) => void` |
+| push | `(...items: UnwrapIo<T>[]) => void` |
+| pop | `() => UnwrapIo<T> \| undefined` |
+| splice | `(start: number, deleteCount: number, ...items: UnwrapIo<T>[]) => void` |
+| sort | `(compareFn?: (a: UnwrapIo<T>, b: UnwrapIo<T>) => number) => void` |
+| commit | `(fn: (draft: UnwrapIo<T>[]) => void) => void` |
+| reduce | `<R>(reducer: (acc: R, item: IoTreeNode<T, MaxDepth>, index: number) => R, initialValue: R) => R` |
+| snapshot | `() => UnwrapIo<T>[]` |
+| subscribe | `(fn: (v: UnwrapIo<T>[]) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| __@iterator@413 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/types.ts`

@@ -5,7 +5,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/io-react',
   plugins: [],
   test: {
-    name: '@org/io-react',
+    name: '@iostore/react',
     passWithNoTests: true,
     watch: false,
     globals: true,

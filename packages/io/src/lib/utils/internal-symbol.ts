@@ -1,1 +1,1 @@
-export const INTERNAL = Symbol.for('io-store/internal');
+export const INTERNAL = Symbol.for('@iostore/store/internal');

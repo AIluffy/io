@@ -5,13 +5,13 @@ sidebar:
   order: 3
 ---
 
-`io-vue` provides `useIO` (read-only) and `ioRef` (two-way binding).
+The npm package `@iostore/vue` provides `useIO` (read-only) and `ioRef` (two-way binding) for Vue refs.
 
 ## useIO
 
 ```ts
-import { io } from 'io-store';
-import { useIO } from 'io-vue';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/vue';
 
 const store = io({ count: 0 });
 
@@ -23,7 +23,7 @@ const state = useIO(store.count);
 ## ioRef (Two-way Binding)
 
 ```ts
-import { ioRef } from 'io-vue';
+import { ioRef } from '@iostore/vue';
 
 const countRef = ioRef(store.count);
 ```

@@ -1,3 +1,3 @@
-export const commonStoreTs = `import { io } from 'io-store';
+export const commonStoreTs = `import { io } from '@iostore/store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });`;

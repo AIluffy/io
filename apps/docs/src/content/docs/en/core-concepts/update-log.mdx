@@ -16,7 +16,7 @@ IO records every write as a structured `patch`, grouped into `update` objects. T
 ## Subscribe to Updates
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
 
@@ -35,7 +35,7 @@ stop();
 ## Replay and Undo
 
 ```ts
-import { applyUpdate, mergeUpdates, undoUpdate, replay, io } from 'io-store';
+import { applyUpdate, mergeUpdates, undoUpdate, replay, io } from '@iostore/store';
 
 const store = io({ count: 0 });
 const updates: any[] = [];
@@ -56,7 +56,7 @@ applyUpdate(store, inverted);
 ## Undo / Redo
 
 ```ts
-import { createHistory, io } from 'io-store';
+import { createHistory, io } from '@iostore/store';
 
 const store = io({ count: 0 });
 const history = createHistory(store, { limit: 100 });
@@ -71,7 +71,7 @@ history.redo();
 ## Debug Hooks
 
 ```ts
-import { io, onMutation, onError } from 'io-store';
+import { io, onMutation, onError } from '@iostore/store';
 
 const store = io({ count: 0 });
 

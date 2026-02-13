@@ -5,7 +5,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/io-vue',
   plugins: [],
   test: {
-    name: '@org/io-vue',
+    name: '@iostore/vue',
     passWithNoTests: true,
     watch: false,
     globals: true,

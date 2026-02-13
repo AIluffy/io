@@ -1,5 +1,5 @@
-import { applyUpdate, getLinkInfo, onError, undoUpdate } from 'io-store';
-import type { IoPatch, IoUpdate } from 'io-store';
+import { applyUpdate, getLinkInfo, onError, undoUpdate } from '@iostore/store';
+import type { IoPatch, IoUpdate } from '@iostore/store';
 import { diffSnapshots } from './diff-snapshots.js';
 import { createReduxBridgeConnector } from './devtools/bridge.js';
 import { createHistoryController } from './devtools/history.js';

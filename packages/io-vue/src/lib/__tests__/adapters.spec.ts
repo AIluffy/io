@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Ref, ShallowRef } from 'vue';
 import { effectScope } from 'vue';
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 import { ioRef, useIO } from '../adapters.js';
 
-describe('@org/io-vue', () => {
+describe('@iostore/vue', () => {
   it('exports adapters', () => {
     expect(typeof useIO).toBe('function');
     expect(typeof ioRef).toBe('function');

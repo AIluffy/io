@@ -1,4 +1,4 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Detail = { id: string; name: string; role: string; location: string };

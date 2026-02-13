@@ -1,23 +1,24 @@
 ---
-title: 'IoTreeScope'
-description: 'type export'
+title: "IoTreeScope"
+description: "type export"
 ---
+
 
 ## Signature
 
 ```ts
-IoTreeScope<T, MaxDepth>;
+IoTreeScope<T, MaxDepth>
 ```
 
 ## Properties
 
-| Name            | Type                                              |
-| --------------- | ------------------------------------------------- |
-| get             | `() => UnwrapIo<T>`                               |
-| commit          | `(fn: (draft: UnwrapIo<T>) => void) => void`      |
-| snapshot        | `() => UnwrapIo<T>`                               |
-| subscribe       | `(fn: (v: UnwrapIo<T>) => void) => IoUnsubscribe` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe`    |
+| Name | Type |
+| --- | --- |
+| get | `() => UnwrapIo<T>` |
+| commit | `(fn: (draft: UnwrapIo<T>) => void) => void` |
+| snapshot | `() => UnwrapIo<T>` |
+| subscribe | `(fn: (v: UnwrapIo<T>) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
 
 ## Errors
 

@@ -1,4 +1,4 @@
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 type Submission = { name: string; email: string; note: string };

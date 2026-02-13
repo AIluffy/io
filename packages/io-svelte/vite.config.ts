@@ -5,7 +5,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/io-svelte',
   plugins: [],
   test: {
-    name: '@org/io-svelte',
+    name: '@iostore/svelte',
     passWithNoTests: true,
     watch: false,
     globals: true,

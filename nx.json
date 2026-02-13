@@ -53,20 +53,15 @@
     }
   ],
   "release": {
-    "projects": [
-      "io-store",
-      "io-react",
-      "io-vue",
-      "io-svelte",
-      "io-devtools",
-      "io-devtools-react",
-      "io-skill"
-    ],
+    "projects": ["packages/*"],
     "git": {
       "commit": true,
       "tag": true,
       "push": true,
       "commitMessage": "chore(release): publish {version}"
+    },
+    "releaseTag": {
+      "pattern": "release/{version}"
     },
     "version": {
       "preVersionCommand": "npx nx run-many -t build"

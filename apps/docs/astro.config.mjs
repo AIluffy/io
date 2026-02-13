@@ -33,14 +33,14 @@ export default defineConfig({
         alt: 'IO',
       },
       favicon: '/favicon.ico',
-      defaultLocale: 'zh-cn',
+      defaultLocale: 'root',
       locales: {
+        root: {
+          label: '简体中文',
+          lang: 'zh-CN',
+        },
         en: {
           label: 'English',
-        },
-        'zh-cn': {
-          label: '简体中文',
-          lang: 'zh-cn',
         },
       },
       sidebar: [

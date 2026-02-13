@@ -1,0 +1,30 @@
+---
+title: "mergeUpdates"
+description: "function export"
+---
+
+
+## 签名
+
+```ts
+(updates: IoUpdate[]) => IoUpdate
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| updates | `IoUpdate[]` |
+
+## 返回
+
+`IoUpdate`
+
+## 错误
+
+- 本库未定义标准化错误码。
+- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+
+## 源码
+
+- `packages/io/src/lib/utils/update-merge.ts`

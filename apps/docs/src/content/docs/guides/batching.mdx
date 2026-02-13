@@ -1,0 +1,36 @@
+---
+title: 批处理
+description: 用 batch 合并多次写入。
+sidebar:
+  order: 3
+---
+
+`batch()` 会把多次写入合并成一次通知，减少重复渲染与 patch 噪音。
+
+## 基础用法
+
+```ts
+import { batch, io } from '@iostore/store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
+
+## 作用范围
+
+- 合并 `subscribe` 的值通知。
+- 合并 `subscribeUpdate` 的 patch 更新（内部会 merge）。
+
+## 何时使用
+
+- 同一逻辑动作涉及多处写入。
+- 需要减少 UI 抖动或订阅触发次数。
+
+## 下一步
+
+- 了解 [订阅](/guides/subscriptions/)。
+- 学习 [更新日志](/core-concepts/update-log/) 的 merge 机制。

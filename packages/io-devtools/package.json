@@ -1,5 +1,5 @@
 {
-  "name": "io-devtools",
+  "name": "@iostore/devtools",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,10 +21,10 @@
     "access": "public"
   },
   "peerDependencies": {
-    "io-store": "*"
+    "@iostore/store": "*"
   },
   "devDependencies": {
-    "io-store": "*"
+    "@iostore/store": "*"
   },
   "nx": {
     "tags": [

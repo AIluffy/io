@@ -10,8 +10,8 @@ import { IoDevtoolsTodoExample } from '../../../../components/IoDevtoolsTodoExam
 ## Create an Instance
 
 ```ts
-import { io } from 'io-store';
-import { createIoDevtools } from 'io-devtools';
+import { io } from '@iostore/store';
+import { createIoDevtools } from '@iostore/devtools';
 
 const store = io({ counter: 0, user: { name: 'Ada' } });
 
@@ -26,7 +26,7 @@ const devtools = createIoDevtools(store, {
 ## React Panel
 
 ```tsx
-import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from 'io-devtools-react';
+import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from '@iostore/devtools-react';
 
 export function DevtoolsDock({ devtools }) {
   return (
@@ -73,9 +73,9 @@ Its role is to integrate that instance into the `withBehaviors()` pipeline for c
 If you do not need unified behavior composition or lifecycle handling, calling `createIoDevtools(store, options)` directly is also valid.
 
 ```ts
-import { devtools, withBehaviors } from 'io-store/behavior';
-import { createIoDevtools } from 'io-devtools';
-import { io } from 'io-store';
+import { devtools, withBehaviors } from '@iostore/store/behavior';
+import { createIoDevtools } from '@iostore/devtools';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
 const view = withBehaviors(store, [

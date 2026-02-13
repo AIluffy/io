@@ -12,7 +12,7 @@ This tutorial builds a simple Tic-Tac-Toe game while showcasing IO trees, derive
 Define the game state as an IO tree. A single scope keeps updates cohesive.
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 type Player = 'X' | 'O';
 
@@ -32,7 +32,7 @@ export const game = io<GameState>({
 Use `derived()` to compute read-only values from the board.
 
 ```ts
-import { derived } from 'io-store';
+import { derived } from '@iostore/store';
 import { game } from './game';
 
 const LINES = [
@@ -72,7 +72,7 @@ export const status = derived(() => {
 Use `useIO` to read state and update the game with a single commit.
 
 ```tsx
-import { useIO } from 'io-react';
+import { useIO } from '@iostore/react';
 import { game, status, winner } from './game';
 
 function handleClick(index: number) {
@@ -126,8 +126,8 @@ export function resetGame() {
 Capture updates and replay them into a fresh store. This keeps the UI logic unchanged.
 
 ```ts
-import { io, replay } from 'io-store';
-import type { IoUpdate } from 'io-store';
+import { io, replay } from '@iostore/store';
+import type { IoUpdate } from '@iostore/store';
 import { game } from './game';
 
 const updates: IoUpdate[] = [];
@@ -149,8 +149,8 @@ export function replayFromStart() {
 ## Live Example
 
 ```tsx live client:load
-import { batch, derived, io } from 'io-store';
-import { useIO } from 'io-react';
+import { batch, derived, io } from '@iostore/store';
+import { useIO } from '@iostore/react';
 
 type Player = 'X' | 'O';
 

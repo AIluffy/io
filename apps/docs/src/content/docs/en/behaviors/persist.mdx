@@ -10,8 +10,8 @@ Persist writes values to storage (defaults to `localStorage`).
 ## Basic Usage
 
 ```ts
-import { io } from 'io-store';
-import { persist, withBehaviors } from 'io-store/behavior';
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);

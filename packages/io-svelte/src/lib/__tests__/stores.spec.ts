@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 import { fromStore } from 'svelte/store';
 import { toReadable, toWritable } from '../stores.js';
 
-describe('@org/io-svelte', () => {
+describe('@iostore/svelte', () => {
   it('creates readable and writable stores', async () => {
     const unit = io(1);
     const writable = toWritable(unit);

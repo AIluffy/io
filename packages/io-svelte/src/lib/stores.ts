@@ -1,7 +1,7 @@
-import type { IoSchedule, IoUnit } from 'io-store';
+import type { IoSchedule, IoUnit } from '@iostore/store';
 import type { Readable, Writable } from 'svelte/store';
 
-import { scheduleTask } from 'io-store';
+import { scheduleTask } from '@iostore/store';
 
 type IoSource<T> = {
   snapshot(): T;

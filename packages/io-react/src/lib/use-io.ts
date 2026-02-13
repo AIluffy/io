@@ -1,6 +1,6 @@
-import type { IoSchedule } from 'io-store';
+import type { IoSchedule } from '@iostore/store';
 
-import { isServerEnv, scheduleTask } from 'io-store';
+import { isServerEnv, scheduleTask } from '@iostore/store';
 import { useSyncExternalStore } from 'react';
 
 type IoSource<T> = {

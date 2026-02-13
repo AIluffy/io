@@ -35,7 +35,7 @@ IO has both atomic state (`Unit`) and structured state (`Tree`). The “atomic a
 - **Composition: atoms compose directly**: use `derived([unit...])` to combine Units into selectors or view-models.
 
 ```ts
-import { derived, io } from 'io-store';
+import { derived, io } from '@iostore/store';
 
 const store = io({
   user: { name: 'Ada' },

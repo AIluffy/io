@@ -20,7 +20,7 @@ const state = proxy({ count: 0, user: { name: 'Ada' } });
 IO:
 
 ```ts
-import { io } from 'io-store';
+import { io } from '@iostore/store';
 
 const store = io({ count: 0, user: { name: 'Ada' } });
 ```
@@ -38,7 +38,7 @@ const snap = useSnapshot(state);
 IO:
 
 ```tsx
-import { useIO } from 'io-react';
+import { useIO } from '@iostore/react';
 
 const count = useIO(store.count);
 const name = useIO(store.user.name);

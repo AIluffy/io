@@ -1,4 +1,4 @@
-# io-devtools-react
+# @iostore/devtools-react
 
 IO DevTools 的 React 组件包。
 
@@ -10,9 +10,9 @@ IO DevTools 的 React 组件包。
 ## Usage
 
 ```tsx
-import { createIoDevtools } from 'io-devtools';
-import { io } from 'io-store';
-import { IoDevtoolsPanel } from 'io-devtools-react';
+import { createIoDevtools } from '@iostore/devtools';
+import { io } from '@iostore/store';
+import { IoDevtoolsPanel } from '@iostore/devtools-react';
 
 const count = io(0);
 const devtools = createIoDevtools(count, { name: 'counter' });
