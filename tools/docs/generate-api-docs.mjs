@@ -9,6 +9,7 @@ const packagesRoot = path.join(repoRoot, 'packages');
 const LOCALES = [
   {
     id: 'en',
+    contentDir: 'en',
     labels: {
       title: 'Reference',
       signature: 'Signature',
@@ -29,6 +30,7 @@ const LOCALES = [
   },
   {
     id: 'zh-cn',
+    contentDir: '',
     labels: {
       title: '参考',
       signature: '签名',
@@ -406,7 +408,10 @@ async function generate() {
     const exports = [...publicExports, ...experimentalExports];
 
     for (const locale of LOCALES) {
-      const pkgDir = path.join(docsRoot, locale.id, 'reference', pkg.dirName);
+      const localeRoot = locale.contentDir
+        ? path.join(docsRoot, locale.contentDir)
+        : docsRoot;
+      const pkgDir = path.join(localeRoot, 'reference', pkg.dirName);
       await ensureDir(pkgDir);
       await fs.writeFile(
         path.join(pkgDir, 'index.mdx'),
@@ -437,8 +442,10 @@ async function generate() {
   }
 
   for (const locale of LOCALES) {
-    const localeDir = locale.id === 'zh-cn' ? '' : locale.id;
-    const referenceDir = path.join(docsRoot, localeDir, 'reference');
+    const localeRoot = locale.contentDir
+      ? path.join(docsRoot, locale.contentDir)
+      : docsRoot;
+    const referenceDir = path.join(localeRoot, 'reference');
     await ensureDir(referenceDir);
     await fs.writeFile(
       path.join(referenceDir, 'versions.mdx'),

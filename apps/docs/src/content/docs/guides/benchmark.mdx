@@ -11,7 +11,7 @@ sidebar:
 
 ## 运行环境
 
-- Date: 2026-02-13T13:43:10.392Z
+- Date: 2026-02-13T14:04:33.562Z
 - Node: v22.22.0
 - Platform: darwin 25.2.0 (arm64)
 - CPU: Apple M4
@@ -22,18 +22,18 @@ sidebar:
 
 | 场景 | ops/sec | mean (ms/op) | 误差 (±rme %) |
 | --- | --- | --- | --- |
-| createUnit: primitive (1k) | 257.87 | 3.88 | 15.60 |
-| createUnit: object (1k) | 170.42 | 5.87 | 10.71 |
-| subscribe/unsubscribe: value (10k) | 1495.95 | 0.67 | 5.46 |
-| subscribe/unsubscribe: update (10k) | 1395.52 | 0.72 | 12.02 |
-| snapshot: scope (10k) | 318.79 | 3.14 | 13.35 |
-| snapshot: array (10k) | 316.79 | 3.16 | 8.94 |
-| snapshot: array (20k boundary) | 8.14 | 122.84 | 11.90 |
-| snapshot: depth (80 boundary) | 662.43 | 1.51 | 11.30 |
-| draft/finish: deep object (200) | 97.42 | 10.27 | 13.56 |
-| commit deep update (200) | 8.61 | 116.16 | 24.46 |
-| commit deep update (80 boundary) | 1.81 | 553.31 | 10.56 |
-| batch: 40k updates | 86.25 | 11.59 | 11.23 |
-| no batch: 40k updates | 83.49 | 11.98 | 7.64 |
-| batch update 200 units | 0.51 | 1942.92 | 6.40 |
-| sequential update 200 units | 0.54 | 1835.41 | 3.29 |
+| createUnit: primitive (1k) | 242.78 | 4.12 | 13.19 |
+| createUnit: object (1k) | 153.86 | 6.50 | 9.77 |
+| subscribe/unsubscribe: value (10k) | 1414.26 | 0.71 | 5.21 |
+| subscribe/unsubscribe: update (10k) | 1322.21 | 0.76 | 5.12 |
+| snapshot: scope (10k) | 275.03 | 3.64 | 12.78 |
+| snapshot: array (10k) | 246.18 | 4.06 | 10.24 |
+| snapshot: array (20k boundary) | 7.52 | 133.02 | 16.96 |
+| snapshot: depth (80 boundary) | 678.99 | 1.47 | 12.56 |
+| draft/finish: deep object (200) | 99.16 | 10.08 | 9.88 |
+| commit deep update (200) | 9.45 | 105.77 | 9.95 |
+| commit deep update (80 boundary) | 1.81 | 553.05 | 12.52 |
+| batch: 40k updates | 91.86 | 10.89 | 6.89 |
+| no batch: 40k updates | 83.94 | 11.91 | 22.98 |
+| batch update 200 units | 0.48 | 2067.75 | 8.37 |
+| sequential update 200 units | 0.42 | 2398.97 | 14.52 |
