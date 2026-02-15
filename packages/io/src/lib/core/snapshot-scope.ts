@@ -116,27 +116,16 @@ export function createScopeSnapshotReader(deps: {
       return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
     }
 
-    let base: Record<PropertyKey, unknown>;
-    if (state.dirtyKeys.size > state.children.size / 2) {
-      base = {};
-      local.set(state.node as object, base);
-      for (const key of state.children.keys()) {
-        const node = state.children.get(key);
-        if (!node) continue;
-        if (state.dirtyKeys.has(key)) {
-          base[key] = deps.getNodeValue(node, local);
-        } else {
-          base[key] = prev[key];
-        }
-      }
-    } else {
-      base = { ...prev } as Record<PropertyKey, unknown>;
-      local.set(state.node as object, base);
-      state.dirtyKeys.forEach((key) => {
-        const node = state.children.get(key);
-        if (!node) return;
+    const base: Record<PropertyKey, unknown> = {};
+    local.set(state.node as object, base);
+    for (const key of state.children.keys()) {
+      const node = state.children.get(key);
+      if (!node) continue;
+      if (state.dirtyKeys.has(key)) {
         base[key] = deps.getNodeValue(node, local);
-      });
+      } else {
+        base[key] = prev[key];
+      }
     }
     state.dirtyKeys.clear();
     state.dirtyStructure = false;

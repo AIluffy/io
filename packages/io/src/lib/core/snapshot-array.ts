@@ -18,7 +18,6 @@ type ArraySnapshotReader = (
 export function createArraySnapshotReader(deps: {
   getNodeValue: GetNodeValue;
 }): ArraySnapshotReader {
-  const fullRebuildThreshold = 0.5;
   return (state: TreeArrayState, cache?: SnapshotCache): unknown[] => {
     const snapshot = readCachedByVersion(state.snapshotCache, state.valueEpoch);
     if (snapshot !== CACHE_MISS) return snapshot as unknown[];
@@ -42,45 +41,38 @@ export function createArraySnapshotReader(deps: {
     }
 
     let values: unknown[];
-    let forceFullRebuild = false;
     if (
       prev &&
       !state.dirtyStructure &&
       prev.length === state.children.length
     ) {
+      const total = state.children.length;
       let validDirty = 0;
       for (const index of state.dirtyIndices.items) {
-        if (index >= 0 && index < state.children.length) validDirty += 1;
+        if (index >= 0 && index < total) validDirty += 1;
       }
       if (validDirty === 0) {
         clearDirtyIndices(state.dirtyIndices);
         local.set(state.node as object, prev);
         return prev;
       }
-      const fullRebuildThresholdCount = Math.ceil(
-        state.children.length * fullRebuildThreshold,
-      );
-      if (validDirty >= fullRebuildThresholdCount) {
-        values = new Array(state.children.length);
-        forceFullRebuild = true;
-      } else {
-        values = prev.slice();
+
+      values = new Array(total);
+      local.set(state.node as object, values);
+      const marks = state.dirtyIndices.marks;
+      const version = state.dirtyIndices.version;
+      for (let i = 0; i < total; i += 1) {
+        if (marks[i] === version) {
+          values[i] = deps.getNodeValue(state.children[i], local);
+        } else {
+          values[i] = prev[i];
+        }
       }
     } else {
       values = new Array(state.children.length);
-      forceFullRebuild = true;
-    }
-    local.set(state.node as object, values);
-
-    if (forceFullRebuild) {
+      local.set(state.node as object, values);
       for (let i = 0; i < state.children.length; i += 1) {
         values[i] = deps.getNodeValue(state.children[i], local);
-      }
-    } else {
-      for (const index of state.dirtyIndices.items) {
-        if (index >= 0 && index < state.children.length) {
-          values[index] = deps.getNodeValue(state.children[index], local);
-        }
       }
     }
     clearDirtyIndices(state.dirtyIndices);

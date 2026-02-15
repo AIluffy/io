@@ -149,6 +149,27 @@ describe('core: snapshot scope dirty patterns', () => {
   });
 });
 
+describe('core: snapshot array dirty patterns', () => {
+  bench('snapshot: array sparse dirty index (1k)', () => {
+    const list = io(Array.from({ length: 1_000 }, (_, i) => i));
+    for (let i = 0; i < 2_000; i += 1) {
+      const index = i % 1_000;
+      list[index].set(i);
+      list.snapshot();
+    }
+  });
+
+  bench('snapshot: array dense dirty indices (1k)', () => {
+    const list = io(Array.from({ length: 1_000 }, (_, i) => i));
+    for (let round = 0; round < 20; round += 1) {
+      for (let i = 0; i < 1_000; i += 1) {
+        list[i].set(i + round);
+      }
+      list.snapshot();
+    }
+  });
+});
+
 describe('core: createDraft/finishDraft', () => {
   bench('draft/finish: deep object (200)', () => {
     let before = buildDeepState(200);

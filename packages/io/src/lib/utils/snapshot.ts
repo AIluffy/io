@@ -1,5 +1,13 @@
+import { isPlainObject } from './plain-object.js';
+
 const IMMUTABLE_ROOTS = new WeakSet<object>();
 let deepCloneCount = 0;
+const FAST_CLONE_UNSUPPORTED: unique symbol = Symbol.for(
+  '@iostore/store/fastCloneUnsupported',
+);
+const REUSABLE_VISITED = new Set<object>();
+const REUSABLE_STACK: unknown[] = [];
+let deepFreezeWorkspaceInUse = false;
 
 function isImmutableRoot(value: object): boolean {
   return IMMUTABLE_ROOTS.has(value);
@@ -21,11 +29,69 @@ function deepClone<T>(value: T): T {
   );
 }
 
+function cloneFastChild(
+  value: unknown,
+  seen: WeakMap<object, unknown>,
+): unknown | typeof FAST_CLONE_UNSUPPORTED {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  return cloneFastObject(value as object, seen);
+}
+
+function cloneFastObject(
+  value: object,
+  seen: WeakMap<object, unknown>,
+): unknown | typeof FAST_CLONE_UNSUPPORTED {
+  if (seen.has(value)) return seen.get(value) as object;
+
+  if (Array.isArray(value)) {
+    const source = value as unknown[];
+    const target = new Array(source.length) as unknown[];
+    seen.set(value, target);
+
+    for (const key of Reflect.ownKeys(source)) {
+      const desc = Object.getOwnPropertyDescriptor(source, key);
+      if (!desc || !('value' in desc)) return FAST_CLONE_UNSUPPORTED;
+      const clonedValue = cloneFastChild(desc.value, seen);
+      if (clonedValue === FAST_CLONE_UNSUPPORTED) return FAST_CLONE_UNSUPPORTED;
+      Object.defineProperty(target, key, { ...desc, value: clonedValue });
+    }
+    return target;
+  }
+
+  if (!isPlainObject(value)) return FAST_CLONE_UNSUPPORTED;
+
+  const target = Object.create(Object.getPrototypeOf(value)) as Record<
+    PropertyKey,
+    unknown
+  >;
+  seen.set(value, target);
+
+  for (const key of Reflect.ownKeys(value)) {
+    const desc = Object.getOwnPropertyDescriptor(value, key);
+    if (!desc || !('value' in desc)) return FAST_CLONE_UNSUPPORTED;
+    const clonedValue = cloneFastChild(desc.value, seen);
+    if (clonedValue === FAST_CLONE_UNSUPPORTED) return FAST_CLONE_UNSUPPORTED;
+    Object.defineProperty(target, key, { ...desc, value: clonedValue });
+  }
+  return target;
+}
+
+function cloneFast<T>(value: T): T | typeof FAST_CLONE_UNSUPPORTED {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  return cloneFastObject(value as object, new WeakMap<object, unknown>()) as
+    | T
+    | typeof FAST_CLONE_UNSUPPORTED;
+}
+
 function toImmutable<T>(value: T): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
   if (isImmutableRoot(value as object)) return value;
-  const cloned = deepClone(value);
+  const fastCloned = cloneFast(value);
+  const cloned =
+    fastCloned === FAST_CLONE_UNSUPPORTED ? deepClone(value) : fastCloned;
   const frozen = deepFreeze(cloned, { assumeDataProperties: true });
   markImmutableRoot(frozen as object);
   return frozen;
@@ -42,49 +108,73 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
   const assumeDataProperties = options?.assumeDataProperties === true;
   if (assumeDataProperties) {
     let hasObjectChild = false;
-    const root = value as Record<PropertyKey, unknown>;
-    for (const key of Reflect.ownKeys(root)) {
-      const child = root[key];
+    for (const key of Reflect.ownKeys(value as object)) {
+      const desc = Object.getOwnPropertyDescriptor(value as object, key);
+      if (!desc || !('value' in desc)) continue;
+      const child = desc.value;
       if (child !== null && typeof child === 'object') {
         hasObjectChild = true;
         break;
       }
     }
     if (!hasObjectChild) {
-      Object.freeze(root);
+      Object.freeze(value);
       return value;
     }
   }
 
-  const visited = new Set<object>();
+  let visited: Set<object>;
+  let stack: unknown[];
+  let usingReusableWorkspace = false;
+  if (!deepFreezeWorkspaceInUse) {
+    deepFreezeWorkspaceInUse = true;
+    usingReusableWorkspace = true;
+    visited = REUSABLE_VISITED;
+    stack = REUSABLE_STACK;
+    visited.clear();
+    stack.length = 0;
+  } else {
+    visited = new Set<object>();
+    stack = [];
+  }
+  stack.push(value);
 
-  const walk = (current: unknown): void => {
-    if (current === null || current === undefined) return;
-    if (typeof current !== 'object') return;
-    const obj = current as object;
-    if (visited.has(obj)) return;
-    visited.add(obj);
+  try {
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (current === null || current === undefined) continue;
+      if (typeof current !== 'object') continue;
+      const obj = current as object;
+      if (visited.has(obj)) continue;
+      visited.add(obj);
 
-    Object.freeze(obj);
+      Object.freeze(obj);
 
-    if (assumeDataProperties) {
-      for (const key of Reflect.ownKeys(obj)) {
-        walk((obj as Record<PropertyKey, unknown>)[key]);
+      if (assumeDataProperties) {
+        for (const key of Reflect.ownKeys(obj)) {
+          const desc = Object.getOwnPropertyDescriptor(obj, key);
+          if (!desc || !('value' in desc)) continue;
+          stack.push(desc.value);
+        }
+        continue;
       }
-      return;
-    }
 
-    if (Array.isArray(obj)) {
-      for (const item of obj) walk(item);
+      if (Array.isArray(obj)) {
+        for (const item of obj) stack.push(item);
+      }
+      for (const key of Reflect.ownKeys(obj)) {
+        const desc = Object.getOwnPropertyDescriptor(obj, key);
+        if (!desc) continue;
+        if ('value' in desc) stack.push(desc.value);
+      }
     }
-    for (const key of Reflect.ownKeys(obj)) {
-      const desc = Object.getOwnPropertyDescriptor(obj, key);
-      if (!desc) continue;
-      if ('value' in desc) walk(desc.value);
+  } finally {
+    if (usingReusableWorkspace) {
+      stack.length = 0;
+      visited.clear();
+      deepFreezeWorkspaceInUse = false;
     }
-  };
-
-  walk(value);
+  }
   return value;
 }
 

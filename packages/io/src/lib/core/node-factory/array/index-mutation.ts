@@ -36,6 +36,13 @@ export function createArrayIndexMutation(
 
       const emitValue = options?.emitValue !== false;
       const emitUpdate = options?.emitUpdate !== false;
+      const stateWithListeners = state as {
+        updateListeners?: Set<(u: unknown) => void>;
+      };
+      const shouldEmitUpdate = emitUpdate && (
+        stateWithListeners.updateListeners === undefined ||
+        stateWithListeners.updateListeners.size > 0
+      );
       const baseRevision = state.revision;
 
       if (isLink(next)) {
@@ -49,7 +56,7 @@ export function createArrayIndexMutation(
         state.revision = nextRevision(state.revision);
         markDirtyIndex(state.dirtyIndices, index, state.children.length);
         state.valueEpoch = nextEpoch(state.valueEpoch);
-        if (emitUpdate) {
+        if (shouldEmitUpdate) {
           const nextValue = readNodeValue(replaced);
           deps.emitArrayUpdate(
             state,
@@ -78,7 +85,7 @@ export function createArrayIndexMutation(
         state.revision = nextRevision(state.revision);
         state.valueEpoch = nextEpoch(state.valueEpoch);
         markDirtyIndex(state.dirtyIndices, index, state.children.length);
-        if (emitUpdate) {
+        if (shouldEmitUpdate) {
           deps.emitArrayUpdate(
             state,
             deps.createUpdate(baseRevision, state.revision, [
@@ -104,7 +111,7 @@ export function createArrayIndexMutation(
       state.revision = nextRevision(state.revision);
       markDirtyIndex(state.dirtyIndices, index, state.children.length);
       state.valueEpoch = nextEpoch(state.valueEpoch);
-      if (emitUpdate) {
+      if (shouldEmitUpdate) {
         deps.emitArrayUpdate(
           state,
           deps.createUpdate(baseRevision, state.revision, [

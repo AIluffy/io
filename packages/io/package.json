@@ -37,6 +37,13 @@
           "command": "vitest bench --config vite.config.ts",
           "cwd": "packages/io"
         }
+      },
+      "bench-gc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node --expose-gc scripts/snapshot-gc-report.mjs",
+          "cwd": "packages/io"
+        }
       }
     }
   }
