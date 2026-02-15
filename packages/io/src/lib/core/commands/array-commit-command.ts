@@ -21,7 +21,7 @@ export class ArrayCommitCommand implements TreeCommand<TreeArrayState> {
     private readonly deps: ArrayCommitCommandDeps,
   ) {}
 
-  execute(state: TreeArrayState): IoPatch[] {
+  execute(state: TreeArrayState): IoPatch[] | null {
     return executeCommitCommand(state, {
       snapshot: this.deps.snapshot,
       createDraft: this.deps.createDraft,

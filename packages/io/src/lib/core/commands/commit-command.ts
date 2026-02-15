@@ -1,9 +1,6 @@
 import type { IoPatch } from '../../utils/types.js';
 import type { Revision, ValueEpoch } from '../../utils/branded.js';
 
-import { previousEpoch, previousRevision } from '../../utils/branded.js';
-import { SkipExecution } from './command.js';
-
 type CommitState = {
   revision: Revision;
   valueEpoch: ValueEpoch;
@@ -26,7 +23,7 @@ export type CommitCommandDeps<TBefore, TNext> = {
 export function executeCommitCommand<TBefore, TNext>(
   state: CommitState,
   deps: CommitCommandDeps<TBefore, TNext>,
-): IoPatch[] {
+): IoPatch[] | null {
   const before = deps.snapshot();
   const draft = deps.createDraft(before);
   deps.runUserFn(draft);
@@ -34,12 +31,6 @@ export function executeCommitCommand<TBefore, TNext>(
   deps.validateNext?.(before, next);
 
   const { changed, patches } = deps.applyDiff(state, before, next);
-  if (!changed) {
-    state.revision = previousRevision(state.revision);
-    throw new SkipExecution();
-  }
-
-  // Commit diff already bumps valueEpoch when changed.
-  state.valueEpoch = previousEpoch(state.valueEpoch);
+  if (!changed) return null;
   return patches;
 }

@@ -1,11 +1,3 @@
-type IoGlobal = {
-  window?: unknown;
-  document?: unknown;
-};
-
-const ioGlobal: IoGlobal | undefined =
-  typeof globalThis === 'undefined'
-    ? undefined
-    : (globalThis as IoGlobal);
+import { ioGlobal } from './global.js';
 
 export const isServerEnv = !ioGlobal?.window && !ioGlobal?.document;

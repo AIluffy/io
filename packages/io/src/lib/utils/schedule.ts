@@ -1,13 +1,6 @@
 export type IoSchedule = 'sync' | 'microtask' | 'animationFrame';
 
-type IoGlobal = {
-  requestAnimationFrame?: (cb: () => void) => number;
-};
-
-const ioGlobal: IoGlobal | undefined =
-  typeof globalThis === 'undefined'
-    ? undefined
-    : (globalThis as IoGlobal);
+import { ioGlobal } from './global.js';
 
 export function scheduleTask(kind: IoSchedule, fn: () => void): void {
   if (kind === 'sync') {

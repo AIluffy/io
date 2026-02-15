@@ -10,7 +10,6 @@ import type { TreeCommand } from './command.js';
 
 import { resetDirtyIndices } from '../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../utils/branded.js';
-import { SkipExecution } from './command.js';
 
 export type ExecuteOptions = {
   emitValue?: boolean;
@@ -46,10 +45,6 @@ type ExecutorConfig<TState extends ExecutorState> = {
   emitValue: (state: TState) => void;
 };
 
-function shouldSkipExecution(error: unknown): error is SkipExecution {
-  return error instanceof SkipExecution;
-}
-
 function createExecutor<TState extends ExecutorState>(
   deps: ExecutorDeps,
   state: TState,
@@ -65,23 +60,23 @@ function createExecutor<TState extends ExecutorState>(
   ): IoUpdate | undefined => {
     config.beforeExecute?.(state);
     try {
-      command.validate?.(state);
-      const baseRevision = state.revision;
-      state.revision = nextRevision(state.revision);
+      if (command.validate && !command.validate(state)) return undefined;
+      const patches = command.execute(state);
+      if (!patches) return undefined;
 
       if (options?.structural !== false) {
         state.dirtyStructure = true;
         config.onStructural?.(state);
       }
 
-      const patches = command.execute(state);
+      const baseRevision = state.revision;
+      state.revision = nextRevision(state.revision);
       const update = deps.createUpdate(baseRevision, state.revision, patches);
       if (options?.emitUpdate !== false) config.emitUpdate(state, update);
       state.valueEpoch = nextEpoch(state.valueEpoch);
       if (options?.emitValue !== false) config.emitValue(state);
       return update;
     } catch (error) {
-      if (shouldSkipExecution(error)) return undefined;
       deps.emitError(getNode(), error, path, command.op);
       throw error;
     } finally {

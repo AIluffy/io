@@ -7,6 +7,7 @@ import { notifyUpdate, notifyValue } from '../../utils/batch.js';
 import { createUpdate } from '../../utils/updates.js';
 import { prependPatchPath } from '../../utils/patch-path.js';
 import { nextEpoch, nextRevision } from '../../utils/branded.js';
+import { isIndexKey } from '../../utils/is-index-key.js';
 import {
   subscribeIndexedChild,
   subscribeKeyedChild,
@@ -135,7 +136,7 @@ export function createSubscriptions<
       const index =
         typeof segment === 'number'
           ? segment
-          : typeof segment === 'string' && /^[0-9]+$/.test(segment)
+          : isIndexKey(segment)
             ? Number(segment)
             : -1;
       if (index >= 0)

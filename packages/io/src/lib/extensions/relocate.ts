@@ -1,21 +1,14 @@
 import type { IoView } from './types.js';
 
 import { getInternal } from '../utils/internal-access.js';
+import { formatPath } from '../utils/format-path.js';
+import { isIndexKey } from '../utils/is-index-key.js';
 
 type ReadableNode<T> = {
   get(): T;
   snapshot(): T;
   subscribe(fn: (v: T) => void): () => void;
 };
-
-function formatPath(path: ReadonlyArray<PropertyKey>): string {
-  if (path.length === 0) return '<root>';
-  return path.map((segment) => String(segment)).join('.');
-}
-
-function isNumericString(value: PropertyKey): value is string {
-  return typeof value === 'string' && /^[0-9]+$/.test(value);
-}
 
 export function relocate<T>(
   root: unknown,
@@ -41,7 +34,7 @@ export function relocate<T>(
     }
 
     if (internal.kind === 'array') {
-      if (typeof segment !== 'number' && !isNumericString(segment)) {
+      if (typeof segment !== 'number' && !isIndexKey(segment)) {
         throw new Error(
           `relocate: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
         );

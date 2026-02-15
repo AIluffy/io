@@ -1,4 +1,5 @@
 import { isLink } from '../../../utils/link.js';
+import type { IoPatch } from '../../../utils/types.js';
 
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { markDirtyIndex } from '../../mutation/dirty-indices.js';
@@ -16,6 +17,23 @@ export function createArrayIndexMutation(
   ) => void;
 } {
   const { deps, ctx, path, state, createTreeNode, getNode } = options;
+  const postSetIndex = (
+    index: number,
+    baseRevision: number,
+    patch: IoPatch | null,
+    flags: { emitUpdate: boolean; emitValue: boolean },
+  ): void => {
+    state.revision = nextRevision(state.revision);
+    markDirtyIndex(state.dirtyIndices, index, state.children.length);
+    state.valueEpoch = nextEpoch(state.valueEpoch);
+    if (flags.emitUpdate && patch) {
+      deps.subscriptions.emitArrayUpdate(
+        state,
+        deps.utils.createUpdate(baseRevision, state.revision, [patch]),
+      );
+    }
+    if (flags.emitValue) deps.subscriptions.emitArrayValue(state);
+  };
 
   const setIndex = (
     index: number,
@@ -53,24 +71,20 @@ export function createArrayIndexMutation(
         state.children[index] = replaced;
         deps.lifecycle.attachChildToArray(state, replaced);
         readCache?.clear();
-        state.revision = nextRevision(state.revision);
-        markDirtyIndex(state.dirtyIndices, index, state.children.length);
-        state.valueEpoch = nextEpoch(state.valueEpoch);
-        if (shouldEmitUpdate) {
-          const nextValue = readNodeValue(replaced);
-          deps.subscriptions.emitArrayUpdate(
-            state,
-            deps.utils.createUpdate(baseRevision, state.revision, [
-              {
+        const nextValue = shouldEmitUpdate ? readNodeValue(replaced) : undefined;
+        postSetIndex(
+          index,
+          baseRevision,
+          shouldEmitUpdate
+            ? {
                 op: 'set',
                 path: [index],
                 prev: deps.utils.cloneValue(prevValue),
                 next: deps.utils.cloneValue(nextValue),
-              },
-            ]),
-          );
-        }
-        if (emitValue) deps.subscriptions.emitArrayValue(state);
+              }
+            : null,
+          { emitUpdate: shouldEmitUpdate, emitValue },
+        );
         return;
       }
 
@@ -82,23 +96,19 @@ export function createArrayIndexMutation(
         internal.setValue(next, { emitUpdate: false, emitValue: false });
         const after = internal.getValue();
         if (Object.is(before, after)) return;
-        state.revision = nextRevision(state.revision);
-        state.valueEpoch = nextEpoch(state.valueEpoch);
-        markDirtyIndex(state.dirtyIndices, index, state.children.length);
-        if (shouldEmitUpdate) {
-          deps.subscriptions.emitArrayUpdate(
-            state,
-            deps.utils.createUpdate(baseRevision, state.revision, [
-              {
+        postSetIndex(
+          index,
+          baseRevision,
+          shouldEmitUpdate
+            ? {
                 op: 'set',
                 path: [index],
                 prev: deps.utils.cloneValue(before),
                 next: deps.utils.cloneValue(after),
-              },
-            ]),
-          );
-        }
-        if (emitValue) deps.subscriptions.emitArrayValue(state);
+              }
+            : null,
+          { emitUpdate: shouldEmitUpdate, emitValue },
+        );
         return;
       }
 
@@ -108,23 +118,19 @@ export function createArrayIndexMutation(
       const replaced = createTreeNode(ctx, [...path, index], next);
       state.children[index] = replaced;
       deps.lifecycle.attachChildToArray(state, replaced);
-      state.revision = nextRevision(state.revision);
-      markDirtyIndex(state.dirtyIndices, index, state.children.length);
-      state.valueEpoch = nextEpoch(state.valueEpoch);
-      if (shouldEmitUpdate) {
-        deps.subscriptions.emitArrayUpdate(
-          state,
-          deps.utils.createUpdate(baseRevision, state.revision, [
-            {
+      postSetIndex(
+        index,
+        baseRevision,
+        shouldEmitUpdate
+          ? {
               op: 'set',
               path: [index],
               prev: deps.utils.cloneValue(prevValue),
               next: deps.utils.cloneValue(next),
-            },
-          ]),
-        );
-      }
-      if (emitValue) deps.subscriptions.emitArrayValue(state);
+            }
+          : null,
+        { emitUpdate: shouldEmitUpdate, emitValue },
+      );
     } catch (error) {
       deps.utils.emitError(getNode(), error, [...path, index], 'set');
       throw error;

@@ -2,7 +2,6 @@ import type { IoPatch } from '../../utils/types.js';
 import type { DirtyIndexState } from './dirty-indices.js';
 import { resetDirtyIndices } from './dirty-indices.js';
 import type { ValueEpoch } from '../../utils/branded.js';
-import { nextEpoch } from '../../utils/branded.js';
 
 type PathSegment = PropertyKey;
 type NodePath = readonly PathSegment[];
@@ -355,7 +354,6 @@ function createDiffHelpers<
       );
       changed = changed || nodeChanged;
     }
-    if (changed) scopeState.valueEpoch = nextEpoch(scopeState.valueEpoch);
     return changed;
   };
 
@@ -407,7 +405,6 @@ function createDiffHelpers<
         changed = changed || nodeChanged;
       }
     }
-    if (changed) arrayState.valueEpoch = nextEpoch(arrayState.valueEpoch);
     return changed;
   };
 

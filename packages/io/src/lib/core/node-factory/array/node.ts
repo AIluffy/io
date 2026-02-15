@@ -14,6 +14,7 @@ import {
   initialRevision,
   staleEpoch,
 } from '../../../utils/branded.js';
+import { isIndexKey } from '../../../utils/is-index-key.js';
 
 type CreateArrayNodeOptions = {
   deps: TreeDeps;
@@ -65,20 +66,20 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
   };
   const proxy = new Proxy(array as TreeNode & object, {
     get(target, prop, receiver) {
-      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
+      if (isIndexKey(prop)) {
         return state.children[Number(prop)];
       }
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
-      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
+      if (isIndexKey(prop)) {
         setIndex(Number(prop), value, {
           emitUpdate: true,
           emitValue: true,
         });
         return true;
       }
-      if (prop === 'length')
+      if (typeof prop === 'string' && prop === 'length')
         throw new Error('ioTree array: length is read-only');
       return Reflect.set(target, prop, value, receiver);
     },

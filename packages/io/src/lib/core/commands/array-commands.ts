@@ -5,7 +5,6 @@ import type { SnapshotCache } from '../snapshot/snapshot-cache.js';
 
 import { clearDirtyIndices, resetDirtyIndices } from '../mutation/dirty-indices.js';
 import { createSnapshotCache } from '../snapshot/snapshot-cache.js';
-import { SkipExecution } from './command.js';
 import type { TreeCommand } from './command.js';
 
 type PerformSpliceResult = {
@@ -43,11 +42,11 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
     private readonly items: unknown[],
   ) {}
 
-  validate(): void {
-    if (this.items.length === 0) throw new SkipExecution();
+  validate(): boolean {
+    return this.items.length > 0;
   }
 
-  execute(state: TreeArrayState): IoPatch[] {
+  execute(state: TreeArrayState): IoPatch[] | null {
     const start = state.children.length;
     const created = this.items.map((value, index) =>
       this.deps.createTreeNode([...this.deps.path, start + index], value),
@@ -78,14 +77,14 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
 
   constructor(private readonly deps: ArrayCommandDeps) {}
 
-  validate(state: TreeArrayState): void {
-    if (state.children.length === 0) throw new SkipExecution();
+  validate(state: TreeArrayState): boolean {
+    return state.children.length > 0;
   }
 
-  execute(state: TreeArrayState): IoPatch[] {
+  execute(state: TreeArrayState): IoPatch[] | null {
     const start = state.children.length - 1;
     const removed = state.children.pop();
-    if (!removed) throw new SkipExecution();
+    if (!removed) return null;
 
     const readCache = createSnapshotCache();
     const removedValue = this.deps.getNodeValue(removed, readCache);
@@ -154,14 +153,15 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
     },
   ) {}
 
-  validate(state: TreeArrayState): void {
-    if (state.children.length <= 1) throw new SkipExecution();
+  validate(state: TreeArrayState): boolean {
+    if (state.children.length <= 1) return false;
     if (this.options?.order) {
       this.deps.validateSortPermutation(
         this.options.order,
         state.children.length,
       );
     }
+    return true;
   }
 
   execute(state: TreeArrayState): IoPatch[] {

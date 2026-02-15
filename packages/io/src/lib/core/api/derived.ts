@@ -12,6 +12,7 @@ import { computed, effect } from '../../utils/signals.js';
 import { cloneValue, snapshotValue } from '../../utils/snapshot.js';
 import { getInternal, registerInternal } from '../../utils/internal-access.js';
 import { INTERNAL } from '../../utils/internal-access.js';
+import { isIndexKey } from '../../utils/is-index-key.js';
 
 type Subscribable = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
@@ -37,10 +38,6 @@ const proxyCache = new WeakMap<object, unknown>();
 
 function asObjectKey(prop: PropertyKey): prop is string | symbol {
   return typeof prop === 'string' || typeof prop === 'symbol';
-}
-
-function isIndexKey(prop: PropertyKey): prop is string {
-  return typeof prop === 'string' && /^[0-9]+$/.test(prop);
 }
 
 function hasGet(value: unknown): value is { get: () => unknown } {

@@ -10,9 +10,7 @@ import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-typ
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
-import { previousRevision } from '../../utils/branded.js';
 import { executeCommitCommand } from './commit-command.js';
-import { SkipExecution } from './command.js';
 
 type ScopeCommitDeps = {
   snapshot: () => Record<string, unknown>;
@@ -41,7 +39,7 @@ export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {
     private readonly deps: ScopeCommitDeps,
   ) {}
 
-  execute(state: TreeScopeState): IoPatch[] {
+  execute(state: TreeScopeState): IoPatch[] | null {
     return executeCommitCommand(state, {
       snapshot: this.deps.snapshot,
       createDraft: this.deps.createDraft,
@@ -74,7 +72,7 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
     private readonly options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) {}
 
-  execute(state: TreeScopeState): IoPatch[] {
+  execute(state: TreeScopeState): IoPatch[] | null {
     const existing = state.children.get(this.key);
     if (!existing)
       throw new Error(`ioTree scope: missing key ${String(this.key)}`);
@@ -92,10 +90,7 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
         emitValue,
       });
       const after = internal.getValue();
-      if (Object.is(before, after)) {
-        state.revision = previousRevision(state.revision);
-        throw new SkipExecution();
-      }
+      if (Object.is(before, after)) return null;
       if (emitValue) {
         state.dirtyKeys.add(this.key);
       } else {

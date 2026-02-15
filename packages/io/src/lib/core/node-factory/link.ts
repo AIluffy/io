@@ -1,6 +1,9 @@
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 
+import { formatPath } from '../../utils/format-path.js';
+export { formatPath };
+
 type TrieNode = {
   node: TreeNode | undefined;
   children: Map<PropertyKey, unknown>;
@@ -12,11 +15,6 @@ export function isPathPrefix(prefix: NodePath, path: NodePath): boolean {
     if (!Object.is(prefix[i], path[i])) return false;
   }
   return true;
-}
-
-export function formatPath(path: NodePath): string {
-  if (path.length === 0) return '<root>';
-  return path.map((segment) => String(segment)).join('.');
 }
 
 export function collectTargetPaths(

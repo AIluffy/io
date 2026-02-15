@@ -21,14 +21,6 @@ export function nextRevision(revision: Revision): Revision {
   return (revision + 1) as Revision;
 }
 
-export function previousRevision(revision: Revision): Revision {
-  return (revision - 1) as Revision;
-}
-
 export function nextEpoch(epoch: ValueEpoch): ValueEpoch {
   return (epoch + 1) as ValueEpoch;
-}
-
-export function previousEpoch(epoch: ValueEpoch): ValueEpoch {
-  return (epoch - 1) as ValueEpoch;
 }
