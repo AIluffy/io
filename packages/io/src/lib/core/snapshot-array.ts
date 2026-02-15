@@ -2,6 +2,7 @@ import type { TreeArrayState } from './io-tree-types.js';
 import type { GetNodeValue, SnapshotCache } from './snapshot-scope.js';
 
 import { freezeRootShallow } from '../utils/snapshot.js';
+import { defineLazyValue } from '../utils/lazy-property.js';
 import { readCachedByVersion } from '../container/cache.js';
 import { clearDirtyIndices } from './dirty-indices.js';
 
@@ -9,26 +10,6 @@ type ArraySnapshotReader = (
   state: TreeArrayState,
   cache?: SnapshotCache,
 ) => unknown[];
-
-function defineLazyValue(
-  target: object,
-  key: PropertyKey,
-  compute: () => unknown,
-): void {
-  let resolved = false;
-  let cached: unknown;
-  Object.defineProperty(target, key, {
-    enumerable: true,
-    configurable: true,
-    get: () => {
-      if (!resolved) {
-        cached = compute();
-        resolved = true;
-      }
-      return cached;
-    },
-  });
-}
 
 export function createArraySnapshotReader(deps: {
   getNodeValue: GetNodeValue;

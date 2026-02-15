@@ -12,6 +12,7 @@ import type {
 import { freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
 import { readCachedByVersion } from '../container/cache.js';
 import { getInternal as getAnyInternal } from '../utils/internal-access.js';
+import { defineLazyValue, materializeKeys } from '../utils/lazy-property.js';
 
 export type SnapshotCache = WeakMap<object, unknown>;
 
@@ -68,32 +69,6 @@ export function createNodeValueReader(deps: {
     if (hasSnapshot(node)) return node.snapshot();
     return snapshotValue(node, { owned: false });
   };
-}
-
-function defineLazyValue(
-  target: object,
-  key: PropertyKey,
-  compute: () => unknown,
-): void {
-  let resolved = false;
-  let cached: unknown;
-  Object.defineProperty(target, key, {
-    enumerable: true,
-    configurable: true,
-    get: () => {
-      if (!resolved) {
-        cached = compute();
-        resolved = true;
-      }
-      return cached;
-    },
-  });
-}
-
-function materializeKeys(target: Record<PropertyKey, unknown>): void {
-  for (const key of Reflect.ownKeys(target)) {
-    void target[key];
-  }
 }
 
 export function createScopeSnapshotReader(deps: {
