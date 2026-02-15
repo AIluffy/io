@@ -1,7 +1,7 @@
 import createJiti from 'jiti';
 
 const jiti = createJiti(import.meta.url, { interopDefault: true });
-const { io } = await jiti.import('../src/lib/core/io.ts');
+const { io } = await jiti.import('../src/index.ts');
 const jsonMode = process.argv.includes('--json');
 
 function forceGc(times = 4) {
