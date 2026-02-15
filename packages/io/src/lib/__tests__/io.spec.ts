@@ -12,7 +12,7 @@ import { onError, onMutation } from '../utils/debug.js';
 import { derived } from '../core/api/derived.js';
 import { io } from '../core/api/io.js';
 import { ioTree } from '../core/api/io-tree.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
+import { INTERNAL } from '../utils/internal-access.js';
 import { link } from '../utils/link.js';
 import { Signal, computed, effect } from '../utils/signals.js';
 import { createHistory } from '../utils/history.js';

@@ -8,7 +8,7 @@ import {
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
-import type { CreateArrayMutationsOptions } from './mutate-types.js';
+import type { CreateArrayMutationsOptions } from './array-ops.js';
 
 function validateSortPermutation(order: number[], length: number): void {
   if (order.length !== length)

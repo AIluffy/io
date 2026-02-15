@@ -1,5 +1,5 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+import type { NodeCreationDeps } from '../types.js';
 import type { TreeArrayState } from '../tree/io-tree-types.js';
 import type { TreeCommand } from './command.js';
 

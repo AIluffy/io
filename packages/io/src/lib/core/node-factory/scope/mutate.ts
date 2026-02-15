@@ -1,6 +1,6 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
-import type { NodeCreationDeps } from '../../deps/node-creation-deps.js';
+import type { NodeCreationDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,

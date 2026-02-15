@@ -1,6 +1,6 @@
 import { isLink } from '../../../utils/link.js';
 
-import type { CreateArrayMutationsOptions } from './mutate-types.js';
+import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { markDirtyIndex } from '../../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../../utils/branded.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';

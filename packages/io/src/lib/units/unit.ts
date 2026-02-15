@@ -1,7 +1,7 @@
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { emitError } from '../utils/debug.js';
 import { getInternal, registerInternal } from '../utils/internal-access.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
+import { INTERNAL } from '../utils/internal-access.js';
 import { trackRead } from '../utils/signals.js';
 import { cloneValue, readValue } from '../utils/snapshot.js';
 import type {

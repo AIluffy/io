@@ -1,7 +1,7 @@
 import { getLinkTarget, isLink } from '../../utils/link.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
-import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+import type { NodeCreationDeps } from '../types.js';
 import { createArrayNode as createArrayNodeImpl } from './array/node.js';
 import { createScopeNode as createScopeNodeImpl } from './scope/node.js';
 import {
@@ -10,7 +10,7 @@ import {
   isPathPrefix,
 } from './link.js';
 
-export type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+export type { NodeCreationDeps } from '../types.js';
 
 /**
  * Builds the tree-node constructor used by `ioTree`.

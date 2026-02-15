@@ -1,6 +1,6 @@
 import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeCreationDeps } from '../../deps/node-creation-deps.js';
+import type { NodeCreationDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,

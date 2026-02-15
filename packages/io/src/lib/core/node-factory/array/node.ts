@@ -1,6 +1,6 @@
 import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeCreationDeps } from '../../deps/node-creation-deps.js';
+import type { NodeCreationDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
@@ -8,7 +8,7 @@ import type {
   TreeNode,
 } from '../../tree/io-tree-types.js';
 import { createDirtyIndexState } from '../../mutation/dirty-indices.js';
-import { createArrayOps } from './ops.js';
+import { createArrayOps } from './array-ops.js';
 import {
   initialEpoch,
   initialRevision,

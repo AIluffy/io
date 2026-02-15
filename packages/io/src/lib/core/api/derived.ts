@@ -11,7 +11,7 @@ import type {
 import { computed, effect } from '../../utils/signals.js';
 import { readValue, snapshotValue } from '../../utils/snapshot.js';
 import { getInternal, registerInternal } from '../../utils/internal-access.js';
-import { INTERNAL } from '../../utils/internal-symbol.js';
+import { INTERNAL } from '../../utils/internal-access.js';
 
 type Subscribable = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
