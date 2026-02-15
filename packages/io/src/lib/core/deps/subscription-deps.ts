@@ -1,5 +1,5 @@
 import type { IoUnsubscribe, IoUpdate } from '../../utils/types.js';
-import type { TreeArrayState, TreeScopeState } from '../io-tree-types.js';
+import type { TreeArrayState, TreeScopeState } from '../tree/io-tree-types.js';
 import type { SnapshotDeps } from './snapshot-deps.js';
 
 export type SubscriptionDeps = SnapshotDeps & {

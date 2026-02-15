@@ -6,12 +6,12 @@ import type {
   IoUnit,
   IoUnsubscribe,
   UnwrapIo,
-} from '../utils/types.js';
+} from '../../utils/types.js';
 
-import { computed, effect } from '../utils/signals.js';
-import { readValue, snapshotValue } from '../utils/snapshot.js';
-import { getInternal, registerInternal } from '../utils/internal-access.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
+import { computed, effect } from '../../utils/signals.js';
+import { readValue, snapshotValue } from '../../utils/snapshot.js';
+import { getInternal, registerInternal } from '../../utils/internal-access.js';
+import { INTERNAL } from '../../utils/internal-symbol.js';
 
 type Subscribable = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;

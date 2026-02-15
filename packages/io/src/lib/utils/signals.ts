@@ -14,16 +14,6 @@ export function trackRead(dep: Dependency): void {
   activeContext?.recordDependency(dep);
 }
 
-export function untrack<R>(fn: () => R): R {
-  const prev = activeContext;
-  activeContext = null;
-  try {
-    return fn();
-  } finally {
-    activeContext = prev;
-  }
-}
-
 function withTracking<R>(ctx: TrackingContext, fn: () => R): R {
   const prev = activeContext;
   activeContext = ctx;

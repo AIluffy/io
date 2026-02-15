@@ -211,7 +211,3 @@ export function finishDraft<T>(draft: T): T {
   release();
   return result as T;
 }
-
-export function isDraftValue(value: unknown): boolean {
-  return isDraft(value);
-}

@@ -28,7 +28,7 @@ describe('counter', () => {
 import { io } from '@iostore/store';
 
 const store = io({ count: 0 });
-const updates: any[] = [];
+const updates: unknown[] = [];
 const stop = store.subscribeUpdate((u) => updates.push(u));
 
 store.count.set(1);
@@ -43,7 +43,7 @@ expect(updates[0].patches[0].op).toBe('set');
 import { io, replay } from '@iostore/store';
 
 const base = io({ count: 0 });
-const updates: any[] = [];
+const updates: unknown[] = [];
 const stop = base.subscribeUpdate((u) => updates.push(u));
 
 base.count.set(1);

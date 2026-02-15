@@ -1,7 +1,7 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { NodeFactoryDeps } from '../node-factory/types.js';
-import type { TreeNode, TreeScopeState, UnitInternal } from '../io-tree-types.js';
-import type { NodePath } from '../path-trie.js';
+import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-types.js';
+import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
 import { previousEpoch, previousRevision } from '../../utils/branded.js';
@@ -9,21 +9,21 @@ import { SkipExecution } from './command.js';
 
 type ScopeCommitDeps = {
   snapshot: () => Record<string, unknown>;
-  createDraft: NodeFactoryDeps['createDraft'];
-  finishDraft: NodeFactoryDeps['finishDraft'];
-  applyScopeCommitDiff: NodeFactoryDeps['applyScopeCommitDiff'];
-  commitDeps: Parameters<NodeFactoryDeps['applyScopeCommitDiff']>[3];
+  createDraft: NodeCreationDeps['createDraft'];
+  finishDraft: NodeCreationDeps['finishDraft'];
+  applyScopeCommitDiff: NodeCreationDeps['applyScopeCommitDiff'];
+  commitDeps: Parameters<NodeCreationDeps['applyScopeCommitDiff']>[3];
 };
 
 type ScopeMutateCommandDeps = {
   path: NodePath;
-  isUnit: NodeFactoryDeps['isUnit'];
-  requireInternalOfKind: NodeFactoryDeps['requireInternalOfKind'];
-  detachChildFromScope: NodeFactoryDeps['detachChildFromScope'];
+  isUnit: NodeCreationDeps['isUnit'];
+  requireInternalOfKind: NodeCreationDeps['requireInternalOfKind'];
+  detachChildFromScope: NodeCreationDeps['detachChildFromScope'];
   unregisterSubtree: (path: NodePath, node: TreeNode) => void;
   createTreeNode: (path: NodePath, initial: unknown) => TreeNode;
-  attachChildToScope: NodeFactoryDeps['attachChildToScope'];
-  markDirty: NodeFactoryDeps['markDirty'];
+  attachChildToScope: NodeCreationDeps['attachChildToScope'];
+  markDirty: NodeCreationDeps['markDirty'];
 };
 
 export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {

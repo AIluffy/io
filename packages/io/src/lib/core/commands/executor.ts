@@ -3,11 +3,11 @@ import type {
   TreeArrayState,
   TreeNode,
   TreeScopeState,
-} from '../io-tree-types.js';
-import type { NodePath } from '../path-trie.js';
+} from '../tree/io-tree-types.js';
+import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
-import { resetDirtyIndices } from '../dirty-indices.js';
+import { resetDirtyIndices } from '../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../utils/branded.js';
 import { SkipExecution } from './command.js';
 
@@ -31,15 +31,12 @@ type ExecutorDeps = {
   ) => void;
 };
 
-export type ArrayCommandExecutorDeps = ExecutorDeps;
-export type ScopeCommandExecutorDeps = ExecutorDeps;
-
 function shouldSkipExecution(error: unknown): error is SkipExecution {
   return error instanceof SkipExecution;
 }
 
 export function createArrayExecutor(
-  deps: ArrayCommandExecutorDeps,
+  deps: ExecutorDeps,
   state: TreeArrayState,
   path: NodePath,
   getNode: () => TreeNode,
@@ -80,7 +77,7 @@ export function createArrayExecutor(
 }
 
 export function createScopeExecutor(
-  deps: ScopeCommandExecutorDeps,
+  deps: ExecutorDeps,
   state: TreeScopeState,
   path: NodePath,
   getNode: () => TreeNode,

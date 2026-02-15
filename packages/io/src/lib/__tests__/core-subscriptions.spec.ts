@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDirtyIndexState } from '../core/dirty-indices.js';
-import { createSubscriptions } from '../core/subscriptions.js';
+import { createDirtyIndexState } from '../core/mutation/dirty-indices.js';
+import { createSubscriptions } from '../core/mutation/subscriptions.js';
 import { initialEpoch, initialRevision } from '../utils/branded.js';
 
 type FakeChild = {

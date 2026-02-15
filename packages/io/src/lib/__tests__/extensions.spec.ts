@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { io } from '../core/io.js';
+import { io } from '../core/api/io.js';
 import { withBehaviors } from '../extensions/with-behaviors.js';
 import { schedule } from '../extensions/behaviors/schedule.js';
 import { persist } from '../extensions/behaviors/persist.js';
 import { devtools } from '../extensions/behaviors/devtools.js';
-import { derived } from '../core/derived.js';
+import { derived } from '../core/api/derived.js';
 
 describe('extensions: behaviors', () => {
   it('schedules subscriber updates', () => {

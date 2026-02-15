@@ -1,16 +1,16 @@
-import { getLinkTarget, isLink } from '../utils/link.js';
-import type { NodePath } from './path-trie.js';
-import type { TreeContext, TreeNode } from './io-tree-types.js';
-import type { NodeFactoryDeps } from './node-factory/types.js';
-import { createArrayNode as createArrayNodeImpl } from './node-factory/array/node.js';
-import { createScopeNode as createScopeNodeImpl } from './node-factory/scope/node.js';
+import { getLinkTarget, isLink } from '../../utils/link.js';
+import type { NodePath } from '../tree/path-trie.js';
+import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
+import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+import { createArrayNode as createArrayNodeImpl } from './array/node.js';
+import { createScopeNode as createScopeNodeImpl } from './scope/node.js';
 import {
   collectTargetPaths,
   formatPath,
   isPathPrefix,
-} from './node-factory/link.js';
+} from './link.js';
 
-export type { NodeFactoryDeps } from './node-factory/types.js';
+export type { NodeCreationDeps } from '../deps/node-creation-deps.js';
 
 /**
  * Builds the tree-node constructor used by `ioTree`.
@@ -18,7 +18,7 @@ export type { NodeFactoryDeps } from './node-factory/types.js';
  * The factory chooses node kind (scope/array/unit), maintains path mappings,
  * and enforces constraints around links, cycles, and shared references.
  */
-export function createNodeFactory(deps: NodeFactoryDeps) {
+export function createNodeFactory(deps: NodeCreationDeps) {
   // Patch payloads must be immutable snapshots. Linked nodes need resolving to
   // values so update logs stay serializable and replay-safe.
   /**

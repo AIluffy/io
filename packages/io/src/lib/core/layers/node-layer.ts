@@ -1,6 +1,6 @@
 import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
 import type { SnapshotDeps } from '../deps/snapshot-deps.js';
-import type { TreeInternal } from '../io-tree-types.js';
+import type { TreeInternal } from '../tree/io-tree-types.js';
 import type { CommandLayer } from './command-layer.js';
 import type { RegistryLayer } from './registry-layer.js';
 import type { SubscriptionLayer } from './subscription-layer.js';
@@ -12,7 +12,7 @@ import {
   requireInternalOfKind,
 } from '../../utils/internal-access.js';
 import { INTERNAL } from '../../utils/internal-symbol.js';
-import { createNodeFactory } from '../node-factory.js';
+import { createNodeFactory } from '../node-factory/index.js';
 
 type CreateNodeLayerDeps = {
   registry: RegistryLayer;

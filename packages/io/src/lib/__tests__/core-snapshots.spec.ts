@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createDirtyIndexState } from '../core/dirty-indices.js';
-import { createSnapshotCache } from '../core/snapshot-cache.js';
-import { createArraySnapshotReader } from '../core/snapshot-array.js';
+import { createDirtyIndexState } from '../core/mutation/dirty-indices.js';
+import { createSnapshotCache } from '../core/snapshot/snapshot-cache.js';
+import { createArraySnapshotReader } from '../core/snapshot/snapshot-array.js';
 import {
   createNodeValueReader,
   createScopeSnapshotReader,
-} from '../core/snapshot-scope.js';
-import { createTreeContext } from '../core/tree-context.js';
+} from '../core/snapshot/snapshot-scope.js';
+import { createTreeContext } from '../core/tree/tree-context.js';
 
 describe('core/snapshot readers', () => {
   it('returns previous scope snapshot when state is clean', () => {

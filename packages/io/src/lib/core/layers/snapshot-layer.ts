@@ -1,10 +1,10 @@
 import type { SnapshotDeps } from '../deps/snapshot-deps.js';
 
-import { createArraySnapshotReader } from '../snapshot-array.js';
+import { createArraySnapshotReader } from '../snapshot/snapshot-array.js';
 import {
   createNodeValueReader,
   createScopeSnapshotReader,
-} from '../snapshot-scope.js';
+} from '../snapshot/snapshot-scope.js';
 
 export function createSnapshotLayer(): SnapshotDeps {
   let getNodeValue: SnapshotDeps['getNodeValue'] = () => {

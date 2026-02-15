@@ -1,4 +1,4 @@
-import type { IoUnit } from '../utils/types.js';
+import type { IoUnit } from '../../utils/types.js';
 import type {
   TreeArrayInternal,
   TreeArrayState,
@@ -7,16 +7,16 @@ import type {
   TreeScopeInternal,
   TreeScopeState,
   UnitInternal,
-} from './io-tree-types.js';
+} from '../tree/io-tree-types.js';
 import type { SnapshotCache } from './snapshot-cache.js';
 
-import { freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
+import { freezeRootShallow, snapshotValue } from '../../utils/snapshot.js';
 import {
   CACHE_MISS,
   readCachedByVersion,
   updateCachedByVersion,
-} from '../container/cache.js';
-import { getInternal as getAnyInternal } from '../utils/internal-access.js';
+} from '../../container/cache.js';
+import { getInternal as getAnyInternal } from '../../utils/internal-access.js';
 import { createSnapshotCache } from './snapshot-cache.js';
 
 export type { SnapshotCache } from './snapshot-cache.js';

@@ -7,7 +7,7 @@ import {
   SpliceCommand,
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
-import { createSnapshotCache } from '../../snapshot-cache.js';
+import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { CreateArrayMutationsOptions } from './mutate-types.js';
 
 function validateSortPermutation(order: number[], length: number): void {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDirtyIndexState } from '../core/dirty-indices.js';
+import { createDirtyIndexState } from '../core/mutation/dirty-indices.js';
 import { createArrayIndexMutation } from '../core/node-factory/array/index-mutation.js';
-import { io } from '../core/io.js';
+import { io } from '../core/api/io.js';
 import { getLinkTarget, link } from '../utils/link.js';
 
 type UnitNode = {

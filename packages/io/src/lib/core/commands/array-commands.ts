@@ -1,10 +1,10 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { TreeArrayState, TreeNode } from '../io-tree-types.js';
-import type { NodePath } from '../path-trie.js';
-import type { SnapshotCache } from '../snapshot-cache.js';
+import type { TreeArrayState, TreeNode } from '../tree/io-tree-types.js';
+import type { NodePath } from '../tree/path-trie.js';
+import type { SnapshotCache } from '../snapshot/snapshot-cache.js';
 
-import { clearDirtyIndices, resetDirtyIndices } from '../dirty-indices.js';
-import { createSnapshotCache } from '../snapshot-cache.js';
+import { clearDirtyIndices, resetDirtyIndices } from '../mutation/dirty-indices.js';
+import { createSnapshotCache } from '../snapshot/snapshot-cache.js';
 import { SkipExecution } from './command.js';
 import type { TreeCommand } from './command.js';
 

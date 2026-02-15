@@ -1,16 +1,16 @@
-import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
+import type { IoUnsubscribe, IoUpdate } from '../../utils/types.js';
 import type { DirtyIndexState } from './dirty-indices.js';
 import { markDirtyIndex } from './dirty-indices.js';
-import type { Revision, ValueEpoch } from '../utils/branded.js';
+import type { Revision, ValueEpoch } from '../../utils/branded.js';
 
-import { notifyUpdate, notifyValue } from '../utils/batch.js';
-import { createUpdate } from '../utils/updates.js';
-import { prependPatchPath } from '../utils/patch-path.js';
-import { nextEpoch, nextRevision } from '../utils/branded.js';
+import { notifyUpdate, notifyValue } from '../../utils/batch.js';
+import { createUpdate } from '../../utils/updates.js';
+import { prependPatchPath } from '../../utils/patch-path.js';
+import { nextEpoch, nextRevision } from '../../utils/branded.js';
 import {
   subscribeIndexedChild,
   subscribeKeyedChild,
-} from '../container/bubbling.js';
+} from '../../container/bubbling.js';
 
 type ScopeStateLike<TNode> = {
   children: Map<PropertyKey, TNode>;

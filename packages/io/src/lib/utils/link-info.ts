@@ -1,6 +1,6 @@
 import type { IoPath } from './types.js';
-import type { PathTrieNode } from '../core/path-trie.js';
-import type { TreeNode } from '../core/io-tree-types.js';
+import type { PathTrieNode } from '../core/tree/path-trie.js';
+import type { TreeNode } from '../core/tree/io-tree-types.js';
 
 import { getInternal } from './internal-access.js';
 

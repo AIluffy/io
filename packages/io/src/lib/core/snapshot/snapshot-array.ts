@@ -1,13 +1,13 @@
-import type { TreeArrayState } from './io-tree-types.js';
+import type { TreeArrayState } from '../tree/io-tree-types.js';
 import type { GetNodeValue, SnapshotCache } from './snapshot-scope.js';
 
-import { freezeRootShallow } from '../utils/snapshot.js';
+import { freezeRootShallow } from '../../utils/snapshot.js';
 import {
   CACHE_MISS,
   readCachedByVersion,
   updateCachedByVersion,
-} from '../container/cache.js';
-import { clearDirtyIndices } from './dirty-indices.js';
+} from '../../container/cache.js';
+import { clearDirtyIndices } from '../mutation/dirty-indices.js';
 import { createSnapshotCache } from './snapshot-cache.js';
 
 type ArraySnapshotReader = (

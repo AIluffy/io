@@ -5,10 +5,10 @@ import type {
   TreeArrayState,
   TreeNode,
   TreeScopeState,
-} from '../io-tree-types.js';
+} from '../tree/io-tree-types.js';
 
 import { trackRead } from '../../utils/signals.js';
-import { createSubscriptions } from '../subscriptions.js';
+import { createSubscriptions } from '../mutation/subscriptions.js';
 
 export type SubscriptionLayer = SubscriptionDeps & LifecycleDeps;
 

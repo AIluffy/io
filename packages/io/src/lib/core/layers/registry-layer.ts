@@ -1,5 +1,5 @@
-import type { TreeContext, TreeNode } from '../io-tree-types.js';
-import type { NodePath } from '../path-trie.js';
+import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
+import type { NodePath } from '../tree/path-trie.js';
 
 import {
   getPathNode as getPathNodeWithAccess,
@@ -7,12 +7,12 @@ import {
   registerSubtree as registerSubtreeWithAccess,
   setPathNode as setPathNodeWithAccess,
   unregisterSubtree as unregisterSubtreeWithAccess,
-} from '../path-trie.js';
+} from '../tree/path-trie.js';
 import {
   getTreeInternal,
   isArrayInternal,
   isScopeInternal,
-} from '../snapshot-scope.js';
+} from '../snapshot/snapshot-scope.js';
 
 type SubtreeState = { path: NodePath };
 

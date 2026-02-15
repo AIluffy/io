@@ -9,9 +9,9 @@ import type {
 } from '../utils/types.js';
 import { batch } from '../utils/batch.js';
 import { onError, onMutation } from '../utils/debug.js';
-import { derived } from '../core/derived.js';
-import { io } from '../core/io.js';
-import { ioTree } from '../core/io-tree.js';
+import { derived } from '../core/api/derived.js';
+import { io } from '../core/api/io.js';
+import { ioTree } from '../core/api/io-tree.js';
 import { INTERNAL } from '../utils/internal-symbol.js';
 import { link } from '../utils/link.js';
 import { Signal, computed, effect } from '../utils/signals.js';

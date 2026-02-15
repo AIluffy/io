@@ -4,7 +4,7 @@ import type {
   TreeInternal,
   TreeNode,
   TreeScopeState,
-} from '../io-tree-types.js';
+} from '../tree/io-tree-types.js';
 import type { CommitDeps } from './commit-deps.js';
 import type { RegistryDeps } from './registry-deps.js';
 import type { SubscriptionDeps } from './subscription-deps.js';

@@ -1,6 +1,6 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { NodeFactoryDeps } from '../node-factory/types.js';
-import type { TreeArrayState } from '../io-tree-types.js';
+import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
+import type { TreeArrayState } from '../tree/io-tree-types.js';
 import type { TreeCommand } from './command.js';
 
 import { previousEpoch, previousRevision } from '../../utils/branded.js';
@@ -8,10 +8,10 @@ import { SkipExecution } from './command.js';
 
 type ArrayCommitCommandDeps = {
   snapshot: () => unknown[];
-  createDraft: NodeFactoryDeps['createDraft'];
-  finishDraft: NodeFactoryDeps['finishDraft'];
-  applyArrayCommitDiff: NodeFactoryDeps['applyArrayCommitDiff'];
-  commitDeps: Parameters<NodeFactoryDeps['applyArrayCommitDiff']>[3];
+  createDraft: NodeCreationDeps['createDraft'];
+  finishDraft: NodeCreationDeps['finishDraft'];
+  applyArrayCommitDiff: NodeCreationDeps['applyArrayCommitDiff'];
+  commitDeps: Parameters<NodeCreationDeps['applyArrayCommitDiff']>[3];
 };
 
 export class ArrayCommitCommand implements TreeCommand<TreeArrayState> {

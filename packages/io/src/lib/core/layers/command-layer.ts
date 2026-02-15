@@ -8,7 +8,7 @@ import { emitError } from '../../utils/debug.js';
 import { isPlainObject } from '../../utils/plain-object.js';
 import { cloneValue } from '../../utils/snapshot.js';
 import { createUpdate } from '../../utils/updates.js';
-import { applyArrayCommitDiff, applyScopeCommitDiff } from '../commit.js';
+import { applyArrayCommitDiff, applyScopeCommitDiff } from '../mutation/commit.js';
 
 type CreateCommandLayerDeps = {
   registry: RegistryLayer;

@@ -38,7 +38,7 @@ stop();
 import { applyUpdate, mergeUpdates, undoUpdate, replay, io } from '@iostore/store';
 
 const store = io({ count: 0 });
-const updates: any[] = [];
+const updates: unknown[] = [];
 const stop = store.subscribeUpdate((u) => updates.push(u));
 
 store.count.set(1);

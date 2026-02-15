@@ -1,15 +1,15 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import type { NodeCreationDeps } from '../../deps/node-creation-deps.js';
+import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
   TreeNode,
   TreeScopeState,
-} from '../../io-tree-types.js';
+} from '../../tree/io-tree-types.js';
 
 type CreateScopeMutationsOptions = {
-  deps: NodeFactoryDeps;
+  deps: NodeCreationDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;

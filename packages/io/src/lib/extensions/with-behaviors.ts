@@ -76,19 +76,19 @@ function createViewProxy<T, N extends object>(
   ]);
 
   return new Proxy(view as IoView<T> & object, {
-    get(_target, prop, receiver) {
+    get(target, prop, receiver) {
       if (overrides.has(prop)) return overrides.get(prop);
       if (Reflect.has(node as object, prop))
         return Reflect.get(node as object, prop, receiver);
-      return Reflect.get(view as object, prop, receiver);
+      return Reflect.get(target, prop, receiver);
     },
-    has(_target, prop) {
+    has(target, prop) {
       if (overrides.has(prop)) return overrides.get(prop) !== undefined;
-      return Reflect.has(node as object, prop) || Reflect.has(view as object, prop);
+      return Reflect.has(node as object, prop) || Reflect.has(target, prop);
     },
-    ownKeys(_target) {
+    ownKeys(target) {
       const keys = new Set<string | symbol>([
-        ...Reflect.ownKeys(view as object),
+        ...Reflect.ownKeys(target),
         ...Reflect.ownKeys(node as object),
       ]);
       for (const [key, value] of overrides.entries()) {
@@ -96,8 +96,8 @@ function createViewProxy<T, N extends object>(
       }
       return Array.from(keys);
     },
-    getOwnPropertyDescriptor(_target, prop) {
-      const targetDesc = Object.getOwnPropertyDescriptor(view as object, prop);
+    getOwnPropertyDescriptor(target, prop) {
+      const targetDesc = Object.getOwnPropertyDescriptor(target, prop);
       if (targetDesc && targetDesc.configurable === false) return targetDesc;
 
       if (overrides.has(prop)) {

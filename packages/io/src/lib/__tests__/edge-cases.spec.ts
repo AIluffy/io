@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { applyUpdate } from '../utils/updates.js';
 import { deepFreeze } from '../utils/snapshot.js';
 import { relocate } from '../extensions/relocate.js';
-import { io } from '../core/io.js';
-import { derived } from '../core/derived.js';
+import { io } from '../core/api/io.js';
+import { derived } from '../core/api/derived.js';
 import { link } from '../utils/link.js';
 import type { IoUpdate } from '../utils/types.js';
 
@@ -147,7 +147,7 @@ describe('edge cases: deepFreeze', () => {
   });
 
   it('handles repeated freezes on circular graphs', async () => {
-    const obj: any = { n: 1 };
+    const obj: { n: number; self?: unknown } = { n: 1 };
     obj.self = obj;
     deepFreeze(obj);
     await nextTick();
@@ -341,7 +341,18 @@ describe('edge cases: array proxy mutation behavior', () => {
 describe('edge cases: derived deps contract', () => {
   it('rejects deps without subscribe()', () => {
     const dep = { get: () => 1 };
-    expect(() => derived([dep as any], (v) => Number(v) + 1)).toThrow(
+    expect(
+      () =>
+        derived(
+          [
+            dep as unknown as {
+              get: () => number;
+              subscribe: (fn: (...args: unknown[]) => void) => () => void;
+            },
+          ],
+          (v) => Number(v) + 1,
+        ),
+    ).toThrow(
       /must implement subscribe/,
     );
   });

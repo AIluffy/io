@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest';
 import { createDraft, finishDraft } from '../utils/cow.js';
 import { cloneValue, __testing } from '../utils/snapshot.js';
 
-import { io } from '../core/io.js';
+import { io } from '../core/api/io.js';
 
 type Fixture = {
   level1: {

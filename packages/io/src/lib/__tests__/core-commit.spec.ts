@@ -3,8 +3,8 @@ import { isPlainObject } from '../utils/plain-object.js';
 import {
   createDirtyIndexState,
   markDirtyIndex,
-} from '../core/dirty-indices.js';
-import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/commit.js';
+} from '../core/mutation/dirty-indices.js';
+import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/mutation/commit.js';
 import type { ValueEpoch } from '../utils/branded.js';
 import { initialEpoch } from '../utils/branded.js';
 

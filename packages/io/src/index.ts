@@ -1,5 +1,5 @@
-export { io } from './lib/core/io.js';
-export { derived } from './lib/core/derived.js';
+export { io } from './lib/core/api/io.js';
+export { derived } from './lib/core/api/derived.js';
 export { batch } from './lib/utils/batch.js';
 export { isServerEnv } from './lib/utils/env.js';
 export { scheduleTask } from './lib/utils/schedule.js';

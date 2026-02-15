@@ -1,4 +1,4 @@
-import type { NodeFactoryDeps } from '../node-factory/types.js';
+import type { NodeCreationDeps } from '../deps/node-creation-deps.js';
 import type {
   TreeArrayInternal,
   TreeArrayState,
@@ -7,17 +7,17 @@ import type {
   TreeScopeInternal,
   TreeScopeState,
   UnitInternal,
-} from '../io-tree-types.js';
-import type { NodePath } from '../path-trie.js';
-import type { SnapshotCache } from '../snapshot-cache.js';
+} from '../tree/io-tree-types.js';
+import type { NodePath } from '../tree/path-trie.js';
+import type { SnapshotCache } from '../snapshot/snapshot-cache.js';
 
 import { isLink } from '../../utils/link.js';
-import { createSnapshotCache } from '../snapshot-cache.js';
+import { createSnapshotCache } from '../snapshot/snapshot-cache.js';
 
-type CommitDeps = Parameters<NodeFactoryDeps['applyScopeCommitDiff']>[3];
+type CommitDeps = Parameters<NodeCreationDeps['applyScopeCommitDiff']>[3];
 
 export function buildCommitDeps(
-  factoryDeps: NodeFactoryDeps,
+  factoryDeps: NodeCreationDeps,
   ctx: TreeContext,
   createTreeNode: (
     ctx: TreeContext,

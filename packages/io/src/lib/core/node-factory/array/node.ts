@@ -1,13 +1,13 @@
 import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import type { NodeCreationDeps } from '../../deps/node-creation-deps.js';
+import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
   TreeNode,
-} from '../../io-tree-types.js';
-import { createDirtyIndexState } from '../../dirty-indices.js';
+} from '../../tree/io-tree-types.js';
+import { createDirtyIndexState } from '../../mutation/dirty-indices.js';
 import { createArrayOps } from './ops.js';
 import {
   initialEpoch,
@@ -16,7 +16,7 @@ import {
 } from '../../../utils/branded.js';
 
 type CreateArrayNodeOptions = {
-  deps: NodeFactoryDeps;
+  deps: NodeCreationDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: unknown[];

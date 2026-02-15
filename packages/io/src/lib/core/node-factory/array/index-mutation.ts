@@ -1,10 +1,10 @@
 import { isLink } from '../../../utils/link.js';
 
 import type { CreateArrayMutationsOptions } from './mutate-types.js';
-import { markDirtyIndex } from '../../dirty-indices.js';
+import { markDirtyIndex } from '../../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../../utils/branded.js';
-import { createSnapshotCache } from '../../snapshot-cache.js';
-import type { SnapshotCache } from '../../snapshot-cache.js';
+import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
+import type { SnapshotCache } from '../../snapshot/snapshot-cache.js';
 
 export function createArrayIndexMutation(
   options: CreateArrayMutationsOptions,

@@ -1,8 +1,8 @@
-import type { IoPatch } from '../utils/types.js';
+import type { IoPatch } from '../../utils/types.js';
 import type { DirtyIndexState } from './dirty-indices.js';
 import { resetDirtyIndices } from './dirty-indices.js';
-import type { ValueEpoch } from '../utils/branded.js';
-import { nextEpoch } from '../utils/branded.js';
+import type { ValueEpoch } from '../../utils/branded.js';
+import { nextEpoch } from '../../utils/branded.js';
 
 type PathSegment = PropertyKey;
 type NodePath = readonly PathSegment[];
