@@ -105,7 +105,7 @@ describe('io: array', () => {
     expect(arr.get()).toEqual([2, 3, 9]);
   });
 
-  it('only marks dirty indices as lazy getters on incremental array rebuild', () => {
+  it('recomputes only dirty indices on incremental array rebuild', () => {
     const arr = io([1, 2, 3]);
     const s1 = arr.snapshot() as number[];
 
@@ -116,7 +116,7 @@ describe('io: array', () => {
     const d2 = Object.getOwnPropertyDescriptor(s2, '2');
 
     expect(d0?.get).toBeUndefined();
-    expect(typeof d1?.get).toBe('function');
+    expect(d1?.get).toBeUndefined();
     expect(d2?.get).toBeUndefined();
     expect(s2[0]).toBe(s1[0]);
     expect(s2[2]).toBe(s1[2]);
@@ -138,17 +138,18 @@ describe('io: scope', () => {
     expect(counter.step.get()).toBe(2);
   });
 
-  it('builds first rebuilt scope snapshot with lazy getters', () => {
+  it('builds first rebuilt scope snapshot with eager values', () => {
     const store = io({ a: { n: 1 }, b: { n: 2 } });
     const snap = store.snapshot() as Record<string, unknown>;
     const aDesc = Object.getOwnPropertyDescriptor(snap, 'a');
     const bDesc = Object.getOwnPropertyDescriptor(snap, 'b');
 
-    expect(typeof aDesc?.get).toBe('function');
-    expect(typeof bDesc?.get).toBe('function');
+    expect(aDesc?.get).toBeUndefined();
+    expect(bDesc?.get).toBeUndefined();
+    expect(snap).toMatchObject({ a: { n: 1 }, b: { n: 2 } });
   });
 
-  it('only marks dirty keys as lazy getters on incremental scope rebuild', () => {
+  it('recomputes only dirty keys on incremental scope rebuild', () => {
     const store = io({ a: { n: 1 }, b: { n: 2 } });
     const s1 = store.snapshot() as { a: { n: number }; b: { n: number } };
 
@@ -157,9 +158,10 @@ describe('io: scope', () => {
     const aDesc = Object.getOwnPropertyDescriptor(s2, 'a');
     const bDesc = Object.getOwnPropertyDescriptor(s2, 'b');
 
-    expect(typeof aDesc?.get).toBe('function');
+    expect(aDesc?.get).toBeUndefined();
     expect(bDesc?.get).toBeUndefined();
     expect(s2.b).toBe(s1.b);
+    expect(s2.a).not.toBe(s1.a);
     expect(s2.a.n).toBe(3);
   });
 

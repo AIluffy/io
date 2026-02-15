@@ -27,9 +27,9 @@ export function collectTargetPaths(
   const paths: NodePath[] = [];
   const walk = (node: TrieNode, current: NodePath) => {
     if (node.node === target) paths.push(current);
-    for (const [segment, child] of node.children.entries()) {
+    node.children.forEach((child, segment) => {
       walk(child as TrieNode, [...current, segment]);
-    }
+    });
   };
   walk(ctx.root as TrieNode, []);
   return paths;

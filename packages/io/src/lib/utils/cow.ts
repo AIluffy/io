@@ -5,22 +5,30 @@ type DraftState = {
   copy: object | undefined;
   modified: boolean;
   drafts: Map<PropertyKey, unknown>;
+  finalized: boolean;
 };
 
-const draftToState = new WeakMap<object, DraftState>();
 const baseToDraft = new WeakMap<object, object>();
 
-const DRAFT_STATE = Symbol.for('@iostore/store/draftState');
+const DRAFT_STATE = Symbol('@iostore/store/draftState');
+type DraftCarrier = {
+  [DRAFT_STATE]?: DraftState;
+};
+
+function tryGetState(value: object): DraftState | undefined {
+  return (value as DraftCarrier)[DRAFT_STATE];
+}
 
 function isDraft(value: unknown): value is object {
   if (value === null || value === undefined) return false;
   if (typeof value !== 'object') return false;
-  return draftToState.has(value);
+  const state = tryGetState(value);
+  return !!state && !state.finalized;
 }
 
 function getState(draft: object): DraftState {
-  const state = draftToState.get(draft);
-  if (!state) throw new Error('COW: missing draft state');
+  const state = tryGetState(draft);
+  if (!state || state.finalized) throw new Error('COW: missing draft state');
   return state;
 }
 
@@ -78,6 +86,7 @@ function createProxy(base: object): object {
     copy: undefined,
     modified: false,
     drafts: new Map(),
+    finalized: false,
   };
 
   const proxy = new Proxy(target, {
@@ -148,7 +157,6 @@ function createProxy(base: object): object {
     },
   });
 
-  draftToState.set(proxy, state);
   baseToDraft.set(base, proxy);
   return proxy;
 }
@@ -171,7 +179,8 @@ export function finishDraft<T>(draft: T): T {
   const state = getState(draftObject);
 
   const release = (): void => {
-    draftToState.delete(draftObject);
+    state.finalized = true;
+    state.drafts.clear();
     baseToDraft.delete(state.base);
   };
 
@@ -185,13 +194,13 @@ export function finishDraft<T>(draft: T): T {
     state.modified ? state.copy : shallowCopy(state.base)
   ) as Record<PropertyKey, unknown>;
   let changed = state.modified;
-  for (const [prop, child] of state.drafts.entries()) {
+  state.drafts.forEach((child, prop) => {
     const finalized = finalize(child);
     if (!Object.is(result[prop], finalized)) {
       result[prop] = finalized;
       changed = true;
     }
-  }
+  });
 
   if (!changed) {
     release();

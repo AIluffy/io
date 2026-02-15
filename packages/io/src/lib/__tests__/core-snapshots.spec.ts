@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDirtyIndexState } from '../core/dirty-indices.js';
+import { createSnapshotCache } from '../core/snapshot-cache.js';
 import { createArraySnapshotReader } from '../core/snapshot-array.js';
 import {
   createNodeValueReader,
@@ -96,7 +97,7 @@ describe('core/snapshot readers', () => {
       getScopeSnapshot: () => ({ v: 1 }),
       getArraySnapshot: () => [1],
     });
-    const cache = new WeakMap<object, unknown>();
+    const cache = createSnapshotCache();
     const withSnapshot = {
       snapshot: () => ({ ok: true }),
     };

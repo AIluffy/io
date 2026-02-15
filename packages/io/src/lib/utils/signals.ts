@@ -47,11 +47,11 @@ class DependencySet {
   }
 
   endCollect(newDeps: Set<Dependency>, onDepChanged: () => void): void {
-    for (const [dep, entry] of this.deps) {
-      if (newDeps.has(dep)) continue;
+    this.deps.forEach((entry, dep) => {
+      if (newDeps.has(dep)) return;
       entry.unsub();
       this.deps.delete(dep);
-    }
+    });
     for (const dep of newDeps) {
       if (this.deps.has(dep)) continue;
       const unsub = dep.subscribe(onDepChanged);
@@ -66,7 +66,8 @@ class DependencySet {
 }
 
 let effectFlushQueued = false;
-const scheduledEffects = new Set<EffectImpl>();
+let scheduledEffects = new Set<EffectImpl>();
+let flushingEffects = new Set<EffectImpl>();
 
 function scheduleEffectRun(effect: EffectImpl): void {
   if (effect.scheduled) return;
@@ -76,12 +77,15 @@ function scheduleEffectRun(effect: EffectImpl): void {
   effectFlushQueued = true;
   queueMicrotask(() => {
     effectFlushQueued = false;
-    const effects = Array.from(scheduledEffects);
+    const executing = scheduledEffects;
+    scheduledEffects = flushingEffects;
+    flushingEffects = executing;
     scheduledEffects.clear();
-    for (const e of effects) {
+    executing.forEach((e) => {
       e.scheduled = false;
       if (!e.disposed) e.run();
-    }
+    });
+    executing.clear();
   });
 }
 

@@ -41,6 +41,14 @@ function buildDeepNested(depth: number): DeepNestedNode {
   return root;
 }
 
+function buildWideScope(size = 1_000): Record<string, number> {
+  const scope: Record<string, number> = {};
+  for (let i = 0; i < size; i += 1) {
+    scope[`k${i}`] = i;
+  }
+  return scope;
+}
+
 function mutateDeepNested(root: DeepNestedNode, next: number): void {
   let current = root;
   while (current.child) {
@@ -115,6 +123,27 @@ describe('core: snapshot', () => {
   bench('snapshot: depth (80 boundary)', () => {
     const store = io(buildDeepNested(80));
     for (let i = 0; i < 5_000; i += 1) {
+      store.snapshot();
+    }
+  });
+});
+
+describe('core: snapshot scope dirty patterns', () => {
+  bench('snapshot: scope sparse dirty key (1k)', () => {
+    const store = io(buildWideScope(1_000));
+    for (let i = 0; i < 2_000; i += 1) {
+      const key = `k${i % 1_000}`;
+      store[key].set(i);
+      store.snapshot();
+    }
+  });
+
+  bench('snapshot: scope dense dirty keys (1k)', () => {
+    const store = io(buildWideScope(1_000));
+    for (let round = 0; round < 20; round += 1) {
+      for (let i = 0; i < 1_000; i += 1) {
+        store[`k${i}`].set(i + round);
+      }
       store.snapshot();
     }
   });

@@ -3,6 +3,8 @@ import { isLink } from '../../../utils/link.js';
 import type { CreateArrayMutationsOptions } from './mutate-types.js';
 import { markDirtyIndex } from '../../dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../../utils/branded.js';
+import { createSnapshotCache } from '../../snapshot-cache.js';
+import type { SnapshotCache } from '../../snapshot-cache.js';
 
 export function createArrayIndexMutation(
   options: CreateArrayMutationsOptions,
@@ -21,6 +23,13 @@ export function createArrayIndexMutation(
     options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => {
     try {
+      let readCache: SnapshotCache | undefined;
+      const readNodeValue = (node: (typeof state.children)[number]): unknown =>
+        deps.getNodeValue(
+          node,
+          (readCache ??= createSnapshotCache()),
+        );
+
       const existing = state.children[index];
       if (!existing)
         throw new Error(`ioTree array: index out of range ${index}`);
@@ -30,17 +39,18 @@ export function createArrayIndexMutation(
       const baseRevision = state.revision;
 
       if (isLink(next)) {
-        const prevValue = deps.getNodeValue(existing, new WeakMap());
+        const prevValue = readNodeValue(existing);
         deps.detachChildFromArray(state, existing);
         deps.unregisterSubtree(ctx, [...path, index], existing);
         const replaced = createTreeNode(ctx, [...path, index], next);
         state.children[index] = replaced;
         deps.attachChildToArray(state, replaced);
+        readCache?.clear();
         state.revision = nextRevision(state.revision);
         markDirtyIndex(state.dirtyIndices, index, state.children.length);
         state.valueEpoch = nextEpoch(state.valueEpoch);
         if (emitUpdate) {
-          const nextValue = deps.getNodeValue(replaced, new WeakMap());
+          const nextValue = readNodeValue(replaced);
           deps.emitArrayUpdate(
             state,
             deps.createUpdate(baseRevision, state.revision, [
@@ -85,7 +95,7 @@ export function createArrayIndexMutation(
         return;
       }
 
-      const prevValue = deps.getNodeValue(existing, new WeakMap());
+      const prevValue = readNodeValue(existing);
       deps.detachChildFromArray(state, existing);
       deps.unregisterSubtree(ctx, [...path, index], existing);
       const replaced = createTreeNode(ctx, [...path, index], next);

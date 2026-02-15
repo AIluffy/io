@@ -6,15 +6,23 @@ export type VersionedCache<T> = {
   hasValue: boolean;
 };
 
+export const CACHE_MISS: unique symbol = Symbol.for('@iostore/store/cacheMiss');
+
 export function readCachedByVersion<T>(
   cache: VersionedCache<T>,
   version: ValueEpoch,
-  compute: () => T,
-): T {
+): T | typeof CACHE_MISS {
   if (cache.hasValue && cache.version === version) return cache.value as T;
-  const next = compute();
-  cache.value = next;
+  return CACHE_MISS;
+}
+
+export function updateCachedByVersion<T>(
+  cache: VersionedCache<T>,
+  version: ValueEpoch,
+  value: T,
+): T {
+  cache.value = value;
   cache.version = version;
   cache.hasValue = true;
-  return next;
+  return value;
 }

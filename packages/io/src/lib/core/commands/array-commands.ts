@@ -1,8 +1,10 @@
 import type { IoPatch } from '../../utils/types.js';
 import type { TreeArrayState, TreeNode } from '../io-tree-types.js';
 import type { NodePath } from '../path-trie.js';
+import type { SnapshotCache } from '../snapshot-cache.js';
 
 import { clearDirtyIndices, resetDirtyIndices } from '../dirty-indices.js';
+import { createSnapshotCache } from '../snapshot-cache.js';
 import { SkipExecution } from './command.js';
 import type { TreeCommand } from './command.js';
 
@@ -20,7 +22,7 @@ export type ArrayCommandDeps = {
   attachChildToArray: (state: TreeArrayState, child: TreeNode) => void;
   detachChildFromArray: (state: TreeArrayState, child: TreeNode) => void;
   unregisterSubtree: (path: NodePath, node: TreeNode) => void;
-  getNodeValue: (node: TreeNode, cache: WeakMap<object, unknown>) => unknown;
+  getNodeValue: (node: TreeNode, cache: SnapshotCache) => unknown;
   cloneValue: (value: unknown) => unknown;
   resolvePatchValue: (value: unknown) => unknown;
   snapshot: () => unknown[];
@@ -85,7 +87,8 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
     const removed = state.children.pop();
     if (!removed) throw new SkipExecution();
 
-    const removedValue = this.deps.getNodeValue(removed, new WeakMap());
+    const readCache = createSnapshotCache();
+    const removedValue = this.deps.getNodeValue(removed, readCache);
     this.result = removedValue;
     this.deps.detachChildFromArray(state, removed);
     this.deps.unregisterSubtree([...this.deps.path, start], removed);
@@ -168,10 +171,11 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
       order = this.options.order;
       state.children = order.map((oldIndex) => old[oldIndex]);
     } else {
+      const readCache = createSnapshotCache();
       const decorated = state.children.map((child, index) => ({
         child,
         index,
-        value: this.deps.getNodeValue(child, new WeakMap()),
+        value: this.deps.getNodeValue(child, readCache),
       }));
       decorated.sort((a, b) => {
         const av = a.value;

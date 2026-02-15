@@ -9,8 +9,10 @@ import type {
   UnitInternal,
 } from '../io-tree-types.js';
 import type { NodePath } from '../path-trie.js';
+import type { SnapshotCache } from '../snapshot-cache.js';
 
 import { isLink } from '../../utils/link.js';
+import { createSnapshotCache } from '../snapshot-cache.js';
 
 type CommitDeps = Parameters<NodeFactoryDeps['applyScopeCommitDiff']>[3];
 
@@ -24,6 +26,16 @@ export function buildCommitDeps(
   ) => TreeNode,
   resolvePatchValue: (value: unknown) => unknown,
 ): CommitDeps {
+  let readCache: SnapshotCache | undefined;
+  const invalidateReadCache = (): void => {
+    readCache?.clear();
+  };
+  const readNodeValue = (node: unknown): unknown =>
+    factoryDeps.getNodeValue(
+      node as TreeNode,
+      (readCache ??= createSnapshotCache()),
+    );
+
   return {
     isPlainObject: factoryDeps.isPlainObject,
     isUnit: (node: unknown) => factoryDeps.isUnit(node),
@@ -52,32 +64,44 @@ export function buildCommitDeps(
         'unit',
         'ioTree commit: invalid unit internal',
       ) as UnitInternal;
+      invalidateReadCache();
       internal.setValue(value, { emitUpdate: false, emitValue: true });
     },
-    getNodeValue: (node: unknown) =>
-      factoryDeps.getNodeValue(node as TreeNode, new WeakMap()),
+    getNodeValue: readNodeValue,
     resolvePatchValue,
     createTreeNode: (absPath: NodePath, value: unknown) =>
       createTreeNode(ctx, absPath, value),
-    detachChildFromScope: (state, key) =>
-      factoryDeps.detachChildFromScope(state as TreeScopeState, key),
-    attachChildToScope: (state, key, child) =>
+    detachChildFromScope: (state, key) => {
+      invalidateReadCache();
+      factoryDeps.detachChildFromScope(state as TreeScopeState, key);
+    },
+    attachChildToScope: (state, key, child) => {
+      invalidateReadCache();
       factoryDeps.attachChildToScope(
         state as TreeScopeState,
         key,
         child as TreeNode,
-      ),
-    detachChildFromArray: (state, child) =>
+      );
+    },
+    detachChildFromArray: (state, child) => {
+      invalidateReadCache();
       factoryDeps.detachChildFromArray(
         state as TreeArrayState,
         child as TreeNode,
-      ),
-    attachChildToArray: (state, child) =>
-      factoryDeps.attachChildToArray(state as TreeArrayState, child as TreeNode),
-    unregisterSubtree: (absPath: NodePath, node: unknown) =>
-      factoryDeps.unregisterSubtree(ctx, absPath, node as TreeNode),
-    registerSubtree: (absPath: NodePath, node: unknown) =>
-      factoryDeps.registerSubtree(ctx, absPath, node as TreeNode),
+      );
+    },
+    attachChildToArray: (state, child) => {
+      invalidateReadCache();
+      factoryDeps.attachChildToArray(state as TreeArrayState, child as TreeNode);
+    },
+    unregisterSubtree: (absPath: NodePath, node: unknown) => {
+      invalidateReadCache();
+      factoryDeps.unregisterSubtree(ctx, absPath, node as TreeNode);
+    },
+    registerSubtree: (absPath: NodePath, node: unknown) => {
+      invalidateReadCache();
+      factoryDeps.registerSubtree(ctx, absPath, node as TreeNode);
+    },
     getPathNode: (absPath: NodePath) => factoryDeps.getPathNode(ctx, absPath),
     emitScopeValue: (state) =>
       factoryDeps.emitScopeValue(state as TreeScopeState),

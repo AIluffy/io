@@ -8,13 +8,18 @@ import type {
   TreeScopeState,
   UnitInternal,
 } from './io-tree-types.js';
+import type { SnapshotCache } from './snapshot-cache.js';
 
 import { freezeRootShallow, snapshotValue } from '../utils/snapshot.js';
-import { readCachedByVersion } from '../container/cache.js';
+import {
+  CACHE_MISS,
+  readCachedByVersion,
+  updateCachedByVersion,
+} from '../container/cache.js';
 import { getInternal as getAnyInternal } from '../utils/internal-access.js';
-import { defineLazyValue, materializeKeys } from '../utils/lazy-property.js';
+import { createSnapshotCache } from './snapshot-cache.js';
 
-export type SnapshotCache = WeakMap<object, unknown>;
+export type { SnapshotCache } from './snapshot-cache.js';
 
 export type GetNodeValue = (node: TreeNode, cache: SnapshotCache) => unknown;
 
@@ -77,42 +82,66 @@ export function createScopeSnapshotReader(deps: {
   return (
     state: TreeScopeState,
     cache?: SnapshotCache,
-  ): Record<string, unknown> =>
-    readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
-      const local = cache ?? new WeakMap<object, unknown>();
-      const cached = local.get(state.node as object);
-      if (cached) return cached as Record<string, unknown>;
+  ): Record<string, unknown> => {
+    const snapshot = readCachedByVersion(state.snapshotCache, state.valueEpoch);
+    if (snapshot !== CACHE_MISS) {
+      return snapshot as Record<string, unknown>;
+    }
 
-      const prev = state.snapshotCache.hasValue
-        ? (state.snapshotCache.value as Record<string, unknown>)
-        : undefined;
+    const local = cache ?? createSnapshotCache();
+    const cached = local.get(state.node as object);
+    if (cached) return cached as Record<string, unknown>;
 
-      if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
-        local.set(state.node as object, prev);
-        return prev;
-      }
+    const prev = state.snapshotCache.hasValue
+      ? (state.snapshotCache.value as Record<PropertyKey, unknown>)
+      : undefined;
 
-      const base: Record<PropertyKey, unknown> =
-        prev && !state.dirtyStructure ? { ...prev } : {};
+    if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
+      local.set(state.node as object, prev);
+      return prev;
+    }
+
+    if (!prev || state.dirtyStructure) {
+      const base: Record<PropertyKey, unknown> = {};
       local.set(state.node as object, base);
-
-      if (!prev || state.dirtyStructure) {
-        for (const [key, node] of state.children.entries()) {
-          defineLazyValue(base, key, () => deps.getNodeValue(node, local));
-        }
-      } else {
-        for (const key of state.dirtyKeys) {
-          const node = state.children.get(key);
-          if (node)
-            defineLazyValue(base, key, () => deps.getNodeValue(node, local));
-        }
+      for (const key of state.children.keys()) {
+        const node = state.children.get(key);
+        if (!node) continue;
+        base[key] = deps.getNodeValue(node, local);
       }
-
-      materializeKeys(base);
       state.dirtyKeys.clear();
       state.dirtyStructure = false;
       const value = freezeRootShallow(base) as Record<string, unknown>;
       local.set(state.node as object, value);
-      return value;
-    });
+      return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
+    }
+
+    let base: Record<PropertyKey, unknown>;
+    if (state.dirtyKeys.size > state.children.size / 2) {
+      base = {};
+      local.set(state.node as object, base);
+      for (const key of state.children.keys()) {
+        const node = state.children.get(key);
+        if (!node) continue;
+        if (state.dirtyKeys.has(key)) {
+          base[key] = deps.getNodeValue(node, local);
+        } else {
+          base[key] = prev[key];
+        }
+      }
+    } else {
+      base = { ...prev } as Record<PropertyKey, unknown>;
+      local.set(state.node as object, base);
+      state.dirtyKeys.forEach((key) => {
+        const node = state.children.get(key);
+        if (!node) return;
+        base[key] = deps.getNodeValue(node, local);
+      });
+    }
+    state.dirtyKeys.clear();
+    state.dirtyStructure = false;
+    const value = freezeRootShallow(base) as Record<string, unknown>;
+    local.set(state.node as object, value);
+    return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
+  };
 }

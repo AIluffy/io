@@ -26,14 +26,35 @@ function toImmutable<T>(value: T): T {
   if (typeof value !== 'object') return value;
   if (isImmutableRoot(value as object)) return value;
   const cloned = deepClone(value);
-  const frozen = deepFreeze(cloned);
+  const frozen = deepFreeze(cloned, { assumeDataProperties: true });
   markImmutableRoot(frozen as object);
   return frozen;
 }
 
-export function deepFreeze<T>(value: T): T {
+type DeepFreezeOptions = {
+  assumeDataProperties?: boolean;
+};
+
+export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
+
+  const assumeDataProperties = options?.assumeDataProperties === true;
+  if (assumeDataProperties) {
+    let hasObjectChild = false;
+    const root = value as Record<PropertyKey, unknown>;
+    for (const key of Reflect.ownKeys(root)) {
+      const child = root[key];
+      if (child !== null && typeof child === 'object') {
+        hasObjectChild = true;
+        break;
+      }
+    }
+    if (!hasObjectChild) {
+      Object.freeze(root);
+      return value;
+    }
+  }
 
   const visited = new Set<object>();
 
@@ -46,10 +67,16 @@ export function deepFreeze<T>(value: T): T {
 
     Object.freeze(obj);
 
+    if (assumeDataProperties) {
+      for (const key of Reflect.ownKeys(obj)) {
+        walk((obj as Record<PropertyKey, unknown>)[key]);
+      }
+      return;
+    }
+
     if (Array.isArray(obj)) {
       for (const item of obj) walk(item);
     }
-
     for (const key of Reflect.ownKeys(obj)) {
       const desc = Object.getOwnPropertyDescriptor(obj, key);
       if (!desc) continue;
@@ -65,7 +92,7 @@ function freezeOwned<T>(value: T): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
   if (isImmutableRoot(value as object)) return value;
-  const frozen = deepFreeze(value);
+  const frozen = deepFreeze(value, { assumeDataProperties: true });
   markImmutableRoot(frozen as object);
   return frozen;
 }

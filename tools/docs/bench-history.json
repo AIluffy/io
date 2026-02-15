@@ -1,0 +1,786 @@
+[
+  {
+    "date": "2026-02-15T10:57:02.332Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1243.7997905229208,
+        "meanMs": 0.8039879147909954,
+        "rme": 0.20707211334025166
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 569.9865685515015,
+        "meanMs": 1.754427306140363,
+        "rme": 0.22269920524640574
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 4006.856845022027,
+        "meanMs": 0.24957218055902436,
+        "rme": 0.21028259331755608
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 4013.739592588934,
+        "meanMs": 0.2491442149975111,
+        "rme": 0.21724648991363602
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1665.640185076003,
+        "meanMs": 0.6003697611044189,
+        "rme": 0.7208549310886486
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1168.4996377651182,
+        "meanMs": 0.8557982969619127,
+        "rme": 0.29781865000064534
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 26.047171601746225,
+        "meanMs": 38.39188435849054,
+        "rme": 1.6016710629740922
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3693.60819866352,
+        "meanMs": 0.2707379738765568,
+        "rme": 0.5816874684449661
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 27.418275839501415,
+        "meanMs": 36.47202347272703,
+        "rme": 0.8081046317397996
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.5203719585252977,
+        "meanMs": 657.7337830999998,
+        "rme": 0.5693006488858645
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 238.90249027627678,
+        "meanMs": 4.18580818828451,
+        "rme": 0.2591754935622797
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.6447907666356,
+        "meanMs": 28.05459026388856,
+        "rme": 0.558823017938043
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 1.0073282754289352,
+        "meanMs": 992.7250375,
+        "rme": 0.7460347327861352
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 263.860932359456,
+        "meanMs": 3.7898751856061303,
+        "rme": 0.1887332564003914
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 265.219462787143,
+        "meanMs": 3.7704623540489157,
+        "rme": 0.18855674328360947
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.1846105219075564,
+        "meanMs": 192.8785191818176,
+        "rme": 1.9496732304824897
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.350121363077081,
+        "meanMs": 186.9116478181829,
+        "rme": 0.15359274314751473
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T10:58:08.576Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1210.8638492579269,
+        "meanMs": 0.8258566812551601,
+        "rme": 0.18750991933948594
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 544.9183082993509,
+        "meanMs": 1.8351374596330319,
+        "rme": 0.20298935498633108
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 3885.657360791054,
+        "meanMs": 0.2573567113998999,
+        "rme": 0.24821783761001867
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3844.1170778874957,
+        "meanMs": 0.26013775848615467,
+        "rme": 0.20603342151467055
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1604.1905724929863,
+        "meanMs": 0.6233673337488537,
+        "rme": 0.7670913068640886
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1145.9287982870715,
+        "meanMs": 0.8726545676265357,
+        "rme": 0.2977857690029015
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 25.267618989089865,
+        "meanMs": 39.5763447450978,
+        "rme": 1.314404364897947
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3434.0886030536512,
+        "meanMs": 0.29119807774056344,
+        "rme": 1.6329229820368016
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 27.331543208689805,
+        "meanMs": 36.587762072726996,
+        "rme": 0.6063936694978902
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.5396528052623757,
+        "meanMs": 649.4970792000004,
+        "rme": 0.21768912692392015
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 236.23241434715663,
+        "meanMs": 4.233119331923876,
+        "rme": 0.2549015587595756
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.3037808973488,
+        "meanMs": 28.325578014084513,
+        "rme": 0.5132826209314345
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 1.0462062800618306,
+        "meanMs": 955.8344459,
+        "rme": 1.1093973502385652
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 251.19106036604458,
+        "meanMs": 3.9810333956262784,
+        "rme": 0.2116083264670184
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 249.7209238820647,
+        "meanMs": 4.004470208000145,
+        "rme": 0.2420281763406979
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.217275927074627,
+        "meanMs": 191.67090527272705,
+        "rme": 0.6140015155584407
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.286984954734635,
+        "meanMs": 189.14371963636356,
+        "rme": 1.461207817777049
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T11:00:45.076Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1244.8180281437812,
+        "meanMs": 0.803330267871487,
+        "rme": 0.18797223576798436
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 571.2968031525941,
+        "meanMs": 1.7504036334208206,
+        "rme": 0.2484927928585953
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 4019.7089228276973,
+        "meanMs": 0.2487742319651697,
+        "rme": 0.20560014545515742
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3922.999493917011,
+        "meanMs": 0.2549069918440205,
+        "rme": 0.377581945007608
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1648.0929515306825,
+        "meanMs": 0.6067618935395848,
+        "rme": 0.7389643500901315
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1143.3504611931794,
+        "meanMs": 0.8746224661128125,
+        "rme": 0.3095121002273179
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 26.1396700978227,
+        "meanMs": 38.25602986792457,
+        "rme": 1.3551440972887177
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3662.366942546706,
+        "meanMs": 0.27304746238907135,
+        "rme": 0.5463635107990878
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 27.06461096734988,
+        "meanMs": 36.948619036363645,
+        "rme": 0.6328242356532822
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.522531360994015,
+        "meanMs": 656.8009209000004,
+        "rme": 0.5338743452318992
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 239.5282093103197,
+        "meanMs": 4.17487361041661,
+        "rme": 0.23984390319439683
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.55174955203416,
+        "meanMs": 28.128010930555824,
+        "rme": 0.4598422348235715
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 1.0211430258220886,
+        "meanMs": 979.2947459000006,
+        "rme": 0.8860783018133515
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 256.82804386514744,
+        "meanMs": 3.893655789883559,
+        "rme": 0.24661411621240767
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 252.93031188169593,
+        "meanMs": 3.9536581936756314,
+        "rme": 0.20749958118580938
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.162059233859131,
+        "meanMs": 193.72114009090993,
+        "rme": 3.660682502180991
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.332549286995712,
+        "meanMs": 187.52756818181925,
+        "rme": 0.2129329788468819
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T11:03:51.332Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1199.5511057845215,
+        "meanMs": 0.8336451820833323,
+        "rme": 0.24823045965495222
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 556.6944894043818,
+        "meanMs": 1.796317403949731,
+        "rme": 0.22062564640936674
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 3761.877934584786,
+        "meanMs": 0.265824680489101,
+        "rme": 1.9902130020303468
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3753.876075166191,
+        "meanMs": 0.26639131925944787,
+        "rme": 0.6710138450702048
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1584.8785618499915,
+        "meanMs": 0.6309631690851591,
+        "rme": 1.1381327825680738
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1127.0998784160963,
+        "meanMs": 0.8872328168514145,
+        "rme": 0.29439536561732293
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 25.146010197272165,
+        "meanMs": 39.76774017647061,
+        "rme": 2.070660873434948
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3563.9670386507214,
+        "meanMs": 0.28058620889451014,
+        "rme": 0.7442317648334621
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 26.751447870470745,
+        "meanMs": 37.3811542777779,
+        "rme": 0.6116460525428328
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.4870448009334667,
+        "meanMs": 672.4746957,
+        "rme": 0.3390800565469842
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 228.32801683037454,
+        "meanMs": 4.379664019693661,
+        "rme": 1.0224478776631116
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.0655366335544,
+        "meanMs": 28.51802926760558,
+        "rme": 0.7930879465366686
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 0.9704168741019673,
+        "meanMs": 1030.4849664999995,
+        "rme": 2.6859050234894895
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 257.75131585992614,
+        "meanMs": 3.87970861240315,
+        "rme": 0.21896383592482466
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 255.1647395590228,
+        "meanMs": 3.9190367827788664,
+        "rme": 0.19274724157235137
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.050714240050551,
+        "meanMs": 197.99179927272846,
+        "rme": 2.6927035243304167
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.047799314191092,
+        "meanMs": 198.10613254545552,
+        "rme": 3.8035355440897765
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T11:13:27.667Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1171.526148132761,
+        "meanMs": 0.853587435153583,
+        "rme": 0.3978782940992476
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 536.3599542705015,
+        "meanMs": 1.8644195787511604,
+        "rme": 0.5430731622679122
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 3549.733766417852,
+        "meanMs": 0.2817112678873186,
+        "rme": 0.6875341862155017
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3737.0757540805803,
+        "meanMs": 0.26758890260869933,
+        "rme": 0.3413926505131186
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1442.128538694166,
+        "meanMs": 0.6934194651646591,
+        "rme": 1.0024546725626384
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1079.4660097742562,
+        "meanMs": 0.9263839629458324,
+        "rme": 0.45463709268424335
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 22.56459820644493,
+        "meanMs": 44.31720834782596,
+        "rme": 2.3506735330535387
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3221.9566389075935,
+        "meanMs": 0.31037040906269014,
+        "rme": 0.8497920802830701
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 25.489855560029042,
+        "meanMs": 39.23129331372565,
+        "rme": 0.7388537792396366
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.4407488608477448,
+        "meanMs": 694.0834917,
+        "rme": 0.5183574377271287
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 223.87063807195466,
+        "meanMs": 4.4668653674832886,
+        "rme": 0.49593877019311605
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 33.16390660672679,
+        "meanMs": 30.153263059701338,
+        "rme": 0.718765835090458
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 0.9156686529847373,
+        "meanMs": 1092.0981042000008,
+        "rme": 4.818953915135717
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 252.29647924220689,
+        "meanMs": 3.9635907841583116,
+        "rme": 0.8939414031801102
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 253.8139060553015,
+        "meanMs": 3.93989445078757,
+        "rme": 0.2511175041082877
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.186148145680538,
+        "meanMs": 192.82133327272658,
+        "rme": 0.8186104014134592
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.323376791363459,
+        "meanMs": 187.85068936363479,
+        "rme": 0.8279822225647178
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T11:15:33.855Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1228.2870107333324,
+        "meanMs": 0.8141419645909659,
+        "rme": 0.2019710856793261
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 571.5798867826835,
+        "meanMs": 1.7495367194055993,
+        "rme": 0.22041536935104136
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 3930.3084269415285,
+        "meanMs": 0.25443295827502677,
+        "rme": 0.22328158967255107
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3956.4710623706146,
+        "meanMs": 0.2527504900796181,
+        "rme": 0.22551908167230575
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1594.922075998425,
+        "meanMs": 0.6269898793481792,
+        "rme": 0.802872082365724
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1132.1413070661129,
+        "meanMs": 0.883281966445911,
+        "rme": 0.3389095259948541
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 25.738825512167786,
+        "meanMs": 38.85181161538468,
+        "rme": 1.4710568142253295
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3561.818445209272,
+        "meanMs": 0.2807554667321753,
+        "rme": 0.7060982005678624
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 26.712997808790448,
+        "meanMs": 37.43495983333364,
+        "rme": 0.7370128502884593
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.499630237896814,
+        "meanMs": 666.8310459000011,
+        "rme": 0.322851796634493
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 233.21253325283138,
+        "meanMs": 4.28793421199141,
+        "rme": 1.3480670439919584
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.09707964689296,
+        "meanMs": 28.492399084506935,
+        "rme": 0.6138317627973787
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 0.9571602855931827,
+        "meanMs": 1044.7570956,
+        "rme": 1.651091169640104
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 257.279228822384,
+        "meanMs": 3.8868275708738333,
+        "rme": 0.21052191589309893
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 252.52071089283643,
+        "meanMs": 3.9600712213438025,
+        "rme": 0.9860116778991784
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.141842598815602,
+        "meanMs": 194.48281054545407,
+        "rme": 0.48545886750241357
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.154850838167686,
+        "meanMs": 193.9920341818182,
+        "rme": 3.329888308624703
+      }
+    ]
+  },
+  {
+    "date": "2026-02-15T11:22:12.037Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 1246.3620295928658,
+        "meanMs": 0.8023350970718018,
+        "rme": 0.21596905730213153
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 571.4868086557393,
+        "meanMs": 1.7498216666666664,
+        "rme": 0.2631282691177608
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 3973.078196166762,
+        "meanMs": 0.2516940142192024,
+        "rme": 0.23045347741036726
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 3950.8060786344195,
+        "meanMs": 0.2531129040749188,
+        "rme": 0.43354110168386173
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 1635.5982995110583,
+        "meanMs": 0.6113970650977918,
+        "rme": 0.7883421274106172
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 1149.0886199540605,
+        "meanMs": 0.8702548982166224,
+        "rme": 0.3490699809135314
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 25.982174725094268,
+        "meanMs": 38.487925301886825,
+        "rme": 1.6604879106042434
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 3560.43610441391,
+        "meanMs": 0.28086447015866667,
+        "rme": 0.7748677126149036
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 26.455562314197422,
+        "meanMs": 37.79923435849059,
+        "rme": 0.4818227781566995
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 1.4652718572908723,
+        "meanMs": 682.4672125000004,
+        "rme": 1.1171121741296344
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 237.82148904992772,
+        "meanMs": 4.204834491596603,
+        "rme": 0.30027073032736623
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 35.12715599295974,
+        "meanMs": 28.4680035070423,
+        "rme": 1.0819900600306924
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 0.942694456292064,
+        "meanMs": 1060.7890958999992,
+        "rme": 2.0145997459604144
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 246.15722593979794,
+        "meanMs": 4.062444221095372,
+        "rme": 0.2628090249894087
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 247.96496564991335,
+        "meanMs": 4.032827772177458,
+        "rme": 0.28369133529942264
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 5.2602222980655045,
+        "meanMs": 190.10603418181762,
+        "rme": 0.5446923430224292
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 5.28515228609446,
+        "meanMs": 189.20930672727397,
+        "rme": 1.5886504090904672
+      }
+    ]
+  }
+]

@@ -70,8 +70,9 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     state.children.set(key, child);
   }
 
-  for (const [key, child] of state.children.entries())
+  state.children.forEach((child, key) => {
     deps.attachChildToScope(state, key, child);
+  });
 
   const snapshot = (): Record<string, unknown> =>
     deps.getScopeSnapshot(state);
@@ -119,7 +120,9 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     getNode: () => scopeNode,
   });
 
-  for (const [key, child] of state.children.entries()) scope[key] = child;
+  state.children.forEach((child, key) => {
+    scope[key] = child;
+  });
 
   const internal: TreeInternal = {
     kind: 'scope',

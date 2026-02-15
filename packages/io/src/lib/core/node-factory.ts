@@ -30,7 +30,7 @@ export function createNodeFactory(deps: NodeFactoryDeps) {
   const resolvePatchValue = (value: unknown): unknown => {
     if (isLink(value)) {
       const target = getLinkTarget(value) as TreeNode;
-      return deps.getNodeValue(target, new WeakMap());
+      return target.snapshot();
     }
     return deps.cloneValue(value);
   };

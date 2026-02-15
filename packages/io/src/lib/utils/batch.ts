@@ -8,8 +8,10 @@ type UpdateListener = (update: IoUpdate) => void;
 let batchDepth = 0;
 let hasPending = false;
 
-const pendingValues = new Map<ValueListener<unknown>, unknown>();
-const pendingUpdates = new Map<UpdateListener, IoUpdate[]>();
+let pendingValues = new Map<ValueListener<unknown>, unknown>();
+let flushingValues = new Map<ValueListener<unknown>, unknown>();
+let pendingUpdates = new Map<UpdateListener, IoUpdate[]>();
+let flushingUpdates = new Map<UpdateListener, IoUpdate[]>();
 const updateArrayPool: IoUpdate[][] = [];
 const UPDATE_POOL_LIMIT = 100;
 
@@ -26,21 +28,27 @@ const releaseUpdateArray = (updates: IoUpdate[]): void => {
 
 function flush(): void {
   if (pendingValues.size > 0) {
-    const entries = Array.from(pendingValues.entries());
+    const executing = pendingValues;
+    pendingValues = flushingValues;
+    flushingValues = executing;
     pendingValues.clear();
-    for (const [listener, value] of entries) {
+    executing.forEach((value, listener) => {
       (listener as ValueListener<unknown>)(value);
-    }
+    });
+    executing.clear();
   }
 
   if (pendingUpdates.size > 0) {
-    const entries = Array.from(pendingUpdates.entries());
+    const executing = pendingUpdates;
+    pendingUpdates = flushingUpdates;
+    flushingUpdates = executing;
     pendingUpdates.clear();
-    for (const [listener, updates] of entries) {
+    executing.forEach((updates, listener) => {
       if (updates.length === 1) listener(updates[0]);
       else listener(mergeUpdates(updates));
       releaseUpdateArray(updates);
-    }
+    });
+    executing.clear();
   }
 }
 

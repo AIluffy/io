@@ -35,9 +35,9 @@ function collectPaths(
     else map.set(obj, [path]);
   }
 
-  for (const [seg, child] of node.children.entries()) {
+  node.children.forEach((child, seg) => {
     collectPaths(child, [...path, seg], map);
-  }
+  });
 }
 
 export function getLinkInfo(target: unknown): IoLinkInfo {
@@ -48,15 +48,15 @@ export function getLinkInfo(target: unknown): IoLinkInfo {
   collectPaths(ctx.root, [], map);
 
   const multiParents: Array<{ paths: IoPath[] }> = [];
-  for (const paths of map.values()) {
-    if (paths.length <= 1) continue;
+  map.forEach((paths) => {
+    if (paths.length <= 1) return;
     const sorted = paths.slice().sort((a, b) => {
       const ka = a.map((s) => String(s)).join('|');
       const kb = b.map((s) => String(s)).join('|');
       return ka.localeCompare(kb);
     });
     multiParents.push({ paths: sorted });
-  }
+  });
 
   return { multiParents };
 }

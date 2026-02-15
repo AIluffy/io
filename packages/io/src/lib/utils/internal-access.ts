@@ -3,15 +3,37 @@ export type InternalKind = 'unit' | 'scope' | 'array' | 'derived';
 export type IoInternal = { kind: InternalKind } & Record<string, unknown>;
 
 const INTERNAL_REGISTRY = new WeakMap<object, IoInternal>();
+const INTERNAL_SLOT = Symbol('@iostore/store/internal');
+
+type InternalCarrier = {
+  [INTERNAL_SLOT]?: IoInternal;
+};
 
 export function registerInternal(target: object, internal: IoInternal): void {
+  if (Object.isExtensible(target)) {
+    try {
+      Object.defineProperty(target, INTERNAL_SLOT, {
+        value: internal,
+        enumerable: false,
+        configurable: false,
+        writable: false,
+      });
+      INTERNAL_REGISTRY.delete(target);
+      return;
+    } catch {
+      // fall through
+    }
+  }
   INTERNAL_REGISTRY.set(target, internal);
 }
 
 export function getInternal(value: unknown): IoInternal | undefined {
   if (value === null || value === undefined) return undefined;
   if (typeof value !== 'function' && typeof value !== 'object') return undefined;
-  return INTERNAL_REGISTRY.get(value as object);
+  const target = value as object;
+  const direct = (target as InternalCarrier)[INTERNAL_SLOT];
+  if (direct) return direct;
+  return INTERNAL_REGISTRY.get(target);
 }
 
 export function requireInternal(value: unknown, errorMessage: string): IoInternal {

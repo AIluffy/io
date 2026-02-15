@@ -7,6 +7,7 @@ import {
   SpliceCommand,
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
+import { createSnapshotCache } from '../../snapshot-cache.js';
 import type { CreateArrayMutationsOptions } from './mutate-types.js';
 
 function validateSortPermutation(order: number[], length: number): void {
@@ -65,9 +66,11 @@ export function createArrayStructuralMutations(
     );
 
     const removed = state.children.splice(normalizedStart, dc);
-    const removedValues = removed.map((c) =>
-      deps.getNodeValue(c, new WeakMap()),
-    );
+    const readCache = createSnapshotCache();
+    const removedValues = new Array<unknown>(removed.length);
+    for (let i = 0; i < removed.length; i += 1) {
+      removedValues[i] = deps.getNodeValue(removed[i], readCache);
+    }
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
       deps.detachChildFromArray(state, child);

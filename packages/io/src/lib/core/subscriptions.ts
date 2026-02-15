@@ -93,6 +93,7 @@ export function createSubscriptions<
    * Emits latest scope snapshot to value listeners.
    */
   const emitScopeValue = (state: TScopeState): void => {
+    if (state.valueListeners.size === 0) return;
     const value = deps.getScopeSnapshot(state);
     notifyValue(state.valueListeners, value);
   };
@@ -108,6 +109,7 @@ export function createSubscriptions<
    * Emits latest array snapshot to value listeners.
    */
   const emitArrayValue = (state: TArrayState): void => {
+    if (state.valueListeners.size === 0) return;
     notifyValue(state.valueListeners, deps.getArraySnapshot(state));
   };
 
