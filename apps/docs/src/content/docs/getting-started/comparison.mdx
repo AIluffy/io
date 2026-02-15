@@ -20,6 +20,7 @@ sidebar:
 | **IO** | 深层路径直改 | 路径级（细） | patch/update | 深层状态、回放/撤销、跨框架复用 | 需要接受“树路径即状态”的模型 |
 | Redux | action/reducer | 通常按 selector | 通过 action 日志 | 强约束团队流程、审计与可预测数据流 | 样板代码与约束成本更高 |
 | Zustand | set + selector | 通常按 selector | 取决于约定/中间件 | React 局部状态、快速落地 | 深层更新/回放能力更依赖封装 |
+| MobX | observable/action/computed | 字段使用追踪（细） | 依赖工具与约定 | 面向对象建模、响应式推导 | 隐式依赖较多，回放/审计要额外设计 |
 | Recoil | atom/selector | atom 级（细） | 依赖调试工具 | React 中复杂依赖图 | atom 设计与 key/边界管理 |
 | Jotai | atom 组合 | atom 级（细） | 依赖调试工具 | 原子化建模、组合自由 | 需要显式拆分并维护 atom 体系 |
 | Valtio | proxy 可变对象 | 基于使用路径 | 以快照为主 | “可变对象写法”偏好 | 更新日志/审计要额外方案 |
@@ -71,6 +72,15 @@ stop();
 
 - **深层状态一等公民**：路径即 Unit，天然细粒度订阅。
 - **快照 + patch**：默认冻结快照，更新有结构化日志。
+
+## IO vs MobX
+
+MobX 强调运行时响应式（`observable/computed/action`）与“按使用自动追踪”，写法流畅，适合面向对象组织状态。
+
+IO 更强调“路径化状态 + 显式更新日志”：
+
+- **响应模型更显式**：路径即 Unit，订阅边界由路径决定，便于定位更新来源。
+- **日志/回放更直接**：patch/update 是一等能力，适合撤销、回放、审计与跨端同步。
 
 ## IO vs Recoil
 

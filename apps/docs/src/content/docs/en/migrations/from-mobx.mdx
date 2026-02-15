@@ -1,0 +1,97 @@
+---
+title: Migrate from MobX
+description: Map observable/action/computed patterns to IO.
+sidebar:
+  order: 5
+---
+
+This guide maps common MobX patterns to IO while keeping updates explicit and traceable.
+
+## Observable Class State
+
+MobX:
+
+```ts
+import { makeAutoObservable } from 'mobx';
+
+class CounterStore {
+  count = 0;
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  inc() {
+    this.count += 1;
+  }
+}
+```
+
+IO:
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const inc = () => store.count.set((v) => v + 1);
+```
+
+## Computed Values
+
+MobX:
+
+```ts
+get double() {
+  return this.count * 2;
+}
+```
+
+IO:
+
+```ts
+import { derived } from '@iostore/store';
+
+const double = derived([store.count], (count) => count * 2);
+```
+
+## Batch Actions
+
+MobX often uses `action` or `runInAction` for grouped writes.  
+In IO, use `commit`:
+
+```ts
+const profile = io({ name: 'Ada', age: 18 });
+
+const updateProfile = (name: string, age: number) => {
+  profile.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+## React Usage
+
+MobX:
+
+```tsx
+import { observer } from 'mobx-react-lite';
+
+const Counter = observer(() => <button onClick={() => store.inc()}>{store.count}</button>);
+```
+
+IO:
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## Next Steps
+
+- Read [Snapshots](/en/core-concepts/snapshots/).
+- Explore [Update Log](/en/core-concepts/update-log/).

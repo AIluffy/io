@@ -20,6 +20,7 @@ There’s no universally “best” state library—only tradeoffs. This page us
 | **IO** | Direct deep writes | Path-level (fine) | patch/update | Deep state, replay/undo, cross-framework reuse | Adopting “tree paths as state units” |
 | Redux | action/reducer | Usually selector-based | action logs | Strong conventions, auditability, predictable flow | Boilerplate and stricter constraints |
 | Zustand | set + selector | Usually selector-based | depends on middleware | Lightweight React stores, fast adoption | Deep updates/replay typically need extra patterns |
+| MobX | observable/action/computed | Usage-tracked fields (fine) | depends on tooling/conventions | OOP-style domain modeling, reactive derivations | More implicit dependencies; replay/audit needs extra design |
 | Recoil | atoms/selectors | Atom-level (fine) | via tooling | Complex dependency graphs in React | Atom modeling and boundary/key management |
 | Jotai | atom composition | Atom-level (fine) | via tooling | Flexible atom-based modeling | Explicit atom design and maintenance |
 | Valtio | proxy mutable objects | Usage-path based | snapshot-first | “Mutable code style” ergonomics | Audit/replay requires additional solutions |
@@ -71,6 +72,15 @@ Both aim to reduce boilerplate, but optimize different things: Zustand is a ligh
 
 - **Deep state is first-class**: each path behaves like a Unit.
 - **Snapshots + patches**: frozen snapshots with structured update logs.
+
+## IO vs MobX
+
+MobX optimizes for runtime reactivity (`observable/computed/action`) with automatic usage tracking, which feels natural for object-oriented state modeling.
+
+IO emphasizes path-based state and explicit update logs:
+
+- **More explicit update boundaries**: paths are Units, so subscription scope is visible and predictable.
+- **Replay/audit-ready by default**: patches/updates are first-class, useful for undo, replay, audit, and sync workflows.
 
 ## IO vs Recoil
 
