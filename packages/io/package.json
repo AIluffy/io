@@ -44,6 +44,13 @@
           "command": "node --expose-gc scripts/snapshot-gc-report.mjs",
           "cwd": "packages/io"
         }
+      },
+      "perf-budget": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node --expose-gc scripts/check-perf-budget.mjs",
+          "cwd": "packages/io"
+        }
       }
     }
   }

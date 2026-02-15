@@ -4,6 +4,7 @@ import { deepFreeze } from '../utils/snapshot.js';
 import { relocate } from '../extensions/relocate.js';
 import { io } from '../core/api/io.js';
 import { derived } from '../core/api/derived.js';
+import { batch } from '../utils/batch.js';
 import { link } from '../utils/link.js';
 import type { IoUpdate } from '../utils/types.js';
 
@@ -355,5 +356,97 @@ describe('edge cases: derived deps contract', () => {
     ).toThrow(
       /must implement subscribe/,
     );
+  });
+});
+
+describe('edge cases: deep nesting / large arrays / cyclic references', () => {
+  it('handles commits deeper than 10 levels', () => {
+    type DeepNode = { value: number; child?: DeepNode };
+    const root: DeepNode = { value: 0 };
+    let current = root;
+    for (let i = 1; i < 14; i += 1) {
+      current.child = { value: i };
+      current = current.child;
+    }
+
+    const store = io(root);
+    store.commit((draft) => {
+      let leaf = draft;
+      while (leaf.child) leaf = leaf.child;
+      leaf.value = 999;
+    });
+
+    let leaf = store.snapshot();
+    while (leaf.child) leaf = leaf.child;
+    expect(leaf.value).toBe(999);
+  });
+
+  it('supports snapshots and sparse updates on arrays larger than 10k', () => {
+    const list = io(Array.from({ length: 12_000 }, (_, i) => i));
+    list[11_999].set(42);
+    const snapshot = list.snapshot();
+    expect(snapshot).toHaveLength(12_000);
+    expect(snapshot[11_999]).toBe(42);
+  });
+
+  it('supports circular references in scope snapshots', () => {
+    const cyclic: { label: string; self?: unknown; nested: { count: number } } =
+      { label: 'root', nested: { count: 0 } };
+    cyclic.self = cyclic;
+
+    const store = io(cyclic);
+    store.nested.count.set(7);
+    const snapshot = store.snapshot() as {
+      label: string;
+      self: unknown;
+      nested: { count: number };
+    };
+
+    expect(snapshot.label).toBe('root');
+    expect(snapshot.nested.count).toBe(7);
+    expect(snapshot.self).toBe(snapshot);
+  });
+});
+
+describe('edge cases: interleaved commits in one batch', () => {
+  it('merges interleaved commit updates per node inside a single batch', () => {
+    const left = io({ count: 0 });
+    const right = io({ count: 0 });
+    const leftUpdates: IoUpdate[] = [];
+    const rightUpdates: IoUpdate[] = [];
+    left.subscribeUpdate((u) => leftUpdates.push(u));
+    right.subscribeUpdate((u) => rightUpdates.push(u));
+
+    batch(() => {
+      left.commit((draft) => {
+        draft.count = 1;
+      });
+      right.commit((draft) => {
+        draft.count = 10;
+      });
+      left.commit((draft) => {
+        draft.count = 2;
+      });
+      right.commit((draft) => {
+        draft.count = 11;
+      });
+    });
+
+    expect(left.get().count).toBe(2);
+    expect(right.get().count).toBe(11);
+    expect(leftUpdates).toHaveLength(1);
+    expect(rightUpdates).toHaveLength(1);
+    expect(leftUpdates[0].patches[leftUpdates[0].patches.length - 1]).toMatchObject({
+      op: 'set',
+      path: ['count'],
+      next: 2,
+    });
+    expect(
+      rightUpdates[0].patches[rightUpdates[0].patches.length - 1],
+    ).toMatchObject({
+      op: 'set',
+      path: ['count'],
+      next: 11,
+    });
   });
 });
