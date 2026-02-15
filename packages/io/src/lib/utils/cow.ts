@@ -89,13 +89,11 @@ function createProxy(base: object): object {
       // Array mutators must run against the writable copy. Calling the method
       // directly on base would mutate frozen snapshots and break sharing.
       if (Array.isArray(source) && arrayMutators.has(prop)) {
-        const fn = (source as unknown as Record<PropertyKey, unknown>)[prop];
+        const fn = (source as Record<PropertyKey, unknown>)[prop];
         if (typeof fn !== 'function') return fn;
         return (...args: unknown[]) => {
           const copy = ensureCopy(state) as unknown[];
-          const method = (copy as unknown as Record<PropertyKey, unknown>)[
-            prop
-          ];
+          const method = Reflect.get(copy as object, prop);
           if (typeof method !== 'function')
             throw new Error('COW: invalid array mutator');
           const immutableArgs =
@@ -169,7 +167,7 @@ function finalize(value: unknown): unknown {
 
 export function finishDraft<T>(draft: T): T {
   if (!isDraft(draft)) return draft;
-  const draftObject = draft as unknown as object;
+  const draftObject = draft as object;
   const state = getState(draftObject);
 
   const release = (): void => {

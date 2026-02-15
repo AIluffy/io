@@ -20,7 +20,7 @@ export function isLink(value: unknown): value is IoLink<unknown> {
 }
 
 export function getLinkTarget<T>(value: IoLink<T>): T {
-  return (value as unknown as Record<PropertyKey, unknown>)[
+  return (value as Record<PropertyKey, unknown>)[
     IO_LINK
   ] as T;
 }

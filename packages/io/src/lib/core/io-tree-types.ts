@@ -9,6 +9,7 @@ import type {
 import type { VersionedCache } from '../container/cache.js';
 import type { NodePath, PathTrieContext } from './path-trie.js';
 import type { DirtyIndexState } from './dirty-indices.js';
+import type { Revision, ValueEpoch } from '../utils/branded.js';
 
 export type TreeScopeNode = IoTreeScope<Record<string, unknown>>;
 export type TreeArrayNode = IoTreeArrayUnit<unknown>;
@@ -68,9 +69,9 @@ export type TreeInternal =
 export type TreeScopeState = {
   children: Map<PropertyKey, TreeNode>;
   node: TreeNode;
-  revision: number;
+  revision: Revision;
   isCommitting: boolean;
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   snapshotCache: VersionedCache<Record<string, unknown>>;
   dirtyKeys: Set<PropertyKey>;
   dirtyStructure: boolean;
@@ -87,9 +88,9 @@ export type TreeArrayState = {
   childIndices: Map<TreeNode, Set<number>>;
   childIndicesDirty: boolean;
   node: TreeNode;
-  revision: number;
+  revision: Revision;
   isCommitting: boolean;
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   snapshotCache: VersionedCache<unknown[]>;
   dirtyIndices: DirtyIndexState;
   dirtyStructure: boolean;

@@ -1,10 +1,12 @@
 import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
 import type { DirtyIndexState } from './dirty-indices.js';
 import { markDirtyIndex } from './dirty-indices.js';
+import type { Revision, ValueEpoch } from '../utils/branded.js';
 
 import { notifyUpdate, notifyValue } from '../utils/batch.js';
 import { createUpdate } from '../utils/updates.js';
 import { prependPatchPath } from '../utils/patch-path.js';
+import { nextEpoch, nextRevision } from '../utils/branded.js';
 import {
   subscribeIndexedChild,
   subscribeKeyedChild,
@@ -12,9 +14,9 @@ import {
 
 type ScopeStateLike<TNode> = {
   children: Map<PropertyKey, TNode>;
-  revision: number;
+  revision: Revision;
   isCommitting: boolean;
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyKeys: Set<PropertyKey>;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
@@ -26,9 +28,9 @@ type ArrayStateLike<TNode> = {
   children: TNode[];
   childIndices?: Map<TNode, Set<number>>;
   childIndicesDirty?: boolean;
-  revision: number;
+  revision: Revision;
   isCommitting: boolean;
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyIndices: DirtyIndexState;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
@@ -158,14 +160,14 @@ export function createSubscriptions<
       onValue: () => {
         if (state.isCommitting) return;
         state.dirtyKeys.add(key);
-        state.valueEpoch += 1;
+        state.valueEpoch = nextEpoch(state.valueEpoch);
         emitScopeValue(state);
       },
       onUpdate: (u) => {
         state.dirtyKeys.add(key);
         const baseRevision = state.revision;
-        state.revision += 1;
-        state.valueEpoch += 1;
+        state.revision = nextRevision(state.revision);
+        state.valueEpoch = nextEpoch(state.valueEpoch);
         emitScopeUpdate(
           state,
           createUpdate(baseRevision, state.revision, u.patches),
@@ -212,15 +214,15 @@ export function createSubscriptions<
           if (state.isCommitting) return;
           for (const index of indices)
             markDirtyIndex(state.dirtyIndices, index, state.children.length);
-          state.valueEpoch += 1;
+          state.valueEpoch = nextEpoch(state.valueEpoch);
           emitArrayValue(state);
         },
         onUpdate: (u, indices) => {
           for (const index of indices)
             markDirtyIndex(state.dirtyIndices, index, state.children.length);
           const baseRevision = state.revision;
-          state.revision += 1;
-          state.valueEpoch += 1;
+          state.revision = nextRevision(state.revision);
+          state.valueEpoch = nextEpoch(state.valueEpoch);
           const patches = indices.flatMap((index) =>
             u.patches.map((p) => prependPatchPath(index, p)),
           );

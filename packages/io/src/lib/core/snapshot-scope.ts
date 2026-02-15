@@ -29,7 +29,7 @@ type ArraySnapshotReader = (
 ) => unknown[];
 
 export function getTreeInternal(value: unknown): TreeInternal | undefined {
-  return getAnyInternal(value) as unknown as TreeInternal | undefined;
+  return getAnyInternal(value) as TreeInternal | undefined;
 }
 
 export function isScopeInternal(
@@ -80,7 +80,7 @@ export function createScopeSnapshotReader(deps: {
   ): Record<string, unknown> =>
     readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
       const local = cache ?? new WeakMap<object, unknown>();
-      const cached = local.get(state.node as unknown as object);
+      const cached = local.get(state.node as object);
       if (cached) return cached as Record<string, unknown>;
 
       const prev = state.snapshotCache.hasValue
@@ -88,13 +88,13 @@ export function createScopeSnapshotReader(deps: {
         : undefined;
 
       if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
-        local.set(state.node as unknown as object, prev);
+        local.set(state.node as object, prev);
         return prev;
       }
 
       const base: Record<PropertyKey, unknown> =
         prev && !state.dirtyStructure ? { ...prev } : {};
-      local.set(state.node as unknown as object, base);
+      local.set(state.node as object, base);
 
       if (!prev || state.dirtyStructure) {
         for (const [key, node] of state.children.entries()) {
@@ -112,7 +112,7 @@ export function createScopeSnapshotReader(deps: {
       state.dirtyKeys.clear();
       state.dirtyStructure = false;
       const value = freezeRootShallow(base) as Record<string, unknown>;
-      local.set(state.node as unknown as object, value);
+      local.set(state.node as object, value);
       return value;
     });
 }

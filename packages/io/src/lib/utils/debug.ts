@@ -16,11 +16,11 @@ export function emitError(
   path: IoPath,
   operation: IoMutationOp
 ): void {
-  const internal = getInternal(target) as unknown as InternalWithState | undefined;
+  const internal = getInternal(target) as InternalWithState | undefined;
   const state = internal?.getState?.();
   if (!state || typeof state !== 'object') return;
 
-  const store = state as unknown as Partial<ErrorStore> & {
+  const store = state as Partial<ErrorStore> & {
     ctx?: Partial<ErrorStore>;
   };
   const listeners = store.ctx?.errorListeners ?? store.errorListeners;
@@ -29,12 +29,12 @@ export function emitError(
 }
 
 export function onError(target: unknown, fn: IoErrorHandler): IoUnsubscribe {
-  const internal = getInternal(target) as unknown as InternalWithState | undefined;
+  const internal = getInternal(target) as InternalWithState | undefined;
   const state = internal?.getState?.();
   if (!state || typeof state !== 'object')
     throw new Error('onError: target is not an IO node');
 
-  const store = state as unknown as Partial<ErrorStore> & {
+  const store = state as Partial<ErrorStore> & {
     ctx?: Partial<ErrorStore>;
   };
   const container = (store.ctx ?? store) as Partial<ErrorStore>;
@@ -50,7 +50,7 @@ export function onMutation(
   fn: (patch: IoPatch, path: IoPath, update: IoUpdate) => void
 ): IoUnsubscribe {
   if (target === null || target === undefined) throw new Error('onMutation: invalid target');
-  const sub = (target as unknown as {
+  const sub = (target as {
     subscribeUpdate?: (cb: (u: IoUpdate) => void) => IoUnsubscribe;
   }).subscribeUpdate;
   if (typeof sub !== 'function')

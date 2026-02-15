@@ -61,7 +61,7 @@ describe('io: unit', () => {
     const snap = scope.snapshot();
     expect(Object.isFrozen(snap)).toBe(true);
     expect(() => {
-      (snap as unknown as Record<string, unknown>).a = 2;
+      (snap as Record<string, unknown>).a = 2;
     }).toThrow();
     expect(scope.a.get()).toBe(1);
   });
@@ -312,7 +312,7 @@ describe('ioTree: nested split', () => {
 
   it('supports deep path mapping via internal ctx', () => {
     const user = ioTree({ profile: { name: 'a', age: 1 } });
-    const rootInternal = (user as unknown as Record<PropertyKey, unknown>)[
+    const rootInternal = (user as Record<PropertyKey, unknown>)[
       INTERNAL
     ] as {
       getState: () => {
@@ -324,7 +324,7 @@ describe('ioTree: nested split', () => {
         };
       };
     };
-    const ctxRoot = rootInternal.getState().ctx.root as unknown as {
+    const ctxRoot = rootInternal.getState().ctx.root as {
       node?: unknown;
       children: Map<string | number, unknown>;
     };
@@ -605,7 +605,7 @@ describe('derived: unit-level deps and release', () => {
   it('subscribes and unsubscribes from deps without leaking', () => {
     const user = ioTree({ profile: { age: 1 } });
     const unitInternal = (
-      user.profile.age as unknown as Record<PropertyKey, unknown>
+      user.profile.age as Record<PropertyKey, unknown>
     )[INTERNAL] as {
       getState: () => { valueListeners: Set<unknown> };
     };

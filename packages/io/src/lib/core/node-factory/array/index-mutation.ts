@@ -2,6 +2,7 @@ import { isLink } from '../../../utils/link.js';
 
 import type { CreateArrayMutationsOptions } from './mutate-types.js';
 import { markDirtyIndex } from '../../dirty-indices.js';
+import { nextEpoch, nextRevision } from '../../../utils/branded.js';
 
 export function createArrayIndexMutation(
   options: CreateArrayMutationsOptions,
@@ -35,9 +36,9 @@ export function createArrayIndexMutation(
         const replaced = createTreeNode(ctx, [...path, index], next);
         state.children[index] = replaced;
         deps.attachChildToArray(state, replaced);
-        state.revision += 1;
+        state.revision = nextRevision(state.revision);
         markDirtyIndex(state.dirtyIndices, index, state.children.length);
-        state.valueEpoch += 1;
+        state.valueEpoch = nextEpoch(state.valueEpoch);
         if (emitUpdate) {
           const nextValue = deps.getNodeValue(replaced, new WeakMap());
           deps.emitArrayUpdate(
@@ -64,8 +65,8 @@ export function createArrayIndexMutation(
         internal.setValue(next, { emitUpdate: false, emitValue: false });
         const after = internal.getValue();
         if (Object.is(before, after)) return;
-        state.revision += 1;
-        state.valueEpoch += 1;
+        state.revision = nextRevision(state.revision);
+        state.valueEpoch = nextEpoch(state.valueEpoch);
         markDirtyIndex(state.dirtyIndices, index, state.children.length);
         if (emitUpdate) {
           deps.emitArrayUpdate(
@@ -90,9 +91,9 @@ export function createArrayIndexMutation(
       const replaced = createTreeNode(ctx, [...path, index], next);
       state.children[index] = replaced;
       deps.attachChildToArray(state, replaced);
-      state.revision += 1;
+      state.revision = nextRevision(state.revision);
       markDirtyIndex(state.dirtyIndices, index, state.children.length);
-      state.valueEpoch += 1;
+      state.valueEpoch = nextEpoch(state.valueEpoch);
       if (emitUpdate) {
         deps.emitArrayUpdate(
           state,

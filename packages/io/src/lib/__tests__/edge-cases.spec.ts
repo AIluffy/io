@@ -322,7 +322,7 @@ describe('edge cases: array proxy mutation behavior', () => {
     const updates: IoUpdate[] = [];
     arr.subscribeUpdate((u) => updates.push(u));
 
-    (arr as unknown as Record<number, number>)[1] = 20;
+    (arr as Record<number, number>)[1] = 20;
 
     expect(arr.get()).toEqual([1, 20, 3]);
     expect(updates).toHaveLength(1);
@@ -332,7 +332,7 @@ describe('edge cases: array proxy mutation behavior', () => {
   it('keeps length read-only on array proxy', () => {
     const arr = io([1, 2, 3]);
     expect(() => {
-      (arr as unknown as { length: number }).length = 1;
+      (arr as { length: number }).length = 1;
     }).toThrow(/length is read-only/);
     expect(arr.get()).toEqual([1, 2, 3]);
   });

@@ -59,6 +59,13 @@ function hasSubscribe(value: unknown): value is Subscribable {
   );
 }
 
+type Getter = { get: () => unknown };
+type ArrayGetter = { get: () => unknown[] };
+
+function readFromGetter(value: unknown): unknown {
+  return (value as Getter).get();
+}
+
 function getValueView<T>(node: unknown): T {
   if (node === null || node === undefined) return node as T;
   const t = typeof node;
@@ -66,10 +73,10 @@ function getValueView<T>(node: unknown): T {
 
   const internal = getInternal(node);
   if (internal?.kind === 'unit' || internal?.kind === 'derived') {
-    return (node as unknown as { get: () => unknown }).get() as T;
+    return readFromGetter(node) as T;
   }
 
-  const obj = node as unknown as object;
+  const obj = node as object;
   const cached = proxyCache.get(obj);
   if (cached) return cached as T;
 
@@ -88,14 +95,14 @@ function getValueView<T>(node: unknown): T {
         prop === 'length' &&
         internal?.kind === 'array'
       ) {
-        const arr = (target as unknown as { get: () => unknown[] }).get();
+        const arr = (target as ArrayGetter).get();
         return arr.length;
       }
 
       const child = Reflect.get(target, prop, receiver);
       const childInternal = getInternal(child);
       if (childInternal?.kind === 'unit' || childInternal?.kind === 'derived') {
-        return (child as unknown as { get: () => unknown }).get();
+        return readFromGetter(child);
       }
       if (childInternal?.kind === 'scope' || childInternal?.kind === 'array') {
         return getValueView(child);
@@ -146,7 +153,7 @@ function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
     [INTERNAL]: { value: internal },
   });
 
-  registerInternal(derived as unknown as object, internal);
+  registerInternal(derived as object, internal);
 
   return derived;
 }
@@ -167,7 +174,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
       if (internal?.kind === 'array') return dep;
       if (hasGet(dep)) return dep.get();
       throw new Error(`derived: deps[${index}] must implement get()`);
-    }) as unknown as { [K in keyof D]: DepArg<D[K]> };
+    }) as { [K in keyof D]: DepArg<D[K]> };
 
   let current = compute(...readArgs());
 
@@ -238,7 +245,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     [INTERNAL]: { value: internal },
   });
 
-  registerInternal(derived as unknown as object, internal);
+  registerInternal(derived as object, internal);
 
   return derived;
 }

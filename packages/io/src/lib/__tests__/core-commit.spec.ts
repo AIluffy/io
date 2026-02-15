@@ -5,13 +5,15 @@ import {
   markDirtyIndex,
 } from '../core/dirty-indices.js';
 import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/commit.js';
+import type { ValueEpoch } from '../utils/branded.js';
+import { initialEpoch } from '../utils/branded.js';
 
 type Path = PropertyKey[];
 
 type FakeScopeState = {
   children: Map<PropertyKey, FakeNode>;
   path: readonly PropertyKey[];
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyKeys: Set<PropertyKey>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -20,7 +22,7 @@ type FakeScopeState = {
 type FakeArrayState = {
   children: FakeNode[];
   path: readonly PropertyKey[];
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyIndices: ReturnType<typeof createDirtyIndexState>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -49,7 +51,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeArrayState = {
         children,
         path,
-        valueEpoch: 0,
+        valueEpoch: initialEpoch(),
         dirtyIndices: createDirtyIndexState(children.length),
         dirtyStructure: false,
         isCommitting: false,
@@ -73,7 +75,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeScopeState = {
         children,
         path,
-        valueEpoch: 0,
+        valueEpoch: initialEpoch(),
         dirtyKeys: new Set(),
         dirtyStructure: false,
         isCommitting: false,
@@ -205,7 +207,7 @@ describe('core/commit', () => {
     const result = applyScopeCommitDiff(
       root.state,
       before,
-      next as unknown as Record<PropertyKey, unknown>,
+      next as Record<PropertyKey, unknown>,
       deps,
     );
 

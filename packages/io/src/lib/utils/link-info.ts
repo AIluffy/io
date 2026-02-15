@@ -29,7 +29,7 @@ function collectPaths(
   map: Map<object, IoPath[]>,
 ): void {
   if (node.node && (typeof node.node === 'object' || typeof node.node === 'function')) {
-    const obj = node.node as unknown as object;
+    const obj = node.node as object;
     const existing = map.get(obj);
     if (existing) existing.push(path);
     else map.set(obj, [path]);

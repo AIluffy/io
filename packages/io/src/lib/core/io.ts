@@ -6,6 +6,10 @@ import { isPlainObject } from '../utils/plain-object.js';
 
 type IoOptions = { shallow?: boolean };
 
+function asIoNode(value: unknown): IoNode<unknown> {
+  return value as IoNode<unknown>;
+}
+
 /**
  * Create an IO node from any value.
  *
@@ -35,10 +39,10 @@ export function io<T>(
 export function io(target: unknown, options?: IoOptions): unknown {
   if (options?.shallow === true) {
     if (Array.isArray(target))
-      return ioTree(target, { maxDepth: 1 }) as unknown as IoNode<unknown>;
+      return asIoNode(ioTree(target, { maxDepth: 1 }));
     if (isPlainObject(target))
-      return ioTree(target, { maxDepth: 1 }) as unknown as IoNode<unknown>;
-    return createUnit(target) as unknown as IoNode<unknown>;
+      return asIoNode(ioTree(target, { maxDepth: 1 }));
+    return asIoNode(createUnit(target));
   }
 
   if (Array.isArray(target))

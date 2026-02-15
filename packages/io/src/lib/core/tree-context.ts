@@ -30,7 +30,7 @@ function resolveDevtoolsEnabled(
 function isDevEnv(): boolean {
   if (typeof process !== 'undefined') {
     const env = (
-      process as unknown as { env?: Record<string, string | undefined> }
+      process as { env?: Record<string, string | undefined> }
     ).env;
     if (env?.NODE_ENV) return env.NODE_ENV !== 'production';
   }

@@ -6,6 +6,6 @@ type IoGlobal = {
 const ioGlobal: IoGlobal | undefined =
   typeof globalThis === 'undefined'
     ? undefined
-    : (globalThis as unknown as IoGlobal);
+    : (globalThis as IoGlobal);
 
 export const isServerEnv = !ioGlobal?.window && !ioGlobal?.document;

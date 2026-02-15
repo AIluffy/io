@@ -53,7 +53,7 @@ type Internal =
     };
 
 function getInternal(value: unknown): Internal | undefined {
-  return getAnyInternal(value) as unknown as Internal | undefined;
+  return getAnyInternal(value) as Internal | undefined;
 }
 
 export { createUpdate, mergeUpdates } from './update-merge.js';
@@ -133,7 +133,7 @@ export function applyUpdate(
           (typeof segment === 'string'
             ? (internal.getChild?.(segment) ?? internal.getUnit?.(segment))
             : undefined) ??
-          (current as unknown as Record<PropertyKey, unknown>)[segment];
+          (current as Record<PropertyKey, unknown>)[segment];
         continue;
       }
 
@@ -142,7 +142,7 @@ export function applyUpdate(
           throw new Error('applyUpdate: invalid array path segment');
         current =
           internal.getChild?.(segment) ??
-          (current as unknown as Record<PropertyKey, unknown>)[segment];
+          (current as Record<PropertyKey, unknown>)[segment];
         continue;
       }
 
@@ -225,7 +225,7 @@ export function applyUpdate(
   if (options?.emitUpdate) {
     const internal = getInternal(target);
     const state = (
-      internal as unknown as { getState?: () => unknown }
+      internal as { getState?: () => unknown }
     )?.getState?.();
     const listeners = (
       state as { updateListeners?: Set<(u: IoUpdate) => void> }

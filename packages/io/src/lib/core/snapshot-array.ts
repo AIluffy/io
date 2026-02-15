@@ -18,7 +18,7 @@ export function createArraySnapshotReader(deps: {
   return (state: TreeArrayState, cache?: SnapshotCache): unknown[] =>
     readCachedByVersion(state.snapshotCache, state.valueEpoch, () => {
       const local = cache ?? new WeakMap<object, unknown>();
-      const cached = local.get(state.node as unknown as object);
+      const cached = local.get(state.node as object);
       if (cached) return cached as unknown[];
 
       const prev = state.snapshotCache.hasValue
@@ -31,7 +31,7 @@ export function createArraySnapshotReader(deps: {
         state.dirtyIndices.items.length === 0 &&
         prev.length === state.children.length
       ) {
-        local.set(state.node as unknown as object, prev);
+        local.set(state.node as object, prev);
         return prev;
       }
 
@@ -48,7 +48,7 @@ export function createArraySnapshotReader(deps: {
         }
         if (validDirty === 0) {
           clearDirtyIndices(state.dirtyIndices);
-          local.set(state.node as unknown as object, prev);
+          local.set(state.node as object, prev);
           return prev;
         }
         const fullRebuildThresholdCount = Math.ceil(
@@ -64,7 +64,7 @@ export function createArraySnapshotReader(deps: {
         values = new Array(state.children.length);
         forceFullRebuild = true;
       }
-      local.set(state.node as unknown as object, values);
+      local.set(state.node as object, values);
 
       if (
         forceFullRebuild ||
@@ -92,7 +92,7 @@ export function createArraySnapshotReader(deps: {
       clearDirtyIndices(state.dirtyIndices);
       state.dirtyStructure = false;
       const frozen = freezeRootShallow(values) as unknown[];
-      local.set(state.node as unknown as object, frozen);
+      local.set(state.node as object, frozen);
       return frozen;
     });
 }

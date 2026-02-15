@@ -7,7 +7,7 @@ type IoGlobal = {
 const ioGlobal: IoGlobal | undefined =
   typeof globalThis === 'undefined'
     ? undefined
-    : (globalThis as unknown as IoGlobal);
+    : (globalThis as IoGlobal);
 
 export function scheduleTask(kind: IoSchedule, fn: () => void): void {
   if (kind === 'sync') {

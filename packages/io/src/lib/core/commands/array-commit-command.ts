@@ -3,6 +3,7 @@ import type { NodeFactoryDeps } from '../node-factory/types.js';
 import type { TreeArrayState } from '../io-tree-types.js';
 import type { TreeCommand } from './command.js';
 
+import { previousEpoch, previousRevision } from '../../utils/branded.js';
 import { SkipExecution } from './command.js';
 
 type ArrayCommitCommandDeps = {
@@ -34,12 +35,12 @@ export class ArrayCommitCommand implements TreeCommand<TreeArrayState> {
       this.deps.commitDeps,
     );
     if (!changed) {
-      state.revision -= 1;
+      state.revision = previousRevision(state.revision);
       throw new SkipExecution();
     }
 
     // Commit diff already bumps valueEpoch when changed.
-    state.valueEpoch -= 1;
+    state.valueEpoch = previousEpoch(state.valueEpoch);
     return patches;
   }
 }

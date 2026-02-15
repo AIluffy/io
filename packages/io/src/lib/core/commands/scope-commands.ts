@@ -4,6 +4,7 @@ import type { TreeNode, TreeScopeState, UnitInternal } from '../io-tree-types.js
 import type { NodePath } from '../path-trie.js';
 import type { TreeCommand } from './command.js';
 
+import { previousEpoch, previousRevision } from '../../utils/branded.js';
 import { SkipExecution } from './command.js';
 
 type ScopeCommitDeps = {
@@ -39,7 +40,7 @@ export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {
     this.fn(draft);
     const next = this.deps.finishDraft(draft);
 
-    const nextAny = next as unknown as Record<PropertyKey, unknown>;
+    const nextAny = next as Record<PropertyKey, unknown>;
     for (const key of Reflect.ownKeys(nextAny)) {
       if (!Reflect.has(before as object, key))
         throw new Error(`ioTree scope: unknown key ${String(key)}`);
@@ -52,12 +53,12 @@ export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {
       this.deps.commitDeps,
     );
     if (!changed) {
-      state.revision -= 1;
+      state.revision = previousRevision(state.revision);
       throw new SkipExecution();
     }
 
     // Commit diff already bumps valueEpoch when changed.
-    state.valueEpoch -= 1;
+    state.valueEpoch = previousEpoch(state.valueEpoch);
     return patches;
   }
 }
@@ -91,7 +92,7 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
       });
       const after = internal.getValue();
       if (Object.is(before, after)) {
-        state.revision -= 1;
+        state.revision = previousRevision(state.revision);
         throw new SkipExecution();
       }
       if (emitValue) {

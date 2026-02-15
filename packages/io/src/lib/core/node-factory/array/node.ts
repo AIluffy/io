@@ -9,6 +9,11 @@ import type {
 } from '../../io-tree-types.js';
 import { createDirtyIndexState } from '../../dirty-indices.js';
 import { createArrayOps } from './ops.js';
+import {
+  initialEpoch,
+  initialRevision,
+  staleEpoch,
+} from '../../../utils/branded.js';
 
 type CreateArrayNodeOptions = {
   deps: NodeFactoryDeps;
@@ -27,15 +32,17 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
   const { deps, ctx, path, initial, createTreeNode, resolvePatchValue } =
     options;
 
+  const initialNode = {} as TreeNode;
+
   const state: TreeArrayState = {
     children: new Array(initial.length),
     childIndices: new Map(),
     childIndicesDirty: true,
-    node: undefined as unknown as TreeNode,
-    revision: 0,
+    node: initialNode,
+    revision: initialRevision(),
     isCommitting: false,
-    valueEpoch: 0,
-    snapshotCache: { value: undefined, version: -1, hasValue: false },
+    valueEpoch: initialEpoch(),
+    snapshotCache: { value: undefined, version: staleEpoch(), hasValue: false },
     dirtyIndices: createDirtyIndexState(initial.length),
     dirtyStructure: false,
     valueListeners: new Set(),
@@ -47,14 +54,13 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
   };
 
   const snapshot = (): unknown[] => deps.getArraySnapshot(state);
-  let node = undefined as unknown as TreeNode;
+  let node: TreeNode = initialNode;
   const array: Record<PropertyKey, unknown> = {};
+  type SubscribableNode = {
+    subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
+  };
   const get = (): unknown[] => {
-    deps.trackRead(
-      node as unknown as {
-        subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
-      },
-    );
+    deps.trackRead(node as SubscribableNode);
     return snapshot();
   };
   const proxy = new Proxy(array as TreeNode & object, {
@@ -78,13 +84,13 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     },
   }) as TreeNode;
 
-  node = proxy as unknown as TreeNode;
+  node = proxy;
   state.node = node;
-  ctx.seen.set(initial as unknown as object, proxy as unknown as TreeNode);
-  deps.setPathNode(ctx, path, proxy as unknown as TreeNode);
+  ctx.seen.set(initial as object, proxy);
+  deps.setPathNode(ctx, path, proxy);
 
   const rebuildMapping = (): void => {
-    deps.rebuildSubtreeMapping(state, proxy as unknown as TreeNode);
+    deps.rebuildSubtreeMapping(state, proxy);
   };
 
   const subscribe = (fn: (v: unknown[]) => void): IoUnsubscribe => {
@@ -149,8 +155,8 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     deps.attachChildToArray(state, child);
   }
 
-  deps.registerInternal(array as unknown as object, internal);
-  deps.registerInternal(proxy as unknown as object, internal);
+  deps.registerInternal(array as object, internal);
+  deps.registerInternal(proxy as object, internal);
 
-  return proxy as unknown as TreeNode;
+  return proxy;
 }

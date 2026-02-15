@@ -8,6 +8,7 @@ import type { NodePath } from '../path-trie.js';
 import type { TreeCommand } from './command.js';
 
 import { resetDirtyIndices } from '../dirty-indices.js';
+import { nextEpoch, nextRevision } from '../../utils/branded.js';
 import { SkipExecution } from './command.js';
 
 export type ExecuteOptions = {
@@ -55,7 +56,7 @@ export function createArrayExecutor(
     try {
       command.validate?.(state);
       const baseRevision = state.revision;
-      state.revision += 1;
+      state.revision = nextRevision(state.revision);
 
       if (options?.structural !== false) {
         state.dirtyStructure = true;
@@ -65,7 +66,7 @@ export function createArrayExecutor(
       const patches = command.execute(state);
       const update = deps.createUpdate(baseRevision, state.revision, patches);
       if (options?.emitUpdate !== false) deps.emitArrayUpdate(state, update);
-      state.valueEpoch += 1;
+      state.valueEpoch = nextEpoch(state.valueEpoch);
       if (options?.emitValue !== false) deps.emitArrayValue(state);
       return update;
     } catch (error) {
@@ -98,7 +99,7 @@ export function createScopeExecutor(
       try {
         command.validate?.(state);
         const baseRevision = state.revision;
-        state.revision += 1;
+        state.revision = nextRevision(state.revision);
 
         if (options?.structural !== false) {
           state.dirtyStructure = true;
@@ -107,7 +108,7 @@ export function createScopeExecutor(
         const patches = command.execute(state);
         const update = deps.createUpdate(baseRevision, state.revision, patches);
         if (options?.emitUpdate !== false) deps.emitScopeUpdate(state, update);
-        state.valueEpoch += 1;
+        state.valueEpoch = nextEpoch(state.valueEpoch);
         if (options?.emitValue !== false) deps.emitScopeValue(state);
         return update;
       } catch (error) {

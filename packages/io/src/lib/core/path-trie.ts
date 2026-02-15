@@ -92,7 +92,7 @@ export function registerSubtree<TNode>(
   visited?: WeakSet<object>,
 ): void {
   const seen = visited ?? new WeakSet<object>();
-  const obj = node as unknown as object;
+  const obj = node as object;
   if (seen.has(obj)) return;
   seen.add(obj);
   setPathNode(ctx, path, node);
@@ -120,7 +120,7 @@ export function unregisterSubtree<TNode>(
   visited?: WeakSet<object>,
 ): void {
   const seen = visited ?? new WeakSet<object>();
-  const obj = node as unknown as object;
+  const obj = node as object;
   if (seen.has(obj)) return;
   seen.add(obj);
   deletePathNode(ctx, path);

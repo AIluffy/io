@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createDirtyIndexState } from '../core/dirty-indices.js';
 import { createSubscriptions } from '../core/subscriptions.js';
+import { initialEpoch, initialRevision } from '../utils/branded.js';
 
 type FakeChild = {
   subscribe?: (fn: (value: unknown) => void) => () => void;
@@ -12,9 +13,9 @@ type FakeChild = {
 function createArrayState() {
   return {
     children: [{} as FakeChild, {} as FakeChild],
-    revision: 0,
+    revision: initialRevision(),
     isCommitting: false,
-    valueEpoch: 0,
+    valueEpoch: initialEpoch(),
     dirtyIndices: createDirtyIndexState(2),
     valueListeners: new Set<(value: unknown[]) => void>(),
     updateListeners: new Set<(update: { patches: unknown[] }) => void>(),
@@ -32,9 +33,9 @@ function createArrayState() {
 function createScopeState() {
   return {
     children: new Map<PropertyKey, FakeChild>(),
-    revision: 0,
+    revision: initialRevision(),
     isCommitting: false,
-    valueEpoch: 0,
+    valueEpoch: initialEpoch(),
     dirtyKeys: new Set<PropertyKey>(),
     valueListeners: new Set<(value: Record<string, unknown>) => void>(),
     updateListeners: new Set<(update: { patches: unknown[] }) => void>(),

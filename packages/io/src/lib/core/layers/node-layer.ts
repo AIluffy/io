@@ -22,7 +22,7 @@ type CreateNodeLayerDeps = {
 };
 
 function getInternal(value: unknown): TreeInternal | undefined {
-  return getAnyInternal(value) as unknown as TreeInternal | undefined;
+  return getAnyInternal(value) as TreeInternal | undefined;
 }
 
 export function createNodeLayer(

@@ -10,6 +10,11 @@ import type {
 } from '../../io-tree-types.js';
 import { createScopeCommit } from './commit.js';
 import { createScopeMutations } from './mutate.js';
+import {
+  initialEpoch,
+  initialRevision,
+  staleEpoch,
+} from '../../../utils/branded.js';
 
 type CreateScopeNodeOptions = {
   deps: NodeFactoryDeps;
@@ -34,13 +39,15 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     resolvePatchValue,
   } = options;
 
+  const initialNode = {} as TreeNode;
+
   const state: TreeScopeState = {
     children: new Map(),
-    node: undefined as unknown as TreeNode,
-    revision: 0,
+    node: initialNode,
+    revision: initialRevision(),
     isCommitting: false,
-    valueEpoch: 0,
-    snapshotCache: { value: undefined, version: -1, hasValue: false },
+    valueEpoch: initialEpoch(),
+    snapshotCache: { value: undefined, version: staleEpoch(), hasValue: false },
     dirtyKeys: new Set(),
     dirtyStructure: false,
     valueListeners: new Set(),
@@ -52,10 +59,11 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
   };
 
   const scope: Record<PropertyKey, unknown> = {};
-  state.node = scope as unknown as TreeNode;
-  ctx.seen.set(initial as unknown as object, scope as unknown as TreeNode);
+  const scopeNode = scope as TreeNode;
+  state.node = scopeNode;
+  ctx.seen.set(initial as object, scopeNode);
 
-  const initialAny = initial as unknown as Record<PropertyKey, unknown>;
+  const initialAny = initial as Record<PropertyKey, unknown>;
   // Reflect.ownKeys keeps symbol/non-enumerable branches in the tree model.
   for (const key of Reflect.ownKeys(initialAny)) {
     const child = createTreeNode(ctx, [...path, key], initialAny[key]);
@@ -67,12 +75,11 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
 
   const snapshot = (): Record<string, unknown> =>
     deps.getScopeSnapshot(state);
+  type SubscribableNode = {
+    subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
+  };
   const get = (): Record<string, unknown> => {
-    deps.trackRead(
-      scope as unknown as {
-        subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
-      },
-    );
+    deps.trackRead(scopeNode as SubscribableNode);
     return snapshot();
   };
 
@@ -98,7 +105,7 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     path,
     state,
     createTreeNode,
-    getNode: () => scope as unknown as TreeNode,
+    getNode: () => scopeNode,
   });
 
   const commit = createScopeCommit({
@@ -109,7 +116,7 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     createTreeNode,
     resolvePatchValue,
     snapshot,
-    getNode: () => scope as unknown as TreeNode,
+    getNode: () => scopeNode,
   });
 
   for (const [key, child] of state.children.entries()) scope[key] = child;
@@ -132,8 +139,8 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     },
   });
 
-  deps.registerInternal(scope as unknown as object, internal);
+  deps.registerInternal(scope as object, internal);
 
-  deps.setPathNode(ctx, path, scope as unknown as TreeNode);
-  return scope as unknown as TreeNode;
+  deps.setPathNode(ctx, path, scopeNode);
+  return scopeNode;
 }

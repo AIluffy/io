@@ -22,7 +22,7 @@ export function createUpdate(
 }
 
 function pathKey(path: ReadonlyArray<PropertyKey>): string {
-  const cached = PATH_KEY_CACHE.get(path as unknown as object);
+  const cached = PATH_KEY_CACHE.get(path as object);
   if (cached) return cached;
   let out = '';
   for (let i = 0; i < path.length; i += 1) {
@@ -38,7 +38,7 @@ function pathKey(path: ReadonlyArray<PropertyKey>): string {
     const escaped = seg.replace(/([\\|:])/g, '\\$1');
     out += `|s:${escaped}`;
   }
-  PATH_KEY_CACHE.set(path as unknown as object, out);
+  PATH_KEY_CACHE.set(path as object, out);
   return out;
 }
 

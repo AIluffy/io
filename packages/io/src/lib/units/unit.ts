@@ -169,7 +169,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     },
   });
 
-  registerInternal(unit as unknown as object, internal);
+  registerInternal(unit as object, internal);
 
   return unit;
 }

@@ -13,5 +13,5 @@ export function ioTree<T>(initial: T, options?: IoTreeOptions): IoTreeNode<T> {
   const subscriptions = createSubscriptionLayer(snapshots);
   const commands = createCommandLayer({ registry, subscriptions });
   const nodes = createNodeLayer({ registry, snapshots, subscriptions, commands });
-  return nodes.createTreeNode(ctx, [], initial) as unknown as IoTreeNode<T>;
+  return nodes.createTreeNode(ctx, [], initial) as IoTreeNode<T>;
 }
