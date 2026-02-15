@@ -9,6 +9,7 @@ import {
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
+import { createExecutorDeps } from '../executor-deps.js';
 
 function validateSortPermutation(order: number[], length: number): void {
   if (order.length !== length)
@@ -69,18 +70,18 @@ export function createArrayStructuralMutations(
     const readCache = createSnapshotCache();
     const removedValues = new Array<unknown>(removed.length);
     for (let i = 0; i < removed.length; i += 1) {
-      removedValues[i] = deps.getNodeValue(removed[i], readCache);
+      removedValues[i] = deps.snapshots.getNodeValue(removed[i], readCache);
     }
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
-      deps.detachChildFromArray(state, child);
-      deps.unregisterSubtree(ctx, [...path, normalizedStart + i], child);
+      deps.lifecycle.detachChildFromArray(state, child);
+      deps.registry.unregisterSubtree(ctx, [...path, normalizedStart + i], child);
     }
 
     const created = items.map((v, i) =>
       createTreeNode(ctx, [...path, normalizedStart + i], v),
     );
-    for (const child of created) deps.attachChildToArray(state, child);
+    for (const child of created) deps.lifecycle.attachChildToArray(state, child);
     state.children.splice(normalizedStart, 0, ...created);
     rebuildMapping();
 
@@ -90,18 +91,19 @@ export function createArrayStructuralMutations(
   const commandDeps: ArrayCommandDeps = {
     path,
     createTreeNode: (absPath, initial) => createTreeNode(ctx, absPath, initial),
-    attachChildToArray: deps.attachChildToArray,
-    detachChildFromArray: deps.detachChildFromArray,
-    unregisterSubtree: (absPath, node) => deps.unregisterSubtree(ctx, absPath, node),
-    getNodeValue: deps.getNodeValue,
-    cloneValue: deps.cloneValue,
+    attachChildToArray: deps.lifecycle.attachChildToArray,
+    detachChildFromArray: deps.lifecycle.detachChildFromArray,
+    unregisterSubtree: (absPath, node) =>
+      deps.registry.unregisterSubtree(ctx, absPath, node),
+    getNodeValue: deps.snapshots.getNodeValue,
+    cloneValue: deps.utils.cloneValue,
     resolvePatchValue,
     snapshot,
     rebuildMapping,
     performSplice,
     validateSortPermutation,
   };
-  const executor = createArrayExecutor(deps, state, path, getNode);
+  const executor = createArrayExecutor(createExecutorDeps(deps), state, path, getNode);
 
   const applySplice = (
     start: number,

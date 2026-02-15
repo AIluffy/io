@@ -32,26 +32,38 @@ describe('core/node-factory/array/index-mutation', () => {
     const emitArrayValue = vi.fn();
 
     const deps = {
-      getNodeValue: (node: UnitNode) => node.value,
-      detachChildFromArray: vi.fn(),
-      unregisterSubtree: vi.fn(),
-      attachChildToArray: vi.fn(),
-      createUpdate: (base: number, revision: number, patches: unknown[]) => ({
-        id: 'u',
-        baseRevision: base,
-        revision,
-        patches,
-      }),
-      cloneValue: (value: unknown) => value,
-      emitArrayUpdate,
-      emitArrayValue,
-      isUnit: (node: UnitNode) => node.kind === 'unit',
-      getInternal: (node: UnitNode) => ({
-        kind: 'unit' as const,
-        getValue: () => node.value,
-        setValue: (next: unknown) => node.setValue(next),
-      }),
-      emitError: vi.fn(),
+      snapshots: {
+        getNodeValue: (node: UnitNode) => node.value,
+      },
+      lifecycle: {
+        detachChildFromArray: vi.fn(),
+        attachChildToArray: vi.fn(),
+      },
+      registry: {
+        unregisterSubtree: vi.fn(),
+      },
+      utils: {
+        createUpdate: (base: number, revision: number, patches: unknown[]) => ({
+          id: 'u',
+          baseRevision: base,
+          revision,
+          patches,
+        }),
+        cloneValue: (value: unknown) => value,
+        isUnit: (node: UnitNode) => node.kind === 'unit',
+        emitError: vi.fn(),
+      },
+      subscriptions: {
+        emitArrayUpdate,
+        emitArrayValue,
+      },
+      internals: {
+        getInternal: (node: UnitNode) => ({
+          kind: 'unit' as const,
+          getValue: () => node.value,
+          setValue: (next: unknown) => node.setValue(next),
+        }),
+      },
     };
 
     const { setIndex } = createArrayIndexMutation({
@@ -98,17 +110,29 @@ describe('core/node-factory/array/index-mutation', () => {
     const emitError = vi.fn();
 
     const deps = {
-      getNodeValue: (node: UnitNode) => node.value,
-      detachChildFromArray: vi.fn(),
-      unregisterSubtree: vi.fn(),
-      attachChildToArray: vi.fn(),
-      createUpdate: vi.fn(),
-      cloneValue: (value: unknown) => value,
-      emitArrayUpdate: vi.fn(),
-      emitArrayValue: vi.fn(),
-      isUnit: () => true,
-      getInternal: () => ({ kind: 'scope' as const }),
-      emitError,
+      snapshots: {
+        getNodeValue: (node: UnitNode) => node.value,
+      },
+      lifecycle: {
+        detachChildFromArray: vi.fn(),
+        attachChildToArray: vi.fn(),
+      },
+      registry: {
+        unregisterSubtree: vi.fn(),
+      },
+      utils: {
+        createUpdate: vi.fn(),
+        cloneValue: (value: unknown) => value,
+        isUnit: () => true,
+        emitError,
+      },
+      subscriptions: {
+        emitArrayUpdate: vi.fn(),
+        emitArrayValue: vi.fn(),
+      },
+      internals: {
+        getInternal: () => ({ kind: 'scope' as const }),
+      },
     };
 
     const { setIndex } = createArrayIndexMutation({

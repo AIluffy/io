@@ -1,8 +1,8 @@
 import type {
   LifecycleDeps,
-  NodeCreationDeps,
   SnapshotDeps,
   SubscriptionDeps,
+  TreeDeps,
 } from './types.js';
 import type { TreeArrayState, TreeInternal, TreeNode, TreeScopeState } from './tree/io-tree-types.js';
 import type { TreeContext } from './tree/io-tree-types.js';
@@ -90,7 +90,7 @@ const subtreeAccess = {
   },
 };
 
-function createNodeDeps(ctx: TreeContext): NodeCreationDeps {
+function createTreeDeps(ctx: TreeContext): TreeDeps {
   const snapshots = createSnapshotDeps();
   const subscriptions = createSubscriptionDeps(snapshots);
 
@@ -98,44 +98,54 @@ function createNodeDeps(ctx: TreeContext): NodeCreationDeps {
     getAnyInternal(value) as TreeInternal | undefined;
 
   return {
-    isPlainObject,
-    isUnit,
-    createUnit,
-    cloneValue,
-    emitError,
-    createDraft,
-    finishDraft,
-    createUpdate,
-    applyScopeCommitDiff,
-    applyArrayCommitDiff,
-    getInternal,
-    requireInternalOfKind,
-    registerInternal,
-    INTERNAL,
-    registerSubtree: (_ctx, path, node) =>
-      registerSubtreeWithAccess(ctx, path, node, subtreeAccess),
-    unregisterSubtree: (_ctx, path, node) =>
-      unregisterSubtreeWithAccess(ctx, path, node, subtreeAccess),
-    rebuildSubtreeMapping: (state, node) =>
-      rebuildSubtreeMappingWithAccess({ ctx, path: state.path }, node, subtreeAccess),
-    setPathNode: (_ctx, path, node) => setPathNodeWithAccess(ctx, path, node),
-    getPathNode: (_ctx, path) => getPathNodeWithAccess(ctx, path),
-    getScopeSnapshot: snapshots.getScopeSnapshot,
-    getArraySnapshot: snapshots.getArraySnapshot,
-    getNodeValue: snapshots.getNodeValue,
-    emitScopeValue: subscriptions.emitScopeValue,
-    emitScopeUpdate: subscriptions.emitScopeUpdate,
-    emitArrayValue: subscriptions.emitArrayValue,
-    emitArrayUpdate: subscriptions.emitArrayUpdate,
-    trackRead: subscriptions.trackRead,
-    markDirty: subscriptions.markDirty,
-    attachChildToScope: subscriptions.attachChildToScope,
-    detachChildFromScope: subscriptions.detachChildFromScope,
-    attachChildToArray: subscriptions.attachChildToArray,
-    detachChildFromArray: subscriptions.detachChildFromArray,
+    utils: {
+      isPlainObject,
+      isUnit,
+      createUnit,
+      cloneValue,
+      emitError,
+      createDraft,
+      finishDraft,
+      createUpdate,
+      trackRead: subscriptions.trackRead,
+    },
+    commit: {
+      applyScopeCommitDiff,
+      applyArrayCommitDiff,
+    },
+    snapshots,
+    subscriptions: {
+      emitScopeValue: subscriptions.emitScopeValue,
+      emitScopeUpdate: subscriptions.emitScopeUpdate,
+      emitArrayValue: subscriptions.emitArrayValue,
+      emitArrayUpdate: subscriptions.emitArrayUpdate,
+      markDirty: subscriptions.markDirty,
+    },
+    registry: {
+      registerSubtree: (_ctx, path, node) =>
+        registerSubtreeWithAccess(ctx, path, node, subtreeAccess),
+      unregisterSubtree: (_ctx, path, node) =>
+        unregisterSubtreeWithAccess(ctx, path, node, subtreeAccess),
+      rebuildSubtreeMapping: (state, node) =>
+        rebuildSubtreeMappingWithAccess({ ctx, path: state.path }, node, subtreeAccess),
+      setPathNode: (_ctx, path, node) => setPathNodeWithAccess(ctx, path, node),
+      getPathNode: (_ctx, path) => getPathNodeWithAccess(ctx, path),
+    },
+    internals: {
+      getInternal,
+      requireInternalOfKind,
+      registerInternal,
+      INTERNAL,
+    },
+    lifecycle: {
+      attachChildToScope: subscriptions.attachChildToScope,
+      detachChildFromScope: subscriptions.detachChildFromScope,
+      attachChildToArray: subscriptions.attachChildToArray,
+      detachChildFromArray: subscriptions.detachChildFromArray,
+    },
   };
 }
 
 export function createTreeNodeFactory(ctx: TreeContext): ReturnType<typeof createNodeFactory> {
-  return createNodeFactory(createNodeDeps(ctx));
+  return createNodeFactory(createTreeDeps(ctx));
 }

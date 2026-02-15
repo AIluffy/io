@@ -1,4 +1,4 @@
-import type { NodeCreationDeps } from '../../types.js';
+import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
@@ -12,7 +12,7 @@ import { createArrayIndexMutation } from './index-mutation.js';
 import { createArrayStructuralMutations } from './structural-mutations.js';
 
 export type CreateArrayMutationsOptions = {
-  deps: NodeCreationDeps;
+  deps: TreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeArrayState;

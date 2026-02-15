@@ -1,6 +1,6 @@
 import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeCreationDeps } from '../../types.js';
+import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
@@ -16,7 +16,7 @@ import {
 } from '../../../utils/branded.js';
 
 type CreateArrayNodeOptions = {
-  deps: NodeCreationDeps;
+  deps: TreeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: unknown[];
@@ -53,14 +53,14 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     path,
   };
 
-  const snapshot = (): unknown[] => deps.getArraySnapshot(state);
+  const snapshot = (): unknown[] => deps.snapshots.getArraySnapshot(state);
   let node: TreeNode = initialNode;
   const array: Record<PropertyKey, unknown> = {};
   type SubscribableNode = {
     subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
   };
   const get = (): unknown[] => {
-    deps.trackRead(node as SubscribableNode);
+    deps.utils.trackRead(node as SubscribableNode);
     return snapshot();
   };
   const proxy = new Proxy(array as TreeNode & object, {
@@ -87,10 +87,10 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
   node = proxy;
   state.node = node;
   ctx.seen.set(initial as object, proxy);
-  deps.setPathNode(ctx, path, proxy);
+  deps.registry.setPathNode(ctx, path, proxy);
 
   const rebuildMapping = (): void => {
-    deps.rebuildSubtreeMapping(state, proxy);
+    deps.registry.rebuildSubtreeMapping(state, proxy);
   };
 
   const subscribe = (fn: (v: unknown[]) => void): IoUnsubscribe => {
@@ -143,7 +143,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     commit: { value: commit },
     reduce: { value: reduce },
     [Symbol.iterator]: { value: iterator },
-    [deps.INTERNAL]: {
+    [deps.internals.INTERNAL]: {
       value: internal,
     },
   });
@@ -152,11 +152,11 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     const value = i in initial ? initial[i] : undefined;
     const child = createTreeNode(ctx, [...path, i], value);
     state.children[i] = child;
-    deps.attachChildToArray(state, child);
+    deps.lifecycle.attachChildToArray(state, child);
   }
 
-  deps.registerInternal(array as object, internal);
-  deps.registerInternal(proxy as object, internal);
+  deps.internals.registerInternal(array as object, internal);
+  deps.internals.registerInternal(proxy as object, internal);
 
   return proxy;
 }

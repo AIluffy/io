@@ -1,4 +1,4 @@
-import type { NodeCreationDeps } from '../../types.js';
+import type { TreeDeps } from '../../types.js';
 import type { SnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
@@ -15,9 +15,10 @@ import { ArrayCommitCommand } from '../../commands/array-commit-command.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { isLink } from '../../../utils/link.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
+import { createExecutorDeps } from '../executor-deps.js';
 
 type CreateArrayCommitOptions = {
-  deps: NodeCreationDeps;
+  deps: TreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeArrayState;
@@ -32,7 +33,7 @@ type CreateArrayCommitOptions = {
 };
 
 function createCommitDeps(
-  deps: NodeCreationDeps,
+  deps: TreeDeps,
   ctx: TreeContext,
   createTreeNode: (
     ctx: TreeContext,
@@ -40,25 +41,26 @@ function createCommitDeps(
     initial: unknown,
   ) => TreeNode,
   resolvePatchValue: (value: unknown) => unknown,
-): Parameters<NodeCreationDeps['applyArrayCommitDiff']>[3] {
+): Parameters<TreeDeps['commit']['applyArrayCommitDiff']>[3] {
   let readCache: SnapshotCache | undefined;
   const invalidateReadCache = (): void => {
     readCache?.clear();
   };
   const readNodeValue = (node: unknown): unknown =>
-    deps.getNodeValue(
+    deps.snapshots.getNodeValue(
       node as TreeNode,
       (readCache ??= createSnapshotCache()),
     );
 
   return {
-    isPlainObject: deps.isPlainObject,
-    isUnit: (node: unknown) => deps.isUnit(node),
+    isPlainObject: deps.utils.isPlainObject,
+    isUnit: (node: unknown) => deps.utils.isUnit(node),
     isLink,
-    getInternalKind: (node: unknown) => deps.getInternal(node as TreeNode)?.kind,
+    getInternalKind: (node: unknown) =>
+      deps.internals.getInternal(node as TreeNode)?.kind,
     getScopeState: (node: unknown) =>
       (
-        deps.requireInternalOfKind(
+        deps.internals.requireInternalOfKind(
           node as TreeNode,
           'scope',
           'ioTree commit: invalid scope internal',
@@ -66,14 +68,14 @@ function createCommitDeps(
       ).getState(),
     getArrayState: (node: unknown) =>
       (
-        deps.requireInternalOfKind(
+        deps.internals.requireInternalOfKind(
           node as TreeNode,
           'array',
           'ioTree commit: invalid array internal',
         ) as TreeArrayInternal
       ).getState(),
     setUnitValue: (node: unknown, value: unknown) => {
-      const internal = deps.requireInternalOfKind(
+      const internal = deps.internals.requireInternalOfKind(
         node as TreeNode,
         'unit',
         'ioTree commit: invalid unit internal',
@@ -87,11 +89,11 @@ function createCommitDeps(
       createTreeNode(ctx, absPath, value),
     detachChildFromScope: (state, key) => {
       invalidateReadCache();
-      deps.detachChildFromScope(state as TreeScopeState, key);
+      deps.lifecycle.detachChildFromScope(state as TreeScopeState, key);
     },
     attachChildToScope: (state, key, child) => {
       invalidateReadCache();
-      deps.attachChildToScope(
+      deps.lifecycle.attachChildToScope(
         state as TreeScopeState,
         key,
         child as TreeNode,
@@ -99,34 +101,37 @@ function createCommitDeps(
     },
     detachChildFromArray: (state, child) => {
       invalidateReadCache();
-      deps.detachChildFromArray(
+      deps.lifecycle.detachChildFromArray(
         state as TreeArrayState,
         child as TreeNode,
       );
     },
     attachChildToArray: (state, child) => {
       invalidateReadCache();
-      deps.attachChildToArray(state as TreeArrayState, child as TreeNode);
+      deps.lifecycle.attachChildToArray(
+        state as TreeArrayState,
+        child as TreeNode,
+      );
     },
     unregisterSubtree: (absPath: NodePath, node: unknown) => {
       invalidateReadCache();
-      deps.unregisterSubtree(ctx, absPath, node as TreeNode);
+      deps.registry.unregisterSubtree(ctx, absPath, node as TreeNode);
     },
     registerSubtree: (absPath: NodePath, node: unknown) => {
       invalidateReadCache();
-      deps.registerSubtree(ctx, absPath, node as TreeNode);
+      deps.registry.registerSubtree(ctx, absPath, node as TreeNode);
     },
-    getPathNode: (absPath: NodePath) => deps.getPathNode(ctx, absPath),
+    getPathNode: (absPath: NodePath) => deps.registry.getPathNode(ctx, absPath),
     emitScopeValue: (state) =>
-      deps.emitScopeValue(state as TreeScopeState),
+      deps.subscriptions.emitScopeValue(state as TreeScopeState),
     emitArrayValue: (state) =>
-      deps.emitArrayValue(state as TreeArrayState),
+      deps.subscriptions.emitArrayValue(state as TreeArrayState),
     markDirty: (state, segment) =>
-      deps.markDirty(
+      deps.subscriptions.markDirty(
         state as TreeScopeState | TreeArrayState,
         segment,
       ),
-    cloneValue: deps.cloneValue,
+    cloneValue: deps.utils.cloneValue,
   };
 }
 
@@ -144,16 +149,16 @@ export function createArrayCommit(
     getNode,
   } = options;
 
-  const executor = createArrayExecutor(deps, state, path, getNode);
+  const executor = createArrayExecutor(createExecutorDeps(deps), state, path, getNode);
   const commitDeps = createCommitDeps(deps, ctx, createTreeNode, resolvePatchValue);
 
   return (fn: (draft: unknown[]) => void): void => {
     executor.runCommand(
       new ArrayCommitCommand(fn, {
         snapshot,
-        createDraft: deps.createDraft,
-        finishDraft: deps.finishDraft,
-        applyArrayCommitDiff: deps.applyArrayCommitDiff,
+        createDraft: deps.utils.createDraft,
+        finishDraft: deps.utils.finishDraft,
+        applyArrayCommitDiff: deps.commit.applyArrayCommitDiff,
         commitDeps,
       }),
       { structural: false },

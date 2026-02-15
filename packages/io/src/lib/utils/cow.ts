@@ -1,4 +1,4 @@
-import { cloneValue } from './snapshot.js';
+import { toImmutable } from './immutable.js';
 
 type DraftState = {
   base: object;
@@ -62,7 +62,7 @@ function ensureCopy(state: DraftState): object {
 function toImmutableIfNeeded(value: unknown): unknown {
   if (!isDraftable(value)) return value;
   if (isDraft(value)) return finishDraft(value);
-  return cloneValue(value);
+  return toImmutable(value);
 }
 
 const arrayMutators = new Set<PropertyKey>([

@@ -1,6 +1,6 @@
 import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
 
-import type { NodeCreationDeps } from '../../types.js';
+import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
@@ -17,7 +17,7 @@ import {
 } from '../../../utils/branded.js';
 
 type CreateScopeNodeOptions = {
-  deps: NodeCreationDeps;
+  deps: TreeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: Record<string, unknown>;
@@ -71,16 +71,16 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
   }
 
   state.children.forEach((child, key) => {
-    deps.attachChildToScope(state, key, child);
+    deps.lifecycle.attachChildToScope(state, key, child);
   });
 
   const snapshot = (): Record<string, unknown> =>
-    deps.getScopeSnapshot(state);
+    deps.snapshots.getScopeSnapshot(state);
   type SubscribableNode = {
     subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
   };
   const get = (): Record<string, unknown> => {
-    deps.trackRead(scopeNode as SubscribableNode);
+    deps.utils.trackRead(scopeNode as SubscribableNode);
     return snapshot();
   };
 
@@ -137,13 +137,13 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     snapshot: { value: snapshot },
     subscribe: { value: subscribe },
     subscribeUpdate: { value: subscribeUpdate },
-    [deps.INTERNAL]: {
+    [deps.internals.INTERNAL]: {
       value: internal,
     },
   });
 
-  deps.registerInternal(scope as object, internal);
+  deps.internals.registerInternal(scope as object, internal);
 
-  deps.setPathNode(ctx, path, scopeNode);
+  deps.registry.setPathNode(ctx, path, scopeNode);
   return scopeNode;
 }

@@ -1,7 +1,7 @@
 import { getLinkTarget, isLink } from '../../utils/link.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
-import type { NodeCreationDeps } from '../types.js';
+import type { TreeDeps } from '../types.js';
 import { createArrayNode as createArrayNodeImpl } from './array/node.js';
 import { createScopeNode as createScopeNodeImpl } from './scope/node.js';
 import {
@@ -10,15 +10,13 @@ import {
   isPathPrefix,
 } from './link.js';
 
-export type { NodeCreationDeps } from '../types.js';
-
 /**
  * Builds the tree-node constructor used by `ioTree`.
  *
  * The factory chooses node kind (scope/array/unit), maintains path mappings,
  * and enforces constraints around links, cycles, and shared references.
  */
-export function createNodeFactory(deps: NodeCreationDeps) {
+export function createNodeFactory(treeDeps: TreeDeps) {
   // Patch payloads must be immutable snapshots. Linked nodes need resolving to
   // values so update logs stay serializable and replay-safe.
   /**
@@ -32,7 +30,7 @@ export function createNodeFactory(deps: NodeCreationDeps) {
       const target = getLinkTarget(value) as TreeNode;
       return target.snapshot();
     }
-    return deps.cloneValue(value);
+    return treeDeps.utils.cloneValue(value);
   };
 
   /**
@@ -43,8 +41,10 @@ export function createNodeFactory(deps: NodeCreationDeps) {
     path: NodePath,
     initial: unknown,
   ): TreeNode => {
-    const unit = deps.createUnit(deps.cloneValue(initial)) as TreeNode;
-    deps.registerSubtree(ctx, path, unit);
+    const unit = treeDeps.utils.createUnit(
+      treeDeps.utils.cloneValue(initial),
+    ) as TreeNode;
+    treeDeps.registry.registerSubtree(ctx, path, unit);
     return unit;
   };
 
@@ -57,7 +57,7 @@ export function createNodeFactory(deps: NodeCreationDeps) {
     initial: Record<string, unknown>,
   ): TreeNode =>
     createScopeNodeImpl({
-      deps,
+      deps: treeDeps,
       ctx,
       path,
       initial,
@@ -74,7 +74,7 @@ export function createNodeFactory(deps: NodeCreationDeps) {
     initial: unknown[],
   ): TreeNode =>
     createArrayNodeImpl({
-      deps,
+      deps: treeDeps,
       ctx,
       path,
       initial,
@@ -102,7 +102,7 @@ export function createNodeFactory(deps: NodeCreationDeps) {
   ): TreeNode => {
     if (isLink(initial)) {
       const target = getLinkTarget(initial) as TreeNode;
-      const internal = deps.getInternal(target);
+      const internal = treeDeps.internals.getInternal(target);
       if (!internal)
         throw new TypeError('ioTree: link target is not an IO node');
 
@@ -122,14 +122,14 @@ export function createNodeFactory(deps: NodeCreationDeps) {
           }
         }
         if (linkCtx === ctx) {
-          deps.registerSubtree(ctx, path, target);
+          treeDeps.registry.registerSubtree(ctx, path, target);
         } else {
-          deps.setPathNode(ctx, path, target);
+          treeDeps.registry.setPathNode(ctx, path, target);
         }
         return target;
       }
 
-      deps.registerSubtree(ctx, path, target);
+      treeDeps.registry.registerSubtree(ctx, path, target);
       return target;
     }
 
@@ -145,12 +145,12 @@ export function createNodeFactory(deps: NodeCreationDeps) {
             'ioTree array: shared object references are not allowed',
           );
         }
-        deps.setPathNode(ctx, path, existing);
+        treeDeps.registry.setPathNode(ctx, path, existing);
         return existing;
       }
     }
     if (Array.isArray(initial)) return createArrayNode(ctx, path, initial);
-    if (deps.isPlainObject(initial))
+    if (treeDeps.utils.isPlainObject(initial))
       return createScopeNode(ctx, path, initial as Record<string, unknown>);
     if (initial !== null && typeof initial === 'object') {
       throw new TypeError(

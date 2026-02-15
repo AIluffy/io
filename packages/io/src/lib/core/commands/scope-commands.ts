@@ -1,5 +1,11 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { NodeCreationDeps } from '../types.js';
+import type {
+  CommitLayer,
+  InternalDeps,
+  LifecycleDeps,
+  SubscriptionDeps,
+  UtilsLayer,
+} from '../types.js';
 import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
@@ -10,21 +16,21 @@ import { SkipExecution } from './command.js';
 
 type ScopeCommitDeps = {
   snapshot: () => Record<string, unknown>;
-  createDraft: NodeCreationDeps['createDraft'];
-  finishDraft: NodeCreationDeps['finishDraft'];
-  applyScopeCommitDiff: NodeCreationDeps['applyScopeCommitDiff'];
-  commitDeps: Parameters<NodeCreationDeps['applyScopeCommitDiff']>[3];
+  createDraft: UtilsLayer['createDraft'];
+  finishDraft: UtilsLayer['finishDraft'];
+  applyScopeCommitDiff: CommitLayer['applyScopeCommitDiff'];
+  commitDeps: Parameters<CommitLayer['applyScopeCommitDiff']>[3];
 };
 
 type ScopeMutateCommandDeps = {
   path: NodePath;
-  isUnit: NodeCreationDeps['isUnit'];
-  requireInternalOfKind: NodeCreationDeps['requireInternalOfKind'];
-  detachChildFromScope: NodeCreationDeps['detachChildFromScope'];
+  isUnit: UtilsLayer['isUnit'];
+  requireInternalOfKind: InternalDeps['requireInternalOfKind'];
+  detachChildFromScope: LifecycleDeps['detachChildFromScope'];
   unregisterSubtree: (path: NodePath, node: TreeNode) => void;
   createTreeNode: (path: NodePath, initial: unknown) => TreeNode;
-  attachChildToScope: NodeCreationDeps['attachChildToScope'];
-  markDirty: NodeCreationDeps['markDirty'];
+  attachChildToScope: LifecycleDeps['attachChildToScope'];
+  markDirty: SubscriptionDeps['markDirty'];
 };
 
 export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {

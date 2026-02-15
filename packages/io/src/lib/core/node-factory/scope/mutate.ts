@@ -1,15 +1,16 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
-import type { NodeCreationDeps } from '../../types.js';
+import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
   TreeNode,
   TreeScopeState,
 } from '../../tree/io-tree-types.js';
+import { createExecutorDeps } from '../executor-deps.js';
 
 type CreateScopeMutationsOptions = {
-  deps: NodeCreationDeps;
+  deps: TreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;
@@ -27,21 +28,21 @@ export function createScopeMutations(
   applySet: (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+  options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
 } {
   const { deps, ctx, path, state, createTreeNode, getNode } = options;
   const commandDeps = {
     path,
-    isUnit: deps.isUnit,
-    requireInternalOfKind: deps.requireInternalOfKind,
-    detachChildFromScope: deps.detachChildFromScope,
+    isUnit: deps.utils.isUnit,
+    requireInternalOfKind: deps.internals.requireInternalOfKind,
+    detachChildFromScope: deps.lifecycle.detachChildFromScope,
     unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
-      deps.unregisterSubtree(ctx, absPath, node),
+      deps.registry.unregisterSubtree(ctx, absPath, node),
     createTreeNode: (absPath: NodePath, initial: unknown) =>
       createTreeNode(ctx, absPath, initial),
-    attachChildToScope: deps.attachChildToScope,
-    markDirty: deps.markDirty,
+    attachChildToScope: deps.lifecycle.attachChildToScope,
+    markDirty: deps.subscriptions.markDirty,
   };
 
   const applySet = (
@@ -49,7 +50,12 @@ export function createScopeMutations(
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean },
   ): void => {
-    createScopeExecutor(deps, state, [...path, key], getNode).runCommand(
+    createScopeExecutor(
+      createExecutorDeps(deps),
+      state,
+      [...path, key],
+      getNode,
+    ).runCommand(
       new ScopeMutateCommand(commandDeps, key, next, options),
       {
         emitUpdate: false,

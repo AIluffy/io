@@ -1,5 +1,5 @@
 import type { IoPatch } from '../../utils/types.js';
-import type { NodeCreationDeps } from '../types.js';
+import type { CommitLayer, UtilsLayer } from '../types.js';
 import type { TreeArrayState } from '../tree/io-tree-types.js';
 import type { TreeCommand } from './command.js';
 
@@ -7,10 +7,10 @@ import { executeCommitCommand } from './commit-command.js';
 
 type ArrayCommitCommandDeps = {
   snapshot: () => unknown[];
-  createDraft: NodeCreationDeps['createDraft'];
-  finishDraft: NodeCreationDeps['finishDraft'];
-  applyArrayCommitDiff: NodeCreationDeps['applyArrayCommitDiff'];
-  commitDeps: Parameters<NodeCreationDeps['applyArrayCommitDiff']>[3];
+  createDraft: UtilsLayer['createDraft'];
+  finishDraft: UtilsLayer['finishDraft'];
+  applyArrayCommitDiff: CommitLayer['applyArrayCommitDiff'];
+  commitDeps: Parameters<CommitLayer['applyArrayCommitDiff']>[3];
 };
 
 export class ArrayCommitCommand implements TreeCommand<TreeArrayState> {

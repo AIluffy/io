@@ -80,9 +80,29 @@ export type LifecycleDeps = {
   detachChildFromArray: (state: TreeArrayState, child: TreeNode) => void;
 };
 
-export type NodeCreationDeps =
-  & CommitDeps
-  & InternalDeps
-  & LifecycleDeps
-  & SubscriptionDeps
-  & RegistryDeps;
+export type UtilsLayer = {
+  isPlainObject: CommitDeps['isPlainObject'];
+  cloneValue: CommitDeps['cloneValue'];
+  createDraft: CommitDeps['createDraft'];
+  finishDraft: CommitDeps['finishDraft'];
+  createUpdate: CommitDeps['createUpdate'];
+  isUnit: InternalDeps['isUnit'];
+  createUnit: InternalDeps['createUnit'];
+  emitError: InternalDeps['emitError'];
+  trackRead: SubscriptionDeps['trackRead'];
+};
+
+export type CommitLayer = {
+  applyScopeCommitDiff: CommitDeps['applyScopeCommitDiff'];
+  applyArrayCommitDiff: CommitDeps['applyArrayCommitDiff'];
+};
+
+export type TreeDeps = {
+  utils: UtilsLayer;
+  commit: CommitLayer;
+  snapshots: SnapshotDeps;
+  subscriptions: Omit<SubscriptionDeps, keyof SnapshotDeps | 'trackRead'>;
+  registry: RegistryDeps;
+  internals: Omit<InternalDeps, 'isUnit' | 'createUnit' | 'emitError'>;
+  lifecycle: LifecycleDeps;
+};
