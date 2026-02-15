@@ -233,14 +233,12 @@ function createDiffHelpers<
       const kind = deps.getInternalKind(node);
       if (kind === 'scope') {
         const childState = deps.getScopeState(node);
-        childState.isCommitting = true;
         const changed = applyScopeDiff(
           childState,
           toRecord(prev),
           toRecord(nextValue),
           relPath,
         );
-        childState.isCommitting = false;
         if (changed) deps.emitScopeValue(childState);
         return changed;
       }
@@ -250,9 +248,7 @@ function createDiffHelpers<
       const kind = deps.getInternalKind(node);
       if (kind === 'array') {
         const childState = deps.getArrayState(node);
-        childState.isCommitting = true;
         const changed = applyArrayDiff(childState, prev, nextValue, relPath);
-        childState.isCommitting = false;
         if (changed) deps.emitArrayValue(childState);
         return changed;
       }
@@ -312,14 +308,12 @@ function createDiffHelpers<
         const kind = deps.getInternalKind(node);
         if (kind === 'scope') {
           const childState = deps.getScopeState(node);
-          childState.isCommitting = true;
           const childChanged = applyScopeDiff(
             childState,
             toRecord(prev),
             toRecord(nextValue),
             [...relPath, key],
           );
-          childState.isCommitting = false;
           if (childChanged) deps.emitScopeValue(childState);
           if (childChanged) deps.markDirty(scopeState, key);
           changed = changed || childChanged;
@@ -331,12 +325,10 @@ function createDiffHelpers<
         const kind = deps.getInternalKind(node);
         if (kind === 'array') {
           const childState = deps.getArrayState(node);
-          childState.isCommitting = true;
           const childChanged = applyArrayDiff(childState, prev, nextValue, [
             ...relPath,
             key,
           ]);
-          childState.isCommitting = false;
           if (childChanged) deps.emitArrayValue(childState);
           if (childChanged) deps.markDirty(scopeState, key);
           changed = changed || childChanged;
@@ -385,14 +377,12 @@ function createDiffHelpers<
           const kind = deps.getInternalKind(node);
           if (kind === 'scope') {
             const childState = deps.getScopeState(node);
-            childState.isCommitting = true;
             const childChanged = applyScopeDiff(
               childState,
               toRecord(prev),
               toRecord(nextValue),
               [...relPath, i],
             );
-            childState.isCommitting = false;
             if (childChanged) deps.emitScopeValue(childState);
             if (childChanged) deps.markDirty(arrayState, i);
             changed = changed || childChanged;
@@ -404,12 +394,10 @@ function createDiffHelpers<
           const kind = deps.getInternalKind(node);
           if (kind === 'array') {
             const childState = deps.getArrayState(node);
-            childState.isCommitting = true;
             const childChanged = applyArrayDiff(childState, prev, nextValue, [
               ...relPath,
               i,
             ]);
-            childState.isCommitting = false;
             if (childChanged) deps.emitArrayValue(childState);
             if (childChanged) deps.markDirty(arrayState, i);
             changed = changed || childChanged;
