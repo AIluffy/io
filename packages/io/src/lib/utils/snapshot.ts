@@ -178,7 +178,7 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
   return value;
 }
 
-function freezeOwned<T>(value: T): T {
+export function freezeOwned<T>(value: T): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
   if (isImmutableRoot(value as object)) return value;
@@ -205,11 +205,9 @@ export function snapshotValue<T>(value: T, options?: { owned?: boolean }): T {
   return toImmutable(value);
 }
 
+/** @deprecated Use cloneValue(value) instead. */
 export function readValue<T>(value: T): T {
-  if (value === null || value === undefined) return value;
-  if (typeof value !== 'object') return value;
-  if (isImmutableRoot(value as object)) return value;
-  return toImmutable(value);
+  return cloneValue(value);
 }
 
 export const __testing = {

@@ -3,7 +3,7 @@ import { emitError } from '../utils/debug.js';
 import { getInternal, registerInternal } from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-access.js';
 import { trackRead } from '../utils/signals.js';
-import { cloneValue, readValue } from '../utils/snapshot.js';
+import { cloneValue } from '../utils/snapshot.js';
 import type {
   IoErrorHandler,
   IoPatch,
@@ -40,7 +40,7 @@ type UnitInternal<T> = {
 function readCachedValue<T>(state: UnitState<T>): T {
   if (state.hasCachedRead && state.cachedReadRevision === state.revision)
     return state.cachedRead as T;
-  const v = readValue(state.value);
+  const v = cloneValue(state.value);
   state.cachedRead = v;
   state.cachedReadRevision = state.revision;
   state.hasCachedRead = true;

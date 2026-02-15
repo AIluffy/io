@@ -3,8 +3,7 @@ import type { NodeCreationDeps } from '../types.js';
 import type { TreeArrayState } from '../tree/io-tree-types.js';
 import type { TreeCommand } from './command.js';
 
-import { previousEpoch, previousRevision } from '../../utils/branded.js';
-import { SkipExecution } from './command.js';
+import { executeCommitCommand } from './commit-command.js';
 
 type ArrayCommitCommandDeps = {
   snapshot: () => unknown[];
@@ -23,24 +22,18 @@ export class ArrayCommitCommand implements TreeCommand<TreeArrayState> {
   ) {}
 
   execute(state: TreeArrayState): IoPatch[] {
-    const before = this.deps.snapshot();
-    const draft = this.deps.createDraft(before);
-    this.fn(draft);
-    const next = this.deps.finishDraft(draft);
-
-    const { changed, patches } = this.deps.applyArrayCommitDiff(
-      state,
-      before,
-      next as unknown[],
-      this.deps.commitDeps,
-    );
-    if (!changed) {
-      state.revision = previousRevision(state.revision);
-      throw new SkipExecution();
-    }
-
-    // Commit diff already bumps valueEpoch when changed.
-    state.valueEpoch = previousEpoch(state.valueEpoch);
-    return patches;
+    return executeCommitCommand(state, {
+      snapshot: this.deps.snapshot,
+      createDraft: this.deps.createDraft,
+      finishDraft: this.deps.finishDraft,
+      runUserFn: (draft) => this.fn(draft as unknown[]),
+      applyDiff: (currentState, before, next) =>
+        this.deps.applyArrayCommitDiff(
+          currentState as TreeArrayState,
+          before,
+          next as unknown[],
+          this.deps.commitDeps,
+        ),
+    });
   }
 }

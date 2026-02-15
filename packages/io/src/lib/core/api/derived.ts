@@ -9,7 +9,7 @@ import type {
 } from '../../utils/types.js';
 
 import { computed, effect } from '../../utils/signals.js';
-import { readValue, snapshotValue } from '../../utils/snapshot.js';
+import { cloneValue, snapshotValue } from '../../utils/snapshot.js';
 import { getInternal, registerInternal } from '../../utils/internal-access.js';
 import { INTERNAL } from '../../utils/internal-access.js';
 
@@ -191,7 +191,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     const next = compute(...readArgs());
     if (Object.is(current, next)) return;
     current = next;
-    const v = readValue(current);
+    const v = cloneValue(current);
     for (const listener of listeners) listener(v);
   };
 
@@ -215,7 +215,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
 
   const get = (): T => {
     ensureCurrent();
-    return readValue(current);
+    return cloneValue(current);
   };
 
   const snapshot = (): T => {

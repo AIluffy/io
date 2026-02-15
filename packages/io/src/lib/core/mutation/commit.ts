@@ -218,6 +218,17 @@ function createDiffHelpers<
     nextValue: unknown,
     relPath: PathSegment[],
   ): boolean => {
+    const nestedChanged = diffChild(
+      parentState,
+      segment,
+      node,
+      prev,
+      nextValue,
+      relPath,
+      false,
+    );
+    if (nestedChanged !== undefined) return nestedChanged;
+
     if (deps.isLink(nextValue)) {
       const prevValue = deps.getNodeValue(node);
       return replaceChild(
@@ -229,31 +240,6 @@ function createDiffHelpers<
         prevValue,
         (replaced) => deps.getNodeValue(replaced),
       );
-    }
-
-    if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
-      const kind = deps.getInternalKind(node);
-      if (kind === 'scope') {
-        const childState = deps.getScopeState(node);
-        const changed = applyScopeDiff(
-          childState,
-          toRecord(prev),
-          toRecord(nextValue),
-          relPath,
-        );
-        if (changed) deps.emitScopeValue(childState);
-        return changed;
-      }
-    }
-
-    if (Array.isArray(prev) && Array.isArray(nextValue)) {
-      const kind = deps.getInternalKind(node);
-      if (kind === 'array') {
-        const childState = deps.getArrayState(node);
-        const changed = applyArrayDiff(childState, prev, nextValue, relPath);
-        if (changed) deps.emitArrayValue(childState);
-        return changed;
-      }
     }
 
     if (Object.is(prev, nextValue)) return false;
@@ -281,6 +267,45 @@ function createDiffHelpers<
     );
   };
 
+  const diffChild = (
+    parentState: TScopeState | TArrayState,
+    segment: PathSegment,
+    node: TNode,
+    prev: unknown,
+    nextValue: unknown,
+    relPath: PathSegment[],
+    markParentDirty: boolean,
+  ): boolean | undefined => {
+    if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
+      const kind = deps.getInternalKind(node);
+      if (kind === 'scope') {
+        const childState = deps.getScopeState(node);
+        const childChanged = applyScopeDiff(
+          childState,
+          toRecord(prev),
+          toRecord(nextValue),
+          relPath,
+        );
+        if (childChanged) deps.emitScopeValue(childState);
+        if (childChanged && markParentDirty) deps.markDirty(parentState, segment);
+        return childChanged;
+      }
+    }
+
+    if (Array.isArray(prev) && Array.isArray(nextValue)) {
+      const kind = deps.getInternalKind(node);
+      if (kind === 'array') {
+        const childState = deps.getArrayState(node);
+        const childChanged = applyArrayDiff(childState, prev, nextValue, relPath);
+        if (childChanged) deps.emitArrayValue(childState);
+        if (childChanged && markParentDirty) deps.markDirty(parentState, segment);
+        return childChanged;
+      }
+    }
+
+    return undefined;
+  };
+
   /**
    * Recursively applies commit diff for a scope node.
    *
@@ -306,36 +331,18 @@ function createDiffHelpers<
       const prev = prevObj[key];
       const nextValue = nextObj[key];
 
-      if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
-        const kind = deps.getInternalKind(node);
-        if (kind === 'scope') {
-          const childState = deps.getScopeState(node);
-          const childChanged = applyScopeDiff(
-            childState,
-            toRecord(prev),
-            toRecord(nextValue),
-            [...relPath, key],
-          );
-          if (childChanged) deps.emitScopeValue(childState);
-          if (childChanged) deps.markDirty(scopeState, key);
-          changed = changed || childChanged;
-          continue;
-        }
-      }
-
-      if (Array.isArray(prev) && Array.isArray(nextValue)) {
-        const kind = deps.getInternalKind(node);
-        if (kind === 'array') {
-          const childState = deps.getArrayState(node);
-          const childChanged = applyArrayDiff(childState, prev, nextValue, [
-            ...relPath,
-            key,
-          ]);
-          if (childChanged) deps.emitArrayValue(childState);
-          if (childChanged) deps.markDirty(scopeState, key);
-          changed = changed || childChanged;
-          continue;
-        }
+      const childChanged = diffChild(
+        scopeState,
+        key,
+        node,
+        prev,
+        nextValue,
+        [...relPath, key],
+        true,
+      );
+      if (childChanged !== undefined) {
+        changed = changed || childChanged;
+        continue;
       }
 
       const nodeChanged = applyNodeDiff(
@@ -375,36 +382,18 @@ function createDiffHelpers<
         const prev = prevArr[i];
         const nextValue = nextArr[i];
 
-        if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
-          const kind = deps.getInternalKind(node);
-          if (kind === 'scope') {
-            const childState = deps.getScopeState(node);
-            const childChanged = applyScopeDiff(
-              childState,
-              toRecord(prev),
-              toRecord(nextValue),
-              [...relPath, i],
-            );
-            if (childChanged) deps.emitScopeValue(childState);
-            if (childChanged) deps.markDirty(arrayState, i);
-            changed = changed || childChanged;
-            continue;
-          }
-        }
-
-        if (Array.isArray(prev) && Array.isArray(nextValue)) {
-          const kind = deps.getInternalKind(node);
-          if (kind === 'array') {
-            const childState = deps.getArrayState(node);
-            const childChanged = applyArrayDiff(childState, prev, nextValue, [
-              ...relPath,
-              i,
-            ]);
-            if (childChanged) deps.emitArrayValue(childState);
-            if (childChanged) deps.markDirty(arrayState, i);
-            changed = changed || childChanged;
-            continue;
-          }
+        const childChanged = diffChild(
+          arrayState,
+          i,
+          node,
+          prev,
+          nextValue,
+          [...relPath, i],
+          true,
+        );
+        if (childChanged !== undefined) {
+          changed = changed || childChanged;
+          continue;
         }
 
         const nodeChanged = applyNodeDiff(

@@ -1,4 +1,5 @@
 import type { IoMutationOp, IoPath, IoPatch, IoUpdate } from '../../utils/types.js';
+import type { Revision, ValueEpoch } from '../../utils/branded.js';
 import type {
   TreeArrayState,
   TreeNode,
@@ -31,8 +32,64 @@ type ExecutorDeps = {
   ) => void;
 };
 
+type ExecutorState = {
+  revision: Revision;
+  valueEpoch: ValueEpoch;
+  dirtyStructure: boolean;
+};
+
+type ExecutorConfig<TState extends ExecutorState> = {
+  beforeExecute?: (state: TState) => void;
+  afterExecute?: (state: TState) => void;
+  onStructural?: (state: TState) => void;
+  emitUpdate: (state: TState, update: IoUpdate) => void;
+  emitValue: (state: TState) => void;
+};
+
 function shouldSkipExecution(error: unknown): error is SkipExecution {
   return error instanceof SkipExecution;
+}
+
+function createExecutor<TState extends ExecutorState>(
+  deps: ExecutorDeps,
+  state: TState,
+  path: NodePath,
+  getNode: () => TreeNode,
+  config: ExecutorConfig<TState>,
+): {
+  runCommand: (command: TreeCommand<TState>, options?: ExecuteOptions) => IoUpdate | undefined;
+} {
+  const runCommand = (
+    command: TreeCommand<TState>,
+    options?: ExecuteOptions,
+  ): IoUpdate | undefined => {
+    config.beforeExecute?.(state);
+    try {
+      command.validate?.(state);
+      const baseRevision = state.revision;
+      state.revision = nextRevision(state.revision);
+
+      if (options?.structural !== false) {
+        state.dirtyStructure = true;
+        config.onStructural?.(state);
+      }
+
+      const patches = command.execute(state);
+      const update = deps.createUpdate(baseRevision, state.revision, patches);
+      if (options?.emitUpdate !== false) config.emitUpdate(state, update);
+      state.valueEpoch = nextEpoch(state.valueEpoch);
+      if (options?.emitValue !== false) config.emitValue(state);
+      return update;
+    } catch (error) {
+      if (shouldSkipExecution(error)) return undefined;
+      deps.emitError(getNode(), error, path, command.op);
+      throw error;
+    } finally {
+      config.afterExecute?.(state);
+    }
+  };
+
+  return { runCommand };
 }
 
 export function createArrayExecutor(
@@ -46,34 +103,14 @@ export function createArrayExecutor(
     options?: ExecuteOptions,
   ) => IoUpdate | undefined;
 } {
-  const runCommand = (
-    command: TreeCommand<TreeArrayState>,
-    options?: ExecuteOptions,
-  ): IoUpdate | undefined => {
-    try {
-      command.validate?.(state);
-      const baseRevision = state.revision;
-      state.revision = nextRevision(state.revision);
-
-      if (options?.structural !== false) {
-        state.dirtyStructure = true;
-        resetDirtyIndices(state.dirtyIndices, state.children.length);
-      }
-
-      const patches = command.execute(state);
-      const update = deps.createUpdate(baseRevision, state.revision, patches);
-      if (options?.emitUpdate !== false) deps.emitArrayUpdate(state, update);
-      state.valueEpoch = nextEpoch(state.valueEpoch);
-      if (options?.emitValue !== false) deps.emitArrayValue(state);
-      return update;
-    } catch (error) {
-      if (shouldSkipExecution(error)) return undefined;
-      deps.emitError(getNode(), error, path, command.op);
-      throw error;
-    }
-  };
-
-  return { runCommand };
+  return createExecutor(deps, state, path, getNode, {
+    onStructural: (currentState) => {
+      resetDirtyIndices(currentState.dirtyIndices, currentState.children.length);
+    },
+    emitUpdate: (currentState, update) =>
+      deps.emitArrayUpdate(currentState, update),
+    emitValue: (currentState) => deps.emitArrayValue(currentState),
+  });
 }
 
 export function createScopeExecutor(
@@ -87,36 +124,15 @@ export function createScopeExecutor(
     options?: ExecuteOptions,
   ) => IoUpdate | undefined;
 } {
-  const runCommand = (
-    command: TreeCommand<TreeScopeState>,
-    options?: ExecuteOptions,
-  ): IoUpdate | undefined => {
-    state.isCommitting = true;
-    try {
-      try {
-        command.validate?.(state);
-        const baseRevision = state.revision;
-        state.revision = nextRevision(state.revision);
-
-        if (options?.structural !== false) {
-          state.dirtyStructure = true;
-        }
-
-        const patches = command.execute(state);
-        const update = deps.createUpdate(baseRevision, state.revision, patches);
-        if (options?.emitUpdate !== false) deps.emitScopeUpdate(state, update);
-        state.valueEpoch = nextEpoch(state.valueEpoch);
-        if (options?.emitValue !== false) deps.emitScopeValue(state);
-        return update;
-      } catch (error) {
-        if (shouldSkipExecution(error)) return undefined;
-        deps.emitError(getNode(), error, path, command.op);
-        throw error;
-      }
-    } finally {
-      state.isCommitting = false;
-    }
-  };
-
-  return { runCommand };
+  return createExecutor(deps, state, path, getNode, {
+    beforeExecute: (currentState) => {
+      currentState.isCommitting = true;
+    },
+    afterExecute: (currentState) => {
+      currentState.isCommitting = false;
+    },
+    emitUpdate: (currentState, update) =>
+      deps.emitScopeUpdate(currentState, update),
+    emitValue: (currentState) => deps.emitScopeValue(currentState),
+  });
 }

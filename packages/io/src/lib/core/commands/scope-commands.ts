@@ -4,7 +4,8 @@ import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-typ
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
-import { previousEpoch, previousRevision } from '../../utils/branded.js';
+import { previousRevision } from '../../utils/branded.js';
+import { executeCommitCommand } from './commit-command.js';
 import { SkipExecution } from './command.js';
 
 type ScopeCommitDeps = {
@@ -35,31 +36,25 @@ export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {
   ) {}
 
   execute(state: TreeScopeState): IoPatch[] {
-    const before = this.deps.snapshot();
-    const draft = this.deps.createDraft(before);
-    this.fn(draft);
-    const next = this.deps.finishDraft(draft);
-
-    const nextAny = next as Record<PropertyKey, unknown>;
-    for (const key of Reflect.ownKeys(nextAny)) {
-      if (!Reflect.has(before as object, key))
-        throw new Error(`ioTree scope: unknown key ${String(key)}`);
-    }
-
-    const { changed, patches } = this.deps.applyScopeCommitDiff(
-      state,
-      before,
-      nextAny,
-      this.deps.commitDeps,
-    );
-    if (!changed) {
-      state.revision = previousRevision(state.revision);
-      throw new SkipExecution();
-    }
-
-    // Commit diff already bumps valueEpoch when changed.
-    state.valueEpoch = previousEpoch(state.valueEpoch);
-    return patches;
+    return executeCommitCommand(state, {
+      snapshot: this.deps.snapshot,
+      createDraft: this.deps.createDraft,
+      finishDraft: this.deps.finishDraft,
+      runUserFn: (draft) => this.fn(draft as Record<string, unknown>),
+      validateNext: (before, next) => {
+        for (const key of Reflect.ownKeys(next as Record<PropertyKey, unknown>)) {
+          if (!Reflect.has(before as object, key))
+            throw new Error(`ioTree scope: unknown key ${String(key)}`);
+        }
+      },
+      applyDiff: (currentState, before, next) =>
+        this.deps.applyScopeCommitDiff(
+          currentState as TreeScopeState,
+          before,
+          next as Record<PropertyKey, unknown>,
+          this.deps.commitDeps,
+        ),
+    });
   }
 }
 
