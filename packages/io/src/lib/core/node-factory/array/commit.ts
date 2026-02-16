@@ -6,10 +6,8 @@ import type {
   TreeNode,
 } from '../../tree/io-tree-types.js';
 
-import { CommitCommand } from '../../commands/commit-command.js';
 import { createArrayExecutor } from '../../commands/executor.js';
-import { createExecutorDeps } from '../executor-deps.js';
-import { createSharedCommitDeps } from '../shared-commit-deps.js';
+import { createCommitFactory } from '../commit-factory.js';
 
 type CreateArrayCommitOptions = {
   deps: TreeDeps;
@@ -26,60 +24,13 @@ type CreateArrayCommitOptions = {
   getNode: () => TreeNode;
 };
 
-function createCommitDeps(
-  deps: TreeDeps,
-  ctx: TreeContext,
-  createTreeNode: (
-    ctx: TreeContext,
-    path: NodePath,
-    initial: unknown,
-  ) => TreeNode,
-  resolvePatchValue: (value: unknown) => unknown,
-): Parameters<TreeDeps['commit']['applyArrayCommitDiff']>[3] &
-  Pick<TreeDeps['commit'], 'applyArrayCommitDiff'> {
-  return {
-    ...createSharedCommitDeps(deps, ctx, createTreeNode, resolvePatchValue),
-    applyArrayCommitDiff: deps.commit.applyArrayCommitDiff,
-  };
-}
-
 export function createArrayCommit(
   options: CreateArrayCommitOptions,
 ): (fn: (draft: unknown[]) => void) => void {
-  const {
-    deps,
-    ctx,
-    path,
-    state,
-    createTreeNode,
-    resolvePatchValue,
-    snapshot,
-    getNode,
-  } = options;
-
-  const executor = createArrayExecutor(createExecutorDeps(deps), state, path, getNode);
-  const { applyArrayCommitDiff, ...commitDeps } = createCommitDeps(
-    deps,
-    ctx,
-    createTreeNode,
-    resolvePatchValue,
-  );
-
-  return (fn: (draft: unknown[]) => void): void => {
-    executor.runCommand(
-      new CommitCommand<TreeArrayState, unknown[]>(fn, {
-        snapshot,
-        createDraft: deps.utils.createDraft,
-        finishDraft: deps.utils.finishDraft,
-        applyDiff: (currentState, before, next) =>
-          applyArrayCommitDiff(
-            currentState as TreeArrayState,
-            before,
-            next as unknown[],
-            commitDeps,
-          ),
-      }),
-      { structural: false },
-    );
-  };
+  return createCommitFactory<TreeArrayState, unknown[]>({
+    ...options,
+    executorFactory: createArrayExecutor,
+    applyDiff: (state, before, next, commitDeps, deps) =>
+      deps.commit.applyArrayCommitDiff(state, before, next, commitDeps),
+  });
 }
