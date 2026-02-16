@@ -144,7 +144,6 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
   };
 
   const start = (): void => {
-    if (active) return;
     active = true;
     depUnsubs = depSubs.flatMap((dep) => {
       const sub = dep.subscribe(() => {
@@ -155,7 +154,6 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
   };
 
   const stop = (): void => {
-    if (!active) return;
     active = false;
     for (const unsub of depUnsubs) unsub();
     depUnsubs = [];

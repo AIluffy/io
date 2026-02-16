@@ -84,6 +84,42 @@ describe('extensions: behaviors', () => {
     warn.mockRestore();
   });
 
+  it('uses global localStorage when custom storage is omitted', () => {
+    const unit = io(0);
+    let stored = '';
+    const globalObj = globalThis as Record<string, unknown>;
+    const previous = globalObj.localStorage;
+    globalObj.localStorage = {
+      getItem: () => null,
+      setItem: (_key: string, value: string) => {
+        stored = value;
+      },
+    };
+
+    try {
+      const view = withBehaviors(unit, [persist({ key: 'count' })]);
+      view.set?.(4);
+      expect(stored).toBe('4');
+    } finally {
+      globalObj.localStorage = previous;
+    }
+  });
+
+  it('skips persistence when storage is unavailable', () => {
+    const unit = io(1);
+    const globalObj = globalThis as Record<string, unknown>;
+    const previous = globalObj.localStorage;
+    delete globalObj.localStorage;
+
+    try {
+      const view = withBehaviors(unit, [persist({ key: 'count' })]);
+      view.set?.(2);
+      expect(unit.get()).toBe(2);
+    } finally {
+      globalObj.localStorage = previous;
+    }
+  });
+
   it('reads via view getter', () => {
     const unit = io(1);
     const view = withBehaviors(unit, [schedule('sync')]);
@@ -126,5 +162,123 @@ describe('extensions: behaviors', () => {
     const readOnly = derived(() => unit.get());
     const roView = withBehaviors(readOnly, [schedule('sync')]);
     expect('set' in roView).toBe(false);
+  });
+
+  it('adapts plain writable nodes and preserves node properties on proxy', () => {
+    let value = 1;
+    const node = {
+      label: 'counter',
+      get: () => value,
+      set: (next: number | ((prev: number) => number)) => {
+        value = typeof next === 'function' ? next(value) : next;
+      },
+      subscribe: () => () => undefined,
+      snapshot: () => value,
+    };
+
+    const view = withBehaviors(node, []);
+    view.set?.((prev) => prev + 1);
+
+    expect(view.get()).toBe(2);
+    expect(view.snapshot?.()).toBe(2);
+    expect(view.label).toBe('counter');
+    expect(Reflect.ownKeys(view)).toContain('label');
+    expect(Object.getOwnPropertyDescriptor(view, 'get')?.writable).toBe(false);
+  });
+
+  it('reads from snapshot when adapting snapshot-only nodes', () => {
+    const node = {
+      value: 5,
+      snapshot() {
+        return this.value;
+      },
+      subscribe: () => () => undefined,
+    };
+
+    const view = withBehaviors(node, []);
+    expect(view.get()).toBe(5);
+    expect(view.snapshot?.()).toBe(5);
+  });
+
+  it('throws when adapting a node that is not readable', () => {
+    const view = withBehaviors(
+      {
+        subscribe: () => () => undefined,
+      } as never,
+      [],
+    );
+
+    expect(() => view.get()).toThrow('withBehaviors: node is not readable');
+  });
+
+  it('throws when adapting a node that is not subscribable', () => {
+    const view = withBehaviors(
+      {
+        get: () => 1,
+      } as never,
+      [],
+    );
+
+    expect(() => view.subscribe(() => undefined)).toThrow();
+  });
+
+  it('uses captured setter when writable node changes after adaptation', () => {
+    let calls = 0;
+    const node: {
+      snapshot(): number;
+      subscribe(fn: (value: number) => void): () => void;
+      set?: (next: number | ((prev: number) => number)) => void;
+    } = {
+      snapshot: () => 1,
+      subscribe: () => () => undefined,
+      set: () => {
+        calls += 1;
+      },
+    };
+
+    const view = withBehaviors(node, []);
+    delete node.set;
+
+    view.set?.(2);
+    expect(calls).toBe(1);
+  });
+
+  it('falls back to behavior-added target properties in proxy traps', () => {
+    const node = {
+      get: () => 1,
+      subscribe: () => () => undefined,
+      extraFromNode: 'node',
+    };
+    const view = withBehaviors(node, [
+      (input) => {
+        const enhanced = Object.create(input) as typeof input & {
+          fromBehavior?: string;
+          locked?: string;
+        };
+        Object.defineProperty(enhanced, 'fromBehavior', {
+          value: 'behavior',
+          configurable: true,
+          enumerable: true,
+          writable: false,
+        });
+        Object.defineProperty(enhanced, 'locked', {
+          value: 'sealed',
+          configurable: false,
+          enumerable: true,
+          writable: false,
+        });
+        return enhanced;
+      },
+    ]);
+
+    expect((view as { fromBehavior?: string }).fromBehavior).toBe('behavior');
+    expect('fromBehavior' in view).toBe(true);
+    expect('missing' in view).toBe(false);
+    expect(Object.getOwnPropertyDescriptor(view, 'locked')?.configurable).toBe(
+      false,
+    );
+    expect(
+      Object.getOwnPropertyDescriptor(view, 'fromBehavior')?.value,
+    ).toBe('behavior');
   });
 });

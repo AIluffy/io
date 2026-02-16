@@ -242,15 +242,6 @@ export function nodeBuilder<TInitial extends object, TState, TValue>(base: {
     | undefined;
   let finalize: CreateNodeBaseConfig<TInitial, TState, TValue>['finalize'] | undefined;
 
-  const requireDefined = <T>(
-    value: T | undefined,
-    name: string,
-  ): T => {
-    if (value === undefined)
-      throw new Error(`nodeBuilder: ${name} is not configured`);
-    return value;
-  };
-
   const builder = {
     withState(
       value: CreateNodeBaseConfig<TInitial, TState, TValue>['createState'],
@@ -291,14 +282,11 @@ export function nodeBuilder<TInitial extends object, TState, TValue>(base: {
     build(): TreeNode {
       return createNodeBase({
         ...base,
-        createState: requireDefined(createState, 'createState'),
-        createNode: requireDefined(createNode, 'createNode'),
+        createState: createState!,
+        createNode: createNode!,
         initialize,
-        createSnapshot: requireDefined(createSnapshot, 'createSnapshot'),
-        createInternalAndProperties: requireDefined(
-          createInternalAndProperties,
-          'createInternalAndProperties',
-        ),
+        createSnapshot: createSnapshot!,
+        createInternalAndProperties: createInternalAndProperties!,
         finalize,
       });
     },

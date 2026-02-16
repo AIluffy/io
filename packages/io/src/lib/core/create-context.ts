@@ -34,12 +34,9 @@ import {
 } from './tree/path-trie.js';
 
 class Lazy<T> {
-  private current: T | undefined;
+  private current!: T;
 
   get value(): T {
-    if (this.current === undefined) {
-      throw new Error('ioTree context: lazy value not initialized');
-    }
     return this.current;
   }
 

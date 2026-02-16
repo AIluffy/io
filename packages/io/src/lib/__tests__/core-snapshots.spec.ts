@@ -92,6 +92,31 @@ describe('core/snapshot readers', () => {
     expect(invalidDirtyState.dirtyIndices.items).toEqual([]);
   });
 
+  it('rebuilds full array snapshot when previous length mismatches', () => {
+    const reader = createArraySnapshotReader({
+      getNodeValue: (node) => node,
+    });
+    const prev = Object.freeze([1]) as unknown[];
+    const state = {
+      node: {},
+      children: [1, 2],
+      dirtyStructure: false,
+      dirtyIndices: createDirtyIndexState(2),
+      valueEpoch: 2,
+      snapshotCache: {
+        value: prev,
+        version: 1,
+        hasValue: true,
+      },
+    };
+    state.dirtyIndices.items.push(1);
+    state.dirtyIndices.marks[1] = state.dirtyIndices.version;
+
+    const next = reader(state as never);
+    expect(next).toEqual([1, 2]);
+    expect(next).not.toBe(prev);
+  });
+
   it('prefers snapshot() for unknown internals and falls back otherwise', () => {
     const nodeReader = createNodeValueReader({
       getScopeSnapshot: () => ({ v: 1 }),

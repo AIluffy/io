@@ -67,13 +67,11 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       ...createNodeStateBase<unknown[], unknown[]>(ctx, path, initialNode),
     }),
     createNode: ({ state }) => {
-      let setIndex: (
+      let setIndex!: (
         index: number,
         next: unknown,
         options?: { emitUpdate?: boolean; emitValue?: boolean },
-      ) => void = () => {
-        throw new Error('ioTree array: setIndex not initialized');
-      };
+      ) => void;
 
       const array: Record<PropertyKey, unknown> = {};
       const proxy = new Proxy(array as TreeNode & object, {
@@ -159,11 +157,6 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       reduce: { value: operations.reduce },
       [Symbol.iterator]: { value: operations.iterator },
     }),
-    finalize: () => {
-      if (!bindSetIndex) {
-        throw new Error('ioTree array: setIndex binder not initialized');
-      }
-    },
   });
 
   return createNodeFromKindPlugin(options, arrayPlugin);

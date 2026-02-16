@@ -93,6 +93,14 @@ describe('io: array', () => {
     expect(values[values.length - 1]).toEqual([10, 2, 3]);
   });
 
+  it('supports non-index property assignment on array proxy', () => {
+    const arr = io([1, 2, 3]) as unknown as Record<string, unknown>;
+    arr.meta = 'ok';
+
+    expect(arr.meta).toBe('ok');
+    expect((arr[0] as { get: () => number }).get()).toBe(1);
+  });
+
   it('supports push/pop/splice/sort', () => {
     const arr = io([3, 1, 2]);
     arr.push(4);
@@ -271,6 +279,61 @@ describe('history: createHistory', () => {
     expect(history.canUndo).toBe(false);
     expect(history.canRedo).toBe(true);
   });
+
+  it('trims redo stack and respects history limit', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, { limit: 2 });
+
+    store.count.set(1);
+    store.count.set(2);
+    store.count.set(3);
+    expect(history.length).toBe(2);
+    expect(history.cursor).toBe(1);
+
+    history.undo();
+    expect(store.count.get()).toBe(2);
+    expect(history.canRedo).toBe(true);
+
+    store.count.set(4);
+    expect(history.length).toBe(2);
+    expect(history.cursor).toBe(1);
+    expect(history.canRedo).toBe(false);
+  });
+
+  it('supports clear/destroy and ignores updates after destroy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store);
+
+    store.count.set(1);
+    expect(history.length).toBe(1);
+
+    history.clear();
+    expect(history.length).toBe(0);
+    expect(history.cursor).toBe(-1);
+
+    history.destroy();
+    history.destroy();
+    store.count.set(2);
+    expect(history.length).toBe(0);
+    expect(history.canUndo).toBe(false);
+  });
+
+  it('is a no-op when undo/redo are called at bounds', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, { limit: 0 });
+
+    history.undo();
+    history.redo();
+    expect(store.count.get()).toBe(0);
+    expect(history.length).toBe(0);
+    expect(history.cursor).toBe(-1);
+  });
+
+  it('throws for non-io targets', () => {
+    expect(() => createHistory({})).toThrow(
+      'createHistory: target is not an IO node',
+    );
+  });
 });
 
 describe('ioTree: deep path replay', () => {
@@ -366,6 +429,73 @@ describe('signals: computed/effect', () => {
     count.set(2);
     expect(double.get()).toBe(4);
   });
+
+  it('runs cleanup on rerun and on dispose', async () => {
+    const count = new Signal.State(0);
+    const cleanup = vi.fn();
+    const stop = effect(() => {
+      count.get();
+      return cleanup;
+    });
+
+    count.set(1);
+    await Promise.resolve();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+
+    stop();
+    expect(cleanup).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips notifications when state value is unchanged', () => {
+    const count = new Signal.State(1);
+    const listener = vi.fn();
+    count.subscribe(listener);
+
+    count.set(1);
+    count.set((prev) => prev);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('coalesces multiple synchronous writes into one effect rerun', async () => {
+    const count = new Signal.State(0);
+    const seen: number[] = [];
+    const stop = effect(() => {
+      seen.push(count.get());
+    });
+
+    count.set(1);
+    count.set(2);
+    await Promise.resolve();
+    stop();
+
+    expect(seen).toEqual([0, 2]);
+  });
+
+  it('switches tracked dependencies and unsubscribes stale ones', async () => {
+    const useLeft = new Signal.State(true);
+    const left = new Signal.State(1);
+    const right = new Signal.State(10);
+    const seen: number[] = [];
+
+    const stop = effect(() => {
+      seen.push(useLeft.get() ? left.get() : right.get());
+    });
+
+    left.set(2);
+    await Promise.resolve();
+
+    useLeft.set(false);
+    await Promise.resolve();
+
+    left.set(3);
+    await Promise.resolve();
+
+    right.set(11);
+    await Promise.resolve();
+    stop();
+
+    expect(seen).toEqual([1, 2, 10, 11]);
+  });
 });
 
 describe('batch', () => {
@@ -446,6 +576,22 @@ describe('debug hooks', () => {
     }).toThrow();
     unsub();
     expect(seen[0]).toMatchObject({ path: [], op: 'commit' });
+  });
+
+  it('onError rejects non-io targets', () => {
+    expect(() => onError({}, () => undefined)).toThrow(
+      'onError: target is not an IO node',
+    );
+  });
+
+  it('onMutation validates target capabilities', () => {
+    expect(() =>
+      onMutation(null, () => undefined),
+    ).toThrow('onMutation: invalid target');
+
+    expect(() =>
+      onMutation({}, () => undefined),
+    ).toThrow('onMutation: target does not support subscribeUpdate');
   });
 });
 
@@ -539,11 +685,46 @@ describe('link', () => {
     expect(paths).toContainEqual(['items', 1]);
   });
 
+  it('supports linking an existing sibling node in the same tree array', () => {
+    const store = io({ items: [{ n: 1 }] });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    store.items.push(link(store.items[0]) as never);
+    store.items[0].n.set(2);
+    unsub();
+
+    expect(store.snapshot()).toEqual({ items: [{ n: 2 }, { n: 2 }] });
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'splice',
+      path: ['items'],
+      items: [{ n: 1 }],
+    });
+  });
+
   it('rejects link cycles', () => {
     const store = io({ items: [] as unknown[] });
     expect(() => {
       store.items.push(link(store));
     }).toThrow(/cycle/i);
+  });
+});
+
+describe('array structural updates', () => {
+  it('supports replacing full array value with set()', () => {
+    const items = io([1, 2, 3]);
+    const updates: IoUpdate[] = [];
+    const unsub = items.subscribeUpdate((u) => updates.push(u));
+
+    items.set([3, 2, 1]);
+    unsub();
+
+    expect(items.get()).toEqual([3, 2, 1]);
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'set',
+      path: [],
+      next: [3, 2, 1],
+    });
   });
 });
 

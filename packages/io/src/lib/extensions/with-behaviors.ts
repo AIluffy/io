@@ -32,29 +32,26 @@ function adaptIo<T>(node: IoLike<T>): IoView<T> {
   const hasGet = typeof (node as { get?: unknown }).get === 'function';
   const hasSnapshot =
     typeof (node as { snapshot?: unknown }).snapshot === 'function';
+  const subscribeImpl = (node as { subscribe: (fn: (v: T) => void) => () => void })
+    .subscribe;
+  const setImpl = isWritable(node)
+    ? (
+        node as { set: (value: T | ((prev: T) => T)) => void }
+      ).set
+    : undefined;
   const get = () => {
     if (hasGet) return (node as { get: () => T }).get();
     if (hasSnapshot) return (node as { snapshot: () => T }).snapshot();
     throw new Error('withBehaviors: node is not readable');
   };
-  const subscribe = (fn: (v: T) => void) => {
-    if (typeof (node as { subscribe?: unknown }).subscribe !== 'function')
-      throw new Error('withBehaviors: node is not subscribable');
-    return (node as { subscribe: (f: (v: T) => void) => () => void }).subscribe(
-      fn,
-    );
-  };
+  const subscribe = (fn: (v: T) => void) => subscribeImpl(fn);
   const set = (next: T | ((prev: T) => T)) => {
-    if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
-    const setter = (
-      node as { set?: (value: T | ((prev: T) => T)) => void }
-    ).set;
-    if (!setter) throw new Error('withBehaviors: node is read-only');
-    setter(next);
+    if (!setImpl) throw new Error('withBehaviors: node is read-only');
+    setImpl(next);
   };
   return {
     get,
-    set: isWritable(node) ? set : undefined,
+    set: setImpl ? set : undefined,
     subscribe,
     snapshot: hasSnapshot
       ? () => (node as { snapshot: () => T }).snapshot()
@@ -68,12 +65,12 @@ function createViewProxy<T, N extends object>(
 ): N & IoView<T> {
   const overrides = new Map<string | symbol, unknown>([
     ['get', view.get],
-    ['set', view.set],
     ['subscribe', view.subscribe],
-    ['snapshot', view.snapshot],
-    ['extensions', view.extensions],
-    ['destroy', view.destroy],
   ]);
+  if (view.set !== undefined) overrides.set('set', view.set);
+  if (view.snapshot !== undefined) overrides.set('snapshot', view.snapshot);
+  if (view.extensions !== undefined) overrides.set('extensions', view.extensions);
+  if (view.destroy !== undefined) overrides.set('destroy', view.destroy);
 
   return new Proxy(view as IoView<T> & object, {
     get(target, prop, receiver) {
@@ -91,28 +88,22 @@ function createViewProxy<T, N extends object>(
         ...Reflect.ownKeys(target),
         ...Reflect.ownKeys(node as object),
       ]);
-      for (const [key, value] of overrides.entries()) {
-        if (value !== undefined) keys.add(key);
-      }
+      for (const key of overrides.keys()) keys.add(key);
       return Array.from(keys);
     },
     getOwnPropertyDescriptor(target, prop) {
-      const targetDesc = Object.getOwnPropertyDescriptor(target, prop);
-      if (targetDesc && targetDesc.configurable === false) return targetDesc;
-
       if (overrides.has(prop)) {
-        const value = overrides.get(prop);
-        if (value === undefined) return undefined;
         return {
           configurable: true,
           enumerable: false,
           writable: false,
-          value,
+          value: overrides.get(prop),
         };
       }
-      const nodeDesc = Object.getOwnPropertyDescriptor(node as object, prop);
-      if (nodeDesc) return nodeDesc;
-      return targetDesc;
+      return (
+        Object.getOwnPropertyDescriptor(node as object, prop) ??
+        Object.getOwnPropertyDescriptor(target, prop)
+      );
     },
   }) as N & IoView<T>;
 }

@@ -45,8 +45,8 @@ function cloneFastObject(
     seen.set(value, target);
 
     for (const key of Reflect.ownKeys(source)) {
-      const desc = Object.getOwnPropertyDescriptor(source, key);
-      if (!desc || !('value' in desc)) return FAST_CLONE_UNSUPPORTED;
+      const desc = Object.getOwnPropertyDescriptor(source, key)!;
+      if (!('value' in desc)) return FAST_CLONE_UNSUPPORTED;
       const clonedValue = cloneFastChild(desc.value, seen);
       if (clonedValue === FAST_CLONE_UNSUPPORTED) return FAST_CLONE_UNSUPPORTED;
       Object.defineProperty(target, key, { ...desc, value: clonedValue });
@@ -63,8 +63,8 @@ function cloneFastObject(
   seen.set(value, target);
 
   for (const key of Reflect.ownKeys(value)) {
-    const desc = Object.getOwnPropertyDescriptor(value, key);
-    if (!desc || !('value' in desc)) return FAST_CLONE_UNSUPPORTED;
+    const desc = Object.getOwnPropertyDescriptor(value, key)!;
+    if (!('value' in desc)) return FAST_CLONE_UNSUPPORTED;
     const clonedValue = cloneFastChild(desc.value, seen);
     if (clonedValue === FAST_CLONE_UNSUPPORTED) return FAST_CLONE_UNSUPPORTED;
     Object.defineProperty(target, key, { ...desc, value: clonedValue });
@@ -104,8 +104,8 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
   if (assumeDataProperties) {
     let hasObjectChild = false;
     for (const key of Reflect.ownKeys(value as object)) {
-      const desc = Object.getOwnPropertyDescriptor(value as object, key);
-      if (!desc || !('value' in desc)) continue;
+      const desc = Object.getOwnPropertyDescriptor(value as object, key)!;
+      if (!('value' in desc)) continue;
       const child = desc.value;
       if (child !== null && typeof child === 'object') {
         hasObjectChild = true;
@@ -134,8 +134,8 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
 
     if (assumeDataProperties) {
       for (const key of Reflect.ownKeys(obj)) {
-        const desc = Object.getOwnPropertyDescriptor(obj, key);
-        if (!desc || !('value' in desc)) continue;
+        const desc = Object.getOwnPropertyDescriptor(obj, key)!;
+        if (!('value' in desc)) continue;
         stack.push(desc.value);
       }
       continue;
@@ -145,8 +145,7 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
       for (const item of obj) stack.push(item);
     }
     for (const key of Reflect.ownKeys(obj)) {
-      const desc = Object.getOwnPropertyDescriptor(obj, key);
-      if (!desc) continue;
+      const desc = Object.getOwnPropertyDescriptor(obj, key)!;
       if ('value' in desc) stack.push(desc.value);
     }
   }

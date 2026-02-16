@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { applyUpdate } from '../utils/patches/updates.js';
+import { applyUpdate, undoUpdate } from '../utils/patches/updates.js';
 import { deepFreeze } from '../utils/immutable/immutable.js';
 import { relocate } from '../extensions/relocate.js';
 import { io } from '../core/api/io.js';
+import { ioTree } from '../core/api/io-tree.js';
 import { derived } from '../core/api/derived.js';
 import { batch } from '../utils/reactive/batch.js';
 import { link } from '../utils/internal/link.js';
@@ -31,6 +32,34 @@ describe('edge cases: relocate', () => {
     expect(view.get()).toEqual([{ n: 1 }]);
     expect(view.set).toBeUndefined();
   });
+});
+
+describe('edge cases: ioTree node factory', () => {
+  it('rejects shared object references under arrays', () => {
+    const shared = { n: 1 };
+    expect(() => ioTree({ items: [shared, shared] })).toThrow(
+      /shared object references are not allowed/,
+    );
+  });
+
+  it('rejects non-plain objects in deep mode', () => {
+    expect(() => ioTree({ at: new Date() })).toThrow(
+      /deep mode only supports plain objects and arrays/,
+    );
+  });
+
+  it('rejects forged link wrappers that do not target io nodes', () => {
+    const fakeLink: Record<PropertyKey, unknown> = {};
+    Object.defineProperty(fakeLink, Symbol.for('@org/io/link'), {
+      value: {},
+      enumerable: false,
+    });
+
+    expect(() => ioTree({ bad: fakeLink })).toThrow(
+      /link target is not an IO node/,
+    );
+  });
+
 });
 
 describe('edge cases: applyUpdate', () => {
@@ -128,6 +157,186 @@ describe('edge cases: applyUpdate', () => {
     ).toThrow(/invalid sort order permutation/);
 
     expect(arr.get()).toEqual([3, 1, 2]);
+  });
+
+  it('rejects sort permutations with invalid length during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6b',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 2] }],
+      }),
+    ).toThrow(/invalid sort order length/);
+  });
+
+  it('rejects sort permutations with non-integer indices during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6c',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 1.5, 2] }],
+      }),
+    ).toThrow(/invalid sort order index/);
+  });
+
+  it('rejects sort permutations with out-of-range indices during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6d',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 1, 3] }],
+      }),
+    ).toThrow(/invalid sort order index/);
+  });
+
+  it('rejects set patches when parent is not a container', () => {
+    const store = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u7',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['a', 'b'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/set target is not a container/);
+  });
+
+  it('rejects splice and sort patches for non-array targets', () => {
+    const store = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u8',
+        baseRevision: 0,
+        revision: 1,
+        patches: [
+          {
+            op: 'splice',
+            path: ['a'],
+            start: 0,
+            deleteCount: 0,
+            deleted: [],
+            items: [2],
+          },
+        ],
+      }),
+    ).toThrow(/splice target is not array/);
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u9',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: ['a'], order: [0] }],
+      }),
+    ).toThrow(/sort target is not array/);
+  });
+
+  it('inverts splice updates with preserved start index', () => {
+    const inverted = undoUpdate({
+      id: 'u10',
+      baseRevision: 0,
+      revision: 1,
+      patches: [
+        {
+          op: 'splice',
+          path: ['items'],
+          start: 2,
+          deleteCount: 1,
+          deleted: [3],
+          items: [4, 5],
+        },
+      ],
+    });
+
+    expect(inverted.patches).toEqual([
+      {
+        op: 'splice',
+        path: ['items'],
+        start: 2,
+        deleteCount: 2,
+        deleted: [4, 5],
+        items: [3],
+      },
+    ]);
+  });
+
+  it('rejects invalid scope/array path segments while resolving parent nodes', () => {
+    const scopeStore = io({ a: 1 });
+    const arrayStore = io([1, 2, 3]);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u11',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [0, 'a'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid scope path segment/);
+
+    expect(() =>
+      applyUpdate(arrayStore, {
+        id: 'u12',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [Symbol('k'), 0], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid array path segment/);
+  });
+
+  it('rejects updates when traversal enters non-node or leaf parent paths', () => {
+    const scopeStore = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u13',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['missing', 'x', 'y'], prev: 0, next: 1 }],
+      }),
+    ).toThrow(/path traversed into non-node/);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u14',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['a', 'x', 'y'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/path traversed into leaf node/);
+  });
+
+  it('rejects invalid scope and array keys on parent containers', () => {
+    const scopeStore = io({ a: 1 });
+    const arrayStore = io([1, 2, 3]);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u15',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [0], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid scope key/);
+
+    expect(() =>
+      applyUpdate(arrayStore, {
+        id: 'u16',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['x'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid array index/);
   });
 });
 

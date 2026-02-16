@@ -4,7 +4,4 @@ type IoGlobal = {
   requestAnimationFrame?: (cb: () => void) => number;
 };
 
-export const ioGlobal: IoGlobal | undefined =
-  typeof globalThis === 'undefined'
-    ? undefined
-    : (globalThis as IoGlobal);
+export const ioGlobal: IoGlobal = globalThis as IoGlobal;

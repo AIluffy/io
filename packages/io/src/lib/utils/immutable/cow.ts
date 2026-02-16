@@ -117,14 +117,11 @@ function createProxy(base: object): object {
         if (typeof fn !== 'function') return fn;
         return (...args: unknown[]) => {
           const copy = ensureCopy(state) as unknown[];
-          const method = Reflect.get(copy as object, prop);
-          if (typeof method !== 'function')
-            throw new Error('COW: invalid array mutator');
+          const method = Reflect.get(copy as object, prop) as (
+            ...a: unknown[]
+          ) => unknown;
           const immutableArgs = immutablizeArgs(prop, args);
-          return (method as (...a: unknown[]) => unknown).apply(
-            copy,
-            immutableArgs,
-          );
+          return method.apply(copy, immutableArgs);
         };
       }
 
