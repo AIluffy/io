@@ -112,33 +112,63 @@ function getValueView<T>(node: unknown): T {
   return proxy as T;
 }
 
-function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
+function createSubscriptionManager<T>(options?: {
+  onActivate?: () => void;
+  onDeactivate?: () => void;
+}): {
+  subscribe: (fn: (value: T) => void) => IoUnsubscribe;
+  emit: (value: T) => void;
+} {
   const listeners = new Set<(value: T) => void>();
-  let stop: IoUnsubscribe | undefined;
-  let current = c.get();
 
-  const get = (): T => c.get();
-
-  const snapshot = (): T => snapshotValue(c.get());
-
-  const subscribe = (fn: (v: T) => void): IoUnsubscribe => {
+  const subscribe = (fn: (value: T) => void): IoUnsubscribe => {
     listeners.add(fn);
-    if (listeners.size === 1) {
-      stop = effect(() => {
-        const next = c.get();
-        if (Object.is(current, next)) return;
-        current = next;
-        for (const l of listeners) l(next);
-      });
-    }
+    if (listeners.size === 1) options?.onActivate?.();
     return () => {
       listeners.delete(fn);
-      if (listeners.size === 0) {
-        stop?.();
-        stop = undefined;
-      }
+      if (listeners.size === 0) options?.onDeactivate?.();
     };
   };
+
+  const emit = (value: T): void => {
+    for (const listener of listeners) listener(value);
+  };
+
+  return { subscribe, emit };
+}
+
+function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
+  let stop: IoUnsubscribe | undefined;
+  let current: T | undefined;
+  let hasCurrent = false;
+  const manager = createSubscriptionManager<T>({
+    onActivate: () => {
+      stop = effect(() => {
+        const next = c.get();
+        if (!hasCurrent) {
+          current = next;
+          hasCurrent = true;
+          return;
+        }
+        if (Object.is(current, next)) return;
+        current = next;
+        manager.emit(next);
+      });
+    },
+    onDeactivate: () => {
+      stop?.();
+      stop = undefined;
+    },
+  });
+
+  const get = (): T => {
+    const next = c.get();
+    current = next;
+    hasCurrent = true;
+    return next;
+  };
+
+  const snapshot = (): T => snapshotValue(get());
 
   const internal: { kind: 'derived' } = { kind: 'derived' };
 
@@ -146,7 +176,7 @@ function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {
   Object.defineProperties(derived, {
     get: { value: get },
     snapshot: { value: snapshot },
-    subscribe: { value: subscribe },
+    subscribe: { value: manager.subscribe },
     [INTERNAL]: { value: internal },
   });
 
@@ -175,9 +205,17 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
 
   let current = compute(...readArgs());
 
-  const listeners = new Set<(value: T) => void>();
   let depUnsubs: IoUnsubscribe[] = [];
   let active = false;
+  const manager = createSubscriptionManager<T>({
+    onActivate: () => {
+      ensureCurrent();
+      start();
+    },
+    onDeactivate: () => {
+      stop();
+    },
+  });
 
   const ensureCurrent = (): void => {
     if (active) return;
@@ -188,8 +226,7 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     const next = compute(...readArgs());
     if (Object.is(current, next)) return;
     current = next;
-    const v = cloneValue(current);
-    for (const listener of listeners) listener(v);
+    manager.emit(cloneValue(current));
   };
 
   const start = (): void => {
@@ -220,25 +257,13 @@ function derivedFromDeps<const D extends readonly FormulaDep[], T>(
     return snapshotValue(current);
   };
 
-  const subscribe = (fn: (v: T) => void): IoUnsubscribe => {
-    listeners.add(fn);
-    if (listeners.size === 1) {
-      ensureCurrent();
-      start();
-    }
-    return () => {
-      listeners.delete(fn);
-      if (listeners.size === 0) stop();
-    };
-  };
-
   const internal: { kind: 'derived' } = { kind: 'derived' };
 
   const derived = {} as IoDerived<T>;
   Object.defineProperties(derived, {
     get: { value: get },
     snapshot: { value: snapshot },
-    subscribe: { value: subscribe },
+    subscribe: { value: manager.subscribe },
     [INTERNAL]: { value: internal },
   });
 
