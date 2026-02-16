@@ -8,7 +8,7 @@
       "arch": "arm64",
       "nodeMajor": 22,
       "metrics": {
-        "snapshot1kMs": 0.0078,
+        "snapshot1kMs": 0.0102,
         "scopeSparseSnapshotBytesPerIter": 22.28,
         "arraySparseSnapshotBytesPerIter": 170.8
       }

@@ -29,6 +29,7 @@ jobs:
       - run: npx nx run-many -t lint test build
 
       - run: npx nx run @iostore/store:perf-budget
+      - run: npx nx run @iostore/store:bundle-size
 
       - run: npx nx-cloud fix-ci
         if: always()

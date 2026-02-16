@@ -51,6 +51,16 @@
           "command": "node --expose-gc scripts/check-perf-budget.mjs",
           "cwd": "packages/io"
         }
+      },
+      "bundle-size": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "command": "node scripts/check-bundle-size.mjs",
+          "cwd": "packages/io"
+        }
       }
     }
   }
