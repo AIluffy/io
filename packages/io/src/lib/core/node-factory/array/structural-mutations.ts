@@ -9,8 +9,8 @@ import {
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import { cloneValue } from '../../../utils/immutable.js';
+import { createUpdate } from '../../../utils/updates.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
-import { createExecutorDeps } from '../executor-deps.js';
 
 function validateSortPermutation(order: number[], length: number): void {
   if (order.length !== length)
@@ -104,7 +104,19 @@ export function createArrayStructuralMutations(
     performSplice,
     validateSortPermutation,
   };
-  const executor = createArrayExecutor(createExecutorDeps(deps), state, path, getNode);
+  const executor = createArrayExecutor(
+    {
+      createUpdate,
+      emitArrayValue: deps.subscriptions.emitArrayValue,
+      emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+      emitScopeValue: deps.subscriptions.emitScopeValue,
+      emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+      emitError: deps.emitError,
+    },
+    state,
+    path,
+    getNode,
+  );
 
   const applySplice = (
     start: number,

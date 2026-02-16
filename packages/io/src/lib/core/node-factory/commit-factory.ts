@@ -8,7 +8,7 @@ import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 
 import { CommitCommand } from '../commands/commit-command.js';
 import { createDraft, finishDraft } from '../../utils/cow.js';
-import { createExecutorDeps } from './executor-deps.js';
+import { createUpdate } from '../../utils/updates.js';
 import { createSharedCommitDeps } from './shared-commit-deps.js';
 import type { SharedCommitDeps } from './shared-commit-deps.js';
 
@@ -20,7 +20,14 @@ type CommitExecutor<TState> = {
 };
 
 type CommitExecutorFactory<TState> = (
-  deps: ReturnType<typeof createExecutorDeps>,
+  deps: {
+    createUpdate: typeof createUpdate;
+    emitArrayValue: TreeDeps['subscriptions']['emitArrayValue'];
+    emitArrayUpdate: TreeDeps['subscriptions']['emitArrayUpdate'];
+    emitScopeValue: TreeDeps['subscriptions']['emitScopeValue'];
+    emitScopeUpdate: TreeDeps['subscriptions']['emitScopeUpdate'];
+    emitError: TreeDeps['emitError'];
+  },
   state: TState,
   path: NodePath,
   getNode: () => TreeNode,
@@ -66,7 +73,19 @@ export function createCommitFactory<TState, TData>(
     validateNext,
   } = options;
 
-  const executor = executorFactory(createExecutorDeps(deps), state, path, getNode);
+  const executor = executorFactory(
+    {
+      createUpdate,
+      emitArrayValue: deps.subscriptions.emitArrayValue,
+      emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+      emitScopeValue: deps.subscriptions.emitScopeValue,
+      emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+      emitError: deps.emitError,
+    },
+    state,
+    path,
+    getNode,
+  );
   const commitDeps = createSharedCommitDeps(
     deps,
     ctx,

@@ -8,7 +8,7 @@ import type {
 } from './tree/io-tree-types.js';
 import type { NodePath } from './tree/path-trie.js';
 
-export type CommitDeps = {
+export type CommitUtilDeps = {
   isPlainObject: (value: unknown) => boolean;
   cloneValue: (value: unknown) => unknown;
   createDraft: <T>(value: T) => T;

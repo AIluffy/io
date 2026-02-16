@@ -29,51 +29,6 @@ export type CreateArrayMutationsOptions = {
 
 type CreateArrayOpsOptions = CreateArrayMutationsOptions;
 
-function createArrayMutations(options: CreateArrayMutationsOptions): {
-  applySplice: (
-    start: number,
-    deleteCount: number,
-    items: unknown[],
-    options?: { emitValue?: boolean },
-  ) => void;
-  applySortOrder: (
-    order: number[],
-    options?: { emitValue?: boolean },
-  ) => void;
-  setIndex: (
-    index: number,
-    next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
-  ) => void;
-  set: (next: unknown[]) => void;
-  push: (...items: unknown[]) => void;
-  pop: () => unknown;
-  splice: (start: number, deleteCount: number, ...items: unknown[]) => void;
-  sort: (compareFn?: (a: unknown, b: unknown) => number) => void;
-} {
-  const { setIndex } = createArrayIndexMutation(options);
-  const {
-    applySplice,
-    applySortOrder,
-    set,
-    push,
-    pop,
-    splice,
-    sort,
-  } = createArrayStructuralMutations(options);
-
-  return {
-    applySplice,
-    applySortOrder,
-    setIndex,
-    set,
-    push,
-    pop,
-    splice,
-    sort,
-  };
-}
-
 export function createArrayOps(options: CreateArrayOpsOptions): {
   internal: TreeInternal;
   setIndex: (
@@ -105,16 +60,26 @@ export function createArrayOps(options: CreateArrayOpsOptions): {
     getNode,
   } = options;
 
+  const { setIndex } = createArrayIndexMutation({
+    deps,
+    ctx,
+    path,
+    state,
+    createTreeNode,
+    resolvePatchValue,
+    snapshot,
+    rebuildMapping,
+    getNode,
+  });
   const {
     applySplice,
     applySortOrder,
-    setIndex,
     set,
     push,
     pop,
     splice,
     sort,
-  } = createArrayMutations({
+  } = createArrayStructuralMutations({
     deps,
     ctx,
     path,

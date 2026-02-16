@@ -1,6 +1,7 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
 import { isUnit } from '../../../units/unit.js';
+import { createUpdate } from '../../../utils/updates.js';
 import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
@@ -8,7 +9,6 @@ import type {
   TreeNode,
   TreeScopeState,
 } from '../../tree/io-tree-types.js';
-import { createExecutorDeps } from '../executor-deps.js';
 
 type CreateScopeMutationsOptions = {
   deps: TreeDeps;
@@ -52,7 +52,14 @@ export function createScopeMutations(
     options?: { emitUpdate?: boolean; emitValue?: boolean },
   ): void => {
     createScopeExecutor(
-      createExecutorDeps(deps),
+      {
+        createUpdate,
+        emitArrayValue: deps.subscriptions.emitArrayValue,
+        emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+        emitScopeValue: deps.subscriptions.emitScopeValue,
+        emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+        emitError: deps.emitError,
+      },
       state,
       [...path, key],
       getNode,

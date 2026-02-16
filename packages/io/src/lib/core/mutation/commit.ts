@@ -24,7 +24,7 @@ type ArrayStateLike<TNode> = {
   isCommitting: boolean;
 };
 
-type CommitDeps<
+type DiffOperationDeps<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
@@ -99,7 +99,7 @@ function createDiffHelpers<
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
 >(
-  deps: CommitDeps<TNode, TScopeState, TArrayState>,
+  deps: DiffOperationDeps<TNode, TScopeState, TArrayState>,
   patches: IoPatch[],
 ): DiffHelpers<TNode, TScopeState, TArrayState> {
   /**
@@ -427,7 +427,7 @@ export function applyScopeCommitDiff<
   state: TScopeState,
   before: Record<PropertyKey, unknown>,
   next: Record<PropertyKey, unknown>,
-  deps: CommitDeps<TNode, TScopeState, TArrayState>,
+  deps: DiffOperationDeps<TNode, TScopeState, TArrayState>,
 ): CommitResult {
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
@@ -451,7 +451,7 @@ export function applyArrayCommitDiff<
   state: TArrayState,
   before: unknown[],
   next: unknown[],
-  deps: CommitDeps<TNode, TScopeState, TArrayState>,
+  deps: DiffOperationDeps<TNode, TScopeState, TArrayState>,
 ): CommitResult {
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
