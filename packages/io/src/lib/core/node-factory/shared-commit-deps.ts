@@ -1,4 +1,4 @@
-import type { TreeDeps } from '../types.js';
+import type { SharedCommitTreeDeps } from '../types.js';
 import type { SnapshotCache } from '../snapshot/snapshot-cache.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type {
@@ -46,7 +46,7 @@ export type SharedCommitDeps = Pick<
 >;
 
 export function createSharedCommitDeps(
-  deps: TreeDeps,
+  deps: SharedCommitTreeDeps,
   ctx: TreeContext,
   createTreeNode: (
     ctx: TreeContext,

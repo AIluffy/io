@@ -1,4 +1,4 @@
-import type { TreeDeps } from '../../types.js';
+import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
@@ -10,12 +10,22 @@ import { createScopeCommit } from './commit.js';
 import { createScopeMutations } from './mutate.js';
 import { createNodeStateBase } from '../create-node-base.js';
 import {
+  createNodeKindPlugin,
   createNodeFromKindPlugin,
-  type NodeKindPlugin,
 } from '../node-kind-plugin.js';
 
+type ScopeNodeDeps = TreeDepsSlice<
+  | 'emitError'
+  | 'trackRead'
+  | 'snapshots'
+  | 'subscriptions'
+  | 'registry'
+  | 'internals'
+  | 'lifecycle'
+>;
+
 type CreateScopeNodeOptions = {
-  deps: TreeDeps;
+  deps: ScopeNodeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: Record<string, unknown>;
@@ -35,12 +45,13 @@ type ScopeOperations = {
   ) => void;
 };
 
-const scopePlugin: NodeKindPlugin<
+const scopePlugin = createNodeKindPlugin<
   Record<string, unknown>,
   TreeScopeState,
   Record<string, unknown>,
-  ScopeOperations
-> = {
+  ScopeOperations,
+  ScopeNodeDeps
+>({
   kind: 'scope',
   createState: ({ ctx, path, initialNode }) => ({
     children: new Map<PropertyKey, TreeNode>(),
@@ -114,7 +125,7 @@ const scopePlugin: NodeKindPlugin<
   finalize: ({ deps, path, node }) => {
     deps.registry.setPathNode(path, node);
   },
-};
+});
 
 export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
   return createNodeFromKindPlugin(options, scopePlugin);

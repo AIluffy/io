@@ -82,3 +82,18 @@ export type TreeDeps = {
   internals: InternalDeps;
   lifecycle: LifecycleDeps;
 };
+
+export type TreeDepsSlice<TKey extends keyof TreeDeps> = Pick<TreeDeps, TKey>;
+
+export type SharedCommitTreeDeps = TreeDepsSlice<
+  'snapshots' | 'subscriptions' | 'registry' | 'internals' | 'lifecycle'
+>;
+
+export type CommitFactoryTreeDeps = TreeDepsSlice<
+  | 'emitError'
+  | 'snapshots'
+  | 'subscriptions'
+  | 'registry'
+  | 'internals'
+  | 'lifecycle'
+>;

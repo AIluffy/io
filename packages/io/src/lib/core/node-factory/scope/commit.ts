@@ -1,4 +1,4 @@
-import type { TreeDeps } from '../../types.js';
+import type { CommitFactoryTreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
@@ -11,7 +11,7 @@ import { applyScopeCommitDiff } from '../../mutation/commit.js';
 import { createCommitFactory } from '../commit-factory.js';
 
 type CreateScopeCommitOptions = {
-  deps: TreeDeps;
+  deps: CommitFactoryTreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;

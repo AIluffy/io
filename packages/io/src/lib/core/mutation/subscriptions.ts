@@ -57,6 +57,41 @@ export function createSubscriptions<
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
 >(deps: SnapshotDeps<TScopeState, TArrayState>) {
+  const emitContainerValue = <TState, TValue>(
+    state: {
+      valueListeners: Set<(value: TValue) => void>;
+    } & TState,
+    snapshotBuilder: (targetState: TState) => TValue,
+  ): void => {
+    if (state.valueListeners.size === 0) return;
+    notifyValue(state.valueListeners, snapshotBuilder(state));
+  };
+
+  const emitContainerUpdate = <TState>(
+    state: {
+      updateListeners: Set<(update: IoUpdate) => void>;
+    } & TState,
+    update: IoUpdate,
+  ): void => {
+    notifyUpdate(state.updateListeners, update);
+  };
+
+  const advanceContainerRevision = <
+    TState extends { revision: Revision; valueEpoch: ValueEpoch },
+  >(
+    state: TState,
+  ): Revision => {
+    const baseRevision = state.revision;
+    state.revision = nextRevision(state.revision);
+    state.valueEpoch = nextEpoch(state.valueEpoch);
+    return baseRevision;
+  };
+
+  const markArrayIndicesDirty = (state: TArrayState, indices: number[]): void => {
+    for (const index of indices)
+      markDirtyIndex(state.dirtyIndices, index, state.children.length);
+  };
+
   const rebuildArrayChildIndices = (state: TArrayState): void => {
     if (!state.childIndices) return;
     state.childIndices.clear();
@@ -94,31 +129,28 @@ export function createSubscriptions<
    * Emits latest scope snapshot to value listeners.
    */
   const emitScopeValue = (state: TScopeState): void => {
-    if (state.valueListeners.size === 0) return;
-    const value = deps.getScopeSnapshot(state);
-    notifyValue(state.valueListeners, value);
+    emitContainerValue(state, deps.getScopeSnapshot);
   };
 
   /**
    * Emits a scope update event without modifying listeners.
    */
   const emitScopeUpdate = (state: TScopeState, update: IoUpdate): void => {
-    notifyUpdate(state.updateListeners, update);
+    emitContainerUpdate(state, update);
   };
 
   /**
    * Emits latest array snapshot to value listeners.
    */
   const emitArrayValue = (state: TArrayState): void => {
-    if (state.valueListeners.size === 0) return;
-    notifyValue(state.valueListeners, deps.getArraySnapshot(state));
+    emitContainerValue(state, deps.getArraySnapshot);
   };
 
   /**
    * Emits an array update event without modifying listeners.
    */
   const emitArrayUpdate = (state: TArrayState, update: IoUpdate): void => {
-    notifyUpdate(state.updateListeners, update);
+    emitContainerUpdate(state, update);
   };
 
   /**
@@ -168,9 +200,7 @@ export function createSubscriptions<
       },
       onUpdate: (u) => {
         state.dirtyKeys.add(key);
-        const baseRevision = state.revision;
-        state.revision = nextRevision(state.revision);
-        state.valueEpoch = nextEpoch(state.valueEpoch);
+        const baseRevision = advanceContainerRevision(state);
         emitScopeUpdate(
           state,
           createUpdate(baseRevision, state.revision, u.patches),
@@ -215,17 +245,13 @@ export function createSubscriptions<
       {
         onValue: (indices) => {
           if (state.isCommitting) return;
-          for (const index of indices)
-            markDirtyIndex(state.dirtyIndices, index, state.children.length);
+          markArrayIndicesDirty(state, indices);
           state.valueEpoch = nextEpoch(state.valueEpoch);
           emitArrayValue(state);
         },
         onUpdate: (u, indices) => {
-          for (const index of indices)
-            markDirtyIndex(state.dirtyIndices, index, state.children.length);
-          const baseRevision = state.revision;
-          state.revision = nextRevision(state.revision);
-          state.valueEpoch = nextEpoch(state.valueEpoch);
+          markArrayIndicesDirty(state, indices);
+          const baseRevision = advanceContainerRevision(state);
           const patches = indices.flatMap((index) =>
             u.patches.map((p) => prependPatchPath(index, p)),
           );

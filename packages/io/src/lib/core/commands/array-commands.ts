@@ -15,16 +15,28 @@ type PerformSpliceResult = {
 
 type CompareFn = (a: unknown, b: unknown) => number;
 
-export type ArrayCommandDeps = {
+export type ArrayChildrenContext = {
   path: NodePath;
   createTreeNode: (path: NodePath, initial: unknown) => TreeNode;
+};
+
+export type ArrayLifecycleContext = {
   attachChildToArray: (state: TreeArrayState, child: TreeNode) => void;
   detachChildFromArray: (state: TreeArrayState, child: TreeNode) => void;
   unregisterSubtree: (path: NodePath, node: TreeNode) => void;
+};
+
+export type ArrayReadContext = {
   getNodeValue: (node: TreeNode, cache: SnapshotCache) => unknown;
+  snapshot: () => unknown[];
+};
+
+export type ArrayPatchContext = {
   cloneValue: (value: unknown) => unknown;
   resolvePatchValue: (value: unknown) => unknown;
-  snapshot: () => unknown[];
+};
+
+export type ArrayStructureContext = {
   rebuildMapping: () => void;
   performSplice: (
     start: number,
@@ -38,7 +50,10 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
   readonly op = 'push' as const;
 
   constructor(
-    private readonly deps: ArrayCommandDeps,
+    private readonly children: ArrayChildrenContext,
+    private readonly lifecycle: Pick<ArrayLifecycleContext, 'attachChildToArray'>,
+    private readonly patch: Pick<ArrayPatchContext, 'resolvePatchValue'>,
+    private readonly structure: Pick<ArrayStructureContext, 'rebuildMapping'>,
     private readonly items: unknown[],
   ) {}
 
@@ -49,14 +64,14 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
   execute(state: TreeArrayState): IoPatch[] | null {
     const start = state.children.length;
     const created = this.items.map((value, index) =>
-      this.deps.createTreeNode([...this.deps.path, start + index], value),
+      this.children.createTreeNode([...this.children.path, start + index], value),
     );
 
-    for (const child of created) this.deps.attachChildToArray(state, child);
+    for (const child of created) this.lifecycle.attachChildToArray(state, child);
     state.children.push(...created);
     state.dirtyStructure = true;
     resetDirtyIndices(state.dirtyIndices, state.children.length);
-    this.deps.rebuildMapping();
+    this.structure.rebuildMapping();
 
     return [
       {
@@ -65,7 +80,7 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
         start,
         deleteCount: 0,
         deleted: [],
-        items: this.items.map((value) => this.deps.resolvePatchValue(value)),
+        items: this.items.map((value) => this.patch.resolvePatchValue(value)),
       },
     ];
   }
@@ -75,7 +90,16 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
   readonly op = 'pop' as const;
   result: unknown = undefined;
 
-  constructor(private readonly deps: ArrayCommandDeps) {}
+  constructor(
+    private readonly children: Pick<ArrayChildrenContext, 'path'>,
+    private readonly lifecycle: Pick<
+      ArrayLifecycleContext,
+      'detachChildFromArray' | 'unregisterSubtree'
+    >,
+    private readonly read: Pick<ArrayReadContext, 'getNodeValue'>,
+    private readonly patch: Pick<ArrayPatchContext, 'cloneValue'>,
+    private readonly structure: Pick<ArrayStructureContext, 'rebuildMapping'>,
+  ) {}
 
   validate(state: TreeArrayState): boolean {
     return state.children.length > 0;
@@ -87,13 +111,13 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
     if (!removed) return null;
 
     const readCache = createSnapshotCache();
-    const removedValue = this.deps.getNodeValue(removed, readCache);
+    const removedValue = this.read.getNodeValue(removed, readCache);
     this.result = removedValue;
-    this.deps.detachChildFromArray(state, removed);
-    this.deps.unregisterSubtree([...this.deps.path, start], removed);
+    this.lifecycle.detachChildFromArray(state, removed);
+    this.lifecycle.unregisterSubtree([...this.children.path, start], removed);
     state.dirtyStructure = true;
     resetDirtyIndices(state.dirtyIndices, state.children.length);
-    this.deps.rebuildMapping();
+    this.structure.rebuildMapping();
 
     return [
       {
@@ -101,7 +125,7 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
         path: [],
         start,
         deleteCount: 1,
-        deleted: [this.deps.cloneValue(removedValue)],
+        deleted: [this.patch.cloneValue(removedValue)],
         items: [],
       },
     ];
@@ -112,7 +136,8 @@ export class SpliceCommand implements TreeCommand<TreeArrayState> {
   readonly op = 'splice' as const;
 
   constructor(
-    private readonly deps: ArrayCommandDeps,
+    private readonly structure: Pick<ArrayStructureContext, 'performSplice'>,
+    private readonly patch: Pick<ArrayPatchContext, 'cloneValue' | 'resolvePatchValue'>,
     private readonly start: number,
     private readonly deleteCount: number,
     private readonly items: unknown[],
@@ -120,7 +145,7 @@ export class SpliceCommand implements TreeCommand<TreeArrayState> {
   ) {}
 
   execute(state: TreeArrayState): IoPatch[] {
-    const { normalizedStart, dc, removedValues } = this.deps.performSplice(
+    const { normalizedStart, dc, removedValues } = this.structure.performSplice(
       this.start,
       this.deleteCount,
       this.items,
@@ -135,8 +160,8 @@ export class SpliceCommand implements TreeCommand<TreeArrayState> {
         path: [],
         start: normalizedStart,
         deleteCount: dc,
-        deleted: removedValues.map((value) => this.deps.cloneValue(value)),
-        items: this.items.map((value) => this.deps.resolvePatchValue(value)),
+        deleted: removedValues.map((value) => this.patch.cloneValue(value)),
+        items: this.items.map((value) => this.patch.resolvePatchValue(value)),
       },
     ];
   }
@@ -146,7 +171,11 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
   readonly op = 'sort' as const;
 
   constructor(
-    private readonly deps: ArrayCommandDeps,
+    private readonly read: Pick<ArrayReadContext, 'getNodeValue'>,
+    private readonly structure: Pick<
+      ArrayStructureContext,
+      'rebuildMapping' | 'validateSortPermutation'
+    >,
     private readonly options?: {
       order?: number[];
       compareFn?: CompareFn;
@@ -156,7 +185,7 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
   validate(state: TreeArrayState): boolean {
     if (state.children.length <= 1) return false;
     if (this.options?.order) {
-      this.deps.validateSortPermutation(
+      this.structure.validateSortPermutation(
         this.options.order,
         state.children.length,
       );
@@ -175,7 +204,7 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
       const decorated = state.children.map((child, index) => ({
         child,
         index,
-        value: this.deps.getNodeValue(child, readCache),
+        value: this.read.getNodeValue(child, readCache),
       }));
       decorated.sort((a, b) => {
         const av = a.value;
@@ -194,7 +223,7 @@ export class SortCommand implements TreeCommand<TreeArrayState> {
     state.dirtyStructure = true;
     state.childIndicesDirty = true;
     clearDirtyIndices(state.dirtyIndices);
-    this.deps.rebuildMapping();
+    this.structure.rebuildMapping();
 
     return [
       {
@@ -210,24 +239,26 @@ export class SetCommand implements TreeCommand<TreeArrayState> {
   readonly op = 'set' as const;
 
   constructor(
-    private readonly deps: ArrayCommandDeps,
+    private readonly read: Pick<ArrayReadContext, 'snapshot'>,
+    private readonly patch: Pick<ArrayPatchContext, 'cloneValue' | 'resolvePatchValue'>,
+    private readonly structure: Pick<ArrayStructureContext, 'performSplice' | 'rebuildMapping'>,
     private readonly next: unknown[],
   ) {}
 
   execute(state: TreeArrayState): IoPatch[] {
-    const prevValue = this.deps.snapshot();
-    this.deps.performSplice(0, state.children.length, this.next);
+    const prevValue = this.read.snapshot();
+    this.structure.performSplice(0, state.children.length, this.next);
     state.dirtyStructure = true;
     resetDirtyIndices(state.dirtyIndices, state.children.length);
-    this.deps.rebuildMapping();
+    this.structure.rebuildMapping();
 
     return [
       {
         op: 'set',
         path: [],
-        prev: this.deps.cloneValue(prevValue),
-        next: this.deps.cloneValue(
-          this.next.map((value) => this.deps.resolvePatchValue(value)),
+        prev: this.patch.cloneValue(prevValue),
+        next: this.patch.cloneValue(
+          this.next.map((value) => this.patch.resolvePatchValue(value)),
         ),
       },
     ];

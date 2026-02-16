@@ -2,7 +2,7 @@ import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
 import { isUnit } from '../../../units/unit.js';
 import { createUpdate } from '../../../utils/patches/updates.js';
-import type { TreeDeps } from '../../types.js';
+import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
@@ -10,8 +10,12 @@ import type {
   TreeScopeState,
 } from '../../tree/io-tree-types.js';
 
+type ScopeMutationDeps = TreeDepsSlice<
+  'emitError' | 'subscriptions' | 'internals' | 'lifecycle' | 'registry'
+>;
+
 type CreateScopeMutationsOptions = {
-  deps: TreeDeps;
+  deps: ScopeMutationDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;

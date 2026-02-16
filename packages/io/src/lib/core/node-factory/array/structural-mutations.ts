@@ -1,5 +1,9 @@
-import type { ArrayCommandDeps } from '../../commands/array-commands.js';
 import {
+  type ArrayChildrenContext,
+  type ArrayLifecycleContext,
+  type ArrayPatchContext,
+  type ArrayReadContext,
+  type ArrayStructureContext,
   PopCommand,
   PushCommand,
   SetCommand,
@@ -10,6 +14,8 @@ import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import { cloneValue } from '../../../utils/immutable/immutable.js';
 import { createUpdate } from '../../../utils/patches/updates.js';
+import type { NodePath } from '../../tree/path-trie.js';
+import type { TreeNode } from '../../tree/io-tree-types.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 
 function validateSortPermutation(order: number[], length: number): void {
@@ -89,17 +95,26 @@ export function createArrayStructuralMutations(
     return { normalizedStart, dc, removedValues };
   };
 
-  const commandDeps: ArrayCommandDeps = {
+  const childrenContext: ArrayChildrenContext = {
     path,
-    createTreeNode: (absPath, initial) => createTreeNode(ctx, absPath, initial),
+    createTreeNode: (absPath: NodePath, initial: unknown) =>
+      createTreeNode(ctx, absPath, initial),
+  };
+  const lifecycleContext: ArrayLifecycleContext = {
     attachChildToArray: deps.lifecycle.attachChildToArray,
     detachChildFromArray: deps.lifecycle.detachChildFromArray,
-    unregisterSubtree: (absPath, node) =>
+    unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
       deps.registry.unregisterSubtree(absPath, node),
+  };
+  const readContext: ArrayReadContext = {
     getNodeValue: deps.snapshots.getNodeValue,
+    snapshot,
+  };
+  const patchContext: ArrayPatchContext = {
     cloneValue,
     resolvePatchValue,
-    snapshot,
+  };
+  const structureContext: ArrayStructureContext = {
     rebuildMapping,
     performSplice,
     validateSortPermutation,
@@ -125,9 +140,14 @@ export function createArrayStructuralMutations(
     options?: { emitValue?: boolean },
   ): void => {
     executor.runCommand(
-      new SpliceCommand(commandDeps, start, deleteCount, items, {
-        emitPatch: false,
-      }),
+      new SpliceCommand(
+        structureContext,
+        patchContext,
+        start,
+        deleteCount,
+        items,
+        { emitPatch: false },
+      ),
       {
         emitUpdate: false,
         emitValue: options?.emitValue,
@@ -141,7 +161,7 @@ export function createArrayStructuralMutations(
     options?: { emitValue?: boolean },
   ): void => {
     executor.runCommand(
-      new SortCommand(commandDeps, { order }),
+      new SortCommand(readContext, structureContext, { order }),
       {
         emitUpdate: false,
         emitValue: options?.emitValue,
@@ -152,13 +172,25 @@ export function createArrayStructuralMutations(
 
   const push = (...items: unknown[]): void => {
     executor.runCommand(
-      new PushCommand(commandDeps, items),
+      new PushCommand(
+        childrenContext,
+        lifecycleContext,
+        patchContext,
+        structureContext,
+        items,
+      ),
       { structural: false },
     );
   };
 
   const pop = (): unknown => {
-    const command = new PopCommand(commandDeps);
+    const command = new PopCommand(
+      childrenContext,
+      lifecycleContext,
+      readContext,
+      patchContext,
+      structureContext,
+    );
     executor.runCommand(command, { structural: false });
     return command.result;
   };
@@ -169,18 +201,27 @@ export function createArrayStructuralMutations(
     ...items: unknown[]
   ): void => {
     executor.runCommand(
-      new SpliceCommand(commandDeps, start, deleteCount, items),
+      new SpliceCommand(
+        structureContext,
+        patchContext,
+        start,
+        deleteCount,
+        items,
+      ),
       { structural: false },
     );
   };
 
   const set = (next: unknown[]): void => {
-    executor.runCommand(new SetCommand(commandDeps, next), { structural: false });
+    executor.runCommand(
+      new SetCommand(readContext, patchContext, structureContext, next),
+      { structural: false },
+    );
   };
 
   const sort = (compareFn?: (a: unknown, b: unknown) => number): void => {
     executor.runCommand(
-      new SortCommand(commandDeps, { compareFn }),
+      new SortCommand(readContext, structureContext, { compareFn }),
       { structural: false },
     );
   };

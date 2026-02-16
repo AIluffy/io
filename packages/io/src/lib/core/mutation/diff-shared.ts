@@ -23,7 +23,7 @@ export type ArrayStateLike<TNode> = {
   isCommitting: boolean;
 };
 
-export type DiffOperationDeps<
+export type DiffNodeReadDeps<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
@@ -36,9 +36,16 @@ export type DiffOperationDeps<
   ) => 'scope' | 'array' | 'unit' | 'derived' | undefined;
   getScopeState: (node: TNode) => TScopeState;
   getArrayState: (node: TNode) => TArrayState;
-  setUnitValue: (node: TNode, next: unknown) => void;
   getNodeValue: (node: TNode) => unknown;
-  resolvePatchValue: (value: unknown) => unknown;
+  cloneValue: (value: unknown) => unknown;
+};
+
+export type DiffNodeWriteDeps<
+  TNode,
+  TScopeState extends ScopeStateLike<TNode>,
+  TArrayState extends ArrayStateLike<TNode>,
+> = {
+  setUnitValue: (node: TNode, next: unknown) => void;
   createTreeNode: (path: NodePath, next: unknown) => TNode;
   detachChildFromScope: (state: TScopeState, key: PropertyKey) => void;
   attachChildToScope: (
@@ -51,11 +58,26 @@ export type DiffOperationDeps<
   unregisterSubtree: (path: NodePath, node: TNode) => void;
   registerSubtree: (path: NodePath, node: TNode) => void;
   getPathNode: (path: NodePath) => TNode | undefined;
+  markDirty: (state: TScopeState | TArrayState, segment: PathSegment) => void;
+};
+
+export type DiffPatchDeps<
+  TNode,
+  TScopeState extends ScopeStateLike<TNode>,
+  TArrayState extends ArrayStateLike<TNode>,
+> = {
+  resolvePatchValue: (value: unknown) => unknown;
   emitScopeValue: (state: TScopeState) => void;
   emitArrayValue: (state: TArrayState) => void;
-  markDirty: (state: TScopeState | TArrayState, segment: PathSegment) => void;
-  cloneValue: (value: unknown) => unknown;
 };
+
+export type DiffOperationDeps<
+  TNode,
+  TScopeState extends ScopeStateLike<TNode>,
+  TArrayState extends ArrayStateLike<TNode>,
+> = DiffNodeReadDeps<TNode, TScopeState, TArrayState> &
+  DiffNodeWriteDeps<TNode, TScopeState, TArrayState> &
+  DiffPatchDeps<TNode, TScopeState, TArrayState>;
 
 export type ReplaceChildFn<
   TNode,

@@ -136,7 +136,7 @@ export function attachNodeBase(config: {
   }
 }
 
-export function createNodeBase<TInitial extends object, TState, TValue>(config: {
+export type CreateNodeBaseConfig<TInitial extends object, TState, TValue> = {
   deps: Pick<TreeDeps, 'trackRead' | 'internals'>;
   ctx: TreeContext;
   initial: TInitial;
@@ -167,7 +167,11 @@ export function createNodeBase<TInitial extends object, TState, TValue>(config: 
     node: TreeNode;
     target: object;
   }) => void;
-}): TreeNode {
+};
+
+export function createNodeBase<TInitial extends object, TState, TValue>(
+  config: CreateNodeBaseConfig<TInitial, TState, TValue>,
+): TreeNode {
   const {
     deps,
     ctx,
@@ -222,4 +226,83 @@ export function createNodeBase<TInitial extends object, TState, TValue>(config: 
 
   finalize?.({ state, node, target });
   return node;
+}
+
+export function nodeBuilder<TInitial extends object, TState, TValue>(base: {
+  deps: Pick<TreeDeps, 'trackRead' | 'internals'>;
+  ctx: TreeContext;
+  initial: TInitial;
+}) {
+  let createState: CreateNodeBaseConfig<TInitial, TState, TValue>['createState'] | undefined;
+  let createNode: CreateNodeBaseConfig<TInitial, TState, TValue>['createNode'] | undefined;
+  let initialize: CreateNodeBaseConfig<TInitial, TState, TValue>['initialize'] | undefined;
+  let createSnapshot: CreateNodeBaseConfig<TInitial, TState, TValue>['createSnapshot'] | undefined;
+  let createInternalAndProperties:
+    | CreateNodeBaseConfig<TInitial, TState, TValue>['createInternalAndProperties']
+    | undefined;
+  let finalize: CreateNodeBaseConfig<TInitial, TState, TValue>['finalize'] | undefined;
+
+  const requireDefined = <T>(
+    value: T | undefined,
+    name: string,
+  ): T => {
+    if (value === undefined)
+      throw new Error(`nodeBuilder: ${name} is not configured`);
+    return value;
+  };
+
+  const builder = {
+    withState(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['createState'],
+    ) {
+      createState = value;
+      return builder;
+    },
+    withNode(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['createNode'],
+    ) {
+      createNode = value;
+      return builder;
+    },
+    withInitialize(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['initialize'],
+    ) {
+      initialize = value;
+      return builder;
+    },
+    withSnapshot(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['createSnapshot'],
+    ) {
+      createSnapshot = value;
+      return builder;
+    },
+    withInternalAndProperties(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['createInternalAndProperties'],
+    ) {
+      createInternalAndProperties = value;
+      return builder;
+    },
+    withFinalize(
+      value: CreateNodeBaseConfig<TInitial, TState, TValue>['finalize'],
+    ) {
+      finalize = value;
+      return builder;
+    },
+    build(): TreeNode {
+      return createNodeBase({
+        ...base,
+        createState: requireDefined(createState, 'createState'),
+        createNode: requireDefined(createNode, 'createNode'),
+        initialize,
+        createSnapshot: requireDefined(createSnapshot, 'createSnapshot'),
+        createInternalAndProperties: requireDefined(
+          createInternalAndProperties,
+          'createInternalAndProperties',
+        ),
+        finalize,
+      });
+    },
+  };
+
+  return builder;
 }

@@ -1,4 +1,4 @@
-import type { TreeDeps } from '../../types.js';
+import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
@@ -11,12 +11,22 @@ import { createArrayOps } from './array-ops.js';
 import { isIndexKey } from '../../../utils/internal/is-index-key.js';
 import { createNodeStateBase } from '../create-node-base.js';
 import {
+  createNodeKindPlugin,
   createNodeFromKindPlugin,
-  type NodeKindPlugin,
 } from '../node-kind-plugin.js';
 
+type ArrayNodeDeps = TreeDepsSlice<
+  | 'emitError'
+  | 'trackRead'
+  | 'snapshots'
+  | 'subscriptions'
+  | 'registry'
+  | 'internals'
+  | 'lifecycle'
+>;
+
 type CreateArrayNodeOptions = {
-  deps: TreeDeps;
+  deps: ArrayNodeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: unknown[];
@@ -39,12 +49,13 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     ) => void,
   ) => void) | undefined;
 
-  const arrayPlugin: NodeKindPlugin<
+  const arrayPlugin = createNodeKindPlugin<
     unknown[],
     TreeArrayState,
     unknown[],
-    ArrayOperations
-  > = {
+    ArrayOperations,
+    ArrayNodeDeps
+  >({
     kind: 'array',
     createState: ({ ctx, path, initial, initialNode }) => ({
       children: new Array(initial.length),
@@ -153,7 +164,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
         throw new Error('ioTree array: setIndex binder not initialized');
       }
     },
-  };
+  });
 
   return createNodeFromKindPlugin(options, arrayPlugin);
 }

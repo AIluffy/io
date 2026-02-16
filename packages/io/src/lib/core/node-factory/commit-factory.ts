@@ -2,7 +2,7 @@ import type { IoUpdate } from '../../utils/types/types.js';
 import type { TreeCommand } from '../commands/command.js';
 import type { CommitCommandDeps } from '../commands/commit-command.js';
 import type { ExecuteOptions } from '../commands/executor.js';
-import type { TreeDeps } from '../types.js';
+import type { CommitFactoryTreeDeps } from '../types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 
@@ -22,11 +22,11 @@ type CommitExecutor<TState> = {
 type CommitExecutorFactory<TState> = (
   deps: {
     createUpdate: typeof createUpdate;
-    emitArrayValue: TreeDeps['subscriptions']['emitArrayValue'];
-    emitArrayUpdate: TreeDeps['subscriptions']['emitArrayUpdate'];
-    emitScopeValue: TreeDeps['subscriptions']['emitScopeValue'];
-    emitScopeUpdate: TreeDeps['subscriptions']['emitScopeUpdate'];
-    emitError: TreeDeps['emitError'];
+    emitArrayValue: CommitFactoryTreeDeps['subscriptions']['emitArrayValue'];
+    emitArrayUpdate: CommitFactoryTreeDeps['subscriptions']['emitArrayUpdate'];
+    emitScopeValue: CommitFactoryTreeDeps['subscriptions']['emitScopeValue'];
+    emitScopeUpdate: CommitFactoryTreeDeps['subscriptions']['emitScopeUpdate'];
+    emitError: CommitFactoryTreeDeps['emitError'];
   },
   state: TState,
   path: NodePath,
@@ -34,7 +34,7 @@ type CommitExecutorFactory<TState> = (
 ) => CommitExecutor<TState>;
 
 type CreateCommitFactoryOptions<TState, TData> = {
-  deps: TreeDeps;
+  deps: CommitFactoryTreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TState;

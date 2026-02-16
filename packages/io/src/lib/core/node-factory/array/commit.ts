@@ -1,4 +1,4 @@
-import type { TreeDeps } from '../../types.js';
+import type { CommitFactoryTreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
@@ -11,7 +11,7 @@ import { applyArrayCommitDiff } from '../../mutation/commit.js';
 import { createCommitFactory } from '../commit-factory.js';
 
 type CreateArrayCommitOptions = {
-  deps: TreeDeps;
+  deps: CommitFactoryTreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeArrayState;
