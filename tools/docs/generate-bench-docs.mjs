@@ -45,6 +45,14 @@ function toFiniteOrNull(value) {
   return Number.isFinite(value) ? value : null;
 }
 
+function indentBlock(text, spaces = 2) {
+  const prefix = ' '.repeat(spaces);
+  return text
+    .split('\n')
+    .map((line) => (line.length > 0 ? `${prefix}${line}` : line))
+    .join('\n');
+}
+
 function getScenarioGroup(name, locale) {
   const map =
     locale === 'zh-cn'
@@ -381,12 +389,18 @@ function buildMarkdown({ locale, history }) {
           gcMethod: '方法',
           gcSourceMetric: '来源指标',
           gcApproxHeading: '近似拆分（仅方向性参考）',
+          gcOverviewHeading: '核心指标',
+          gcDetailsHeading: '完整明细',
           gcNoData: '暂无 GC 数据',
           disclaimer: '结果会随硬件、负载与 Node 版本变化。',
+          metricsViewHeading: '指标视图',
+          gcTabLabel: 'GC/堆增量',
+          timeTabLabel: '时间性能',
           run: '运行',
           date: '时间',
           node: 'Node',
           platform: '平台',
+          timelinePageLabel: '页',
           scenario: '场景',
           latestMean: '最新 mean (ms/op)',
           latestOps: '最新 ops/sec',
@@ -432,12 +446,18 @@ function buildMarkdown({ locale, history }) {
           gcMethod: 'Method',
           gcSourceMetric: 'Source metric',
           gcApproxHeading: 'Approximation (directional only)',
+          gcOverviewHeading: 'Key Metrics',
+          gcDetailsHeading: 'Full Details',
           gcNoData: 'No GC data',
           disclaimer: 'Numbers vary by hardware, load, and Node version.',
+          metricsViewHeading: 'Metrics View',
+          gcTabLabel: 'GC/Heap Delta',
+          timeTabLabel: 'Timing Performance',
           run: 'Run',
           date: 'Date',
           node: 'Node',
           platform: 'Platform',
+          timelinePageLabel: 'Page',
           scenario: 'Scenario',
           latestMean: 'Latest mean (ms/op)',
           latestOps: 'Latest ops/sec',
@@ -456,6 +476,7 @@ function buildMarkdown({ locale, history }) {
   const frontmatter = `---\ntitle: ${JSON.stringify(
     labels.title,
   )}\ndescription: ${JSON.stringify(labels.description)}\nsidebar:\n  order: 6\n---\n`;
+  const imports = "import { Tabs, TabItem } from '@astrojs/starlight/components';";
 
   const historyWindow = history.slice(-DOC_HISTORY_WINDOW);
   const globalStartIndex = history.length - historyWindow.length;
@@ -488,12 +509,40 @@ function buildMarkdown({ locale, history }) {
       ].join('\n')
     : '- n/a';
 
-  const timelineRows = indexedRuns
-    .map(
-      (run) =>
-        `| ${run.runId} | ${run.date} | ${run.node} | ${run.platform} |`,
-    )
+  const timelinePageSize = 10;
+  const timelinePages = [];
+  for (let i = 0; i < indexedRuns.length; i += timelinePageSize) {
+    const rows = indexedRuns.slice(i, i + timelinePageSize);
+    timelinePages.push(rows);
+  }
+
+  const timelineTabs = timelinePages
+    .map((pageRows, pageIndex) => {
+      const startRun = pageRows[0]?.runId ?? 0;
+      const endRun = pageRows[pageRows.length - 1]?.runId ?? 0;
+      const tableRows = pageRows
+        .map((run) => `| ${run.runId} | ${run.date} | ${run.node} | ${run.platform} |`)
+        .join('\n');
+      const table = [
+        `| ${labels.run} | ${labels.date} | ${labels.node} | ${labels.platform} |`,
+        '| --- | --- | --- | --- |',
+        tableRows,
+      ].join('\n');
+      const tabLabel = `${labels.timelinePageLabel} ${pageIndex + 1} (${startRun}-${endRun})`;
+      return [
+        `  <TabItem label="${tabLabel}">`,
+        '',
+        indentBlock(table, 4),
+        '',
+        '  </TabItem>',
+      ].join('\n');
+    })
     .join('\n');
+
+  const timelineSection =
+    timelineTabs.length > 0
+      ? ['<Tabs>', timelineTabs, '</Tabs>'].join('\n')
+      : labels.noFiniteData;
 
   const latestWithDelta = latestResults.map((row) => {
     const previous = previousByName.get(row.name);
@@ -600,6 +649,13 @@ function buildMarkdown({ locale, history }) {
     .map(
       (row) =>
         `| ${row.scenario} | ${row.samples} | ${row.iterations} | ${row.heapDeltaBytes} | ${row.meanHeapDeltaBytes} | ${row.p75HeapDeltaBytes} | ${row.bytesPerIteration} | ${row.stableBytesPerIteration} |`,
+    )
+    .join('\n');
+
+  const gcOverviewRows = latestGcResults
+    .map(
+      (row) =>
+        `| ${row.scenario} | ${row.iterations} | ${row.meanHeapDeltaBytes} | ${row.stableBytesPerIteration} |`,
     )
     .join('\n');
 
@@ -714,24 +770,31 @@ function buildMarkdown({ locale, history }) {
   const focusedTrendByGroup = groupedTrendText(focusedTrendSections);
   const appendixTrendByGroup = groupedTrendText(appendixTrendSections);
 
-  return [
-    frontmatter,
-    `${labels.note}`,
-    '',
-    `## ${labels.commandsHeading}`,
-    '',
-    `- ${labels.perfCommandLabel}: \`npx nx run @iostore/store:bench -- src/lib/__bench__/core-perf.bench.ts\``,
-    `- ${labels.gcCommandLabel}: \`npx nx run @iostore/store:bench-gc\``,
-    '',
+  const gcSection = [
     `## ${labels.gcHeading}`,
+    '',
+    `### ${labels.gcOverviewHeading}`,
+    '',
+    gcOverviewRows.length > 0
+      ? [
+          `| ${labels.gcScenario} | ${labels.gcIterations} | ${labels.gcMeanDelta} | ${labels.gcStableBytesPerIter} |`,
+          '| --- | --- | --- | --- |',
+          gcOverviewRows,
+        ].join('\n')
+      : labels.gcNoData,
     '',
     gcRows.length > 0
       ? [
+          `<details>`,
+          `  <summary>${labels.gcDetailsHeading}</summary>`,
+          '',
           `| ${labels.gcScenario} | ${labels.gcSamples} | ${labels.gcIterations} | ${labels.gcMedianDelta} | ${labels.gcMeanDelta} | ${labels.gcP75Delta} | ${labels.gcBytesPerIter} | ${labels.gcStableBytesPerIter} |`,
           '| --- | --- | --- | --- | --- | --- | --- | --- |',
           gcRows,
+          '',
+          '</details>',
         ].join('\n')
-      : labels.gcNoData,
+      : '',
     '',
     latestGcApprox.length > 0
       ? [
@@ -744,7 +807,9 @@ function buildMarkdown({ locale, history }) {
         ].join('\n')
       : '',
     `${labels.disclaimer}`,
-    '',
+  ].join('\n');
+
+  const timeSection = [
     `## ${labels.quickHeading}`,
     '',
     `### ${labels.slowestHeading}`,
@@ -793,15 +858,7 @@ function buildMarkdown({ locale, history }) {
     '',
     `## ${labels.timelineHeading}`,
     '',
-    `| ${labels.run} | ${labels.date} | ${labels.node} | ${labels.platform} |`,
-    '| --- | --- | --- | --- |',
-    timelineRows,
-    '',
-    `## ${labels.latestHeading}`,
-    '',
-    `## ${labels.latestByGroupHeading}`,
-    '',
-    groupedLatestSections.length > 0 ? groupedLatestSections : labels.noFiniteData,
+    timelineSection,
     '',
     `## ${labels.topChangesHeading}`,
     '',
@@ -820,6 +877,33 @@ function buildMarkdown({ locale, history }) {
     `### ${labels.trendAppendixHeading}`,
     '',
     appendixTrendByGroup.length > 0 ? appendixTrendByGroup : labels.noFiniteData,
+  ].join('\n');
+
+  return [
+    frontmatter,
+    imports,
+    '',
+    `${labels.note}`,
+    '',
+    `## ${labels.commandsHeading}`,
+    '',
+    `- ${labels.perfCommandLabel}: \`npx nx run @iostore/store:bench -- src/lib/__bench__/core-perf.bench.ts\``,
+    `- ${labels.gcCommandLabel}: \`npx nx run @iostore/store:bench-gc\``,
+    '',
+    `## ${labels.metricsViewHeading}`,
+    '',
+    `<Tabs default="${labels.timeTabLabel}">`,
+    `  <TabItem label="${labels.timeTabLabel}">`,
+    '',
+    indentBlock(timeSection, 4),
+    '',
+    '  </TabItem>',
+    `  <TabItem label="${labels.gcTabLabel}">`,
+    '',
+    indentBlock(gcSection, 4),
+    '',
+    '  </TabItem>',
+    '</Tabs>',
     '',
   ].join('\n');
 }
