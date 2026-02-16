@@ -91,6 +91,7 @@ class EffectImpl implements TrackingContext {
   private currentDeps: Set<Dependency> | null = null;
 
   run(): void {
+    if (this.disposed) return;
     if (this.cleanup) {
       this.cleanup();
       this.cleanup = undefined;

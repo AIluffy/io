@@ -71,7 +71,8 @@ export function deletePathNode<TNode>(
   for (let i = path.length - 1; i >= 0; i -= 1) {
     const parent = stack[i];
     const seg = path[i];
-    const child = parent.children.get(seg)!;
+    const child = parent.children.get(seg);
+    if (!child) continue;
     if (child.node !== undefined) break;
     if (child.children.size > 0) break;
     parent.children.delete(seg);
