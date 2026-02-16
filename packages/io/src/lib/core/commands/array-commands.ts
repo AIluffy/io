@@ -1,4 +1,4 @@
-import type { IoPatch } from '../../utils/types.js';
+import type { IoPatch } from '../../utils/types/types.js';
 import type { TreeArrayState, TreeNode } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { SnapshotCache } from '../snapshot/snapshot-cache.js';

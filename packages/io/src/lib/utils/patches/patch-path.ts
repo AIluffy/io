@@ -1,4 +1,4 @@
-import type { IoPatch, IoUpdate } from './types.js';
+import type { IoPatch, IoUpdate } from '../types/types.js';
 
 export function prependPatchPath(segment: PropertyKey, patch: IoPatch): IoPatch {
   return { ...patch, path: [segment, ...patch.path] };

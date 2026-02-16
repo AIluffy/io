@@ -1,5 +1,5 @@
 import { getInternal } from './internal-access.js';
-import type { IoLink } from './types.js';
+import type { IoLink } from '../types/types.js';
 
 const IO_LINK = Symbol.for('@org/io/link');
 

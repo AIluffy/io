@@ -1,7 +1,7 @@
 import { bench, describe } from 'vitest';
 import { io } from '../core/api/io.js';
-import { createDraft, finishDraft } from '../utils/cow.js';
-import { batch } from '../utils/batch.js';
+import { createDraft, finishDraft } from '../utils/immutable/cow.js';
+import { batch } from '../utils/reactive/batch.js';
 import { createUnit } from '../units/unit.js';
 
 type DeepState = {

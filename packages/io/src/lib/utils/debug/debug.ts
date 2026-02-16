@@ -1,6 +1,6 @@
-import type { IoErrorHandler, IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from './types.js';
+import type { IoErrorHandler, IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from '../types/types.js';
 
-import { getInternal } from './internal-access.js';
+import { getInternal } from '../internal/internal-access.js';
 
 type ErrorStore = {
   errorListeners: Set<IoErrorHandler>;

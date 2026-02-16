@@ -1,4 +1,4 @@
-import type { IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from '../utils/types.js';
+import type { IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from '../utils/types/types.js';
 import type { SnapshotCache } from './snapshot/snapshot-cache.js';
 import type {
   TreeArrayState,

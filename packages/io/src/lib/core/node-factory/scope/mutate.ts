@@ -1,7 +1,7 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
 import { isUnit } from '../../../units/unit.js';
-import { createUpdate } from '../../../utils/updates.js';
+import { createUpdate } from '../../../utils/patches/updates.js';
 import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {

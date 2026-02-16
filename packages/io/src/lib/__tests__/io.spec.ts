@@ -6,22 +6,22 @@ import type {
   IoTreeNode,
   IoUnit,
   IoUpdate,
-} from '../utils/types.js';
-import { batch } from '../utils/batch.js';
-import { onError, onMutation } from '../utils/debug.js';
+} from '../utils/types/types.js';
+import { batch } from '../utils/reactive/batch.js';
+import { onError, onMutation } from '../utils/debug/debug.js';
 import { derived } from '../core/api/derived.js';
 import { io } from '../core/api/io.js';
 import { ioTree } from '../core/api/io-tree.js';
-import { INTERNAL } from '../utils/internal-access.js';
-import { link } from '../utils/link.js';
-import { Signal, computed, effect } from '../utils/signals.js';
-import { createHistory } from '../utils/history.js';
+import { INTERNAL } from '../utils/internal/internal-access.js';
+import { link } from '../utils/internal/link.js';
+import { Signal, computed, effect } from '../utils/reactive/signals.js';
+import { createHistory } from '../utils/patches/history.js';
 import {
   applyUpdate,
   undoUpdate,
   mergeUpdates,
   replay,
-} from '../utils/updates.js';
+} from '../utils/patches/updates.js';
 
 describe('io: unit', () => {
   it('supports get/set/reset', () => {

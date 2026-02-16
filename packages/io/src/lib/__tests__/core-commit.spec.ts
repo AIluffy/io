@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isPlainObject } from '../utils/plain-object.js';
+import { isPlainObject } from '../utils/immutable/plain-object.js';
 import {
   createDirtyIndexState,
   markDirtyIndex,
 } from '../core/mutation/dirty-indices.js';
 import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/mutation/commit.js';
-import type { ValueEpoch } from '../utils/branded.js';
-import { initialEpoch } from '../utils/branded.js';
+import type { ValueEpoch } from '../utils/types/branded.js';
+import { initialEpoch } from '../utils/types/branded.js';
 
 type Path = PropertyKey[];
 

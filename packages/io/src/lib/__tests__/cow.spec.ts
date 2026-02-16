@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDraft, finishDraft } from '../utils/cow.js';
+import { createDraft, finishDraft } from '../utils/immutable/cow.js';
 
 type DeepWritable<T> = T extends readonly (infer U)[]
   ? DeepWritable<U>[]

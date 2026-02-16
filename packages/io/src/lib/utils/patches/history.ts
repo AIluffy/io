@@ -1,4 +1,4 @@
-import type { IoHistory, IoHistoryOptions, IoUpdate } from './types.js';
+import type { IoHistory, IoHistoryOptions, IoUpdate } from '../types/types.js';
 
 import { applyUpdate, undoUpdate } from './updates.js';
 

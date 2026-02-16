@@ -1,14 +1,14 @@
-import type { VersionedCache } from '../../container/cache.js';
-import type { ValueEpoch } from '../../utils/branded.js';
+import type { VersionedCache } from './versioned-cache.js';
+import type { ValueEpoch } from '../../utils/types/branded.js';
 import type { TreeNode } from '../tree/io-tree-types.js';
 import type { SnapshotCache } from './snapshot-cache.js';
 
-import { freezeRootShallow } from '../../utils/immutable.js';
+import { freezeRootShallow } from '../../utils/immutable/immutable.js';
 import {
   CACHE_MISS,
   readCachedByVersion,
   updateCachedByVersion,
-} from '../../container/cache.js';
+} from './versioned-cache.js';
 import { createSnapshotCache } from './snapshot-cache.js';
 
 export type GetNodeValue = (node: TreeNode, cache: SnapshotCache) => unknown;

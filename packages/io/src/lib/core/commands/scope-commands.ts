@@ -1,4 +1,4 @@
-import type { IoPatch } from '../../utils/types.js';
+import type { IoPatch } from '../../utils/types/types.js';
 import type {
   InternalDeps,
   LifecycleDeps,

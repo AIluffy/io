@@ -1,5 +1,5 @@
-import type { IoPatch } from '../../utils/types.js';
-import type { Revision, ValueEpoch } from '../../utils/branded.js';
+import type { IoPatch } from '../../utils/types/types.js';
+import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 import type { TreeCommand } from './command.js';
 
 type CommitState = {

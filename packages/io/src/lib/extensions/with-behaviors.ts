@@ -1,4 +1,4 @@
-import type { IoDerived, IoUnit } from '../utils/types.js';
+import type { IoDerived, IoUnit } from '../utils/types/types.js';
 import type { IoBehavior, IoView } from './types.js';
 
 type WithBehaviorsNode<T> = object & {

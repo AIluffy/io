@@ -7,14 +7,14 @@ import type {
 import type { TreeArrayState, TreeInternal, TreeNode, TreeScopeState } from './tree/io-tree-types.js';
 import type { TreeContext } from './tree/io-tree-types.js';
 
-import { emitError } from '../utils/debug.js';
+import { emitError } from '../utils/debug/debug.js';
 import {
   INTERNAL,
   getInternal as getAnyInternal,
   registerInternal,
   requireInternalOfKind,
-} from '../utils/internal-access.js';
-import { trackRead } from '../utils/signals.js';
+} from '../utils/internal/internal-access.js';
+import { trackRead } from '../utils/reactive/signals.js';
 import { createSubscriptions } from './mutation/subscriptions.js';
 import { createNodeFactory } from './node-factory/index.js';
 import { createArraySnapshotReader } from './snapshot/snapshot-array.js';

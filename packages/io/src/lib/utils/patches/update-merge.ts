@@ -1,4 +1,4 @@
-import type { IoPatch, IoUpdate } from './types.js';
+import type { IoPatch, IoUpdate } from '../types/types.js';
 
 const PATH_KEY_CACHE = new WeakMap<object, string>();
 

@@ -1,4 +1,4 @@
-import type { IoUnsubscribe } from './types.js';
+import type { IoUnsubscribe } from '../types/types.js';
 
 type Dependency = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;

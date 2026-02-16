@@ -5,11 +5,11 @@ import type {
   IoUnit,
   IoUnsubscribe,
   IoUpdate,
-} from '../../utils/types.js';
-import type { VersionedCache } from '../../container/cache.js';
+} from '../../utils/types/types.js';
+import type { VersionedCache } from '../snapshot/versioned-cache.js';
 import type { NodePath, PathTrieContext } from './path-trie.js';
 import type { DirtyIndexState } from '../mutation/dirty-indices.js';
-import type { Revision, ValueEpoch } from '../../utils/branded.js';
+import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 
 export type TreeScopeNode = IoTreeScope<Record<string, unknown>>;
 export type TreeArrayNode = IoTreeArrayUnit<unknown>;

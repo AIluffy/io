@@ -1,17 +1,17 @@
-import { notifyUpdate, notifyValue } from '../utils/batch.js';
-import { emitError } from '../utils/debug.js';
-import { getInternal, registerInternal } from '../utils/internal-access.js';
-import { INTERNAL } from '../utils/internal-access.js';
-import { trackRead } from '../utils/signals.js';
-import { cloneValue } from '../utils/immutable.js';
+import { notifyUpdate, notifyValue } from '../utils/reactive/batch.js';
+import { emitError } from '../utils/debug/debug.js';
+import { getInternal, registerInternal } from '../utils/internal/internal-access.js';
+import { INTERNAL } from '../utils/internal/internal-access.js';
+import { trackRead } from '../utils/reactive/signals.js';
+import { cloneValue } from '../utils/immutable/immutable.js';
 import type {
   IoErrorHandler,
   IoPatch,
   IoUnit,
   IoUnsubscribe,
   IoUpdate,
-} from '../utils/types.js';
-import { createUpdate } from '../utils/updates.js';
+} from '../utils/types/types.js';
+import { createUpdate } from '../utils/patches/updates.js';
 
 type UnitState<T> = {
   initial: T;

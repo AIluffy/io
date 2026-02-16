@@ -1,6 +1,6 @@
-import type { IoUpdate, IoUnsubscribe } from '../../utils/types.js';
-import type { VersionedCache } from '../../container/cache.js';
-import type { Revision, ValueEpoch } from '../../utils/branded.js';
+import type { IoUpdate, IoUnsubscribe } from '../../utils/types/types.js';
+import type { VersionedCache } from '../snapshot/versioned-cache.js';
+import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 import type { TreeDeps } from '../types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeInternal, TreeNode } from '../tree/io-tree-types.js';
@@ -9,7 +9,7 @@ import {
   initialEpoch,
   initialRevision,
   staleEpoch,
-} from '../../utils/branded.js';
+} from '../../utils/types/branded.js';
 
 type BaseState<TSnapshot, TValue> = {
   node: TreeNode;

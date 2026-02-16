@@ -1,4 +1,4 @@
-import type { IoUpdate } from '../../utils/types.js';
+import type { IoUpdate } from '../../utils/types/types.js';
 import type { TreeCommand } from '../commands/command.js';
 import type { CommitCommandDeps } from '../commands/commit-command.js';
 import type { ExecuteOptions } from '../commands/executor.js';
@@ -7,8 +7,8 @@ import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 
 import { CommitCommand } from '../commands/commit-command.js';
-import { createDraft, finishDraft } from '../../utils/cow.js';
-import { createUpdate } from '../../utils/updates.js';
+import { createDraft, finishDraft } from '../../utils/immutable/cow.js';
+import { createUpdate } from '../../utils/patches/updates.js';
 import { createSharedCommitDeps } from './shared-commit-deps.js';
 import type { SharedCommitDeps } from './shared-commit-deps.js';
 

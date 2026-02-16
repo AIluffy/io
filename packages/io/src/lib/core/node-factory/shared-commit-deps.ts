@@ -11,9 +11,9 @@ import type {
   UnitInternal,
 } from '../tree/io-tree-types.js';
 
-import { isLink } from '../../utils/link.js';
-import { isPlainObject } from '../../utils/plain-object.js';
-import { cloneValue } from '../../utils/immutable.js';
+import { isLink } from '../../utils/internal/link.js';
+import { isPlainObject } from '../../utils/immutable/plain-object.js';
+import { cloneValue } from '../../utils/immutable/immutable.js';
 import { isUnit } from '../../units/unit.js';
 import { applyScopeCommitDiff } from '../mutation/commit.js';
 import { createSnapshotCache } from '../snapshot/snapshot-cache.js';

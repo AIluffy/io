@@ -1,7 +1,7 @@
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 
-import { formatPath } from '../../utils/format-path.js';
+import { formatPath } from '../../utils/debug/format-path.js';
 export { formatPath };
 
 type TrieNode = {

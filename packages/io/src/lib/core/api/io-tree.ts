@@ -1,4 +1,4 @@
-import type { IoTreeNode } from '../../utils/types.js';
+import type { IoTreeNode } from '../../utils/types/types.js';
 
 import { createTreeNodeFactory } from '../create-context.js';
 import { createTreeContext, type IoTreeOptions } from '../tree/tree-context.js';

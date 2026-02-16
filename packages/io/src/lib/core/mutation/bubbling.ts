@@ -1,5 +1,5 @@
-import { prependUpdatePath } from '../utils/patch-path.js';
-import type { IoUnsubscribe, IoUpdate } from '../utils/types.js';
+import { prependUpdatePath } from '../../utils/patches/patch-path.js';
+import type { IoUnsubscribe, IoUpdate } from '../../utils/types/types.js';
 
 const noopUnsubscribe: IoUnsubscribe = () => {
   return undefined;

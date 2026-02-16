@@ -1,8 +1,8 @@
 import type { IoView } from './types.js';
 
-import { getInternal } from '../utils/internal-access.js';
-import { formatPath } from '../utils/format-path.js';
-import { isIndexKey } from '../utils/is-index-key.js';
+import { getInternal } from '../utils/internal/internal-access.js';
+import { formatPath } from '../utils/debug/format-path.js';
+import { isIndexKey } from '../utils/internal/is-index-key.js';
 
 type ReadableNode<T> = {
   get(): T;

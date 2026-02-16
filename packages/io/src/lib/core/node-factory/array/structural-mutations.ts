@@ -8,8 +8,8 @@ import {
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
-import { cloneValue } from '../../../utils/immutable.js';
-import { createUpdate } from '../../../utils/updates.js';
+import { cloneValue } from '../../../utils/immutable/immutable.js';
+import { createUpdate } from '../../../utils/patches/updates.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 
 function validateSortPermutation(order: number[], length: number): void {

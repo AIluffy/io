@@ -6,13 +6,14 @@ import type {
   IoUnit,
   IoUnsubscribe,
   UnwrapIo,
-} from '../../utils/types.js';
+} from '../../utils/types/types.js';
 
-import { computed, effect } from '../../utils/signals.js';
-import { cloneValue, snapshotValue } from '../../utils/immutable.js';
-import { getInternal, registerInternal } from '../../utils/internal-access.js';
-import { INTERNAL } from '../../utils/internal-access.js';
-import { isIndexKey } from '../../utils/is-index-key.js';
+import { computed, effect } from '../../utils/reactive/signals.js';
+import { cloneValue, snapshotValue } from '../../utils/immutable/immutable.js';
+import { getInternal, registerInternal } from '../../utils/internal/internal-access.js';
+import { INTERNAL } from '../../utils/internal/internal-access.js';
+import { getValueView } from './utils/value-view.js';
+import { createSubscriptionManager } from './utils/subscription-manager.js';
 
 type Subscribable = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
@@ -34,12 +35,6 @@ type DepArg<D> = D extends IoArrayUnit<infer U>
   ? R
   : never;
 
-const proxyCache = new WeakMap<object, unknown>();
-
-function asObjectKey(prop: PropertyKey): prop is string | symbol {
-  return typeof prop === 'string' || typeof prop === 'symbol';
-}
-
 function hasGet(value: unknown): value is { get: () => unknown } {
   return (
     typeof value === 'object' &&
@@ -54,87 +49,6 @@ function hasSubscribe(value: unknown): value is Subscribable {
     value !== null &&
     typeof (value as { subscribe?: unknown }).subscribe === 'function'
   );
-}
-
-type Getter = { get: () => unknown };
-type ArrayGetter = { get: () => unknown[] };
-
-function readFromGetter(value: unknown): unknown {
-  return (value as Getter).get();
-}
-
-function getValueView<T>(node: unknown): T {
-  if (node === null || node === undefined) return node as T;
-  const t = typeof node;
-  if (t !== 'object' && t !== 'function') return node as T;
-
-  const internal = getInternal(node);
-  if (internal?.kind === 'unit' || internal?.kind === 'derived') {
-    return readFromGetter(node) as T;
-  }
-
-  const obj = node as object;
-  const cached = proxyCache.get(obj);
-  if (cached) return cached as T;
-
-  const proxy = new Proxy(obj as object, {
-    get(target, prop, receiver) {
-      if (!asObjectKey(prop)) return Reflect.get(target, prop, receiver);
-      if (prop === INTERNAL) return undefined;
-
-      if (isIndexKey(prop)) {
-        const child = Reflect.get(target, prop, receiver);
-        return getValueView(child);
-      }
-
-      if (
-        typeof prop === 'string' &&
-        prop === 'length' &&
-        internal?.kind === 'array'
-      ) {
-        const arr = (target as ArrayGetter).get();
-        return arr.length;
-      }
-
-      const child = Reflect.get(target, prop, receiver);
-      const childInternal = getInternal(child);
-      if (childInternal?.kind === 'unit' || childInternal?.kind === 'derived') {
-        return readFromGetter(child);
-      }
-      if (childInternal?.kind === 'scope' || childInternal?.kind === 'array') {
-        return getValueView(child);
-      }
-      return child;
-    },
-  });
-
-  proxyCache.set(obj, proxy);
-  return proxy as T;
-}
-
-function createSubscriptionManager<T>(options?: {
-  onActivate?: () => void;
-  onDeactivate?: () => void;
-}): {
-  subscribe: (fn: (value: T) => void) => IoUnsubscribe;
-  emit: (value: T) => void;
-} {
-  const listeners = new Set<(value: T) => void>();
-
-  const subscribe = (fn: (value: T) => void): IoUnsubscribe => {
-    listeners.add(fn);
-    if (listeners.size === 1) options?.onActivate?.();
-    return () => {
-      listeners.delete(fn);
-      if (listeners.size === 0) options?.onDeactivate?.();
-    };
-  };
-
-  const emit = (value: T): void => {
-    for (const listener of listeners) listener(value);
-  };
-
-  return { subscribe, emit };
 }
 
 function createDerivedFromComputed<T>(c: { get(): T }): IoDerived<T> {

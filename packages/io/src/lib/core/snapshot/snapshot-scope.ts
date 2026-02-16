@@ -1,4 +1,4 @@
-import type { IoUnit } from '../../utils/types.js';
+import type { IoUnit } from '../../utils/types/types.js';
 import type {
   TreeArrayInternal,
   TreeArrayState,
@@ -11,8 +11,8 @@ import type {
 import type { SnapshotCache } from './snapshot-cache.js';
 import type { GetNodeValue } from './create-snapshot-reader.js';
 
-import { snapshotValue } from '../../utils/immutable.js';
-import { getInternal as getAnyInternal } from '../../utils/internal-access.js';
+import { snapshotValue } from '../../utils/immutable/immutable.js';
+import { getInternal as getAnyInternal } from '../../utils/internal/internal-access.js';
 import { createSnapshotReader } from './create-snapshot-reader.js';
 
 export type { SnapshotCache } from './snapshot-cache.js';

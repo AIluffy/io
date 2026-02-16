@@ -1,4 +1,4 @@
-import type { ValueEpoch } from '../utils/branded.js';
+import type { ValueEpoch } from '../../utils/types/branded.js';
 
 export type VersionedCache<T> = {
   value: T | undefined;

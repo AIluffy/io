@@ -1,8 +1,8 @@
-import type { IoNode, IoResult } from '../../utils/types.js';
+import type { IoNode, IoResult } from '../../utils/types/types.js';
 
 import { ioTree } from './io-tree.js';
 import { createUnit } from '../../units/unit.js';
-import { isPlainObject } from '../../utils/plain-object.js';
+import { isPlainObject } from '../../utils/immutable/plain-object.js';
 
 type IoOptions = { shallow?: boolean };
 

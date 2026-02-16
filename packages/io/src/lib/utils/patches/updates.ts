@@ -1,8 +1,8 @@
-import type { IoPatch, IoUnit, IoUpdate } from './types.js';
+import type { IoPatch, IoUnit, IoUpdate } from '../types/types.js';
 
-import { notifyUpdate } from './batch.js';
-import { emitError } from './debug.js';
-import { getInternal as getAnyInternal } from './internal-access.js';
+import { notifyUpdate } from '../reactive/batch.js';
+import { emitError } from '../debug/debug.js';
+import { getInternal as getAnyInternal } from '../internal/internal-access.js';
 import { createUpdate } from './update-merge.js';
 
 type InternalUnit = {

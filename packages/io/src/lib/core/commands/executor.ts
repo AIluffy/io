@@ -1,5 +1,5 @@
-import type { IoMutationOp, IoPath, IoPatch, IoUpdate } from '../../utils/types.js';
-import type { Revision, ValueEpoch } from '../../utils/branded.js';
+import type { IoMutationOp, IoPath, IoPatch, IoUpdate } from '../../utils/types/types.js';
+import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 import type {
   TreeArrayState,
   TreeNode,
@@ -9,7 +9,7 @@ import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
 import { resetDirtyIndices } from '../mutation/dirty-indices.js';
-import { nextEpoch, nextRevision } from '../../utils/branded.js';
+import { nextEpoch, nextRevision } from '../../utils/types/branded.js';
 
 export type ExecuteOptions = {
   emitValue?: boolean;

@@ -1,12 +1,12 @@
-import { isLink } from '../../../utils/link.js';
-import type { IoPatch } from '../../../utils/types.js';
-import { createUpdate } from '../../../utils/updates.js';
-import { cloneValue } from '../../../utils/immutable.js';
+import { isLink } from '../../../utils/internal/link.js';
+import type { IoPatch } from '../../../utils/types/types.js';
+import { createUpdate } from '../../../utils/patches/updates.js';
+import { cloneValue } from '../../../utils/immutable/immutable.js';
 import { isUnit } from '../../../units/unit.js';
 
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { markDirtyIndex } from '../../mutation/dirty-indices.js';
-import { nextEpoch, nextRevision } from '../../../utils/branded.js';
+import { nextEpoch, nextRevision } from '../../../utils/types/branded.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { SnapshotCache } from '../../snapshot/snapshot-cache.js';
 

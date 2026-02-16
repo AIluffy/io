@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDirtyIndexState } from '../core/mutation/dirty-indices.js';
 import { createArrayIndexMutation } from '../core/node-factory/array/index-mutation.js';
 import { io } from '../core/api/io.js';
-import { getLinkTarget, link } from '../utils/link.js';
+import { getLinkTarget, link } from '../utils/internal/link.js';
 
 type UnitNode = {
   kind: 'unit';

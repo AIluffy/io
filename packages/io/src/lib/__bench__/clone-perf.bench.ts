@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest';
-import { createDraft, finishDraft } from '../utils/cow.js';
-import { cloneValue, __testing } from '../utils/immutable.js';
+import { createDraft, finishDraft } from '../utils/immutable/cow.js';
+import { cloneValue, __testing } from '../utils/immutable/immutable.js';
 
 import { io } from '../core/api/io.js';
 

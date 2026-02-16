@@ -3,15 +3,17 @@ import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeArrayState,
   TreeContext,
+  TreeInternal,
   TreeNode,
 } from '../../tree/io-tree-types.js';
 import { createDirtyIndexState } from '../../mutation/dirty-indices.js';
 import { createArrayOps } from './array-ops.js';
-import { isIndexKey } from '../../../utils/is-index-key.js';
+import { isIndexKey } from '../../../utils/internal/is-index-key.js';
+import { createNodeStateBase } from '../create-node-base.js';
 import {
-  createNodeBase,
-  createNodeStateBase,
-} from '../create-node-base.js';
+  createNodeFromKindPlugin,
+  type NodeKindPlugin,
+} from '../node-kind-plugin.js';
 
 type CreateArrayNodeOptions = {
   deps: TreeDeps;
@@ -26,9 +28,9 @@ type CreateArrayNodeOptions = {
   resolvePatchValue: (value: unknown) => unknown;
 };
 
+type ArrayOperations = ReturnType<typeof createArrayOps>;
+
 export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
-  const { deps, ctx, path, initial, createTreeNode, resolvePatchValue } =
-    options;
   let bindSetIndex: ((
     fn: (
       index: number,
@@ -37,11 +39,14 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     ) => void,
   ) => void) | undefined;
 
-  return createNodeBase({
-    deps,
-    ctx,
-    initial,
-    createState: (initialNode): TreeArrayState => ({
+  const arrayPlugin: NodeKindPlugin<
+    unknown[],
+    TreeArrayState,
+    unknown[],
+    ArrayOperations
+  > = {
+    kind: 'array',
+    createState: ({ ctx, path, initial, initialNode }) => ({
       children: new Array(initial.length),
       childIndices: new Map<TreeNode, Set<number>>(),
       childIndicesDirty: true,
@@ -50,7 +55,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       childUpdateUnsubs: new Map(),
       ...createNodeStateBase<unknown[], unknown[]>(ctx, path, initialNode),
     }),
-    createNode: (state) => {
+    createNode: ({ state }) => {
       let setIndex: (
         index: number,
         next: unknown,
@@ -58,6 +63,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       ) => void = () => {
         throw new Error('ioTree array: setIndex not initialized');
       };
+
       const array: Record<PropertyKey, unknown> = {};
       const proxy = new Proxy(array as TreeNode & object, {
         get(target, prop, receiver) {
@@ -80,16 +86,9 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
         },
       }) as TreeNode;
 
-      const setSetIndex = (
-        fn: (
-          index: number,
-          next: unknown,
-          options?: { emitUpdate?: boolean; emitValue?: boolean },
-        ) => void,
-      ) => {
+      bindSetIndex = (fn) => {
         setIndex = fn;
       };
-      bindSetIndex = setSetIndex;
 
       return {
         target: array as object,
@@ -97,7 +96,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
         registerTargets: [array as object, proxy as object],
       };
     },
-    initialize: ({ state, node }) => {
+    initialize: ({ deps, ctx, path, initial, state, node, createTreeNode }) => {
       deps.registry.setPathNode(path, node);
       for (let i = 0; i < initial.length; i += 1) {
         const value = i in initial ? initial[i] : undefined;
@@ -106,24 +105,24 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
         deps.lifecycle.attachChildToArray(state, child);
       }
     },
-    createSnapshot: (state) => (): unknown[] => deps.snapshots.getArraySnapshot(state),
-    createInternalAndProperties: ({ state, node, snapshot, getNode }) => {
+    createSnapshot: ({ deps, state }) => (): unknown[] =>
+      deps.snapshots.getArraySnapshot(state),
+    createOperations: ({
+      deps,
+      ctx,
+      path,
+      state,
+      createTreeNode,
+      resolvePatchValue,
+      snapshot,
+      getNode,
+      node,
+    }) => {
       const rebuildMapping = (): void => {
         deps.registry.rebuildSubtreeMapping(state.path, node);
       };
 
-      const {
-        internal,
-        setIndex,
-        set,
-        push,
-        pop,
-        splice,
-        sort,
-        commit,
-        reduce,
-        iterator,
-      } = createArrayOps({
+      const operations = createArrayOps({
         deps,
         ctx,
         path,
@@ -134,26 +133,27 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
         rebuildMapping,
         getNode,
       });
-
-      bindSetIndex?.(setIndex);
-      return {
-        internal,
-        properties: {
-          set: { value: set },
-          push: { value: push },
-          pop: { value: pop },
-          splice: { value: splice },
-          sort: { value: sort },
-          commit: { value: commit },
-          reduce: { value: reduce },
-          [Symbol.iterator]: { value: iterator },
-        },
-      };
+      bindSetIndex?.(operations.setIndex);
+      return operations;
     },
+    createCommit: ({ operations }) => operations.commit,
+    createInternal: ({ operations }) => operations.internal as TreeInternal,
+    defineProperties: ({ operations }) => ({
+      set: { value: operations.set },
+      push: { value: operations.push },
+      pop: { value: operations.pop },
+      splice: { value: operations.splice },
+      sort: { value: operations.sort },
+      commit: { value: operations.commit },
+      reduce: { value: operations.reduce },
+      [Symbol.iterator]: { value: operations.iterator },
+    }),
     finalize: () => {
       if (!bindSetIndex) {
         throw new Error('ioTree array: setIndex binder not initialized');
       }
     },
-  });
+  };
+
+  return createNodeFromKindPlugin(options, arrayPlugin);
 }

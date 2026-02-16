@@ -1,6 +1,6 @@
 export type IoSchedule = 'sync' | 'microtask' | 'animationFrame';
 
-import { ioGlobal } from './global.js';
+import { ioGlobal } from '../env/global.js';
 
 export function scheduleTask(kind: IoSchedule, fn: () => void): void {
   if (kind === 'sync') {

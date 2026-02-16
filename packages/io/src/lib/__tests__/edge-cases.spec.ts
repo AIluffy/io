@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { applyUpdate } from '../utils/updates.js';
-import { deepFreeze } from '../utils/immutable.js';
+import { applyUpdate } from '../utils/patches/updates.js';
+import { deepFreeze } from '../utils/immutable/immutable.js';
 import { relocate } from '../extensions/relocate.js';
 import { io } from '../core/api/io.js';
 import { derived } from '../core/api/derived.js';
-import { batch } from '../utils/batch.js';
-import { link } from '../utils/link.js';
-import type { IoUpdate } from '../utils/types.js';
+import { batch } from '../utils/reactive/batch.js';
+import { link } from '../utils/internal/link.js';
+import type { IoUpdate } from '../utils/types/types.js';
 
 function nextTick(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
