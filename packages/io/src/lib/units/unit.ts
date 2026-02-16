@@ -3,7 +3,7 @@ import { emitError } from '../utils/debug.js';
 import { getInternal, registerInternal } from '../utils/internal-access.js';
 import { INTERNAL } from '../utils/internal-access.js';
 import { trackRead } from '../utils/signals.js';
-import { cloneValue } from '../utils/snapshot.js';
+import { cloneValue } from '../utils/immutable.js';
 import type {
   IoErrorHandler,
   IoPatch,

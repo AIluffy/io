@@ -196,9 +196,20 @@ export function freezeRootShallow<T>(value: T): T {
   return value;
 }
 
+export function cloneValue<T>(value: T): T {
+  return toImmutable(value);
+}
+
+export function snapshotValue<T>(value: T, options?: { owned?: boolean }): T {
+  if (options?.owned) return freezeOwned(value);
+  return toImmutable(value);
+}
+
 export const immutableTesting = {
   resetDeepCloneCount: () => {
     deepCloneCount = 0;
   },
   getDeepCloneCount: () => deepCloneCount,
 };
+
+export const __testing = immutableTesting;

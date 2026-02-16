@@ -8,7 +8,7 @@ import {
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
-import { cloneValue } from '../../../utils/snapshot.js';
+import { cloneValue } from '../../../utils/immutable.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { createExecutorDeps } from '../executor-deps.js';
 

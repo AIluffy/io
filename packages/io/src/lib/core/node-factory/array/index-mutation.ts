@@ -1,7 +1,7 @@
 import { isLink } from '../../../utils/link.js';
 import type { IoPatch } from '../../../utils/types.js';
 import { createUpdate } from '../../../utils/updates.js';
-import { cloneValue } from '../../../utils/snapshot.js';
+import { cloneValue } from '../../../utils/immutable.js';
 import { isUnit } from '../../../units/unit.js';
 
 import type { CreateArrayMutationsOptions } from './array-ops.js';

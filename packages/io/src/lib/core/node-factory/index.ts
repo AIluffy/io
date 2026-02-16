@@ -1,6 +1,6 @@
 import { getLinkTarget, isLink } from '../../utils/link.js';
 import { isPlainObject } from '../../utils/plain-object.js';
-import { cloneValue } from '../../utils/snapshot.js';
+import { cloneValue } from '../../utils/immutable.js';
 import { createUnit } from '../../units/unit.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';

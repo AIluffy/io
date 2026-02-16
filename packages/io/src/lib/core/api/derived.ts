@@ -9,7 +9,7 @@ import type {
 } from '../../utils/types.js';
 
 import { computed, effect } from '../../utils/signals.js';
-import { cloneValue, snapshotValue } from '../../utils/snapshot.js';
+import { cloneValue, snapshotValue } from '../../utils/immutable.js';
 import { getInternal, registerInternal } from '../../utils/internal-access.js';
 import { INTERNAL } from '../../utils/internal-access.js';
 import { isIndexKey } from '../../utils/is-index-key.js';

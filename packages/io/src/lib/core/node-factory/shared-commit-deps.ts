@@ -13,7 +13,7 @@ import type {
 
 import { isLink } from '../../utils/link.js';
 import { isPlainObject } from '../../utils/plain-object.js';
-import { cloneValue } from '../../utils/snapshot.js';
+import { cloneValue } from '../../utils/immutable.js';
 import { isUnit } from '../../units/unit.js';
 import { applyScopeCommitDiff } from '../mutation/commit.js';
 import { createSnapshotCache } from '../snapshot/snapshot-cache.js';

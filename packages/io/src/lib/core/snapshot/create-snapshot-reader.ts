@@ -3,7 +3,7 @@ import type { ValueEpoch } from '../../utils/branded.js';
 import type { TreeNode } from '../tree/io-tree-types.js';
 import type { SnapshotCache } from './snapshot-cache.js';
 
-import { freezeRootShallow } from '../../utils/snapshot.js';
+import { freezeRootShallow } from '../../utils/immutable.js';
 import {
   CACHE_MISS,
   readCachedByVersion,

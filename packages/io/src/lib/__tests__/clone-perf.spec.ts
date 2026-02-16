@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDraft, finishDraft } from '../utils/cow.js';
-import { cloneValue, __testing } from '../utils/snapshot.js';
+import { cloneValue, __testing } from '../utils/immutable.js';
 
 type Fixture = {
   level1: {

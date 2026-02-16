@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cloneValue, deepFreeze } from '../utils/snapshot.js';
+import { cloneValue, deepFreeze } from '../utils/immutable.js';
 
 describe('snapshot: deepFreeze', () => {
   it('freezes symbol and non-enumerable branches', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyUpdate } from '../utils/updates.js';
-import { deepFreeze } from '../utils/snapshot.js';
+import { deepFreeze } from '../utils/immutable.js';
 import { relocate } from '../extensions/relocate.js';
 import { io } from '../core/api/io.js';
 import { derived } from '../core/api/derived.js';
