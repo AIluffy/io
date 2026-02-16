@@ -1,8 +1,10 @@
 import type { IoView } from './types.js';
+import type { IoInternal } from '../utils/internal/internal-access.js';
 
 import { getInternal } from '../utils/internal/internal-access.js';
 import { formatPath } from '../utils/debug/format-path.js';
 import { isIndexKey } from '../utils/internal/is-index-key.js';
+import { traversePath } from '../utils/internal/traverse-path.js';
 
 type ReadableNode<T> = {
   get(): T;
@@ -14,39 +16,23 @@ export function relocate<T>(
   root: unknown,
   path: ReadonlyArray<PropertyKey>,
 ): IoView<T> {
-  let node: unknown = root;
-  for (let i = 0; i < path.length; i += 1) {
-    const segment = path[i];
-    const internal = getInternal(node);
-    if (!internal)
-      throw new Error(
-        `relocate: path traversed into non-node at ${formatPath(path.slice(0, i))}`,
-      );
-
-    if (internal.kind === 'scope') {
-      if (typeof segment !== 'string' && typeof segment !== 'symbol') {
-        throw new Error(
-          `relocate: invalid scope key at ${formatPath(path.slice(0, i + 1))}`,
-        );
-      }
-      node = (node as Record<PropertyKey, unknown>)[segment];
-      continue;
-    }
-
-    if (internal.kind === 'array') {
-      if (typeof segment !== 'number' && !isIndexKey(segment)) {
-        throw new Error(
-          `relocate: invalid array index at ${formatPath(path.slice(0, i + 1))}`,
-        );
-      }
-      node = (node as Record<PropertyKey, unknown>)[segment];
-      continue;
-    }
-
-    throw new Error(
-      `relocate: path traversed into leaf at ${formatPath(path.slice(0, i))}`,
-    );
-  }
+  const node = traversePath<IoInternal>(root, path, {
+    getInternal,
+    isArraySegment: (segment) =>
+      typeof segment === 'number' || isIndexKey(segment),
+    onNonNode: (fullPath, index) => {
+      return `relocate: path traversed into non-node at ${formatPath(fullPath.slice(0, index))}`;
+    },
+    onInvalidScopeSegment: (fullPath, index) => {
+      return `relocate: invalid scope key at ${formatPath(fullPath.slice(0, index + 1))}`;
+    },
+    onInvalidArraySegment: (fullPath, index) => {
+      return `relocate: invalid array index at ${formatPath(fullPath.slice(0, index + 1))}`;
+    },
+    onLeaf: (fullPath, index) => {
+      return `relocate: path traversed into leaf at ${formatPath(fullPath.slice(0, index))}`;
+    },
+  });
 
   const internal = getInternal(node);
   if (!internal)

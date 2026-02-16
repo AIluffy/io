@@ -3,6 +3,7 @@ import type { IoPatch, IoUnit, IoUpdate } from '../types/types.js';
 import { notifyUpdate } from '../reactive/batch.js';
 import { emitError } from '../debug/debug.js';
 import { getInternal as getAnyInternal } from '../internal/internal-access.js';
+import { traversePath } from '../internal/traverse-path.js';
 import { createUpdate } from './update-merge.js';
 
 type InternalUnit = {
@@ -119,36 +120,26 @@ export function applyUpdate(
     throw new Error('applyUpdate: target is not an IO node');
 
   const resolveNode = (root: unknown, path: ReadonlyArray<PropertyKey>) => {
-    let current: unknown = root;
-    for (const segment of path) {
-      const internal = getInternal(current);
-      if (!internal)
-        throw new Error('applyUpdate: path traversed into non-node');
-
-      if (internal.kind === 'scope') {
-        // Allow symbol keys for scope
-        if (typeof segment !== 'string' && typeof segment !== 'symbol')
-          throw new Error('applyUpdate: invalid scope path segment');
-        current =
+    return traversePath<Internal>(root, path, {
+      getInternal,
+      resolveScopeChild: (node, internal, segment) => {
+        return (
           (typeof segment === 'string'
             ? (internal.getChild?.(segment) ?? internal.getUnit?.(segment))
-            : undefined) ??
-          (current as Record<PropertyKey, unknown>)[segment];
-        continue;
-      }
-
-      if (internal.kind === 'array') {
-        if (typeof segment !== 'number')
-          throw new Error('applyUpdate: invalid array path segment');
-        current =
-          internal.getChild?.(segment) ??
-          (current as Record<PropertyKey, unknown>)[segment];
-        continue;
-      }
-
-      throw new Error('applyUpdate: path traversed into leaf node');
-    }
-    return current;
+            : undefined) ?? (node as Record<PropertyKey, unknown>)[segment]
+        );
+      },
+      resolveArrayChild: (node, internal, segment) => {
+        return (
+          internal.getChild?.(segment as number) ??
+          (node as Record<PropertyKey, unknown>)[segment]
+        );
+      },
+      onNonNode: () => 'applyUpdate: path traversed into non-node',
+      onInvalidScopeSegment: () => 'applyUpdate: invalid scope path segment',
+      onInvalidArraySegment: () => 'applyUpdate: invalid array path segment',
+      onLeaf: () => 'applyUpdate: path traversed into leaf node',
+    });
   };
 
   type PatchHandlerMap = {

@@ -1,13 +1,9 @@
 import { isPlainObject } from './plain-object.js';
 
 const IMMUTABLE_ROOTS = new WeakSet<object>();
-let deepCloneCount = 0;
 const FAST_CLONE_UNSUPPORTED: unique symbol = Symbol.for(
   '@iostore/store/fastCloneUnsupported',
 );
-const REUSABLE_VISITED = new Set<object>();
-const REUSABLE_STACK: unknown[] = [];
-let deepFreezeWorkspaceInUse = false;
 
 function isImmutableRoot(value: object): boolean {
   return IMMUTABLE_ROOTS.has(value);
@@ -18,7 +14,6 @@ function markImmutableRoot(value: object): void {
 }
 
 function deepClone<T>(value: T): T {
-  deepCloneCount += 1;
   const maybeStructuredClone = (globalThis as Record<PropertyKey, unknown>)
     .structuredClone;
   if (typeof maybeStructuredClone === 'function') {
@@ -123,56 +118,36 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
     }
   }
 
-  let visited: Set<object>;
-  let stack: unknown[];
-  let usingReusableWorkspace = false;
-  if (!deepFreezeWorkspaceInUse) {
-    deepFreezeWorkspaceInUse = true;
-    usingReusableWorkspace = true;
-    visited = REUSABLE_VISITED;
-    stack = REUSABLE_STACK;
-    visited.clear();
-    stack.length = 0;
-  } else {
-    visited = new Set<object>();
-    stack = [];
-  }
+  const visited = new Set<object>();
+  const stack: unknown[] = [];
   stack.push(value);
 
-  try {
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (current === null || current === undefined) continue;
-      if (typeof current !== 'object') continue;
-      const obj = current as object;
-      if (visited.has(obj)) continue;
-      visited.add(obj);
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (current === null || current === undefined) continue;
+    if (typeof current !== 'object') continue;
+    const obj = current as object;
+    if (visited.has(obj)) continue;
+    visited.add(obj);
 
-      Object.freeze(obj);
+    Object.freeze(obj);
 
-      if (assumeDataProperties) {
-        for (const key of Reflect.ownKeys(obj)) {
-          const desc = Object.getOwnPropertyDescriptor(obj, key);
-          if (!desc || !('value' in desc)) continue;
-          stack.push(desc.value);
-        }
-        continue;
-      }
-
-      if (Array.isArray(obj)) {
-        for (const item of obj) stack.push(item);
-      }
+    if (assumeDataProperties) {
       for (const key of Reflect.ownKeys(obj)) {
         const desc = Object.getOwnPropertyDescriptor(obj, key);
-        if (!desc) continue;
-        if ('value' in desc) stack.push(desc.value);
+        if (!desc || !('value' in desc)) continue;
+        stack.push(desc.value);
       }
+      continue;
     }
-  } finally {
-    if (usingReusableWorkspace) {
-      stack.length = 0;
-      visited.clear();
-      deepFreezeWorkspaceInUse = false;
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) stack.push(item);
+    }
+    for (const key of Reflect.ownKeys(obj)) {
+      const desc = Object.getOwnPropertyDescriptor(obj, key);
+      if (!desc) continue;
+      if ('value' in desc) stack.push(desc.value);
     }
   }
   return value;
@@ -204,12 +179,3 @@ export function snapshotValue<T>(value: T, options?: { owned?: boolean }): T {
   if (options?.owned) return freezeOwned(value);
   return toImmutable(value);
 }
-
-export const immutableTesting = {
-  resetDeepCloneCount: () => {
-    deepCloneCount = 0;
-  },
-  getDeepCloneCount: () => deepCloneCount,
-};
-
-export const __testing = immutableTesting;

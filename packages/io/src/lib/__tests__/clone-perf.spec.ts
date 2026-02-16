@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDraft, finishDraft } from '../utils/immutable/cow.js';
-import { cloneValue, __testing } from '../utils/immutable/immutable.js';
+import { cloneValue } from '../utils/immutable/immutable.js';
+import { runWithDeepCloneCounter } from '../utils/immutable/__testing__.js';
 
 type Fixture = {
   level1: {
@@ -47,14 +48,14 @@ describe('clone strategy', () => {
     const initial = buildFixture();
     const before0 = cloneValue(initial);
 
-    __testing.resetDeepCloneCount();
-    let before = before0;
-    for (let i = 0; i < 200; i += 1) {
-      const draft = createDraft(before);
-      mutateDeep(draft, i);
-      before = finishDraft(draft);
-    }
-    const newDeepClones = __testing.getDeepCloneCount();
+    const { deepCloneCount: newDeepClones } = runWithDeepCloneCounter(() => {
+      let before = before0;
+      for (let i = 0; i < 200; i += 1) {
+        const draft = createDraft(before);
+        mutateDeep(draft, i);
+        before = finishDraft(draft);
+      }
+    });
 
     const counter = { deepClones: 0 };
     let legacyBefore = before0;

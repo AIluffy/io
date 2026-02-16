@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest';
 import { createDraft, finishDraft } from '../utils/immutable/cow.js';
-import { cloneValue, __testing } from '../utils/immutable/immutable.js';
+import { cloneValue } from '../utils/immutable/immutable.js';
 
 import { io } from '../core/api/io.js';
 
@@ -58,7 +58,6 @@ describe('clone performance', () => {
 
   bench('new: COW draft (structural sharing)', () => {
     const before0 = cloneValue(buildFixture());
-    __testing.resetDeepCloneCount();
     let before = before0;
     for (let i = 0; i < 200; i += 1) {
       const draft = createDraft(before);

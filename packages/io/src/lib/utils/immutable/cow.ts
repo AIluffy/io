@@ -77,6 +77,18 @@ const arrayMutators = new Set<PropertyKey>([
   'unshift',
 ]);
 
+function immutablizeArgs(prop: PropertyKey, args: unknown[]): unknown[] {
+  switch (prop) {
+    case 'push':
+    case 'unshift':
+      return args.map(toImmutableIfNeeded);
+    case 'splice':
+      return [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)];
+    default:
+      return args;
+  }
+}
+
 function createProxy(base: object): object {
   const target: object = Array.isArray(base) ? [] : {};
   Object.assign(target as object, base);
@@ -105,12 +117,7 @@ function createProxy(base: object): object {
           const method = Reflect.get(copy as object, prop);
           if (typeof method !== 'function')
             throw new Error('COW: invalid array mutator');
-          const immutableArgs =
-            prop === 'push' || prop === 'unshift'
-              ? args.map(toImmutableIfNeeded)
-              : prop === 'splice'
-                ? [args[0], args[1], ...args.slice(2).map(toImmutableIfNeeded)]
-                : args;
+          const immutableArgs = immutablizeArgs(prop, args);
           return (method as (...a: unknown[]) => unknown).apply(
             copy,
             immutableArgs,

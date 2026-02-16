@@ -1,4 +1,5 @@
 import type { IoUnsubscribe } from '../types/types.js';
+import { SwapBuffer } from './swap-buffer.js';
 
 type Dependency = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;
@@ -56,26 +57,22 @@ class DependencySet {
 }
 
 let effectFlushQueued = false;
-let scheduledEffects = new Set<EffectImpl>();
-let flushingEffects = new Set<EffectImpl>();
+const scheduledEffects = new SwapBuffer<EffectImpl, EffectImpl>();
 
 function scheduleEffectRun(effect: EffectImpl): void {
   if (effect.scheduled) return;
   effect.scheduled = true;
-  scheduledEffects.add(effect);
+  scheduledEffects.set(effect, effect);
   if (effectFlushQueued) return;
   effectFlushQueued = true;
   queueMicrotask(() => {
     effectFlushQueued = false;
-    const executing = scheduledEffects;
-    scheduledEffects = flushingEffects;
-    flushingEffects = executing;
-    scheduledEffects.clear();
-    executing.forEach((e) => {
-      e.scheduled = false;
-      if (!e.disposed) e.run();
+    scheduledEffects.drain((executing) => {
+      executing.forEach((e) => {
+        e.scheduled = false;
+        if (!e.disposed) e.run();
+      });
     });
-    executing.clear();
   });
 }
 
