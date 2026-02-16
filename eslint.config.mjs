@@ -38,6 +38,10 @@ export default [
               onlyDependOnLibsWithTags: ['scope:io', 'scope:io-react'],
             },
             {
+              sourceTag: 'scope:io-lynx',
+              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-lynx'],
+            },
+            {
               sourceTag: 'scope:io-devtools-react',
               onlyDependOnLibsWithTags: [
                 'scope:io',

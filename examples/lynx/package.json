@@ -1,0 +1,33 @@
+{
+  "name": "io-example-lynx",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rspeedy dev",
+    "build": "rspeedy build",
+    "preview": "rspeedy preview"
+  },
+  "dependencies": {
+    "@iostore/store": "*",
+    "@iostore/lynx": "*",
+    "@lynx-js/react": "*",
+    "@lynx-js/types": "*"
+  },
+  "devDependencies": {
+    "@lynx-js/react-rsbuild-plugin": "*",
+    "@lynx-js/rspeedy": "*",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": ["scope:io-example"],
+    "targets": {
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "examples/lynx",
+          "command": "tsc --noEmit"
+        }
+      }
+    }
+  }
+}

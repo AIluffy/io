@@ -1,0 +1,61 @@
+---
+title: Lynx
+description: Connect IO with useIO in ReactLynx.
+sidebar:
+  order: 3
+---
+
+The npm package `@iostore/lynx` provides `useIO` for subscribing to IO sources in ReactLynx.
+
+## Basic Usage
+
+```tsx
+import { root } from '@lynx-js/react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/lynx';
+
+const count = io(0);
+
+function Counter() {
+  const value = useIO(count);
+  return (
+    <view>
+      <text>{value}</text>
+      <view bindtap={() => count.set((v) => v + 1)}>
+        <text>+1</text>
+      </view>
+    </view>
+  );
+}
+
+root.render(<Counter />);
+```
+
+## TypeScript Setup
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react"
+  }
+}
+```
+
+## Scheduling
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## Notes
+
+- Use Lynx intrinsic elements and events: `view` / `text` / `input` with `bindtap` / `bindinput`.
+- Use `root.render(...)` as the app entry instead of web `createRoot`.
+
+## Next Steps
+
+- Combine with [Persist](/en/behaviors/persist/).
+- Read [Lynx Quick Start](https://lynxjs.org/guide/start/quick-start.html).

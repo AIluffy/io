@@ -1,6 +1,6 @@
 # Io
 
-细粒度响应式状态管理库，支持 React、Vue、Svelte、Solid。
+细粒度响应式状态管理库，支持 React、Lynx、Vue、Svelte、Solid。
 
 ## 特性
 
@@ -19,6 +19,7 @@ npm i @iostore/store
 
 ```bash
 npm i @iostore/react
+npm i @iostore/lynx
 npm i @iostore/vue
 npm i @iostore/svelte
 npm i @iostore/solid
@@ -57,6 +58,13 @@ import { useIO } from '@iostore/react';
 const value = useIO(countUnit);
 ```
 
+Lynx:
+
+```tsx
+import { useIO } from '@iostore/lynx';
+const value = useIO(countUnit);
+```
+
 Vue:
 
 ```ts
@@ -84,6 +92,7 @@ const value = useIO(countUnit);
 
 - `@iostore/store`
 - `@iostore/react`
+- `@iostore/lynx`
 - `@iostore/vue`
 - `@iostore/svelte`
 - `@iostore/solid`

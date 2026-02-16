@@ -1,0 +1,61 @@
+---
+title: Lynx
+description: 使用 useIO Hook 接入 Lynx（ReactLynx）。
+sidebar:
+  order: 3
+---
+
+npm 包 `@iostore/lynx` 提供 `useIO`，用于在 ReactLynx 中订阅 IO 数据源。
+
+## 基础用法
+
+```tsx
+import { root } from '@lynx-js/react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/lynx';
+
+const count = io(0);
+
+function Counter() {
+  const value = useIO(count);
+  return (
+    <view>
+      <text>{value}</text>
+      <view bindtap={() => count.set((v) => v + 1)}>
+        <text>+1</text>
+      </view>
+    </view>
+  );
+}
+
+root.render(<Counter />);
+```
+
+## TypeScript 配置
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react"
+  }
+}
+```
+
+## 调度策略
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## 注意事项
+
+- 使用 Lynx 原生标签和事件：`view` / `text` / `input` 与 `bindtap` / `bindinput`。
+- 应用入口使用 `root.render(...)`，而不是 Web 的 `createRoot`。
+
+## 下一步
+
+- 结合 [Persist](/behaviors/persist/) 做持久化。
+- 阅读 [Lynx 快速开始](https://lynxjs.org/guide/start/quick-start.html)。

@@ -159,10 +159,12 @@ Projects use Nx tags for dependency constraints:
 
 <!-- nx configuration end-->
 
-
 ## Skills
+
 A skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.
+
 ### Available skills
+
 - doc: Use when the task involves reading, creating, or editing `.docx` documents, especially when formatting or layout fidelity matters; prefer `python-docx` plus the bundled `scripts/render_docx.py` for visual checks. (file: /Users/zhangxueai/.codex/skills/doc/SKILL.md)
 - gh-address-comments: Help address review/issue comments on the open GitHub PR for the current branch using gh CLI; verify gh auth first and prompt the user to authenticate if not logged in. (file: /Users/zhangxueai/.codex/skills/gh-address-comments/SKILL.md)
 - gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions; use `gh` to inspect checks and logs, summarize failure context, draft a fix plan, and implement only after explicit approval. Treat external providers (for example Buildkite) as out of scope and report only the details URL. (file: /Users/zhangxueai/.codex/skills/gh-fix-ci/SKILL.md)
@@ -170,16 +172,18 @@ A skill is a set of local instructions to follow that is stored in a `SKILL.md` 
 - yeet: Use only when the user explicitly asks to stage, commit, push, and open a GitHub pull request in one flow using the GitHub CLI (`gh`). (file: /Users/zhangxueai/.codex/skills/yeet/SKILL.md)
 - skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/zhangxueai/.codex/skills/.system/skill-creator/SKILL.md)
 - skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/zhangxueai/.codex/skills/.system/skill-installer/SKILL.md)
+
 ### How to use skills
+
 - Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.
 - Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.
 - Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.
 - How to use a skill (progressive disclosure):
-  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.
-  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.
-  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.
-  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.
-  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.
+  1. After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.
+  2. When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.
+  3. If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.
+  4. If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.
+  5. If `assets/` or templates exist, reuse them instead of recreating from scratch.
 - Coordination and sequencing:
   - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.
   - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.
@@ -188,3 +192,10 @@ A skill is a set of local instructions to follow that is stored in a `SKILL.md` 
   - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.
   - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.
 - Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.
+
+## Read in Advance
+
+Read docs below in advance to help you understand the library or frameworks this project depends on.
+
+- Lynx: [llms.txt](https://lynxjs.org/llms.txt).
+  While dealing with a Lynx task, an agent **MUST** read this doc because it is an entrypoint of all available docs about Lynx.

@@ -27,7 +27,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::note
 如果你的项目已经在用框架，请安装对应适配包：
-`@iostore/react`、`@iostore/solid`、`@iostore/vue` 或 `@iostore/svelte`。
+`@iostore/react`、`@iostore/lynx`、`@iostore/solid`、`@iostore/vue` 或 `@iostore/svelte`。
 :::
 
 ## 创建状态
@@ -94,6 +94,27 @@ batch(() => {
     ```
 
   </TabItem>
+  <TabItem label="Lynx">
+    ```tsx
+    import { root } from '@lynx-js/react';
+    import { io } from '@iostore/store';
+    import { useIO } from '@iostore/lynx';
+
+    const count = io(0);
+
+    function Counter() {
+      const value = useIO(count);
+      return (
+        <view bindtap={() => count.set((v) => v + 1)}>
+          <text>{value}</text>
+        </view>
+      );
+    }
+
+    root.render(<Counter />);
+    ```
+
+  </TabItem>
   <TabItem label="Vue">
     ```vue
     <script setup lang="ts">
@@ -154,4 +175,4 @@ batch(() => {
 
 - 理解 [核心概念](/core-concepts/units-scopes/)。
 - 学习 [派生值](/guides/derived/) 与 [订阅](/guides/subscriptions/)。
-- 查看 [React](/integrations/react/)、[Solid](/integrations/solid/) 或 [Vue](/integrations/vue/) 接入方式。
+- 查看 [React](/integrations/react/)、[Lynx](/integrations/lynx/)、[Solid](/integrations/solid/) 或 [Vue](/integrations/vue/) 接入方式。
