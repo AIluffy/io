@@ -59,14 +59,6 @@ export type InternalDeps = {
   ) => unknown;
   registerInternal: (obj: object, internal: TreeInternal) => void;
   INTERNAL: symbol;
-  isUnit: (value: unknown) => boolean;
-  createUnit: (value: unknown) => unknown;
-  emitError: (
-    target: unknown,
-    error: unknown,
-    path: IoPath,
-    operation: IoMutationOp,
-  ) => void;
 };
 
 export type LifecycleDeps = {
@@ -80,29 +72,17 @@ export type LifecycleDeps = {
   detachChildFromArray: (state: TreeArrayState, child: TreeNode) => void;
 };
 
-export type UtilsLayer = {
-  isPlainObject: CommitDeps['isPlainObject'];
-  cloneValue: CommitDeps['cloneValue'];
-  createDraft: CommitDeps['createDraft'];
-  finishDraft: CommitDeps['finishDraft'];
-  createUpdate: CommitDeps['createUpdate'];
-  isUnit: InternalDeps['isUnit'];
-  createUnit: InternalDeps['createUnit'];
-  emitError: InternalDeps['emitError'];
-  trackRead: SubscriptionDeps['trackRead'];
-};
-
-export type CommitLayer = {
-  applyScopeCommitDiff: CommitDeps['applyScopeCommitDiff'];
-  applyArrayCommitDiff: CommitDeps['applyArrayCommitDiff'];
-};
-
 export type TreeDeps = {
-  utils: UtilsLayer;
-  commit: CommitLayer;
+  emitError: (
+    target: unknown,
+    error: unknown,
+    path: IoPath,
+    operation: IoMutationOp,
+  ) => void;
+  trackRead: SubscriptionDeps['trackRead'];
   snapshots: SnapshotDeps;
   subscriptions: Omit<SubscriptionDeps, keyof SnapshotDeps | 'trackRead'>;
   registry: RegistryDeps;
-  internals: Omit<InternalDeps, 'isUnit' | 'createUnit' | 'emitError'>;
+  internals: InternalDeps;
   lifecycle: LifecycleDeps;
 };

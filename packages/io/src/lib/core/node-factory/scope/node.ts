@@ -80,7 +80,7 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
     subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
   };
   const get = (): Record<string, unknown> => {
-    deps.utils.trackRead(scopeNode as SubscribableNode);
+    deps.trackRead(scopeNode as SubscribableNode);
     return snapshot();
   };
 

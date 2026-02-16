@@ -3,7 +3,6 @@ import type {
   InternalDeps,
   LifecycleDeps,
   SubscriptionDeps,
-  UtilsLayer,
 } from '../types.js';
 import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
@@ -11,7 +10,7 @@ import type { TreeCommand } from './command.js';
 
 type ScopeMutateCommandDeps = {
   path: NodePath;
-  isUnit: UtilsLayer['isUnit'];
+  isUnit: (value: unknown) => boolean;
   requireInternalOfKind: InternalDeps['requireInternalOfKind'];
   detachChildFromScope: LifecycleDeps['detachChildFromScope'];
   unregisterSubtree: (path: NodePath, node: TreeNode) => void;

@@ -61,7 +61,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
   };
   const get = (): unknown[] => {
-    deps.utils.trackRead(node as SubscribableNode);
+    deps.trackRead(node as SubscribableNode);
     return snapshot();
   };
   const proxy = new Proxy(array as TreeNode & object, {

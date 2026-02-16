@@ -7,6 +7,7 @@ import type {
 } from '../../tree/io-tree-types.js';
 
 import { createArrayExecutor } from '../../commands/executor.js';
+import { applyArrayCommitDiff } from '../../mutation/commit.js';
 import { createCommitFactory } from '../commit-factory.js';
 
 type CreateArrayCommitOptions = {
@@ -30,7 +31,7 @@ export function createArrayCommit(
   return createCommitFactory<TreeArrayState, unknown[]>({
     ...options,
     executorFactory: createArrayExecutor,
-    applyDiff: (state, before, next, commitDeps, deps) =>
-      deps.commit.applyArrayCommitDiff(state, before, next, commitDeps),
+    applyDiff: (state, before, next, commitDeps) =>
+      applyArrayCommitDiff(state, before, next, commitDeps),
   });
 }

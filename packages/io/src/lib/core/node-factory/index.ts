@@ -1,4 +1,7 @@
 import { getLinkTarget, isLink } from '../../utils/link.js';
+import { isPlainObject } from '../../utils/plain-object.js';
+import { cloneValue } from '../../utils/snapshot.js';
+import { createUnit } from '../../units/unit.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
 import type { TreeDeps } from '../types.js';
@@ -30,7 +33,7 @@ export function createNodeFactory(treeDeps: TreeDeps) {
       const target = getLinkTarget(value) as TreeNode;
       return target.snapshot();
     }
-    return treeDeps.utils.cloneValue(value);
+    return cloneValue(value);
   };
 
   /**
@@ -41,9 +44,7 @@ export function createNodeFactory(treeDeps: TreeDeps) {
     path: NodePath,
     initial: unknown,
   ): TreeNode => {
-    const unit = treeDeps.utils.createUnit(
-      treeDeps.utils.cloneValue(initial),
-    ) as TreeNode;
+    const unit = createUnit(cloneValue(initial)) as TreeNode;
     treeDeps.registry.registerSubtree(ctx, path, unit);
     return unit;
   };
@@ -150,7 +151,7 @@ export function createNodeFactory(treeDeps: TreeDeps) {
       }
     }
     if (Array.isArray(initial)) return createArrayNode(ctx, path, initial);
-    if (treeDeps.utils.isPlainObject(initial))
+    if (isPlainObject(initial))
       return createScopeNode(ctx, path, initial as Record<string, unknown>);
     if (initial !== null && typeof initial === 'object') {
       throw new TypeError(

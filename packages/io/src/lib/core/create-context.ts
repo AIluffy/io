@@ -7,8 +7,6 @@ import type {
 import type { TreeArrayState, TreeInternal, TreeNode, TreeScopeState } from './tree/io-tree-types.js';
 import type { TreeContext } from './tree/io-tree-types.js';
 
-import { createUnit, isUnit } from '../units/unit.js';
-import { createDraft, finishDraft } from '../utils/cow.js';
 import { emitError } from '../utils/debug.js';
 import {
   INTERNAL,
@@ -16,11 +14,7 @@ import {
   registerInternal,
   requireInternalOfKind,
 } from '../utils/internal-access.js';
-import { isPlainObject } from '../utils/plain-object.js';
 import { trackRead } from '../utils/signals.js';
-import { cloneValue } from '../utils/snapshot.js';
-import { createUpdate } from '../utils/updates.js';
-import { applyArrayCommitDiff, applyScopeCommitDiff } from './mutation/commit.js';
 import { createSubscriptions } from './mutation/subscriptions.js';
 import { createNodeFactory } from './node-factory/index.js';
 import { createArraySnapshotReader } from './snapshot/snapshot-array.js';
@@ -98,21 +92,8 @@ function createTreeDeps(ctx: TreeContext): TreeDeps {
     getAnyInternal(value) as TreeInternal | undefined;
 
   return {
-    utils: {
-      isPlainObject,
-      isUnit,
-      createUnit,
-      cloneValue,
-      emitError,
-      createDraft,
-      finishDraft,
-      createUpdate,
-      trackRead: subscriptions.trackRead,
-    },
-    commit: {
-      applyScopeCommitDiff,
-      applyArrayCommitDiff,
-    },
+    emitError,
+    trackRead: subscriptions.trackRead,
     snapshots,
     subscriptions: {
       emitScopeValue: subscriptions.emitScopeValue,

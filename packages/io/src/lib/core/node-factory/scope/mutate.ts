@@ -1,5 +1,6 @@
 import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
+import { isUnit } from '../../../units/unit.js';
 import type { TreeDeps } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
@@ -34,7 +35,7 @@ export function createScopeMutations(
   const { deps, ctx, path, state, createTreeNode, getNode } = options;
   const commandDeps = {
     path,
-    isUnit: deps.utils.isUnit,
+    isUnit,
     requireInternalOfKind: deps.internals.requireInternalOfKind,
     detachChildFromScope: deps.lifecycle.detachChildFromScope,
     unregisterSubtree: (absPath: NodePath, node: TreeNode) =>

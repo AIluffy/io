@@ -12,9 +12,13 @@ import type {
 } from '../tree/io-tree-types.js';
 
 import { isLink } from '../../utils/link.js';
+import { isPlainObject } from '../../utils/plain-object.js';
+import { cloneValue } from '../../utils/snapshot.js';
+import { isUnit } from '../../units/unit.js';
+import { applyScopeCommitDiff } from '../mutation/commit.js';
 import { createSnapshotCache } from '../snapshot/snapshot-cache.js';
 
-type ScopeCommitDiffDeps = Parameters<TreeDeps['commit']['applyScopeCommitDiff']>[3];
+type ScopeCommitDiffDeps = Parameters<typeof applyScopeCommitDiff>[3];
 
 export type SharedCommitDeps = Pick<
   ScopeCommitDiffDeps,
@@ -62,8 +66,8 @@ export function createSharedCommitDeps(
     );
 
   return {
-    isPlainObject: deps.utils.isPlainObject,
-    isUnit: (node: unknown) => deps.utils.isUnit(node),
+    isPlainObject,
+    isUnit: (node: unknown) => isUnit(node),
     isLink,
     getInternalKind: (node: unknown) =>
       deps.internals.getInternal(node as TreeNode)?.kind,
@@ -140,6 +144,6 @@ export function createSharedCommitDeps(
         state as TreeScopeState | TreeArrayState,
         segment,
       ),
-    cloneValue: deps.utils.cloneValue,
+    cloneValue,
   };
 }

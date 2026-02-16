@@ -9,19 +9,14 @@ import type {
   UnitInternal,
 } from '../tree/io-tree-types.js';
 import type { SnapshotCache } from './snapshot-cache.js';
+import type { GetNodeValue } from './create-snapshot-reader.js';
 
-import { freezeRootShallow, snapshotValue } from '../../utils/snapshot.js';
-import {
-  CACHE_MISS,
-  readCachedByVersion,
-  updateCachedByVersion,
-} from '../../container/cache.js';
+import { snapshotValue } from '../../utils/snapshot.js';
 import { getInternal as getAnyInternal } from '../../utils/internal-access.js';
-import { createSnapshotCache } from './snapshot-cache.js';
+import { createSnapshotReader } from './create-snapshot-reader.js';
 
 export type { SnapshotCache } from './snapshot-cache.js';
-
-export type GetNodeValue = (node: TreeNode, cache: SnapshotCache) => unknown;
+export type { GetNodeValue } from './create-snapshot-reader.js';
 
 type ScopeSnapshotReader = (
   state: TreeScopeState,
@@ -79,58 +74,43 @@ export function createNodeValueReader(deps: {
 export function createScopeSnapshotReader(deps: {
   getNodeValue: GetNodeValue;
 }): ScopeSnapshotReader {
-  return (
-    state: TreeScopeState,
-    cache?: SnapshotCache,
-  ): Record<string, unknown> => {
-    const snapshot = readCachedByVersion(state.snapshotCache, state.valueEpoch);
-    if (snapshot !== CACHE_MISS) {
-      return snapshot as Record<string, unknown>;
-    }
-
-    const local = cache ?? createSnapshotCache();
-    const cached = local.get(state.node as object);
-    if (cached) return cached as Record<string, unknown>;
-
-    const prev = state.snapshotCache.hasValue
-      ? (state.snapshotCache.value as Record<PropertyKey, unknown>)
-      : undefined;
-
-    if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
-      local.set(state.node as object, prev);
-      return prev;
-    }
-
-    if (!prev || state.dirtyStructure) {
+  const readSnapshot = createSnapshotReader<
+    TreeScopeState,
+    Record<PropertyKey, unknown>
+  >({
+    hasDirtySegments: (state) => state.dirtyKeys.size > 0,
+    buildFull: (state, getNodeValue, cache) => {
       const base: Record<PropertyKey, unknown> = {};
-      local.set(state.node as object, base);
+      cache.set(state.node as object, base);
       for (const key of state.children.keys()) {
         const node = state.children.get(key);
         if (!node) continue;
-        base[key] = deps.getNodeValue(node, local);
+        base[key] = getNodeValue(node, cache);
       }
+      return base;
+    },
+    buildIncremental: (state, prev, getNodeValue, cache) => {
+      const base: Record<PropertyKey, unknown> = {};
+      cache.set(state.node as object, base);
+      for (const key of state.children.keys()) {
+        const node = state.children.get(key);
+        if (!node) continue;
+        if (state.dirtyKeys.has(key)) {
+          base[key] = getNodeValue(node, cache);
+        } else {
+          base[key] = prev[key];
+        }
+      }
+      return base;
+    },
+    clearDirty: (state) => {
       state.dirtyKeys.clear();
-      state.dirtyStructure = false;
-      const value = freezeRootShallow(base) as Record<string, unknown>;
-      local.set(state.node as object, value);
-      return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
-    }
+    },
+  });
 
-    const base: Record<PropertyKey, unknown> = {};
-    local.set(state.node as object, base);
-    for (const key of state.children.keys()) {
-      const node = state.children.get(key);
-      if (!node) continue;
-      if (state.dirtyKeys.has(key)) {
-        base[key] = deps.getNodeValue(node, local);
-      } else {
-        base[key] = prev[key];
-      }
-    }
-    state.dirtyKeys.clear();
-    state.dirtyStructure = false;
-    const value = freezeRootShallow(base) as Record<string, unknown>;
-    local.set(state.node as object, value);
-    return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
-  };
+  return (
+    state: TreeScopeState,
+    cache?: SnapshotCache,
+  ): Record<string, unknown> =>
+    readSnapshot(state, deps.getNodeValue, cache) as Record<string, unknown>;
 }

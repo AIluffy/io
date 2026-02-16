@@ -7,6 +7,7 @@ import type {
 } from '../../tree/io-tree-types.js';
 
 import { createScopeExecutor } from '../../commands/executor.js';
+import { applyScopeCommitDiff } from '../../mutation/commit.js';
 import { createCommitFactory } from '../commit-factory.js';
 
 type CreateScopeCommitOptions = {
@@ -36,8 +37,8 @@ export function createScopeCommit(
           throw new Error(`ioTree scope: unknown key ${String(key)}`);
       }
     },
-    applyDiff: (state, before, next, commitDeps, deps) =>
-      deps.commit.applyScopeCommitDiff(
+    applyDiff: (state, before, next, commitDeps) =>
+      applyScopeCommitDiff(
         state,
         before,
         next as Record<PropertyKey, unknown>,

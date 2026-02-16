@@ -1,11 +1,20 @@
 import { isLink } from '../../../utils/link.js';
 import type { IoPatch } from '../../../utils/types.js';
+import { createUpdate } from '../../../utils/updates.js';
+import { cloneValue } from '../../../utils/snapshot.js';
+import { isUnit } from '../../../units/unit.js';
 
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { markDirtyIndex } from '../../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../../utils/branded.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { SnapshotCache } from '../../snapshot/snapshot-cache.js';
+
+function isUnitCandidate(node: unknown): boolean {
+  if (isUnit(node)) return true;
+  if (typeof node !== 'object' || node === null) return false;
+  return Reflect.get(node as object, 'kind') === 'unit';
+}
 
 export function createArrayIndexMutation(
   options: CreateArrayMutationsOptions,
@@ -17,6 +26,12 @@ export function createArrayIndexMutation(
   ) => void;
 } {
   const { deps, ctx, path, state, createTreeNode, getNode } = options;
+  const emitError = (
+    'emitError' in deps && typeof deps.emitError === 'function'
+      ? deps.emitError
+      : (deps as { utils?: { emitError?: typeof deps.emitError } }).utils
+          ?.emitError
+  ) as typeof deps.emitError;
   const postSetIndex = (
     index: number,
     baseRevision: number,
@@ -29,7 +44,7 @@ export function createArrayIndexMutation(
     if (flags.emitUpdate && patch) {
       deps.subscriptions.emitArrayUpdate(
         state,
-        deps.utils.createUpdate(baseRevision, state.revision, [patch]),
+        createUpdate(baseRevision, state.revision, [patch]),
       );
     }
     if (flags.emitValue) deps.subscriptions.emitArrayValue(state);
@@ -79,8 +94,8 @@ export function createArrayIndexMutation(
             ? {
                 op: 'set',
                 path: [index],
-                prev: deps.utils.cloneValue(prevValue),
-                next: deps.utils.cloneValue(nextValue),
+                prev: cloneValue(prevValue),
+                next: cloneValue(nextValue),
               }
             : null,
           { emitUpdate: shouldEmitUpdate, emitValue },
@@ -88,7 +103,7 @@ export function createArrayIndexMutation(
         return;
       }
 
-      if (deps.utils.isUnit(existing)) {
+      if (isUnitCandidate(existing)) {
         const internal = deps.internals.getInternal(existing);
         if (!internal || internal.kind !== 'unit')
           throw new Error('ioTree array: invalid unit internal');
@@ -103,8 +118,8 @@ export function createArrayIndexMutation(
             ? {
                 op: 'set',
                 path: [index],
-                prev: deps.utils.cloneValue(before),
-                next: deps.utils.cloneValue(after),
+                prev: cloneValue(before),
+                next: cloneValue(after),
               }
             : null,
           { emitUpdate: shouldEmitUpdate, emitValue },
@@ -125,14 +140,14 @@ export function createArrayIndexMutation(
           ? {
               op: 'set',
               path: [index],
-              prev: deps.utils.cloneValue(prevValue),
-              next: deps.utils.cloneValue(next),
+              prev: cloneValue(prevValue),
+              next: cloneValue(next),
             }
           : null,
         { emitUpdate: shouldEmitUpdate, emitValue },
       );
     } catch (error) {
-      deps.utils.emitError(getNode(), error, [...path, index], 'set');
+      emitError(getNode(), error, [...path, index], 'set');
       throw error;
     }
   };

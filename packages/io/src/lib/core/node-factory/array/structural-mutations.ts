@@ -8,6 +8,7 @@ import {
 } from '../../commands/array-commands.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
+import { cloneValue } from '../../../utils/snapshot.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
 import { createExecutorDeps } from '../executor-deps.js';
 
@@ -96,7 +97,7 @@ export function createArrayStructuralMutations(
     unregisterSubtree: (absPath, node) =>
       deps.registry.unregisterSubtree(ctx, absPath, node),
     getNodeValue: deps.snapshots.getNodeValue,
-    cloneValue: deps.utils.cloneValue,
+    cloneValue,
     resolvePatchValue,
     snapshot,
     rebuildMapping,
