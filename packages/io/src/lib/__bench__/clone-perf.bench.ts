@@ -4,6 +4,12 @@ import { cloneValue } from '../utils/immutable/immutable.js';
 
 import { io } from '../core/api/io.js';
 
+const BENCH_OPTIONS = {
+  time: 2_000,
+  warmupTime: 500,
+  warmupIterations: 10,
+} as const;
+
 type Fixture = {
   level1: {
     level2: {
@@ -54,7 +60,7 @@ describe('clone performance', () => {
       mutateDeep(draft, i);
       before = draft;
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('new: COW draft (structural sharing)', () => {
     const before0 = cloneValue(buildFixture());
@@ -64,7 +70,7 @@ describe('clone performance', () => {
       mutateDeep(draft, i);
       before = finishDraft(draft);
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('snapshot perf (tree reuse)', () => {
@@ -85,5 +91,5 @@ describe('snapshot perf (tree reuse)', () => {
       throw new Error('expected unchanged branch to reuse');
     if (s1.user.profile !== s2.user.profile)
       throw new Error('expected unchanged leaf to reuse');
-  });
+  }, BENCH_OPTIONS);
 });

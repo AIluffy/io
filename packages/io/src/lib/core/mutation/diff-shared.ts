@@ -4,6 +4,7 @@ import type { ValueEpoch } from '../../utils/types/branded.js';
 
 export type PathSegment = PropertyKey;
 export type NodePath = readonly PathSegment[];
+export type PathStack = PathSegment[];
 
 export type ScopeStateLike<TNode> = {
   children: Map<PropertyKey, TNode>;
@@ -88,7 +89,7 @@ export type ReplaceChildFn<
   segment: PathSegment,
   node: TNode,
   nextValue: unknown,
-  relPath: PathSegment[],
+  pathStack: PathStack,
   patchPrev: unknown,
   getPatchNext: (replaced: TNode) => unknown,
 ) => boolean;
@@ -103,7 +104,7 @@ export type DiffChildFn<
   node: TNode,
   prev: unknown,
   nextValue: unknown,
-  relPath: PathSegment[],
+  pathStack: PathStack,
   markParentDirty: boolean,
 ) => boolean | undefined;
 
@@ -123,22 +124,20 @@ export function createReplaceChild<
     segment,
     node,
     nextValue,
-    relPath,
+    pathStack,
     patchPrev,
     getPatchNext,
   ) => {
     if (typeof segment === 'string') {
+      const absPath = [...parentState.path, segment] as NodePath;
       deps.detachChildFromScope(parentState as TScopeState, segment);
-      deps.unregisterSubtree([...parentState.path, segment], node);
-      const replaced = deps.createTreeNode(
-        [...parentState.path, segment],
-        nextValue,
-      );
+      deps.unregisterSubtree(absPath, node);
+      const replaced = deps.createTreeNode(absPath, nextValue);
       (parentState as TScopeState).children.set(segment, replaced);
       deps.attachChildToScope(parentState as TScopeState, segment, replaced);
       patches.push({
         op: 'set',
-        path: relPath,
+        path: pathStack.slice(),
         prev: deps.cloneValue(patchPrev),
         next: deps.cloneValue(getPatchNext(replaced)),
       });
@@ -147,14 +146,15 @@ export function createReplaceChild<
 
     if (typeof segment !== 'number')
       throw new Error('ioTree array: invalid segment');
+    const absPath = [...parentState.path, segment] as NodePath;
     deps.detachChildFromArray(parentState as TArrayState, node);
-    deps.unregisterSubtree([...parentState.path, segment], node);
-    const replaced = deps.createTreeNode([...parentState.path, segment], nextValue);
+    deps.unregisterSubtree(absPath, node);
+    const replaced = deps.createTreeNode(absPath, nextValue);
     (parentState as TArrayState).children[segment] = replaced;
     deps.attachChildToArray(parentState as TArrayState, replaced);
     patches.push({
       op: 'set',
-      path: relPath,
+      path: pathStack.slice(),
       prev: deps.cloneValue(patchPrev),
       next: deps.cloneValue(getPatchNext(replaced)),
     });
@@ -178,7 +178,7 @@ export function createApplyNodeDiff<
     node: TNode,
     prev: unknown,
     nextValue: unknown,
-    relPath: PathSegment[],
+    pathStack: PathStack,
   ): boolean => {
     const nestedChanged = diffChild(
       parentState,
@@ -186,7 +186,7 @@ export function createApplyNodeDiff<
       node,
       prev,
       nextValue,
-      relPath,
+      pathStack,
       false,
     );
     if (nestedChanged !== undefined) return nestedChanged;
@@ -198,7 +198,7 @@ export function createApplyNodeDiff<
         segment,
         node,
         nextValue,
-        relPath,
+        pathStack,
         prevValue,
         (replaced) => deps.getNodeValue(replaced),
       );
@@ -210,7 +210,7 @@ export function createApplyNodeDiff<
       deps.setUnitValue(node, nextValue);
       patches.push({
         op: 'set',
-        path: relPath,
+        path: pathStack.slice(),
         prev: deps.cloneValue(prev),
         next: deps.cloneValue(nextValue),
       });
@@ -223,7 +223,7 @@ export function createApplyNodeDiff<
       segment,
       node,
       nextValue,
-      relPath,
+      pathStack,
       prev,
       () => nextValue,
     );

@@ -5,6 +5,8 @@ type DraftState = {
   copy: object | undefined;
   modified: boolean;
   drafts: Map<PropertyKey, unknown>;
+  lastDraftKey: PropertyKey | undefined;
+  lastDraftValue: unknown;
   finalized: boolean;
 };
 
@@ -91,13 +93,14 @@ function immutablizeArgs(prop: PropertyKey, args: unknown[]): unknown[] {
 
 function createProxy(base: object): object {
   const target: object = Array.isArray(base) ? [] : {};
-  Object.assign(target as object, base);
 
   const state: DraftState = {
     base,
     copy: undefined,
     modified: false,
     drafts: new Map(),
+    lastDraftKey: undefined,
+    lastDraftValue: undefined,
     finalized: false,
   };
 
@@ -128,11 +131,19 @@ function createProxy(base: object): object {
       const value = source[prop];
       if (!isDraftable(value)) return value;
 
+      if (state.lastDraftKey === prop) return state.lastDraftValue;
+
       const existing = state.drafts.get(prop);
-      if (existing) return existing;
+      if (existing) {
+        state.lastDraftKey = prop;
+        state.lastDraftValue = existing;
+        return existing;
+      }
 
       const childDraft = createDraft(value);
       state.drafts.set(prop, childDraft);
+      state.lastDraftKey = prop;
+      state.lastDraftValue = childDraft;
       return childDraft;
     },
     set(_target, prop, value) {
@@ -140,12 +151,20 @@ function createProxy(base: object): object {
       const immutable = toImmutableIfNeeded(value);
       copy[prop] = immutable;
       state.drafts.delete(prop);
+      if (state.lastDraftKey === prop) {
+        state.lastDraftKey = undefined;
+        state.lastDraftValue = undefined;
+      }
       return true;
     },
     deleteProperty(_target, prop) {
       const copy = ensureCopy(state) as Record<PropertyKey, unknown>;
       delete copy[prop];
       state.drafts.delete(prop);
+      if (state.lastDraftKey === prop) {
+        state.lastDraftKey = undefined;
+        state.lastDraftValue = undefined;
+      }
       return true;
     },
     has(_target, prop) {
@@ -188,6 +207,8 @@ export function finishDraft<T>(draft: T): T {
   const release = (): void => {
     state.finalized = true;
     state.drafts.clear();
+    state.lastDraftKey = undefined;
+    state.lastDraftValue = undefined;
     baseToDraft.delete(state.base);
   };
 

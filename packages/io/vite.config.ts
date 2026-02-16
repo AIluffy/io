@@ -31,6 +31,11 @@ export default defineConfig(() => ({
     environment: 'node',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    benchmark: {
+      include: ['src/**/*.bench.ts'],
+      reporters: ['default'],
+      outputJson: './test-output/vitest/bench-results.json',
+    },
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,

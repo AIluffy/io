@@ -299,6 +299,42 @@ describe('core/commit', () => {
     ]);
   });
 
+  it('keeps deep patch paths stable when commit diff reuses a path stack', () => {
+    const before = {
+      left: { child: { value: 1 } },
+      right: { child: { value: 2 } },
+    };
+    const next = {
+      left: { child: { value: 10 } },
+      right: { child: { value: 20 } },
+    };
+    const graph = createGraph(before);
+    const root = graph.root as { state: FakeScopeState };
+    const deps = createDeps(graph.pathNodes);
+
+    const result = applyScopeCommitDiff(root.state, before, next, deps);
+
+    expect(result.changed).toBe(true);
+    expect(result.patches).toEqual([
+      { op: 'set', path: ['left', 'child', 'value'], prev: 1, next: 10 },
+      { op: 'set', path: ['right', 'child', 'value'], prev: 2, next: 20 },
+    ]);
+
+    const leftPatch = result.patches.find(
+      (patch) => patch.op === 'set' && patch.path[0] === 'left',
+    );
+    const rightPatch = result.patches.find(
+      (patch) => patch.op === 'set' && patch.path[0] === 'right',
+    );
+    if (!leftPatch || !rightPatch) {
+      throw new Error('expected both left and right patches');
+    }
+    expect(leftPatch.path).not.toBe(rightPatch.path);
+
+    (leftPatch.path as PropertyKey[]).push('mutated');
+    expect(rightPatch.path).toEqual(['right', 'child', 'value']);
+  });
+
   it('handles symbol keys by surfacing invalid array-segment replacement', () => {
     const key = Symbol('k');
     const before = { [key]: { id: 1 } } as Record<PropertyKey, unknown>;

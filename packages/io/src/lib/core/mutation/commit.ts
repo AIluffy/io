@@ -1,4 +1,5 @@
 import type { IoPatch } from '../../utils/types/types.js';
+import type { VersionedCache } from '../snapshot/versioned-cache.js';
 import {
   createApplyArrayDiff,
   createRebuildArrayChildren,
@@ -10,11 +11,74 @@ import {
   type ArrayStateLike,
   type DiffChildFn,
   type DiffOperationDeps,
+  type PathStack,
   type ScopeStateLike,
 } from './diff-shared.js';
 import { createApplyScopeDiff } from './scope-diff.js';
+import type { ValueEpoch } from '../../utils/types/branded.js';
+import { nextEpoch } from '../../utils/types/branded.js';
+import { clearDirtyIndices } from './dirty-indices.js';
 
 type CommitResult = { changed: boolean; patches: IoPatch[] };
+
+type ScopeSnapshotCacheState = {
+  valueEpoch: ValueEpoch;
+  snapshotCache: VersionedCache<Record<string, unknown>>;
+  dirtyKeys: Set<PropertyKey>;
+  dirtyStructure: boolean;
+};
+
+type ArraySnapshotCacheState = {
+  valueEpoch: ValueEpoch;
+  snapshotCache: VersionedCache<unknown[]>;
+  dirtyIndices: { items: number[]; marks: Int32Array; version: number };
+  dirtyStructure: boolean;
+};
+
+function hasScopeSnapshotCacheState(
+  state: unknown,
+): state is ScopeSnapshotCacheState {
+  if (!state || typeof state !== 'object') return false;
+  return (
+    'snapshotCache' in state &&
+    'dirtyKeys' in state &&
+    'valueEpoch' in state &&
+    'dirtyStructure' in state
+  );
+}
+
+function hasArraySnapshotCacheState(
+  state: unknown,
+): state is ArraySnapshotCacheState {
+  if (!state || typeof state !== 'object') return false;
+  return (
+    'snapshotCache' in state &&
+    'dirtyIndices' in state &&
+    'valueEpoch' in state &&
+    'dirtyStructure' in state
+  );
+}
+
+function primeScopeSnapshotCache(
+  state: unknown,
+  next: Record<PropertyKey, unknown>,
+): void {
+  if (!hasScopeSnapshotCacheState(state)) return;
+  state.snapshotCache.value = next as Record<string, unknown>;
+  state.snapshotCache.version = nextEpoch(state.valueEpoch);
+  state.snapshotCache.hasValue = true;
+  state.dirtyKeys.clear();
+  state.dirtyStructure = false;
+}
+
+function primeArraySnapshotCache(state: unknown, next: unknown[]): void {
+  if (!hasArraySnapshotCacheState(state)) return;
+  state.snapshotCache.value = next;
+  state.snapshotCache.version = nextEpoch(state.valueEpoch);
+  state.snapshotCache.hasValue = true;
+  clearDirtyIndices(state.dirtyIndices);
+  state.dirtyStructure = false;
+}
 
 /**
  * Creates recursive diff appliers that mutate the live tree in-place while
@@ -36,7 +100,7 @@ function createDiffHelpers<
     node,
     prev,
     nextValue,
-    relPath,
+    pathStack,
     markParentDirty,
   ) => {
     if (deps.isPlainObject(prev) && deps.isPlainObject(nextValue)) {
@@ -47,7 +111,7 @@ function createDiffHelpers<
           childState,
           toRecord(prev),
           toRecord(nextValue),
-          relPath,
+          pathStack,
         );
         if (childChanged) deps.emitScopeValue(childState);
         if (childChanged && markParentDirty)
@@ -64,7 +128,7 @@ function createDiffHelpers<
           childState,
           prev,
           nextValue,
-          relPath,
+          pathStack,
         );
         if (childChanged) deps.emitArrayValue(childState);
         if (childChanged && markParentDirty)
@@ -113,7 +177,9 @@ export function applyScopeCommitDiff<
 ): CommitResult {
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
-  const changed = helpers.applyScopeDiff(state, before, next, []);
+  const pathStack: PathStack = [];
+  const changed = helpers.applyScopeDiff(state, before, next, pathStack);
+  if (changed) primeScopeSnapshotCache(state, next);
   return { changed, patches };
 }
 
@@ -137,6 +203,8 @@ export function applyArrayCommitDiff<
 ): CommitResult {
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
-  const changed = helpers.applyArrayDiff(state, before, next, []);
+  const pathStack: PathStack = [];
+  const changed = helpers.applyArrayDiff(state, before, next, pathStack);
+  if (changed) primeArraySnapshotCache(state, next);
   return { changed, patches };
 }

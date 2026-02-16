@@ -4,6 +4,12 @@ import { createDraft, finishDraft } from '../utils/immutable/cow.js';
 import { batch } from '../utils/reactive/batch.js';
 import { createUnit } from '../units/unit.js';
 
+const BENCH_OPTIONS = {
+  time: 2_000,
+  warmupTime: 500,
+  warmupIterations: 10,
+} as const;
+
 type DeepState = {
   level1: {
     level2: {
@@ -51,8 +57,10 @@ function buildWideScope(size = 1_000): Record<string, number> {
 
 function mutateDeepNested(root: DeepNestedNode, next: number): void {
   let current = root;
-  while (current.child) {
-    current = current.child;
+  while (true) {
+    const child = current.child;
+    if (!child) break;
+    current = child;
   }
   current.value = next;
 }
@@ -69,13 +77,13 @@ describe('core: createUnit', () => {
     for (let i = 0; i < 1_000; i += 1) {
       createUnit(i);
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('createUnit: object (1k)', () => {
     for (let i = 0; i < 1_000; i += 1) {
       createUnit({ a: i, b: { c: i } });
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: subscribe/unsubscribe', () => {
@@ -86,7 +94,7 @@ describe('core: subscribe/unsubscribe', () => {
       const unsub = unit.subscribe(onValue);
       unsub();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('subscribe/unsubscribe: update (10k)', () => {
     const unit = createUnit(0);
@@ -95,7 +103,7 @@ describe('core: subscribe/unsubscribe', () => {
       const unsub = unit.subscribeUpdate(onUpdate);
       unsub();
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: snapshot', () => {
@@ -104,28 +112,28 @@ describe('core: snapshot', () => {
     for (let i = 0; i < 10_000; i += 1) {
       store.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('snapshot: array (10k)', () => {
     const list = io(Array.from({ length: 500 }, (_, i) => i));
     for (let i = 0; i < 10_000; i += 1) {
       list.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('snapshot: array (20k boundary)', () => {
     const list = io(Array.from({ length: 20_000 }, (_, i) => i));
     for (let i = 0; i < 2_000; i += 1) {
       list.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('snapshot: depth (80 boundary)', () => {
     const store = io(buildDeepNested(80));
     for (let i = 0; i < 5_000; i += 1) {
       store.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: snapshot scope dirty patterns', () => {
@@ -136,7 +144,7 @@ describe('core: snapshot scope dirty patterns', () => {
       store[key].set(i);
       store.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('snapshot: scope dense dirty keys (1k)', () => {
     const store = io(buildWideScope(1_000));
@@ -146,7 +154,7 @@ describe('core: snapshot scope dirty patterns', () => {
       }
       store.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: snapshot array dirty patterns', () => {
@@ -157,7 +165,7 @@ describe('core: snapshot array dirty patterns', () => {
       list[index].set(i);
       list.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('snapshot: array dense dirty indices (1k)', () => {
     const list = io(Array.from({ length: 1_000 }, (_, i) => i));
@@ -167,7 +175,7 @@ describe('core: snapshot array dirty patterns', () => {
       }
       list.snapshot();
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: createDraft/finishDraft', () => {
@@ -178,7 +186,7 @@ describe('core: createDraft/finishDraft', () => {
       mutateDeep(draft, i);
       before = finishDraft(draft);
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: deep updates', () => {
@@ -189,7 +197,7 @@ describe('core: deep updates', () => {
         mutateDeep(draft, i);
       });
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('commit deep update (80 boundary)', () => {
     const store = io(buildDeepNested(80));
@@ -198,7 +206,7 @@ describe('core: deep updates', () => {
         mutateDeepNested(draft as DeepNestedNode, i);
       });
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('core: batch vs non-batch', () => {
@@ -211,7 +219,7 @@ describe('core: batch vs non-batch', () => {
         }
       });
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('no batch: 40k updates', () => {
     const count = io(0);
@@ -220,7 +228,39 @@ describe('core: batch vs non-batch', () => {
         count.set(j);
       }
     }
-  });
+  }, BENCH_OPTIONS);
+
+  bench('batch: 40k updates (with subscriber)', () => {
+    const count = io(0);
+    let updateEvents = 0;
+    const unsub = count.subscribeUpdate(() => {
+      updateEvents += 1;
+    });
+    for (let i = 0; i < 200; i += 1) {
+      batch(() => {
+        for (let j = 0; j < 200; j += 1) {
+          count.set(j);
+        }
+      });
+    }
+    unsub();
+    if (updateEvents === 0) throw new Error('expected update events');
+  }, BENCH_OPTIONS);
+
+  bench('no batch: 40k updates (with subscriber)', () => {
+    const count = io(0);
+    let updateEvents = 0;
+    const unsub = count.subscribeUpdate(() => {
+      updateEvents += 1;
+    });
+    for (let i = 0; i < 200; i += 1) {
+      for (let j = 0; j < 200; j += 1) {
+        count.set(j);
+      }
+    }
+    unsub();
+    if (updateEvents === 0) throw new Error('expected update events');
+  }, BENCH_OPTIONS);
 });
 
 describe('core: concurrent updates (multi-unit)', () => {
@@ -233,7 +273,7 @@ describe('core: concurrent updates (multi-unit)', () => {
         }
       });
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('sequential update 200 units', () => {
     const list = io(Array.from({ length: 200 }, () => 0));
@@ -242,5 +282,5 @@ describe('core: concurrent updates (multi-unit)', () => {
         list[i].set(i + r);
       }
     }
-  });
+  }, BENCH_OPTIONS);
 });

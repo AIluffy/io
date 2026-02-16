@@ -4,6 +4,7 @@ import type {
   ArrayStateLike,
   DiffChildFn,
   DiffOperationDeps,
+  PathStack,
   PathSegment,
   ScopeStateLike,
 } from './diff-shared.js';
@@ -20,7 +21,7 @@ export function createRebuildArrayChildren<
     arrayState: TArrayState,
     prevArr: unknown[],
     nextArr: unknown[],
-    relPath: PathSegment[],
+    pathStack: PathStack,
   ): boolean => {
     arrayState.dirtyStructure = true;
     resetDirtyIndices(arrayState.dirtyIndices, nextArr.length);
@@ -41,7 +42,7 @@ export function createRebuildArrayChildren<
 
     patches.push({
       op: 'splice',
-      path: relPath,
+      path: pathStack.slice(),
       start: 0,
       deleteCount: prevArr.length,
       deleted: prevArr.map((v) => deps.resolvePatchValue(v)),
@@ -63,53 +64,58 @@ export function createApplyArrayDiff<
     node: TNode,
     prev: unknown,
     nextValue: unknown,
-    relPath: PathSegment[],
+    pathStack: PathStack,
   ) => boolean,
   rebuildArrayChildren: (
     arrayState: TArrayState,
     prevArr: unknown[],
     nextArr: unknown[],
-    relPath: PathSegment[],
+    pathStack: PathStack,
   ) => boolean,
 ) {
   return (
     arrayState: TArrayState,
     prevArr: unknown[],
     nextArr: unknown[],
-    relPath: PathSegment[],
+    pathStack: PathStack,
   ): boolean => {
     let changed = false;
     if (prevArr.length !== nextArr.length) {
-      changed = rebuildArrayChildren(arrayState, prevArr, nextArr, relPath);
+      changed = rebuildArrayChildren(arrayState, prevArr, nextArr, pathStack);
     } else {
       for (let i = 0; i < prevArr.length; i += 1) {
         const node = arrayState.children[i];
         const prev = prevArr[i];
         const nextValue = nextArr[i];
+        if (Object.is(prev, nextValue)) continue;
+        pathStack.push(i);
+        try {
+          const childChanged = diffChild(
+            arrayState,
+            i,
+            node,
+            prev,
+            nextValue,
+            pathStack,
+            true,
+          );
+          if (childChanged !== undefined) {
+            changed = changed || childChanged;
+            continue;
+          }
 
-        const childChanged = diffChild(
-          arrayState,
-          i,
-          node,
-          prev,
-          nextValue,
-          [...relPath, i],
-          true,
-        );
-        if (childChanged !== undefined) {
-          changed = changed || childChanged;
-          continue;
+          const nodeChanged = applyNodeDiff(
+            arrayState,
+            i,
+            node,
+            prev,
+            nextValue,
+            pathStack,
+          );
+          changed = changed || nodeChanged;
+        } finally {
+          pathStack.pop();
         }
-
-        const nodeChanged = applyNodeDiff(
-          arrayState,
-          i,
-          node,
-          prev,
-          nextValue,
-          [...relPath, i],
-        );
-        changed = changed || nodeChanged;
       }
     }
     return changed;
