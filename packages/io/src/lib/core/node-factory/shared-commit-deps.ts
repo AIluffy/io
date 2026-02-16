@@ -128,13 +128,13 @@ export function createSharedCommitDeps(
     },
     unregisterSubtree: (absPath: NodePath, node: unknown) => {
       invalidateReadCache();
-      deps.registry.unregisterSubtree(ctx, absPath, node as TreeNode);
+      deps.registry.unregisterSubtree(absPath, node as TreeNode);
     },
     registerSubtree: (absPath: NodePath, node: unknown) => {
       invalidateReadCache();
-      deps.registry.registerSubtree(ctx, absPath, node as TreeNode);
+      deps.registry.registerSubtree(absPath, node as TreeNode);
     },
-    getPathNode: (absPath: NodePath) => deps.registry.getPathNode(ctx, absPath),
+    getPathNode: (absPath: NodePath) => deps.registry.getPathNode(absPath),
     emitScopeValue: (state) =>
       deps.subscriptions.emitScopeValue(state as TreeScopeState),
     emitArrayValue: (state) =>

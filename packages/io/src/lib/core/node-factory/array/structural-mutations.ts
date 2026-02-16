@@ -76,7 +76,7 @@ export function createArrayStructuralMutations(
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
       deps.lifecycle.detachChildFromArray(state, child);
-      deps.registry.unregisterSubtree(ctx, [...path, normalizedStart + i], child);
+      deps.registry.unregisterSubtree([...path, normalizedStart + i], child);
     }
 
     const created = items.map((v, i) =>
@@ -95,7 +95,7 @@ export function createArrayStructuralMutations(
     attachChildToArray: deps.lifecycle.attachChildToArray,
     detachChildFromArray: deps.lifecycle.detachChildFromArray,
     unregisterSubtree: (absPath, node) =>
-      deps.registry.unregisterSubtree(ctx, absPath, node),
+      deps.registry.unregisterSubtree(absPath, node),
     getNodeValue: deps.snapshots.getNodeValue,
     cloneValue,
     resolvePatchValue,

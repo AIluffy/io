@@ -81,7 +81,7 @@ export function createArrayIndexMutation(
       if (isLink(next)) {
         const prevValue = readNodeValue(existing);
         deps.lifecycle.detachChildFromArray(state, existing);
-        deps.registry.unregisterSubtree(ctx, [...path, index], existing);
+        deps.registry.unregisterSubtree([...path, index], existing);
         const replaced = createTreeNode(ctx, [...path, index], next);
         state.children[index] = replaced;
         deps.lifecycle.attachChildToArray(state, replaced);
@@ -129,7 +129,7 @@ export function createArrayIndexMutation(
 
       const prevValue = readNodeValue(existing);
       deps.lifecycle.detachChildFromArray(state, existing);
-      deps.registry.unregisterSubtree(ctx, [...path, index], existing);
+      deps.registry.unregisterSubtree([...path, index], existing);
       const replaced = createTreeNode(ctx, [...path, index], next);
       state.children[index] = replaced;
       deps.lifecycle.attachChildToArray(state, replaced);

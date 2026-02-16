@@ -39,7 +39,7 @@ export function createScopeMutations(
     requireInternalOfKind: deps.internals.requireInternalOfKind,
     detachChildFromScope: deps.lifecycle.detachChildFromScope,
     unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
-      deps.registry.unregisterSubtree(ctx, absPath, node),
+      deps.registry.unregisterSubtree(absPath, node),
     createTreeNode: (absPath: NodePath, initial: unknown) =>
       createTreeNode(ctx, absPath, initial),
     attachChildToScope: deps.lifecycle.attachChildToScope,

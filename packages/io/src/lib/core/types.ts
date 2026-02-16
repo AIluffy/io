@@ -2,7 +2,6 @@ import type { IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from '../
 import type { SnapshotCache } from './snapshot/snapshot-cache.js';
 import type {
   TreeArrayState,
-  TreeContext,
   TreeInternal,
   TreeNode,
   TreeScopeState,
@@ -40,14 +39,11 @@ export type SubscriptionDeps = SnapshotDeps & {
 };
 
 export type RegistryDeps = {
-  registerSubtree: (ctx: TreeContext, path: NodePath, node: TreeNode) => void;
-  unregisterSubtree: (ctx: TreeContext, path: NodePath, node: TreeNode) => void;
-  rebuildSubtreeMapping: (
-    state: { ctx: TreeContext; path: NodePath },
-    node: TreeNode,
-  ) => void;
-  setPathNode: (ctx: TreeContext, path: NodePath, node: TreeNode) => void;
-  getPathNode: (ctx: TreeContext, path: NodePath) => TreeNode | undefined;
+  registerSubtree: (path: NodePath, node: TreeNode) => void;
+  unregisterSubtree: (path: NodePath, node: TreeNode) => void;
+  rebuildSubtreeMapping: (path: NodePath, node: TreeNode) => void;
+  setPathNode: (path: NodePath, node: TreeNode) => void;
+  getPathNode: (path: NodePath) => TreeNode | undefined;
 };
 
 export type InternalDeps = {

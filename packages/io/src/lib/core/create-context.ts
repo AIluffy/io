@@ -103,14 +103,14 @@ function createTreeDeps(ctx: TreeContext): TreeDeps {
       markDirty: subscriptions.markDirty,
     },
     registry: {
-      registerSubtree: (_ctx, path, node) =>
+      registerSubtree: (path, node) =>
         registerSubtreeWithAccess(ctx, path, node, subtreeAccess),
-      unregisterSubtree: (_ctx, path, node) =>
+      unregisterSubtree: (path, node) =>
         unregisterSubtreeWithAccess(ctx, path, node, subtreeAccess),
-      rebuildSubtreeMapping: (state, node) =>
-        rebuildSubtreeMappingWithAccess({ ctx, path: state.path }, node, subtreeAccess),
-      setPathNode: (_ctx, path, node) => setPathNodeWithAccess(ctx, path, node),
-      getPathNode: (_ctx, path) => getPathNodeWithAccess(ctx, path),
+      rebuildSubtreeMapping: (path, node) =>
+        rebuildSubtreeMappingWithAccess({ ctx, path }, node, subtreeAccess),
+      setPathNode: (path, node) => setPathNodeWithAccess(ctx, path, node),
+      getPathNode: (path) => getPathNodeWithAccess(ctx, path),
     },
     internals: {
       getInternal,

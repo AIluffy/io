@@ -113,7 +113,7 @@ export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
       };
     },
     finalize: ({ node }) => {
-      deps.registry.setPathNode(ctx, path, node);
+      deps.registry.setPathNode(path, node);
     },
   });
 }

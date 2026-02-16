@@ -98,7 +98,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       };
     },
     initialize: ({ state, node }) => {
-      deps.registry.setPathNode(ctx, path, node);
+      deps.registry.setPathNode(path, node);
       for (let i = 0; i < initial.length; i += 1) {
         const value = i in initial ? initial[i] : undefined;
         const child = createTreeNode(ctx, [...path, i], value);
@@ -109,7 +109,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     createSnapshot: (state) => (): unknown[] => deps.snapshots.getArraySnapshot(state),
     createInternalAndProperties: ({ state, node, snapshot, getNode }) => {
       const rebuildMapping = (): void => {
-        deps.registry.rebuildSubtreeMapping(state, node);
+        deps.registry.rebuildSubtreeMapping(state.path, node);
       };
 
       const {

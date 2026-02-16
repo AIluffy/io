@@ -45,7 +45,7 @@ export function createNodeFactory(treeDeps: TreeDeps) {
     initial: unknown,
   ): TreeNode => {
     const unit = createUnit(cloneValue(initial)) as TreeNode;
-    treeDeps.registry.registerSubtree(ctx, path, unit);
+    treeDeps.registry.registerSubtree(path, unit);
     return unit;
   };
 
@@ -123,14 +123,14 @@ export function createNodeFactory(treeDeps: TreeDeps) {
           }
         }
         if (linkCtx === ctx) {
-          treeDeps.registry.registerSubtree(ctx, path, target);
+          treeDeps.registry.registerSubtree(path, target);
         } else {
-          treeDeps.registry.setPathNode(ctx, path, target);
+          treeDeps.registry.setPathNode(path, target);
         }
         return target;
       }
 
-      treeDeps.registry.registerSubtree(ctx, path, target);
+      treeDeps.registry.registerSubtree(path, target);
       return target;
     }
 
@@ -146,7 +146,7 @@ export function createNodeFactory(treeDeps: TreeDeps) {
             'ioTree array: shared object references are not allowed',
           );
         }
-        treeDeps.registry.setPathNode(ctx, path, existing);
+        treeDeps.registry.setPathNode(path, existing);
         return existing;
       }
     }
