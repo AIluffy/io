@@ -6,7 +6,7 @@ import type {
   TreeScopeState,
 } from '../../tree/io-tree-types.js';
 
-import { ScopeCommitCommand } from '../../commands/scope-commands.js';
+import { CommitCommand } from '../../commands/commit-command.js';
 import { createScopeExecutor } from '../../commands/executor.js';
 import { createExecutorDeps } from '../executor-deps.js';
 import { createSharedCommitDeps } from '../shared-commit-deps.js';
@@ -72,12 +72,23 @@ export function createScopeCommit(
 
   return (fn: (draft: Record<string, unknown>) => void): void => {
     executor.runCommand(
-      new ScopeCommitCommand(fn, {
+      new CommitCommand<TreeScopeState, Record<string, unknown>>(fn, {
         snapshot,
         createDraft: deps.utils.createDraft,
         finishDraft: deps.utils.finishDraft,
-        applyScopeCommitDiff,
-        commitDeps,
+        validateNext: (before, next) => {
+          for (const key of Reflect.ownKeys(next as Record<PropertyKey, unknown>)) {
+            if (!Reflect.has(before as object, key))
+              throw new Error(`ioTree scope: unknown key ${String(key)}`);
+          }
+        },
+        applyDiff: (currentState, before, next) =>
+          applyScopeCommitDiff(
+            currentState as TreeScopeState,
+            before,
+            next as Record<PropertyKey, unknown>,
+            commitDeps,
+          ),
       }),
       { structural: false },
     );

@@ -1,6 +1,5 @@
 import type { IoPatch } from '../../utils/types.js';
 import type {
-  CommitLayer,
   InternalDeps,
   LifecycleDeps,
   SubscriptionDeps,
@@ -9,16 +8,6 @@ import type {
 import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
-
-import { executeCommitCommand } from './commit-command.js';
-
-type ScopeCommitDeps = {
-  snapshot: () => Record<string, unknown>;
-  createDraft: UtilsLayer['createDraft'];
-  finishDraft: UtilsLayer['finishDraft'];
-  applyScopeCommitDiff: CommitLayer['applyScopeCommitDiff'];
-  commitDeps: Parameters<CommitLayer['applyScopeCommitDiff']>[3];
-};
 
 type ScopeMutateCommandDeps = {
   path: NodePath;
@@ -30,37 +19,6 @@ type ScopeMutateCommandDeps = {
   attachChildToScope: LifecycleDeps['attachChildToScope'];
   markDirty: SubscriptionDeps['markDirty'];
 };
-
-export class ScopeCommitCommand implements TreeCommand<TreeScopeState> {
-  readonly op = 'commit' as const;
-
-  constructor(
-    private readonly fn: (draft: Record<string, unknown>) => void,
-    private readonly deps: ScopeCommitDeps,
-  ) {}
-
-  execute(state: TreeScopeState): IoPatch[] | null {
-    return executeCommitCommand(state, {
-      snapshot: this.deps.snapshot,
-      createDraft: this.deps.createDraft,
-      finishDraft: this.deps.finishDraft,
-      runUserFn: (draft) => this.fn(draft as Record<string, unknown>),
-      validateNext: (before, next) => {
-        for (const key of Reflect.ownKeys(next as Record<PropertyKey, unknown>)) {
-          if (!Reflect.has(before as object, key))
-            throw new Error(`ioTree scope: unknown key ${String(key)}`);
-        }
-      },
-      applyDiff: (currentState, before, next) =>
-        this.deps.applyScopeCommitDiff(
-          currentState as TreeScopeState,
-          before,
-          next as Record<PropertyKey, unknown>,
-          this.deps.commitDeps,
-        ),
-    });
-  }
-}
 
 export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
   readonly op = 'set' as const;

@@ -6,7 +6,7 @@ import type {
   TreeNode,
 } from '../../tree/io-tree-types.js';
 
-import { ArrayCommitCommand } from '../../commands/array-commit-command.js';
+import { CommitCommand } from '../../commands/commit-command.js';
 import { createArrayExecutor } from '../../commands/executor.js';
 import { createExecutorDeps } from '../executor-deps.js';
 import { createSharedCommitDeps } from '../shared-commit-deps.js';
@@ -67,12 +67,17 @@ export function createArrayCommit(
 
   return (fn: (draft: unknown[]) => void): void => {
     executor.runCommand(
-      new ArrayCommitCommand(fn, {
+      new CommitCommand<TreeArrayState, unknown[]>(fn, {
         snapshot,
         createDraft: deps.utils.createDraft,
         finishDraft: deps.utils.finishDraft,
-        applyArrayCommitDiff,
-        commitDeps,
+        applyDiff: (currentState, before, next) =>
+          applyArrayCommitDiff(
+            currentState as TreeArrayState,
+            before,
+            next as unknown[],
+            commitDeps,
+          ),
       }),
       { structural: false },
     );
