@@ -33,20 +33,33 @@ import {
   unregisterSubtree as unregisterSubtreeWithAccess,
 } from './tree/path-trie.js';
 
+class Lazy<T> {
+  private current: T | undefined;
+
+  get value(): T {
+    if (this.current === undefined) {
+      throw new Error('ioTree context: lazy value not initialized');
+    }
+    return this.current;
+  }
+
+  set value(next: T) {
+    this.current = next;
+  }
+}
+
 function createSnapshotDeps(): SnapshotDeps {
-  let getNodeValue: SnapshotDeps['getNodeValue'] = () => {
-    throw new Error('ioTree snapshot layer: getNodeValue not initialized');
-  };
+  const getNodeValue = new Lazy<SnapshotDeps['getNodeValue']>();
 
   const getScopeSnapshot = createScopeSnapshotReader({
-    getNodeValue: (node, cache) => getNodeValue(node, cache),
+    getNodeValue: (node, cache) => getNodeValue.value(node, cache),
   });
 
   const getArraySnapshot = createArraySnapshotReader({
-    getNodeValue: (node, cache) => getNodeValue(node, cache),
+    getNodeValue: (node, cache) => getNodeValue.value(node, cache),
   });
 
-  getNodeValue = createNodeValueReader({
+  getNodeValue.value = createNodeValueReader({
     getScopeSnapshot,
     getArraySnapshot,
   });
@@ -54,7 +67,7 @@ function createSnapshotDeps(): SnapshotDeps {
   return {
     getScopeSnapshot,
     getArraySnapshot,
-    getNodeValue,
+    getNodeValue: (node, cache) => getNodeValue.value(node, cache),
   };
 }
 
