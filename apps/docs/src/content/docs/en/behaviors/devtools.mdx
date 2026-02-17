@@ -27,6 +27,7 @@ const devtools = createIoDevtools(store, {
 
 ```tsx
 import { IoDevtoolsPanel, IoDevtoolsErrorBoundary } from '@iostore/devtools-react';
+import '@iostore/devtools-react/styles.css';
 
 export function DevtoolsDock({ devtools }) {
   return (
@@ -34,6 +35,26 @@ export function DevtoolsDock({ devtools }) {
       <IoDevtoolsPanel devtools={devtools} height={420} />
     </IoDevtoolsErrorBoundary>
   );
+}
+```
+
+### Styling and Theme
+
+`IoDevtoolsPanel` expects its base stylesheet to be loaded:
+
+```tsx
+import '@iostore/devtools-react/styles.css';
+```
+
+You can customize the panel with CSS variables:
+
+```css
+.io-devtools-panel {
+  --io-devtools-panel-bg: #0b1020;
+  --io-devtools-surface: #111827;
+  --io-devtools-text: #e5e7eb;
+  --io-devtools-muted: #9ca3af;
+  --io-devtools-border: #334155;
 }
 ```
 

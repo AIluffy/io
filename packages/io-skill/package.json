@@ -1,6 +1,14 @@
 {
   "name": "@iostore/skill",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io-skill"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
   "private": false,
   "type": "module",
   "description": "Reusable IO monorepo skill for coding agents",

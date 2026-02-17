@@ -54,13 +54,16 @@ function cloneFastObject(
     const target = new Array(source.length) as unknown[];
     seen.set(value, target);
 
-    for (let i = 0; i < source.length; i += 1) {
-      const clonedValue = cloneFastChild(source[i], seen);
-      if (clonedValue === FAST_CLONE_UNSUPPORTED)
-        return FAST_CLONE_UNSUPPORTED;
-      target[i] = clonedValue;
-    }
-    if (Object.getOwnPropertySymbols(source).length === 0) {
+    const hasSymbols = Object.getOwnPropertySymbols(source).length > 0;
+    const ownKeyCount = hasSymbols ? -1 : Reflect.ownKeys(source).length;
+    const canFastCloneDenseArray = !hasSymbols && ownKeyCount === source.length + 1;
+    if (canFastCloneDenseArray) {
+      for (let i = 0; i < source.length; i += 1) {
+        const clonedValue = cloneFastChild(source[i], seen);
+        if (clonedValue === FAST_CLONE_UNSUPPORTED)
+          return FAST_CLONE_UNSUPPORTED;
+        target[i] = clonedValue;
+      }
       return target;
     }
 
@@ -186,8 +189,14 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
       if (assumeDataProperties) {
         if (Array.isArray(obj)) {
           const array = obj as unknown[];
-          for (let i = 0; i < array.length; i += 1) stack.push(array[i]);
-          if (Object.getOwnPropertySymbols(array).length === 0) continue;
+          const hasSymbols = Object.getOwnPropertySymbols(array).length > 0;
+          const ownKeyCount = hasSymbols ? -1 : Reflect.ownKeys(array).length;
+          const canFastFreezeDenseArrayValuesOnly =
+            !hasSymbols && ownKeyCount === array.length + 1;
+          if (canFastFreezeDenseArrayValuesOnly) {
+            for (let i = 0; i < array.length; i += 1) stack.push(array[i]);
+            continue;
+          }
         }
 
         const fastKeys = getFastPlainObjectKeys(obj);

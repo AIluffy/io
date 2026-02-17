@@ -1,12 +1,23 @@
 {
   "name": "@iostore/devtools-react",
   "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io-devtools-react"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
+  "homepage": "https://github.com/AIluffy/oin#readme",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
+    "./styles.css": "./styles.css",
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
@@ -14,6 +25,7 @@
     }
   },
   "files": [
+    "styles.css",
     "dist",
     "!**/*.tsbuildinfo"
   ],
@@ -33,6 +45,15 @@
     "vite": "^7.3.1"
   },
   "nx": {
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "packages/io-devtools-react",
+          "command": "vitest run --config vite.config.ts"
+        }
+      }
+    },
     "tags": [
       "scope:io-devtools-react"
     ]

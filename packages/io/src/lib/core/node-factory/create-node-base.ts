@@ -280,13 +280,19 @@ export function nodeBuilder<TInitial extends object, TState, TValue>(base: {
       return builder;
     },
     build(): TreeNode {
+      if (!createState || !createNode || !createSnapshot || !createInternalAndProperties) {
+        throw new Error(
+          'ioTree nodeBuilder: missing required handlers (state/node/snapshot/internal)',
+        );
+      }
+
       return createNodeBase({
         ...base,
-        createState: createState!,
-        createNode: createNode!,
+        createState,
+        createNode,
         initialize,
-        createSnapshot: createSnapshot!,
-        createInternalAndProperties: createInternalAndProperties!,
+        createSnapshot,
+        createInternalAndProperties,
         finalize,
       });
     },

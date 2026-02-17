@@ -51,6 +51,25 @@ describe('immutable utilities', () => {
     expect(toImmutable(undefined)).toBeUndefined();
   });
 
+  it('toImmutable preserves sparse array holes', () => {
+    const sparse: unknown[] = [];
+    sparse[1] = 1;
+    const cloned = toImmutable(sparse);
+
+    expect(Object.prototype.hasOwnProperty.call(cloned, 0)).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(cloned, 1)).toBe(true);
+    expect(cloned.length).toBe(2);
+  });
+
+  it('toImmutable preserves custom array properties', () => {
+    const withProps = [1, 2] as unknown[] & { foo?: { nested: number } };
+    withProps.foo = { nested: 1 };
+    const cloned = toImmutable(withProps);
+
+    expect(cloned.foo).toEqual({ nested: 1 });
+    expect(Object.isFrozen(cloned.foo as object)).toBe(true);
+  });
+
   it('toImmutable falls back to deep clone for accessor descriptors', () => {
     const value = Object.defineProperty({}, 'x', {
       configurable: true,

@@ -1,0 +1,109 @@
+.io-devtools-panel {
+  --io-devtools-border: #d8dee9;
+  --io-devtools-panel-bg: #f8fafc;
+  --io-devtools-surface: #ffffff;
+  --io-devtools-surface-strong: #f1f5f9;
+  --io-devtools-divider: #e2e8f0;
+  --io-devtools-text: #0f172a;
+  --io-devtools-muted: #64748b;
+  --io-devtools-button-bg: #ffffff;
+  --io-devtools-button-bg-hover: #f1f5f9;
+  --io-devtools-button-border: #cbd5e1;
+  --io-devtools-button-text: #0f172a;
+  --io-devtools-timeline-bg: #ffffff;
+  --io-devtools-timeline-active-bg: #e2e8f0;
+  box-sizing: border-box;
+}
+
+.io-devtools-panel *,
+.io-devtools-panel *::before,
+.io-devtools-panel *::after {
+  box-sizing: border-box;
+}
+
+.io-devtools-panel__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.io-devtools-panel__button {
+  border: 1px solid var(--io-devtools-button-border);
+  border-radius: 8px;
+  background: var(--io-devtools-button-bg);
+  color: var(--io-devtools-button-text);
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.io-devtools-panel__button:hover:not(:disabled) {
+  background: var(--io-devtools-button-bg-hover);
+}
+
+.io-devtools-panel__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.io-devtools-panel__toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 22px;
+  background: var(--io-devtools-divider);
+}
+
+.io-devtools-panel__seek-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.io-devtools-panel__seek {
+  min-width: 240px;
+  flex: 1 1 320px;
+  display: grid;
+  gap: 6px;
+}
+
+.io-devtools-panel__seek input[type='range'] {
+  width: 100%;
+}
+
+.io-devtools-panel__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--io-devtools-muted);
+}
+
+.io-devtools-panel__section-title {
+  color: var(--io-devtools-text);
+  letter-spacing: 0.01em;
+}
+
+.io-devtools-panel__timeline-item {
+  color: var(--io-devtools-text);
+  transition: background-color 120ms ease-in-out;
+}
+
+.io-devtools-panel__timeline-item:hover {
+  filter: brightness(0.98);
+}
+
+.io-devtools-panel__timeline-item.is-active {
+  box-shadow: inset 0 0 0 1px var(--io-devtools-button-border);
+}
+
+.io-devtools-panel__timeline-item.is-cursor {
+  border-left: 3px solid #2563eb;
+}
+
+.io-devtools-panel__muted {
+  color: var(--io-devtools-muted);
+}

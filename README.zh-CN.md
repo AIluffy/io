@@ -1,23 +1,23 @@
 # Io
 
-Fine-grained reactive state management for React, Lynx, Vue, Svelte, and Solid.
+细粒度响应式状态管理库，支持 React、Lynx、Vue、Svelte、Solid。
 
-Language: English | [简体中文](./README.zh-CN.md)
+语言: [English](./README.md) | 简体中文
 
-## Features
+## 特性
 
-- Fine-grained updates: only affected nodes are notified.
-- Deep object and array operations with a consistent API.
-- Update logs with replay and undo support.
-- One state model shared across multiple frameworks.
+- 细粒度更新：只触发受影响节点。
+- 深层对象与数组可直接操作，API 一致。
+- 支持更新日志、回放与撤销。
+- 一套状态模型，多框架复用。
 
-## Install
+## 安装
 
 ```bash
 npm i @iostore/store
 ```
 
-Install adapters as needed:
+按需安装适配层：
 
 ```bash
 npm i @iostore/react
@@ -27,7 +27,7 @@ npm i @iostore/svelte
 npm i @iostore/solid
 ```
 
-## Quick Start
+## 快速开始
 
 ```ts
 import { derived, io } from '@iostore/store';
@@ -39,7 +39,7 @@ state.items.push(4);
 const doubled = derived([state.count], (count) => count * 2);
 ```
 
-Replay and undo updates:
+更新回放与撤销：
 
 ```ts
 import { applyUpdate, replay, undoUpdate } from '@iostore/store';
@@ -51,7 +51,7 @@ replay(anotherState, updates);
 applyUpdate(state, undoUpdate(updates[0]));
 ```
 
-## Framework Integration
+## 框架集成
 
 React:
 
@@ -90,7 +90,7 @@ import { useIO } from '@iostore/solid';
 const value = useIO(countUnit);
 ```
 
-## Packages
+## 包列表
 
 - `@iostore/store`
 - `@iostore/react`
@@ -102,10 +102,10 @@ const value = useIO(countUnit);
 - `@iostore/devtools-react`
 - `@iostore/skill`
 
-## Documentation
+## 文档索引
 
-- Docs site (zh-CN): `apps/docs/src/content/docs`
-- Docs site (en): `apps/docs/src/content/docs/en`
+- 中文文档目录：`apps/docs/src/content/docs`
+- 英文文档目录：`apps/docs/src/content/docs/en`
 
 ## License
 

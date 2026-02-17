@@ -1,5 +1,5 @@
 ---
-name: @iostore/skill
+name: io-skill
 description: Usage guide for IO packages. Use when an agent needs to explain or implement app-level usage of @iostore/store, @iostore/react, @iostore/solid, @iostore/vue, @iostore/svelte, and @iostore/devtools (including state modeling, subscriptions, batching, framework adapters, SSR-safe usage, and debugging integration).
 ---
 

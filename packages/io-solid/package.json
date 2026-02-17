@@ -1,6 +1,16 @@
 {
   "name": "@iostore/solid",
   "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io-solid"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
+  "homepage": "https://github.com/AIluffy/oin#readme",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
