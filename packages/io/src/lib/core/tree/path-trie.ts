@@ -1,5 +1,3 @@
-import { appendPath } from './path-utils.js';
-
 type PathSegment = PropertyKey;
 export type NodePath = readonly PathSegment[];
 
@@ -86,6 +84,76 @@ type SubtreeAccess<TNode> = {
   getArrayChildren: (node: TNode) => TNode[] | undefined;
 };
 
+type PathStack = PathSegment[];
+
+const clonePath = (path: NodePath): PathStack => {
+  const pathStack = new Array<PathSegment>(path.length);
+  for (let i = 0; i < path.length; i += 1) pathStack[i] = path[i];
+  return pathStack;
+};
+
+const registerSubtreeWithPathStack = <TNode>(
+  ctx: PathTrieContext<TNode>,
+  pathStack: PathStack,
+  node: TNode,
+  access: SubtreeAccess<TNode>,
+  seen: WeakSet<object>,
+): void => {
+  const obj = node as object;
+  if (seen.has(obj)) return;
+  seen.add(obj);
+  setPathNode(ctx, pathStack, node);
+
+  const scopeChildren = access.getScopeChildren(node);
+  if (scopeChildren) {
+    for (const [key, child] of scopeChildren) {
+      pathStack.push(key);
+      registerSubtreeWithPathStack(ctx, pathStack, child, access, seen);
+      pathStack.pop();
+    }
+    return;
+  }
+
+  const arrayChildren = access.getArrayChildren(node);
+  if (!arrayChildren) return;
+  for (let i = 0; i < arrayChildren.length; i += 1) {
+    pathStack.push(i);
+    registerSubtreeWithPathStack(ctx, pathStack, arrayChildren[i], access, seen);
+    pathStack.pop();
+  }
+};
+
+const unregisterSubtreeWithPathStack = <TNode>(
+  ctx: PathTrieContext<TNode>,
+  pathStack: PathStack,
+  node: TNode,
+  access: SubtreeAccess<TNode>,
+  seen: WeakSet<object>,
+): void => {
+  const obj = node as object;
+  if (seen.has(obj)) return;
+  seen.add(obj);
+  deletePathNode(ctx, pathStack);
+
+  const scopeChildren = access.getScopeChildren(node);
+  if (scopeChildren) {
+    for (const [key, child] of scopeChildren) {
+      pathStack.push(key);
+      unregisterSubtreeWithPathStack(ctx, pathStack, child, access, seen);
+      pathStack.pop();
+    }
+    return;
+  }
+
+  const arrayChildren = access.getArrayChildren(node);
+  if (!arrayChildren) return;
+  for (let i = 0; i < arrayChildren.length; i += 1) {
+    pathStack.push(i);
+    unregisterSubtreeWithPathStack(ctx, pathStack, arrayChildren[i], access, seen);
+    pathStack.pop();
+  }
+};
+
 export function registerSubtree<TNode>(
   ctx: PathTrieContext<TNode>,
   path: NodePath,
@@ -94,24 +162,7 @@ export function registerSubtree<TNode>(
   visited?: WeakSet<object>,
 ): void {
   const seen = visited ?? new WeakSet<object>();
-  const obj = node as object;
-  if (seen.has(obj)) return;
-  seen.add(obj);
-  setPathNode(ctx, path, node);
-
-  const scopeChildren = access.getScopeChildren(node);
-  if (scopeChildren) {
-    for (const [key, child] of scopeChildren) {
-      registerSubtree(ctx, appendPath(path, key), child, access, seen);
-    }
-    return;
-  }
-
-  const arrayChildren = access.getArrayChildren(node);
-  if (!arrayChildren) return;
-  for (let i = 0; i < arrayChildren.length; i += 1) {
-    registerSubtree(ctx, appendPath(path, i), arrayChildren[i], access, seen);
-  }
+  registerSubtreeWithPathStack(ctx, clonePath(path), node, access, seen);
 }
 
 export function unregisterSubtree<TNode>(
@@ -122,24 +173,7 @@ export function unregisterSubtree<TNode>(
   visited?: WeakSet<object>,
 ): void {
   const seen = visited ?? new WeakSet<object>();
-  const obj = node as object;
-  if (seen.has(obj)) return;
-  seen.add(obj);
-  deletePathNode(ctx, path);
-
-  const scopeChildren = access.getScopeChildren(node);
-  if (scopeChildren) {
-    for (const [key, child] of scopeChildren) {
-      unregisterSubtree(ctx, appendPath(path, key), child, access, seen);
-    }
-    return;
-  }
-
-  const arrayChildren = access.getArrayChildren(node);
-  if (!arrayChildren) return;
-  for (let i = 0; i < arrayChildren.length; i += 1) {
-    unregisterSubtree(ctx, appendPath(path, i), arrayChildren[i], access, seen);
-  }
+  unregisterSubtreeWithPathStack(ctx, clonePath(path), node, access, seen);
 }
 
 export function rebuildSubtreeMapping<TNode>(

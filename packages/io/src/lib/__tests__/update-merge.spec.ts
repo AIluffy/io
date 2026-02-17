@@ -2,28 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { createUpdate, mergeUpdates } from '../utils/patches/update-merge.js';
 
 describe('patches: update-merge', () => {
-  it('uses fallback id generation when crypto.randomUUID is unavailable', () => {
-    const originalCrypto = (globalThis as Record<string, unknown>).crypto;
-    const originalNow = Date.now;
-    const originalRandom = Math.random;
-    try {
-      Object.defineProperty(globalThis, 'crypto', {
-        value: {},
-        configurable: true,
-      });
-      Date.now = () => 255;
-      Math.random = () => 0.5;
-
-      const update = createUpdate(0, 1, []);
-      expect(update.id).toMatch(/^ff-/);
-    } finally {
-      Date.now = originalNow;
-      Math.random = originalRandom;
-      Object.defineProperty(globalThis, 'crypto', {
-        value: originalCrypto,
-        configurable: true,
-      });
-    }
+  it('generates process-local monotonic update ids by default', () => {
+    const first = createUpdate(0, 1, []);
+    const second = createUpdate(1, 2, []);
+    const firstCounter = Number.parseInt(
+      first.id.slice(first.id.lastIndexOf('-') + 1),
+      36,
+    );
+    const secondCounter = Number.parseInt(
+      second.id.slice(second.id.lastIndexOf('-') + 1),
+      36,
+    );
+    expect(secondCounter).toBe(firstCounter + 1);
   });
 
   it('merges set patches with symbol paths using path-key fallback', () => {

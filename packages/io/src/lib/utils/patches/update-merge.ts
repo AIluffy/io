@@ -2,15 +2,18 @@ import type { IoPatch, IoUpdate } from '../types/types.js';
 
 const PATH_KEY_CACHE = new WeakMap<object, string>();
 
+let updateIdSeed: string | undefined;
+let updateIdCounter = 0;
+
+function resolveUpdateIdSeed(): string {
+  if (updateIdSeed) return updateIdSeed;
+  updateIdSeed = `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  return updateIdSeed;
+}
+
 function newId(): string {
-  const cryptoObj = (globalThis as Record<PropertyKey, unknown>).crypto;
-  if (typeof cryptoObj === 'object' && cryptoObj !== null) {
-    const randomUUID = (cryptoObj as { randomUUID?: unknown }).randomUUID;
-    if (typeof randomUUID === 'function') {
-      return (randomUUID as (this: unknown) => string).call(cryptoObj);
-    }
-  }
-  return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  updateIdCounter += 1;
+  return `${resolveUpdateIdSeed()}-${updateIdCounter.toString(36)}`;
 }
 
 export function createUpdate(

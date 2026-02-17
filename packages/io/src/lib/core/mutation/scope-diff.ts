@@ -6,6 +6,20 @@ import type {
   ScopeStateLike,
 } from './diff-shared.js';
 
+const validateScopeKeys = resolveScopeKeyValidationEnabled();
+
+function resolveScopeKeyValidationEnabled(): boolean {
+  const override = (globalThis as Record<PropertyKey, unknown>)
+    .__IO_VALIDATE_SCOPE_KEYS__;
+  if (override === true) return true;
+  if (override === false) return false;
+  if (typeof process !== 'undefined') {
+    const env = (process as { env?: Record<string, string | undefined> }).env;
+    if (env?.NODE_ENV) return env.NODE_ENV !== 'production';
+  }
+  return true;
+}
+
 export function createApplyScopeDiff<
   TNode,
   TScopeState extends ScopeStateLike<TNode>,
@@ -79,9 +93,11 @@ export function createApplyScopeDiff<
     let currentNext = nextObj;
 
     while (true) {
-      for (const key of Reflect.ownKeys(currentNext)) {
-        if (!currentState.children.has(key))
-          throw new Error(`ioTree scope: unknown key ${String(key)}`);
+      if (validateScopeKeys) {
+        for (const key of Reflect.ownKeys(currentNext)) {
+          if (!currentState.children.has(key))
+            throw new Error(`ioTree scope: unknown key ${String(key)}`);
+        }
       }
 
       if (currentState.children.size <= 4) {

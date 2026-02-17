@@ -1,4 +1,4 @@
-import type { IoUnsubscribe, IoUpdate } from '../../utils/types/types.js';
+import type { IoPatch, IoUnsubscribe, IoUpdate } from '../../utils/types/types.js';
 import { markDirtyIndex } from './dirty-indices.js';
 import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 import type {
@@ -52,6 +52,8 @@ export function createSubscriptions<
   TScopeState extends ScopeStateLike<TNode>,
   TArrayState extends ArrayStateLike<TNode>,
 >(deps: SnapshotDeps<TScopeState, TArrayState>) {
+  const sharedIndexBuffer: number[] = [];
+
   const emitContainerValue = <TState, TValue>(
     state: {
       valueListeners: Set<(value: TValue) => void>;
@@ -106,18 +108,19 @@ export function createSubscriptions<
     state: TArrayState,
     child: TNode,
   ): number[] => {
+    sharedIndexBuffer.length = 0;
     if (!state.childIndices) {
-      const indices: number[] = [];
       for (let i = 0; i < state.children.length; i += 1) {
-        if (state.children[i] === child) indices.push(i);
+        if (state.children[i] === child) sharedIndexBuffer.push(i);
       }
-      return indices;
+      return sharedIndexBuffer;
     }
 
     if (state.childIndicesDirty !== false) rebuildArrayChildIndices(state);
     const indices = state.childIndices.get(child);
-    if (!indices) return [];
-    return [...indices];
+    if (!indices) return sharedIndexBuffer;
+    for (const index of indices) sharedIndexBuffer.push(index);
+    return sharedIndexBuffer;
   };
 
   /**
@@ -247,9 +250,17 @@ export function createSubscriptions<
         onUpdate: (u, indices) => {
           markArrayIndicesDirty(state, indices);
           const baseRevision = advanceContainerRevision(state);
-          const patches = indices.flatMap((index) =>
-            u.patches.map((p) => prependPatchPath(index, p)),
-          );
+          const sourcePatches = u.patches;
+          const patchCount = sourcePatches.length;
+          const patches = new Array<IoPatch>(indices.length * patchCount);
+          let patchIndex = 0;
+          for (let i = 0; i < indices.length; i += 1) {
+            const index = indices[i];
+            for (let j = 0; j < patchCount; j += 1) {
+              patches[patchIndex] = prependPatchPath(index, sourcePatches[j]);
+              patchIndex += 1;
+            }
+          }
           emitArrayUpdate(
             state,
             createUpdate(baseRevision, state.revision, patches),
