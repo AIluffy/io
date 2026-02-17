@@ -23,30 +23,77 @@ export function createRebuildArrayChildren<
     nextArr: unknown[],
     pathStack: PathStack,
   ): boolean => {
+    const prevLen = prevArr.length;
+    const nextLen = nextArr.length;
+    const minLen = Math.min(prevLen, nextLen);
+
+    let start = 0;
+    while (start < minLen && Object.is(prevArr[start], nextArr[start])) {
+      start += 1;
+    }
+
+    let suffix = 0;
+    while (
+      suffix < prevLen - start &&
+      suffix < nextLen - start &&
+      Object.is(prevArr[prevLen - 1 - suffix], nextArr[nextLen - 1 - suffix])
+    ) {
+      suffix += 1;
+    }
+
+    const deleteCount = prevLen - start - suffix;
+    const insertCount = nextLen - start - suffix;
+    if (deleteCount === 0 && insertCount === 0) return false;
+
     arrayState.dirtyStructure = true;
-    resetDirtyIndices(arrayState.dirtyIndices, nextArr.length);
+    resetDirtyIndices(arrayState.dirtyIndices, nextLen);
     const arrayNode = deps.getPathNode(arrayState.path);
     if (arrayNode) deps.unregisterSubtree(arrayState.path, arrayNode);
 
-    for (let i = 0; i < arrayState.children.length; i += 1) {
-      const child = arrayState.children[i];
+    const prevChildren = arrayState.children;
+    for (let i = 0; i < deleteCount; i += 1) {
+      const index = start + i;
+      const child = prevChildren[index];
       deps.detachChildFromArray(arrayState, child);
-      deps.unregisterSubtree([...arrayState.path, i], child);
+      deps.unregisterSubtree([...arrayState.path, index], child);
     }
-    arrayState.children = nextArr.map((v, index) =>
-      deps.createTreeNode([...arrayState.path, index], v),
-    );
-    for (const child of arrayState.children) deps.attachChildToArray(arrayState, child);
+
+    const insertedChildren = new Array<TNode>(insertCount);
+    for (let i = 0; i < insertCount; i += 1) {
+      insertedChildren[i] = deps.createTreeNode(
+        [...arrayState.path, start + i],
+        nextArr[start + i],
+      );
+      deps.attachChildToArray(arrayState, insertedChildren[i]);
+    }
+
+    const nextChildren = new Array<TNode>(nextLen);
+    for (let i = 0; i < start; i += 1) {
+      nextChildren[i] = prevChildren[i];
+    }
+    for (let i = 0; i < insertCount; i += 1) {
+      nextChildren[start + i] = insertedChildren[i];
+    }
+    for (let i = 0; i < suffix; i += 1) {
+      nextChildren[nextLen - suffix + i] = prevChildren[prevLen - suffix + i];
+    }
+
+    arrayState.children = nextChildren;
+    if ('childIndicesDirty' in arrayState) arrayState.childIndicesDirty = true;
 
     if (arrayNode) deps.registerSubtree(arrayState.path, arrayNode);
 
     patches.push({
       op: 'splice',
       path: pathStack.slice(),
-      start: 0,
-      deleteCount: prevArr.length,
-      deleted: prevArr.map((v) => deps.resolvePatchValue(v)),
-      items: nextArr.map((v) => deps.resolvePatchValue(v)),
+      start,
+      deleteCount,
+      deleted: prevArr
+        .slice(start, start + deleteCount)
+        .map((v) => deps.resolvePatchValue(v)),
+      items: nextArr
+        .slice(start, start + insertCount)
+        .map((v) => deps.resolvePatchValue(v)),
     });
     return true;
   };

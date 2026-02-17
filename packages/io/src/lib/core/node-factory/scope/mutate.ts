@@ -33,7 +33,7 @@ export function createScopeMutations(
   applySet: (
     key: PropertyKey,
     next: unknown,
-  options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
 } {
   const { deps, ctx, path, state, createTreeNode, getNode } = options;
@@ -50,12 +50,14 @@ export function createScopeMutations(
     markDirty: deps.subscriptions.markDirty,
   };
 
-  const applySet = (
+  const executors = new Map<PropertyKey, ReturnType<typeof createScopeExecutor>>();
+  const resolveExecutor = (
     key: PropertyKey,
-    next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
-  ): void => {
-    createScopeExecutor(
+  ): ReturnType<typeof createScopeExecutor> => {
+    const existing = executors.get(key);
+    if (existing) return existing;
+
+    const created = createScopeExecutor(
       {
         createUpdate,
         emitArrayValue: deps.subscriptions.emitArrayValue,
@@ -67,7 +69,17 @@ export function createScopeMutations(
       state,
       [...path, key],
       getNode,
-    ).runCommand(
+    );
+    executors.set(key, created);
+    return created;
+  };
+
+  const applySet = (
+    key: PropertyKey,
+    next: unknown,
+    options?: { emitUpdate?: boolean; emitValue?: boolean },
+  ): void => {
+    resolveExecutor(key).runCommand(
       new ScopeMutateCommand(commandDeps, key, next, options),
       {
         emitUpdate: false,

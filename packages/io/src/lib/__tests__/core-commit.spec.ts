@@ -217,12 +217,14 @@ describe('core/commit', () => {
     ]);
   });
 
-  it('rebuilds array children when length changes', () => {
+  it('applies minimal splice when array length changes', () => {
     const before = [1, 2];
     const next = [1, 2, 3];
     const graph = createGraph(before);
     const root = graph.root as { state: FakeArrayState };
     const deps = createDeps(graph.pathNodes);
+    const beforeFirst = root.state.children[0];
+    const beforeSecond = root.state.children[1];
 
     const result = applyArrayCommitDiff(root.state, before, next, deps);
 
@@ -231,13 +233,15 @@ describe('core/commit', () => {
       {
         op: 'splice',
         path: [],
-        start: 0,
-        deleteCount: 2,
-        deleted: [1, 2],
-        items: [1, 2, 3],
+        start: 2,
+        deleteCount: 0,
+        deleted: [],
+        items: [3],
       },
     ]);
     expect(root.state.children).toHaveLength(3);
+    expect(root.state.children[0]).toBe(beforeFirst);
+    expect(root.state.children[1]).toBe(beforeSecond);
     expect(root.state.dirtyStructure).toBe(true);
   });
 

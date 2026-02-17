@@ -55,6 +55,10 @@ function buildWideScope(size = 1_000): Record<string, number> {
   return scope;
 }
 
+function buildNumberArray(size = 1_000): number[] {
+  return Array.from({ length: size }, (_, i) => i);
+}
+
 function mutateDeepNested(root: DeepNestedNode, next: number): void {
   let current = root;
   while (true) {
@@ -281,6 +285,48 @@ describe('core: concurrent updates (multi-unit)', () => {
       for (let i = 0; i < 200; i += 1) {
         list[i].set(i + r);
       }
+    }
+  }, BENCH_OPTIONS);
+});
+
+describe('core: array length-diff commit patterns', () => {
+  bench('commit: head insert + head delete (1k)', () => {
+    const list = io(buildNumberArray(1_000));
+    for (let i = 0; i < 1_000; i += 1) {
+      list.commit((draft) => {
+        draft.unshift(-i);
+      });
+      list.commit((draft) => {
+        draft.shift();
+      });
+    }
+  }, BENCH_OPTIONS);
+
+  bench('commit: middle insert + middle delete (1k)', () => {
+    const list = io(buildNumberArray(1_000));
+    for (let i = 0; i < 1_000; i += 1) {
+      list.commit((draft) => {
+        const mid = draft.length >> 1;
+        draft.splice(mid, 0, -i);
+      });
+      list.commit((draft) => {
+        const mid = draft.length >> 1;
+        draft.splice(mid, 1);
+      });
+    }
+  }, BENCH_OPTIONS);
+
+  bench('commit: middle delete + middle insert (1k)', () => {
+    const list = io(buildNumberArray(1_000));
+    for (let i = 0; i < 1_000; i += 1) {
+      list.commit((draft) => {
+        const mid = draft.length >> 1;
+        draft.splice(mid, 1);
+      });
+      list.commit((draft) => {
+        const mid = draft.length >> 1;
+        draft.splice(mid, 0, -i);
+      });
     }
   }, BENCH_OPTIONS);
 });
