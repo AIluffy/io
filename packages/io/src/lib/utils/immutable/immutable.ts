@@ -5,6 +5,16 @@ const FAST_CLONE_UNSUPPORTED: unique symbol = Symbol.for(
   '@iostore/store/fastCloneUnsupported',
 );
 
+function getFastPlainObjectKeys(
+  value: object,
+): ReadonlyArray<string> | undefined {
+  if (!isPlainObject(value)) return undefined;
+  if (Object.getOwnPropertySymbols(value).length > 0) return undefined;
+  const keys = Object.keys(value as Record<string, unknown>);
+  if (Reflect.ownKeys(value).length !== keys.length) return undefined;
+  return keys;
+}
+
 function isImmutableRoot(value: object): boolean {
   return IMMUTABLE_ROOTS.has(value);
 }
@@ -44,6 +54,16 @@ function cloneFastObject(
     const target = new Array(source.length) as unknown[];
     seen.set(value, target);
 
+    for (let i = 0; i < source.length; i += 1) {
+      const clonedValue = cloneFastChild(source[i], seen);
+      if (clonedValue === FAST_CLONE_UNSUPPORTED)
+        return FAST_CLONE_UNSUPPORTED;
+      target[i] = clonedValue;
+    }
+    if (Object.getOwnPropertySymbols(source).length === 0) {
+      return target;
+    }
+
     for (const key of Reflect.ownKeys(source)) {
       const desc = Object.getOwnPropertyDescriptor(source, key);
       if (!desc || !('value' in desc)) return FAST_CLONE_UNSUPPORTED;
@@ -61,6 +81,19 @@ function cloneFastObject(
     unknown
   >;
   seen.set(value, target);
+
+  const fastKeys = getFastPlainObjectKeys(value);
+  if (fastKeys) {
+    const source = value as Record<string, unknown>;
+    for (const key of fastKeys) {
+      const rawValue = source[key];
+      const clonedValue = cloneFastChild(rawValue, seen);
+      if (clonedValue === FAST_CLONE_UNSUPPORTED)
+        return FAST_CLONE_UNSUPPORTED;
+      target[key] = clonedValue;
+    }
+    return target;
+  }
 
   for (const key of Reflect.ownKeys(value)) {
     const desc = Object.getOwnPropertyDescriptor(value, key);
@@ -151,6 +184,19 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
       Object.freeze(obj);
 
       if (assumeDataProperties) {
+        if (Array.isArray(obj)) {
+          const array = obj as unknown[];
+          for (let i = 0; i < array.length; i += 1) stack.push(array[i]);
+          if (Object.getOwnPropertySymbols(array).length === 0) continue;
+        }
+
+        const fastKeys = getFastPlainObjectKeys(obj);
+        if (fastKeys) {
+          const record = obj as Record<string, unknown>;
+          for (const key of fastKeys) stack.push(record[key]);
+          continue;
+        }
+
         for (const key of Reflect.ownKeys(obj)) {
           const desc = Object.getOwnPropertyDescriptor(obj, key);
           if (!desc || !('value' in desc)) continue;

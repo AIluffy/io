@@ -24,6 +24,7 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
+    "src/lib/__tests__/immutable-helper.ts",
     "src/**/*.d.ts"
   ],
   "references": [

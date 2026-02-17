@@ -1,4 +1,4 @@
-import type { IoUnsubscribe } from '../../../utils/types/types.js';
+import type { IoUnsubscribe } from '../types/types.js';
 
 export function createSubscriptionManager<T>(options?: {
   onActivate?: () => void;

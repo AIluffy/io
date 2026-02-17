@@ -18,7 +18,6 @@ import { createApplyScopeDiff } from './scope-diff.js';
 import type { ValueEpoch } from '../../utils/types/branded.js';
 import { nextEpoch } from '../../utils/types/branded.js';
 import { clearDirtyIndices } from './dirty-indices.js';
-import { profileEnd, profileStart } from './commit-profile.js';
 
 type CommitResult = { changed: boolean; patches: IoPatch[] };
 
@@ -189,15 +188,11 @@ export function applyScopeCommitDiff<
   next: Record<PropertyKey, unknown>,
   deps: DiffOperationDeps<TNode, TScopeState, TArrayState>,
 ): CommitResult {
-  const totalStart = profileStart();
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
   const pathStack: PathStack = [];
-  const diffStart = profileStart();
   const changed = helpers.applyScopeDiff(state, before, next, pathStack);
-  profileEnd('commit.diff.scope.recursive', diffStart);
   if (changed) primeScopeSnapshotCache(state, next);
-  profileEnd('commit.diff.scope.total', totalStart);
   return { changed, patches };
 }
 
@@ -219,14 +214,10 @@ export function applyArrayCommitDiff<
   next: unknown[],
   deps: DiffOperationDeps<TNode, TScopeState, TArrayState>,
 ): CommitResult {
-  const totalStart = profileStart();
   const patches: IoPatch[] = [];
   const helpers = createDiffHelpers(deps, patches);
   const pathStack: PathStack = [];
-  const diffStart = profileStart();
   const changed = helpers.applyArrayDiff(state, before, next, pathStack);
-  profileEnd('commit.diff.array.recursive', diffStart);
   if (changed) primeArraySnapshotCache(state, next);
-  profileEnd('commit.diff.array.total', totalStart);
   return { changed, patches };
 }

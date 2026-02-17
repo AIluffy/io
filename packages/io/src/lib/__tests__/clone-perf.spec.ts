@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDraft, finishDraft } from '../utils/immutable/cow.js';
 import { cloneValue } from '../utils/immutable/immutable.js';
-import { runWithDeepCloneCounter } from './immutable.spec.js';
+import { runWithDeepCloneCounter } from './immutable-helper.js';
 
 type Fixture = {
   level1: {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSubscriptionManager } from '../core/api/utils/subscription-manager.js';
+import { createSubscriptionManager } from '../utils/core/subscription-manager.js';
 import { scheduleTask } from '../utils/reactive/schedule.js';
 import { SwapBuffer } from '../utils/reactive/swap-buffer.js';
 

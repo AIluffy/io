@@ -6,7 +6,7 @@ import {
   snapshotValue,
   toImmutable,
 } from '../utils/immutable/immutable.js';
-import { runWithDeepCloneCounter } from './immutable.spec.js';
+import { runWithDeepCloneCounter } from './immutable-helper.js';
 
 describe('immutable utilities', () => {
   it('freezeOwned deeply freezes owned values and reuses immutable roots', () => {

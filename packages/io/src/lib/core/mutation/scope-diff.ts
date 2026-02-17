@@ -5,7 +5,6 @@ import type {
   PathSegment,
   ScopeStateLike,
 } from './diff-shared.js';
-import { profileEnd, profileStart } from './commit-profile.js';
 
 export function createApplyScopeDiff<
   TNode,
@@ -68,41 +67,28 @@ export function createApplyScopeDiff<
     return changedKey;
   };
 
-  return (
+  const applyScopeDiffFast = (
     scopeState: TScopeState,
     prevObj: Record<PropertyKey, unknown>,
     nextObj: Record<PropertyKey, unknown>,
     pathStack: PathStack,
   ): boolean => {
     const baseDepth = pathStack.length;
-    const depth = pathStack.length;
-    const totalStart = profileStart();
     let currentState = scopeState;
     let currentPrev = prevObj;
     let currentNext = nextObj;
 
     while (true) {
-      const currentDepth = pathStack.length;
-      const shapeCheckStart = profileStart();
       for (const key of Reflect.ownKeys(currentNext)) {
         if (!currentState.children.has(key))
           throw new Error(`ioTree scope: unknown key ${String(key)}`);
       }
-      profileEnd(
-        `commit.diff.scope.depth.${currentDepth}.shapeCheck`,
-        shapeCheckStart,
-      );
 
-      const fastPathCheckStart = profileStart();
       if (currentState.children.size <= 4) {
         const changedKey = findSingleChangedKey(
           currentState,
           currentPrev,
           currentNext,
-        );
-        profileEnd(
-          `commit.diff.scope.depth.${currentDepth}.fastPathCheck`,
-          fastPathCheckStart,
         );
         if (changedKey !== undefined) {
           const node = currentState.children.get(changedKey);
@@ -130,7 +116,6 @@ export function createApplyScopeDiff<
             );
             if (childChanged !== undefined) {
               pathStack.length = baseDepth;
-              profileEnd(`commit.diff.scope.depth.${depth}.total`, totalStart);
               return childChanged;
             }
 
@@ -143,19 +128,12 @@ export function createApplyScopeDiff<
               pathStack,
             );
             pathStack.length = baseDepth;
-            profileEnd(`commit.diff.scope.depth.${depth}.total`, totalStart);
             return nodeChanged;
           }
         }
-      } else {
-        profileEnd(
-          `commit.diff.scope.depth.${currentDepth}.fastPathCheck`,
-          fastPathCheckStart,
-        );
       }
 
       let changed = false;
-      const loopStart = profileStart();
       for (const [key, node] of currentState.children.entries()) {
         const prev = currentPrev[key];
         const nextValue = currentNext[key];
@@ -189,10 +167,10 @@ export function createApplyScopeDiff<
           pathStack.pop();
         }
       }
-      profileEnd(`commit.diff.scope.depth.${currentDepth}.loop`, loopStart);
       pathStack.length = baseDepth;
-      profileEnd(`commit.diff.scope.depth.${depth}.total`, totalStart);
       return changed;
     }
   };
+
+  return applyScopeDiffFast;
 }

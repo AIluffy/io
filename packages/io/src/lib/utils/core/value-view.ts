@@ -1,5 +1,5 @@
-import { getInternal, INTERNAL } from '../../../utils/internal/internal-access.js';
-import { isIndexKey } from '../../../utils/internal/is-index-key.js';
+import { getInternal, INTERNAL } from '../internal/internal-access.js';
+import { isIndexKey } from '../internal/is-index-key.js';
 
 type Getter = { get: () => unknown };
 type ArrayGetter = { get: () => unknown[] };

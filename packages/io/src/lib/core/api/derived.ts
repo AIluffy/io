@@ -12,8 +12,8 @@ import { computed, effect } from '../../utils/reactive/signals.js';
 import { cloneValue, snapshotValue } from '../../utils/immutable/immutable.js';
 import { getInternal, registerInternal } from '../../utils/internal/internal-access.js';
 import { INTERNAL } from '../../utils/internal/internal-access.js';
-import { getValueView } from './utils/value-view.js';
-import { createSubscriptionManager } from './utils/subscription-manager.js';
+import { getValueView } from '../../utils/core/value-view.js';
+import { createSubscriptionManager } from '../../utils/core/subscription-manager.js';
 
 type Subscribable = {
   subscribe: (fn: (...args: unknown[]) => void) => IoUnsubscribe;

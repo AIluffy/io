@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { derived } from '../core/api/derived.js';
 import { io } from '../core/api/io.js';
-import { getValueView } from '../core/api/utils/value-view.js';
+import { getValueView } from '../utils/core/value-view.js';
 import { INTERNAL } from '../utils/internal/internal-access.js';
 
-describe('core/api/utils: getValueView', () => {
+describe('utils/core: getValueView', () => {
   it('returns primitives and nullish values as-is', () => {
     expect(getValueView<number>(1)).toBe(1);
     expect(getValueView<null>(null)).toBeNull();
