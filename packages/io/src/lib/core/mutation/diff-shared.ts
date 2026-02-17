@@ -1,28 +1,17 @@
 import type { IoPatch } from '../../utils/types/types.js';
-import type { DirtyIndexState } from './dirty-indices.js';
-import type { ValueEpoch } from '../../utils/types/branded.js';
+import type {
+  MutationArrayStateLike,
+  MutationScopeStateLike,
+} from './state-like.js';
+import { appendPath } from '../tree/path-utils.js';
 
 export type PathSegment = PropertyKey;
 export type NodePath = readonly PathSegment[];
 export type PathStack = PathSegment[];
 
-export type ScopeStateLike<TNode> = {
-  children: Map<PropertyKey, TNode>;
-  path: NodePath;
-  valueEpoch: ValueEpoch;
-  dirtyKeys: Set<PropertyKey>;
-  dirtyStructure: boolean;
-  isCommitting: boolean;
-};
+export type ScopeStateLike<TNode> = MutationScopeStateLike<TNode>;
 
-export type ArrayStateLike<TNode> = {
-  children: TNode[];
-  path: NodePath;
-  valueEpoch: ValueEpoch;
-  dirtyIndices: DirtyIndexState;
-  dirtyStructure: boolean;
-  isCommitting: boolean;
-};
+export type ArrayStateLike<TNode> = MutationArrayStateLike<TNode>;
 
 export type DiffNodeReadDeps<
   TNode,
@@ -129,7 +118,7 @@ export function createReplaceChild<
     getPatchNext,
   ) => {
     if (typeof segment === 'string') {
-      const absPath = [...parentState.path, segment] as NodePath;
+      const absPath = appendPath(parentState.path, segment);
       deps.detachChildFromScope(parentState as TScopeState, segment);
       deps.unregisterSubtree(absPath, node);
       const replaced = deps.createTreeNode(absPath, nextValue);
@@ -146,7 +135,7 @@ export function createReplaceChild<
 
     if (typeof segment !== 'number')
       throw new Error('ioTree array: invalid segment');
-    const absPath = [...parentState.path, segment] as NodePath;
+    const absPath = appendPath(parentState.path, segment);
     deps.detachChildFromArray(parentState as TArrayState, node);
     deps.unregisterSubtree(absPath, node);
     const replaced = deps.createTreeNode(absPath, nextValue);

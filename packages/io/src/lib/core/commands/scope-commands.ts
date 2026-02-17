@@ -7,6 +7,7 @@ import type {
 import type { TreeNode, TreeScopeState, UnitInternal } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
+import { appendPath } from '../tree/path-utils.js';
 
 type ScopeMutateCommandDeps = {
   path: NodePath;
@@ -57,9 +58,9 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
     }
 
     this.deps.detachChildFromScope(state, this.key);
-    this.deps.unregisterSubtree([...this.deps.path, this.key], existing);
+    this.deps.unregisterSubtree(appendPath(this.deps.path, this.key), existing);
     const replaced = this.deps.createTreeNode(
-      [...this.deps.path, this.key],
+      appendPath(this.deps.path, this.key),
       this.next,
     );
     state.children.set(this.key, replaced);

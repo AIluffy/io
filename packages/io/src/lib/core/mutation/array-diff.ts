@@ -8,6 +8,7 @@ import type {
   PathSegment,
   ScopeStateLike,
 } from './diff-shared.js';
+import { appendPath } from '../tree/path-utils.js';
 
 export function createRebuildArrayChildren<
   TNode,
@@ -55,13 +56,13 @@ export function createRebuildArrayChildren<
       const index = start + i;
       const child = prevChildren[index];
       deps.detachChildFromArray(arrayState, child);
-      deps.unregisterSubtree([...arrayState.path, index], child);
+      deps.unregisterSubtree(appendPath(arrayState.path, index), child);
     }
 
     const insertedChildren = new Array<TNode>(insertCount);
     for (let i = 0; i < insertCount; i += 1) {
       insertedChildren[i] = deps.createTreeNode(
-        [...arrayState.path, start + i],
+        appendPath(arrayState.path, start + i),
         nextArr[start + i],
       );
       deps.attachChildToArray(arrayState, insertedChildren[i]);

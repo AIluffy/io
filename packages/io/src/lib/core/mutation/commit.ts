@@ -14,25 +14,22 @@ import {
   type PathStack,
   type ScopeStateLike,
 } from './diff-shared.js';
+import type {
+  MutationArrayStateLike,
+  MutationScopeStateLike,
+} from './state-like.js';
 import { createApplyScopeDiff } from './scope-diff.js';
-import type { ValueEpoch } from '../../utils/types/branded.js';
 import { nextEpoch } from '../../utils/types/branded.js';
 import { clearDirtyIndices } from './dirty-indices.js';
 
 type CommitResult = { changed: boolean; patches: IoPatch[] };
 
-type ScopeSnapshotCacheState = {
-  valueEpoch: ValueEpoch;
+type ScopeSnapshotCacheState = MutationScopeStateLike<unknown> & {
   snapshotCache: VersionedCache<Record<string, unknown>>;
-  dirtyKeys: Set<PropertyKey>;
-  dirtyStructure: boolean;
 };
 
-type ArraySnapshotCacheState = {
-  valueEpoch: ValueEpoch;
+type ArraySnapshotCacheState = MutationArrayStateLike<unknown> & {
   snapshotCache: VersionedCache<unknown[]>;
-  dirtyIndices: { items: number[]; marks: Int32Array; version: number };
-  dirtyStructure: boolean;
 };
 
 function hasScopeSnapshotCacheState(

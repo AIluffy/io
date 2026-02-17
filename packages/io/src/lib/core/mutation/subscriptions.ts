@@ -1,7 +1,10 @@
 import type { IoUnsubscribe, IoUpdate } from '../../utils/types/types.js';
-import type { DirtyIndexState } from './dirty-indices.js';
 import { markDirtyIndex } from './dirty-indices.js';
 import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
+import type {
+  MutationArrayStateLike,
+  MutationScopeStateLike,
+} from './state-like.js';
 
 import { notifyUpdate, notifyValue } from '../../utils/reactive/batch.js';
 import { createUpdate } from '../../utils/patches/updates.js';
@@ -13,26 +16,18 @@ import {
   subscribeKeyedChild,
 } from './bubbling.js';
 
-type ScopeStateLike<TNode> = {
-  children: Map<PropertyKey, TNode>;
+type ScopeStateLike<TNode> = MutationScopeStateLike<TNode> & {
   revision: Revision;
-  isCommitting: boolean;
-  valueEpoch: ValueEpoch;
-  dirtyKeys: Set<PropertyKey>;
   valueListeners: Set<(value: Record<string, unknown>) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
   childValueUnsubs: Map<PropertyKey, IoUnsubscribe>;
   childUpdateUnsubs: Map<PropertyKey, IoUnsubscribe>;
 };
 
-type ArrayStateLike<TNode> = {
-  children: TNode[];
+type ArrayStateLike<TNode> = MutationArrayStateLike<TNode> & {
   childIndices?: Map<TNode, Set<number>>;
   childIndicesDirty?: boolean;
   revision: Revision;
-  isCommitting: boolean;
-  valueEpoch: ValueEpoch;
-  dirtyIndices: DirtyIndexState;
   valueListeners: Set<(value: unknown[]) => void>;
   updateListeners: Set<(update: IoUpdate) => void>;
   childValueUnsubs: Map<TNode, { unsub: IoUnsubscribe; count: number }>;

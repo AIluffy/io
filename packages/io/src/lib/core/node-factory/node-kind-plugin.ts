@@ -1,7 +1,7 @@
 import type { TreeDeps } from '../types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { TreeContext, TreeInternal, TreeNode } from '../tree/io-tree-types.js';
-import { nodeBuilder } from './create-node-base.js';
+import { createNodeBase } from './create-node-base.js';
 
 type NodeKindPluginBaseDeps = Pick<TreeDeps, 'trackRead' | 'internals'>;
 
@@ -93,65 +93,6 @@ export function createNodeKindPlugin<
   return plugin;
 }
 
-function createNodeRuntimeAssembler<
-  TInitial extends object,
-  TState,
-  TValue,
-  TOperations extends Record<string, unknown>,
-  TDeps extends NodeKindPluginBaseDeps,
->(
-  plugin: NodeKindPlugin<TInitial, TState, TValue, TOperations, TDeps>,
-) {
-  let createOperations = plugin.createOperations;
-  let createCommit = plugin.createCommit;
-
-  const assembler = {
-    withOperations(
-      value: NodeKindPlugin<
-        TInitial,
-        TState,
-        TValue,
-        TOperations,
-        TDeps
-      >['createOperations'],
-    ) {
-      createOperations = value;
-      return assembler;
-    },
-    withCommit(
-      value: NodeKindPlugin<
-        TInitial,
-        TState,
-        TValue,
-        TOperations,
-        TDeps
-      >['createCommit'],
-    ) {
-      createCommit = value;
-      return assembler;
-    },
-    buildRuntime(
-      runtimeArgs: RuntimeArgs<TInitial, TState, TValue, TDeps>,
-    ): { internal: TreeInternal; properties?: Record<PropertyKey, PropertyDescriptor> } {
-      const operations = createOperations(runtimeArgs);
-      const commit = createCommit({ ...runtimeArgs, operations });
-      const internal = plugin.createInternal({ ...runtimeArgs, operations });
-      const properties = plugin.defineProperties?.({
-        ...runtimeArgs,
-        operations,
-        commit,
-      });
-
-      return {
-        internal,
-        properties,
-      };
-    },
-  };
-
-  return assembler;
-}
-
 export function createNodeFromKindPlugin<
   TInitial extends object,
   TState,
@@ -163,51 +104,53 @@ export function createNodeFromKindPlugin<
   plugin: NodeKindPlugin<TInitial, TState, TValue, TOperations, TDeps>,
 ): TreeNode {
   const { deps, ctx, initial } = options;
-  const runtimeAssembler = createNodeRuntimeAssembler(plugin)
-    .withOperations(plugin.createOperations)
-    .withCommit(plugin.createCommit);
+  const snapshotPlaceholder = () => undefined as TValue;
 
-  return nodeBuilder<TInitial, TState, TValue>({
+  return createNodeBase<TInitial, TState, TValue>({
     deps,
     ctx,
     initial,
-  })
-    .withState((initialNode) => plugin.createState({ ...options, initialNode }))
-    .withNode((state) => plugin.createNode({ state }))
-    .withInitialize(({ state, node, target }) => {
-      const snapshot = () => undefined as TValue;
+    createState: (initialNode) => plugin.createState({ ...options, initialNode }),
+    createNode: (state) => plugin.createNode({ state }),
+    initialize: ({ state, node, target }) => {
       plugin.initialize?.({
         ...options,
         state,
         node,
         target,
         getNode: () => node,
-        snapshot,
+        snapshot: snapshotPlaceholder,
       });
-    })
-    .withSnapshot((state) =>
+    },
+    createSnapshot: (state) =>
       plugin.createSnapshot({
         ...options,
         state,
         node: (state as { node: TreeNode }).node,
         target: (state as { node: TreeNode }).node as object,
         getNode: () => (state as { node: TreeNode }).node,
-        snapshot: () => undefined as TValue,
+        snapshot: snapshotPlaceholder,
       }),
-    )
-    .withInternalAndProperties(
-      ({ state, node, target, snapshot, getNode }) => {
-        return runtimeAssembler.buildRuntime({
-          ...options,
-          state,
-          node,
-          target,
-          getNode,
-          snapshot,
-        });
-      },
-    )
-    .withFinalize(({ state, node, target }) => {
+    createInternalAndProperties: ({ state, node, target, snapshot, getNode }) => {
+      const runtimeArgs = {
+        ...options,
+        state,
+        node,
+        target,
+        getNode,
+        snapshot,
+      };
+      const operations = plugin.createOperations(runtimeArgs);
+      const commit = plugin.createCommit({ ...runtimeArgs, operations });
+      const internal = plugin.createInternal({ ...runtimeArgs, operations });
+      const properties = plugin.defineProperties?.({
+        ...runtimeArgs,
+        operations,
+        commit,
+      });
+      return { internal, properties };
+    },
+    finalize: ({ state, node, target }) => {
       const snapshot = () => undefined as TValue;
       plugin.finalize?.({
         ...options,
@@ -217,6 +160,6 @@ export function createNodeFromKindPlugin<
         getNode: () => node,
         snapshot,
       });
-    })
-    .build();
+    },
+  });
 }

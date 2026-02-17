@@ -1,3 +1,5 @@
+import { appendPath } from './path-utils.js';
+
 type PathSegment = PropertyKey;
 export type NodePath = readonly PathSegment[];
 
@@ -100,7 +102,7 @@ export function registerSubtree<TNode>(
   const scopeChildren = access.getScopeChildren(node);
   if (scopeChildren) {
     for (const [key, child] of scopeChildren) {
-      registerSubtree(ctx, [...path, key], child, access, seen);
+      registerSubtree(ctx, appendPath(path, key), child, access, seen);
     }
     return;
   }
@@ -108,7 +110,7 @@ export function registerSubtree<TNode>(
   const arrayChildren = access.getArrayChildren(node);
   if (!arrayChildren) return;
   for (let i = 0; i < arrayChildren.length; i += 1) {
-    registerSubtree(ctx, [...path, i], arrayChildren[i], access, seen);
+    registerSubtree(ctx, appendPath(path, i), arrayChildren[i], access, seen);
   }
 }
 
@@ -128,7 +130,7 @@ export function unregisterSubtree<TNode>(
   const scopeChildren = access.getScopeChildren(node);
   if (scopeChildren) {
     for (const [key, child] of scopeChildren) {
-      unregisterSubtree(ctx, [...path, key], child, access, seen);
+      unregisterSubtree(ctx, appendPath(path, key), child, access, seen);
     }
     return;
   }
@@ -136,7 +138,7 @@ export function unregisterSubtree<TNode>(
   const arrayChildren = access.getArrayChildren(node);
   if (!arrayChildren) return;
   for (let i = 0; i < arrayChildren.length; i += 1) {
-    unregisterSubtree(ctx, [...path, i], arrayChildren[i], access, seen);
+    unregisterSubtree(ctx, appendPath(path, i), arrayChildren[i], access, seen);
   }
 }
 

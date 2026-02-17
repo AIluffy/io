@@ -7712,5 +7712,233 @@
         "method": "combined - set-only"
       }
     ]
+  },
+  {
+    "date": "2026-02-17T14:48:32.078Z",
+    "node": "v22.22.0",
+    "platform": "darwin 25.2.0 (arm64)",
+    "cpu": "Apple M4",
+    "timeMs": 2000,
+    "warmupMs": 250,
+    "results": [
+      {
+        "name": "createUnit: primitive (1k)",
+        "hz": 509.14491062899424,
+        "meanMs": 1.9640773758586856,
+        "rme": 1.302153046316726
+      },
+      {
+        "name": "createUnit: object (1k)",
+        "hz": 284.7784598720947,
+        "meanMs": 3.5115015385964923,
+        "rme": 4.337475906904709
+      },
+      {
+        "name": "subscribe/unsubscribe: value (10k)",
+        "hz": 1628.2599814526507,
+        "meanMs": 0.614152537918331,
+        "rme": 1.0810652615503917
+      },
+      {
+        "name": "subscribe/unsubscribe: update (10k)",
+        "hz": 1627.7242334019727,
+        "meanMs": 0.6143546796683012,
+        "rme": 1.115150874039244
+      },
+      {
+        "name": "snapshot: scope (10k)",
+        "hz": 526.3958146875693,
+        "meanMs": 1.899711152896472,
+        "rme": 7.20426434476814
+      },
+      {
+        "name": "snapshot: array (10k)",
+        "hz": 632.4814844055493,
+        "meanMs": 1.5810739518167407,
+        "rme": 3.092683613391544
+      },
+      {
+        "name": "snapshot: array (20k boundary)",
+        "hz": 12.364272227853311,
+        "meanMs": 80.87819336000015,
+        "rme": 3.7472363481763504
+      },
+      {
+        "name": "snapshot: depth (80 boundary)",
+        "hz": 1347.82685950944,
+        "meanMs": 0.741935058605349,
+        "rme": 2.169333150156303
+      },
+      {
+        "name": "snapshot: scope sparse dirty key (1k)",
+        "hz": 11.450366006867112,
+        "meanMs": 87.33345286956516,
+        "rme": 3.059250760201066
+      },
+      {
+        "name": "snapshot: scope dense dirty keys (1k)",
+        "hz": 44.778029731755524,
+        "meanMs": 22.332380544444177,
+        "rme": 6.779572903039173
+      },
+      {
+        "name": "draft/finish: deep object (200)",
+        "hz": 151.36624869576494,
+        "meanMs": 6.606492587458693,
+        "rme": 3.879574121249183
+      },
+      {
+        "name": "commit deep update (200)",
+        "hz": 95.95938538205588,
+        "meanMs": 10.421075499999992,
+        "rme": 4.938481772325219
+      },
+      {
+        "name": "commit deep update (80 boundary)",
+        "hz": 6.956696304677475,
+        "meanMs": 143.74639285714252,
+        "rme": 6.518107755075291
+      },
+      {
+        "name": "batch: 40k updates",
+        "hz": 111.03638384608264,
+        "meanMs": 9.00605698206264,
+        "rme": 1.711465081403291
+      },
+      {
+        "name": "no batch: 40k updates",
+        "hz": 114.57262663034261,
+        "meanMs": 8.728088282608745,
+        "rme": 1.8727269128930406
+      },
+      {
+        "name": "batch update 200 units",
+        "hz": 18.475362697385176,
+        "meanMs": 54.12613632432397,
+        "rme": 3.2234073789674342
+      },
+      {
+        "name": "sequential update 200 units",
+        "hz": 22.020232833897275,
+        "meanMs": 45.412780488888856,
+        "rme": 4.00306732125057
+      }
+    ],
+    "gcResults": [
+      {
+        "scenario": "scope: clean snapshot hit (10k)",
+        "iterations": 10000,
+        "samples": 5,
+        "heapDeltaBytes": 7648,
+        "meanHeapDeltaBytes": 7133,
+        "p75HeapDeltaBytes": 7656,
+        "bytesPerIteration": 0.76,
+        "stableBytesPerIteration": 0.76
+      },
+      {
+        "scenario": "scope: sparse dirty set-only (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 74072,
+        "meanHeapDeltaBytes": 58702,
+        "p75HeapDeltaBytes": 85144,
+        "bytesPerIteration": 37.04,
+        "stableBytesPerIteration": 37.04
+      },
+      {
+        "scenario": "scope: sparse dirty set-only cached-handle (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 41192,
+        "meanHeapDeltaBytes": 40720,
+        "p75HeapDeltaBytes": 48328,
+        "bytesPerIteration": 20.6,
+        "stableBytesPerIteration": 20.6
+      },
+      {
+        "scenario": "scope: sparse dirty + snapshot (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 14144,
+        "meanHeapDeltaBytes": 25632,
+        "p75HeapDeltaBytes": 25992,
+        "bytesPerIteration": 7.07,
+        "stableBytesPerIteration": 7.07
+      },
+      {
+        "scenario": "scope: dense dirty + snapshot (20 rounds)",
+        "iterations": 20,
+        "samples": 5,
+        "heapDeltaBytes": 0,
+        "meanHeapDeltaBytes": 3,
+        "p75HeapDeltaBytes": 0,
+        "bytesPerIteration": 0,
+        "stableBytesPerIteration": 0.15
+      },
+      {
+        "scenario": "array: clean snapshot hit (10k)",
+        "iterations": 10000,
+        "samples": 5,
+        "heapDeltaBytes": 22008,
+        "meanHeapDeltaBytes": 17442,
+        "p75HeapDeltaBytes": 23752,
+        "bytesPerIteration": 2.2,
+        "stableBytesPerIteration": 2.2
+      },
+      {
+        "scenario": "array: sparse dirty set-only (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 287720,
+        "meanHeapDeltaBytes": 284442,
+        "p75HeapDeltaBytes": 292696,
+        "bytesPerIteration": 143.86,
+        "stableBytesPerIteration": 143.86
+      },
+      {
+        "scenario": "array: sparse dirty set-only cached-handle (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 292568,
+        "meanHeapDeltaBytes": 235610,
+        "p75HeapDeltaBytes": 294792,
+        "bytesPerIteration": 146.28,
+        "stableBytesPerIteration": 146.28
+      },
+      {
+        "scenario": "array: sparse dirty + snapshot (2k)",
+        "iterations": 2000,
+        "samples": 5,
+        "heapDeltaBytes": 333896,
+        "meanHeapDeltaBytes": 277222,
+        "p75HeapDeltaBytes": 345896,
+        "bytesPerIteration": 166.95,
+        "stableBytesPerIteration": 166.95
+      },
+      {
+        "scenario": "array: dense dirty + snapshot (20 rounds)",
+        "iterations": 20,
+        "samples": 5,
+        "heapDeltaBytes": 0,
+        "meanHeapDeltaBytes": 0,
+        "p75HeapDeltaBytes": 0,
+        "bytesPerIteration": 0,
+        "stableBytesPerIteration": 0
+      }
+    ],
+    "gcApproximations": [
+      {
+        "scenario": "scope: sparse dirty snapshot-only (estimated)",
+        "bytesPerIteration": 0,
+        "sourceMetric": "stableBytesPerIteration",
+        "method": "combined - set-only"
+      },
+      {
+        "scenario": "array: sparse dirty snapshot-only (estimated)",
+        "bytesPerIteration": 23.09,
+        "sourceMetric": "stableBytesPerIteration",
+        "method": "combined - set-only"
+      }
+    ]
   }
 ]

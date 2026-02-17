@@ -10,6 +10,7 @@ import { createDirtyIndexState } from '../../mutation/dirty-indices.js';
 import { createArrayOps } from './array-ops.js';
 import { isIndexKey } from '../../../utils/internal/is-index-key.js';
 import { createNodeStateBase } from '../create-node-base.js';
+import { appendPath } from '../../tree/path-utils.js';
 import {
   createNodeKindPlugin,
   createNodeFromKindPlugin,
@@ -109,7 +110,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       deps.registry.setPathNode(path, node);
       for (let i = 0; i < initial.length; i += 1) {
         const value = i in initial ? initial[i] : undefined;
-        const child = createTreeNode(ctx, [...path, i], value);
+        const child = createTreeNode(ctx, appendPath(path, i), value);
         state.children[i] = child;
         deps.lifecycle.attachChildToArray(state, child);
       }

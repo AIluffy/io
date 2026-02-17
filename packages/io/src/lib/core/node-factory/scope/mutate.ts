@@ -2,6 +2,7 @@ import { ScopeMutateCommand } from '../../commands/scope-commands.js';
 import { createScopeExecutor } from '../../commands/executor.js';
 import { isUnit } from '../../../units/unit.js';
 import { createUpdate } from '../../../utils/patches/updates.js';
+import { appendPath } from '../../tree/path-utils.js';
 import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
@@ -67,7 +68,7 @@ export function createScopeMutations(
         emitError: deps.emitError,
       },
       state,
-      [...path, key],
+      appendPath(path, key),
       getNode,
     );
     executors.set(key, created);

@@ -14,6 +14,7 @@ import { createArrayExecutor } from '../../commands/executor.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import { cloneValue } from '../../../utils/immutable/immutable.js';
 import { createUpdate } from '../../../utils/patches/updates.js';
+import { appendPath } from '../../tree/path-utils.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type { TreeNode } from '../../tree/io-tree-types.js';
 import type { CreateArrayMutationsOptions } from './array-ops.js';
@@ -82,11 +83,14 @@ export function createArrayStructuralMutations(
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
       deps.lifecycle.detachChildFromArray(state, child);
-      deps.registry.unregisterSubtree([...path, normalizedStart + i], child);
+      deps.registry.unregisterSubtree(
+        appendPath(path, normalizedStart + i),
+        child,
+      );
     }
 
     const created = items.map((v, i) =>
-      createTreeNode(ctx, [...path, normalizedStart + i], v),
+      createTreeNode(ctx, appendPath(path, normalizedStart + i), v),
     );
     for (const child of created) deps.lifecycle.attachChildToArray(state, child);
     state.children.splice(normalizedStart, 0, ...created);

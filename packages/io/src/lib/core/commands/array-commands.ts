@@ -2,6 +2,7 @@ import type { IoPatch } from '../../utils/types/types.js';
 import type { TreeArrayState, TreeNode } from '../tree/io-tree-types.js';
 import type { NodePath } from '../tree/path-trie.js';
 import type { SnapshotCache } from '../snapshot/snapshot-cache.js';
+import { appendPath } from '../tree/path-utils.js';
 
 import { clearDirtyIndices, resetDirtyIndices } from '../mutation/dirty-indices.js';
 import { createSnapshotCache } from '../snapshot/snapshot-cache.js';
@@ -64,7 +65,10 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
   execute(state: TreeArrayState): IoPatch[] | null {
     const start = state.children.length;
     const created = this.items.map((value, index) =>
-      this.children.createTreeNode([...this.children.path, start + index], value),
+      this.children.createTreeNode(
+        appendPath(this.children.path, start + index),
+        value,
+      ),
     );
 
     for (const child of created) this.lifecycle.attachChildToArray(state, child);
@@ -114,7 +118,10 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
     const removedValue = this.read.getNodeValue(removed, readCache);
     this.result = removedValue;
     this.lifecycle.detachChildFromArray(state, removed);
-    this.lifecycle.unregisterSubtree([...this.children.path, start], removed);
+    this.lifecycle.unregisterSubtree(
+      appendPath(this.children.path, start),
+      removed,
+    );
     state.dirtyStructure = true;
     resetDirtyIndices(state.dirtyIndices, state.children.length);
     this.structure.rebuildMapping();

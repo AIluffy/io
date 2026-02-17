@@ -9,6 +9,7 @@ import type {
 import { createScopeCommit } from './commit.js';
 import { createScopeMutations } from './mutate.js';
 import { createNodeStateBase } from '../create-node-base.js';
+import { appendPath } from '../../tree/path-utils.js';
 import {
   createNodeKindPlugin,
   createNodeFromKindPlugin,
@@ -74,7 +75,7 @@ const scopePlugin = createNodeKindPlugin<
   initialize: ({ deps, ctx, path, initial, state, createTreeNode }) => {
     const initialAny = initial as Record<PropertyKey, unknown>;
     for (const key of Reflect.ownKeys(initialAny)) {
-      const child = createTreeNode(ctx, [...path, key], initialAny[key]);
+      const child = createTreeNode(ctx, appendPath(path, key), initialAny[key]);
       state.children.set(key, child);
     }
 

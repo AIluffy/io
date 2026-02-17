@@ -11,16 +11,10 @@ import type {
 import type { SnapshotCache } from './snapshot-cache.js';
 
 import {
-  freezeRootShallow,
   snapshotValue,
 } from '../../utils/immutable/immutable.js';
 import { getInternal as getAnyInternal } from '../../utils/internal/internal-access.js';
-import { createSnapshotCache } from './snapshot-cache.js';
-import {
-  CACHE_MISS,
-  readCachedByVersion,
-  updateCachedByVersion,
-} from './versioned-cache.js';
+import { createSnapshotReader } from './create-snapshot-reader.js';
 
 export type { SnapshotCache } from './snapshot-cache.js';
 export type GetNodeValue = (node: TreeNode, cache: SnapshotCache) => unknown;
@@ -81,41 +75,34 @@ export function createNodeValueReader(deps: {
 export function createScopeSnapshotReader(deps: {
   getNodeValue: GetNodeValue;
 }): ScopeSnapshotReader {
-  return (state: TreeScopeState, cache?: SnapshotCache): Record<string, unknown> => {
-    const snapshot = readCachedByVersion(state.snapshotCache, state.valueEpoch);
-    if (snapshot !== CACHE_MISS) return snapshot as Record<string, unknown>;
-
-    const local = cache ?? createSnapshotCache();
-    const cached = local.get(state.node as object);
-    if (cached) return cached as Record<string, unknown>;
-
-    const prev = state.snapshotCache.hasValue
-      ? (state.snapshotCache.value as Record<PropertyKey, unknown>)
-      : undefined;
-
-    if (prev && !state.dirtyStructure && state.dirtyKeys.size === 0) {
-      local.set(state.node as object, prev);
-      return prev as Record<string, unknown>;
-    }
-
-    const base: Record<PropertyKey, unknown> = {};
-    local.set(state.node as object, base);
-    const incremental = prev !== undefined && !state.dirtyStructure;
-    for (const key of state.children.keys()) {
-      const node = state.children.get(key);
-      if (!node) continue;
-      if (incremental && !state.dirtyKeys.has(key)) {
-        base[key] = prev[key];
-        continue;
+  const readScopeSnapshot = createSnapshotReader<TreeScopeState, Record<string, unknown>>({
+    hasDirtySegments: (state) => state.dirtyKeys.size > 0,
+    buildFull: (state, getNodeValue, cache) => {
+      const base: Record<PropertyKey, unknown> = {};
+      cache.set(state.node as object, base);
+      for (const [key, node] of state.children.entries()) {
+        base[key] = getNodeValue(node, cache);
       }
-      base[key] = deps.getNodeValue(node, local);
-    }
+      return base as Record<string, unknown>;
+    },
+    buildIncremental: (state, prev, getNodeValue, cache) => {
+      const prevRecord = prev as Record<PropertyKey, unknown>;
+      const base: Record<PropertyKey, unknown> = {};
+      cache.set(state.node as object, base);
+      for (const [key, node] of state.children.entries()) {
+        if (!state.dirtyKeys.has(key)) {
+          base[key] = prevRecord[key];
+          continue;
+        }
+        base[key] = getNodeValue(node, cache);
+      }
+      return base as Record<string, unknown>;
+    },
+    clearDirty: (state) => {
+      state.dirtyKeys.clear();
+    },
+  });
 
-    state.dirtyKeys.clear();
-    state.dirtyStructure = false;
-
-    const value = freezeRootShallow(base) as Record<string, unknown>;
-    local.set(state.node as object, value);
-    return updateCachedByVersion(state.snapshotCache, state.valueEpoch, value);
-  };
+  return (state: TreeScopeState, cache?: SnapshotCache): Record<string, unknown> =>
+    readScopeSnapshot(state, deps.getNodeValue, cache);
 }

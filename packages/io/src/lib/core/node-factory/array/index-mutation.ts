@@ -9,6 +9,7 @@ import { markDirtyIndex } from '../../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../../utils/types/branded.js';
 import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
 import type { SnapshotCache } from '../../snapshot/snapshot-cache.js';
+import { appendPath } from '../../tree/path-utils.js';
 
 function isUnitCandidate(node: unknown): boolean {
   if (isUnit(node)) return true;
@@ -81,8 +82,8 @@ export function createArrayIndexMutation(
       if (isLink(next)) {
         const prevValue = readNodeValue(existing);
         deps.lifecycle.detachChildFromArray(state, existing);
-        deps.registry.unregisterSubtree([...path, index], existing);
-        const replaced = createTreeNode(ctx, [...path, index], next);
+        deps.registry.unregisterSubtree(appendPath(path, index), existing);
+        const replaced = createTreeNode(ctx, appendPath(path, index), next);
         state.children[index] = replaced;
         deps.lifecycle.attachChildToArray(state, replaced);
         readCache?.clear();
@@ -129,8 +130,8 @@ export function createArrayIndexMutation(
 
       const prevValue = readNodeValue(existing);
       deps.lifecycle.detachChildFromArray(state, existing);
-      deps.registry.unregisterSubtree([...path, index], existing);
-      const replaced = createTreeNode(ctx, [...path, index], next);
+      deps.registry.unregisterSubtree(appendPath(path, index), existing);
+      const replaced = createTreeNode(ctx, appendPath(path, index), next);
       state.children[index] = replaced;
       deps.lifecycle.attachChildToArray(state, replaced);
       postSetIndex(
@@ -147,7 +148,7 @@ export function createArrayIndexMutation(
         { emitUpdate: shouldEmitUpdate, emitValue },
       );
     } catch (error) {
-      emitError(getNode(), error, [...path, index], 'set');
+      emitError(getNode(), error, appendPath(path, index), 'set');
       throw error;
     }
   };
