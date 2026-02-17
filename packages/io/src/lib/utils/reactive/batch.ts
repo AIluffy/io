@@ -1,7 +1,6 @@
 import type { IoUpdate } from '../types/types.js';
 
 import { mergeUpdates } from '../patches/update-merge.js';
-import { SwapBuffer } from './swap-buffer.js';
 
 type ValueListener<T> = (value: T) => void;
 type UpdateListener = (update: IoUpdate) => void;
@@ -9,8 +8,10 @@ type UpdateListener = (update: IoUpdate) => void;
 let batchDepth = 0;
 let hasPending = false;
 
-const pendingValues = new SwapBuffer<ValueListener<unknown>, unknown>();
-const pendingUpdates = new SwapBuffer<UpdateListener, IoUpdate[]>();
+let pendingValues = new Map<ValueListener<unknown>, unknown>();
+let flushingValues = new Map<ValueListener<unknown>, unknown>();
+let pendingUpdates = new Map<UpdateListener, IoUpdate[]>();
+let flushingUpdates = new Map<UpdateListener, IoUpdate[]>();
 const updateArrayPool: IoUpdate[][] = [];
 const UPDATE_POOL_LIMIT = 100;
 
@@ -27,21 +28,27 @@ const releaseUpdateArray = (updates: IoUpdate[]): void => {
 
 function flush(): void {
   if (pendingValues.size > 0) {
-    pendingValues.drain((executing) => {
-      executing.forEach((value, listener) => {
-        (listener as ValueListener<unknown>)(value);
-      });
+    const executing = pendingValues;
+    pendingValues = flushingValues;
+    flushingValues = executing;
+    pendingValues.clear();
+    executing.forEach((value, listener) => {
+      (listener as ValueListener<unknown>)(value);
     });
+    executing.clear();
   }
 
   if (pendingUpdates.size > 0) {
-    pendingUpdates.drain((executing) => {
-      executing.forEach((updates, listener) => {
-        if (updates.length === 1) listener(updates[0]);
-        else listener(mergeUpdates(updates));
-        releaseUpdateArray(updates);
-      });
+    const executing = pendingUpdates;
+    pendingUpdates = flushingUpdates;
+    flushingUpdates = executing;
+    pendingUpdates.clear();
+    executing.forEach((updates, listener) => {
+      if (updates.length === 1) listener(updates[0]);
+      else listener(mergeUpdates(updates));
+      releaseUpdateArray(updates);
     });
+    executing.clear();
   }
 }
 

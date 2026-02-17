@@ -9,6 +9,7 @@ import type { NodePath } from '../tree/path-trie.js';
 import type { TreeCommand } from './command.js';
 
 import { resetDirtyIndices } from '../mutation/dirty-indices.js';
+import { profileEnd, profileStart } from '../mutation/commit-profile.js';
 import { nextEpoch, nextRevision } from '../../utils/types/branded.js';
 
 export type ExecuteOptions = {
@@ -71,10 +72,23 @@ function createExecutor<TState extends ExecutorState>(
 
       const baseRevision = state.revision;
       state.revision = nextRevision(state.revision);
+      const createUpdateStart = command.op === 'commit' ? profileStart() : 0;
       const update = deps.createUpdate(baseRevision, state.revision, patches);
-      if (options?.emitUpdate !== false) config.emitUpdate(state, update);
+      if (createUpdateStart !== 0)
+        profileEnd('commit.executor.createUpdate', createUpdateStart);
+      if (options?.emitUpdate !== false) {
+        const emitUpdateStart = command.op === 'commit' ? profileStart() : 0;
+        config.emitUpdate(state, update);
+        if (emitUpdateStart !== 0)
+          profileEnd('commit.notifications.emitUpdate', emitUpdateStart);
+      }
       state.valueEpoch = nextEpoch(state.valueEpoch);
-      if (options?.emitValue !== false) config.emitValue(state);
+      if (options?.emitValue !== false) {
+        const emitValueStart = command.op === 'commit' ? profileStart() : 0;
+        config.emitValue(state);
+        if (emitValueStart !== 0)
+          profileEnd('commit.notifications.emitValue', emitValueStart);
+      }
       return update;
     } catch (error) {
       deps.emitError(getNode(), error, path, command.op);

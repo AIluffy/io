@@ -1,5 +1,6 @@
 import type { IoPatch } from '../../utils/types/types.js';
 import { resetDirtyIndices } from './dirty-indices.js';
+import { profileEnd, profileStart } from './commit-profile.js';
 import type {
   ArrayStateLike,
   DiffChildFn,
@@ -40,6 +41,7 @@ export function createRebuildArrayChildren<
 
     if (arrayNode) deps.registerSubtree(arrayState.path, arrayNode);
 
+    const patchStart = profileStart();
     patches.push({
       op: 'splice',
       path: pathStack.slice(),
@@ -48,6 +50,7 @@ export function createRebuildArrayChildren<
       deleted: prevArr.map((v) => deps.resolvePatchValue(v)),
       items: nextArr.map((v) => deps.resolvePatchValue(v)),
     });
+    profileEnd('commit.patch.generate', patchStart);
     return true;
   };
 }

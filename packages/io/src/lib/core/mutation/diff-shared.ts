@@ -1,6 +1,7 @@
 import type { IoPatch } from '../../utils/types/types.js';
 import type { DirtyIndexState } from './dirty-indices.js';
 import type { ValueEpoch } from '../../utils/types/branded.js';
+import { profileEnd, profileStart } from './commit-profile.js';
 
 export type PathSegment = PropertyKey;
 export type NodePath = readonly PathSegment[];
@@ -135,12 +136,14 @@ export function createReplaceChild<
       const replaced = deps.createTreeNode(absPath, nextValue);
       (parentState as TScopeState).children.set(segment, replaced);
       deps.attachChildToScope(parentState as TScopeState, segment, replaced);
+      const patchStart = profileStart();
       patches.push({
         op: 'set',
         path: pathStack.slice(),
         prev: deps.cloneValue(patchPrev),
         next: deps.cloneValue(getPatchNext(replaced)),
       });
+      profileEnd('commit.patch.generate', patchStart);
       return true;
     }
 
@@ -152,12 +155,14 @@ export function createReplaceChild<
     const replaced = deps.createTreeNode(absPath, nextValue);
     (parentState as TArrayState).children[segment] = replaced;
     deps.attachChildToArray(parentState as TArrayState, replaced);
+    const patchStart = profileStart();
     patches.push({
       op: 'set',
       path: pathStack.slice(),
       prev: deps.cloneValue(patchPrev),
       next: deps.cloneValue(getPatchNext(replaced)),
     });
+    profileEnd('commit.patch.generate', patchStart);
     return true;
   };
 }
@@ -208,12 +213,14 @@ export function createApplyNodeDiff<
 
     if (deps.isUnit(node)) {
       deps.setUnitValue(node, nextValue);
+      const patchStart = profileStart();
       patches.push({
         op: 'set',
         path: pathStack.slice(),
         prev: deps.cloneValue(prev),
         next: deps.cloneValue(nextValue),
       });
+      profileEnd('commit.patch.generate', patchStart);
       deps.markDirty(parentState, segment);
       return true;
     }

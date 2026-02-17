@@ -96,6 +96,10 @@ type DeepFreezeOptions = {
   assumeDataProperties?: boolean;
 };
 
+const REUSABLE_VISITED = new Set<object>();
+const REUSABLE_STACK: unknown[] = [];
+let reusableDeepFreezeContextBusy = false;
+
 export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;
@@ -118,38 +122,60 @@ export function deepFreeze<T>(value: T, options?: DeepFreezeOptions): T {
     }
   }
 
-  const visited = new Set<object>();
-  const stack: unknown[] = [];
-  stack.push(value);
+  let visited: Set<object>;
+  let stack: unknown[];
+  let useReusableContext = false;
+  if (!reusableDeepFreezeContextBusy) {
+    reusableDeepFreezeContextBusy = true;
+    useReusableContext = true;
+    visited = REUSABLE_VISITED;
+    stack = REUSABLE_STACK;
+    visited.clear();
+    stack.length = 0;
+  } else {
+    visited = new Set<object>();
+    stack = [];
+  }
 
-  while (stack.length > 0) {
-    const current = stack.pop();
-    if (current === null || current === undefined) continue;
-    if (typeof current !== 'object') continue;
-    const obj = current as object;
-    if (visited.has(obj)) continue;
-    visited.add(obj);
+  try {
+    stack.push(value);
 
-    Object.freeze(obj);
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (current === null || current === undefined) continue;
+      if (typeof current !== 'object') continue;
+      const obj = current as object;
+      if (visited.has(obj)) continue;
+      visited.add(obj);
 
-    if (assumeDataProperties) {
+      Object.freeze(obj);
+
+      if (assumeDataProperties) {
+        for (const key of Reflect.ownKeys(obj)) {
+          const desc = Object.getOwnPropertyDescriptor(obj, key);
+          if (!desc || !('value' in desc)) continue;
+          stack.push(desc.value);
+        }
+        continue;
+      }
+
+      if (Array.isArray(obj)) {
+        for (const item of obj) stack.push(item);
+      }
       for (const key of Reflect.ownKeys(obj)) {
         const desc = Object.getOwnPropertyDescriptor(obj, key);
-        if (!desc || !('value' in desc)) continue;
-        stack.push(desc.value);
+        if (!desc) continue;
+        if ('value' in desc) stack.push(desc.value);
       }
-      continue;
     }
-
-    if (Array.isArray(obj)) {
-      for (const item of obj) stack.push(item);
-    }
-    for (const key of Reflect.ownKeys(obj)) {
-      const desc = Object.getOwnPropertyDescriptor(obj, key);
-      if (!desc) continue;
-      if ('value' in desc) stack.push(desc.value);
+  } finally {
+    if (useReusableContext) {
+      REUSABLE_VISITED.clear();
+      REUSABLE_STACK.length = 0;
+      reusableDeepFreezeContextBusy = false;
     }
   }
+
   return value;
 }
 
