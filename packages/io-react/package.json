@@ -25,6 +25,7 @@
   },
   "files": [
     "dist",
+    "!**/*.d.ts.map",
     "!**/*.tsbuildinfo"
   ],
   "publishConfig": {
@@ -45,6 +46,29 @@
   "nx": {
     "tags": [
       "scope:io-react"
-    ]
+    ],
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "packages/io-react",
+          "command": "node --input-type=module -e \"import { rmSync } from \\\"node:fs\\\"; rmSync(\\\"dist\\\", { recursive: true, force: true });\" && tsc --build tsconfig.lib.json"
+        },
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ],
+        "syncGenerators": [
+          "@nx/js:typescript-sync"
+        ]
+      }
+    }
   }
 }
