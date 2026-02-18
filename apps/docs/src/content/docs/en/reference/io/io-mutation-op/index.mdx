@@ -22,7 +22,7 @@ IoMutationOp
 | lastIndexOf | `(searchString: string, position?: number) => number` |
 | localeCompare | `{ (that: string): number; (that: string, locales?: string \| string[], options?: Intl.CollatorOptions): number; (that: string, locales?: Intl.LocalesArgument, options?: Intl.CollatorOptions): number; }` |
 | match | `{ (regexp: string \| RegExp): RegExpMatchArray \| null; (matcher: { [Symbol.match](string: string): RegExpMatchArray \| null; }): RegExpMatchArray \| null; }` |
-| replace | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; (searchValue: { [Symbol.replace](string: string, replaceValue: string): string; }, replaceValue: string): string; (searchValue: { [Symbol.replace](string: string, replacer: (substring: string, ...args: any[]) => string): string; }, replacer: (substring: string, ...args: any[]) => string): string; }` |
+| replace | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; (searchValue: { [Symbol.replace](string: string, replaceValue: string): string; }, replaceValue: string): string; (searchValue: { [Symbol.replace](string: s...` |
 | search | `{ (regexp: string \| RegExp): number; (searcher: { [Symbol.search](string: string): number; }): number; }` |
 | slice | `(start?: number, end?: number) => string` |
 | split | `{ (separator: string \| RegExp, limit?: number): string[]; (splitter: { [Symbol.split](string: string, limit?: number): string[]; }, limit?: number): string[]; }` |
@@ -63,7 +63,7 @@ IoMutationOp
 | matchAll | `(regexp: RegExp) => RegExpStringIterator<RegExpExecArray>` |
 | replaceAll | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; }` |
 | at | `(index: number) => string \| undefined` |
-| __@iterator@432 | `() => StringIterator<string>` |
+| __@iterator@434 | `() => StringIterator<string>` |
 
 ## Errors
 

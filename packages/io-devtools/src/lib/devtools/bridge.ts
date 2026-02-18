@@ -98,9 +98,9 @@ export function createReduxBridgeConnector(deps: BridgeDeps) {
       const dispatchType = payload?.type;
       if (dispatchType === 'RESET') {
         deps.clearHistory();
-        connection.init(
-          deps.sanitizeForJson(deps.target.snapshot(), deps.options?.export),
-        );
+        const snapshot = deps.target.snapshot();
+        deps.resetSnapshots(snapshot);
+        connection.init(deps.sanitizeForJson(snapshot, deps.options?.export));
         return;
       }
       if (dispatchType === 'COMMIT') {

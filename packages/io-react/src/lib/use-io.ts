@@ -1,6 +1,6 @@
 import type { IoSchedule } from '@iostore/store';
 
-import { isServerEnv, scheduleTask } from '@iostore/store';
+import { createScheduledDispatcher, isServerEnv } from '@iostore/store';
 import { useSyncExternalStore } from 'react';
 
 type IoSource<T> = {
@@ -23,25 +23,10 @@ function createSubscriber<T>(
       return source.subscribe(() => onStoreChange());
     }
 
-    let active = true;
-    let pending = false;
-    let token = 0;
-    const scheduleNotify = () => {
-      if (pending) return;
-      pending = true;
-      token += 1;
-      const currentToken = token;
-      scheduleTask(schedule, () => {
-        if (!active || !pending || currentToken !== token) return;
-        pending = false;
-        onStoreChange();
-      });
-    };
-    const unsub = source.subscribe(() => scheduleNotify());
+    const notify = createScheduledDispatcher(schedule, () => onStoreChange());
+    const unsub = source.subscribe(() => notify.dispatch());
     return () => {
-      active = false;
-      pending = false;
-      token += 1;
+      notify.cancel();
       unsub();
     };
   };

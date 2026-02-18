@@ -19,8 +19,6 @@ const STORE_COVERAGE_THRESHOLDS = {
   },
 } as const;
 
-// @ts-ignore
-
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/io',

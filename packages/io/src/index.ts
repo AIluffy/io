@@ -2,7 +2,10 @@ export { io } from './lib/core/api/io.js';
 export { derived } from './lib/core/api/derived.js';
 export { batch } from './lib/utils/reactive/batch.js';
 export { isServerEnv } from './lib/utils/env/env.js';
-export { scheduleTask } from './lib/utils/reactive/schedule.js';
+export {
+  createScheduledDispatcher,
+  scheduleTask,
+} from './lib/utils/reactive/schedule.js';
 export { onError, onMutation } from './lib/utils/debug/debug.js';
 export { relocate } from './lib/extensions/relocate.js';
 export { link } from './lib/utils/internal/link.js';

@@ -251,7 +251,10 @@ export function createIoDevtools(
 
   const clear = () => {
     const from = historyController.getCursor();
+    const snapshot = target.snapshot();
     historyController.clearHistory();
+    historyController.setInitialSnapshot(snapshot);
+    historyController.setLastSnapshot(snapshot);
     emit({
       type: 'timeTravel',
       kind: 'clear',

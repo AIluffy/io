@@ -86,4 +86,60 @@ describe('@iostore/devtools: createIoDevtools', () => {
     expect(paths).toContainEqual(['a']);
     expect(paths).toContainEqual(['b']);
   });
+
+  it('resets snapshot baseline when clear is called after time travel', () => {
+    const store = io({ count: 0 });
+    const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
+
+    store.count.set(1);
+    store.count.set(2);
+    devtools.timeTravel.undo();
+    expect(store.count.get()).toBe(1);
+
+    devtools.clear();
+    store.count.set(3);
+
+    const state = devtools.getState();
+    expect(state.history).toHaveLength(1);
+    expect(state.history[0].snapshotBefore).toMatchObject({ count: 1 });
+    expect(state.history[0].snapshotAfter).toMatchObject({ count: 3 });
+  });
+
+  it('resets snapshot baseline on Redux bridge RESET after time travel', () => {
+    const store = io({ count: 0 });
+    let onMessage: ((message: unknown) => void) | undefined;
+    const initCalls: unknown[] = [];
+    const extension = {
+      connect: () => ({
+        init: (state: unknown) => {
+          initCalls.push(state);
+        },
+        send: () => undefined,
+        subscribe: (fn: (message: unknown) => void) => {
+          onMessage = fn;
+        },
+        unsubscribe: () => undefined,
+      }),
+    };
+
+    const devtools = createIoDevtools(store, {
+      captureSnapshots: 'always',
+      reduxDevTools: { enabled: true },
+    });
+    devtools.connectReduxDevToolsExtension({ window: { __REDUX_DEVTOOLS_EXTENSION__: extension } });
+
+    store.count.set(1);
+    store.count.set(2);
+    devtools.timeTravel.undo();
+    expect(store.count.get()).toBe(1);
+
+    onMessage?.({ type: 'DISPATCH', payload: { type: 'RESET' } });
+    store.count.set(4);
+
+    const state = devtools.getState();
+    expect(initCalls.length).toBeGreaterThan(0);
+    expect(state.history).toHaveLength(1);
+    expect(state.history[0].snapshotBefore).toMatchObject({ count: 1 });
+    expect(state.history[0].snapshotAfter).toMatchObject({ count: 4 });
+  });
 });

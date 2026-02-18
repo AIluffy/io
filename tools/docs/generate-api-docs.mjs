@@ -51,9 +51,8 @@ const LOCALES = [
   },
 ];
 
-const TYPE_FLAGS =
-  ts.TypeFormatFlags.NoTruncation |
-  ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
+const TYPE_FLAGS = ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
+const MAX_TYPE_TEXT_LENGTH = 320;
 
 function kebabCase(input) {
   return input
@@ -78,7 +77,12 @@ async function ensureDir(dirPath) {
 }
 
 function normalizeTypeText(text) {
-  return text.replace(/import\(".*?"\)\./g, '');
+  const normalized = text
+    .replace(/import\(".*?"\)\./g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (normalized.length <= MAX_TYPE_TEXT_LENGTH) return normalized;
+  return `${normalized.slice(0, MAX_TYPE_TEXT_LENGTH - 1)}…`;
 }
 
 function createProgram(entryFile) {
