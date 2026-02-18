@@ -13,6 +13,12 @@ const BASELINE_PATH =
 const DEFAULT_BUDGETS = {
   selective: { raw: 45_000, gzip: 13_000, brotli: 12_000 },
   full: { raw: 58_000, gzip: 17_000, brotli: 15_000 },
+  entries: {
+    derived: { raw: 10_000, gzip: 3_000, brotli: 2_700 },
+    patches: { raw: 15_000, gzip: 4_500, brotli: 4_000 },
+    debug: { raw: 9_000, gzip: 3_000, brotli: 2_700 },
+    extensions: { raw: 9_000, gzip: 3_000, brotli: 2_700 },
+  },
 };
 const DEFAULT_MIN_SAVINGS_RATIO = 0.15;
 const DEFAULT_MAX_REGRESS_PCT = 15;
@@ -88,6 +94,23 @@ function resolveBudgets(entry, maxRegressPct) {
   const fullRaw = getMetric(entry, 'fullRawBytes');
   const fullGzip = getMetric(entry, 'fullGzipBytes');
   const fullBrotli = getMetric(entry, 'fullBrotliBytes');
+  const entries = {};
+  for (const name of Object.keys(DEFAULT_BUDGETS.entries)) {
+    const raw = getMetric(entry, `${name}EntryRawBytes`);
+    const gzip = getMetric(entry, `${name}EntryGzipBytes`);
+    const brotli = getMetric(entry, `${name}EntryBrotliBytes`);
+    entries[name] = {
+      raw: raw
+        ? withRegressLimit(raw, maxRegressPct)
+        : DEFAULT_BUDGETS.entries[name].raw,
+      gzip: gzip
+        ? withRegressLimit(gzip, maxRegressPct)
+        : DEFAULT_BUDGETS.entries[name].gzip,
+      brotli: brotli
+        ? withRegressLimit(brotli, maxRegressPct)
+        : DEFAULT_BUDGETS.entries[name].brotli,
+    };
+  }
 
   return {
     selective: {
@@ -112,6 +135,7 @@ function resolveBudgets(entry, maxRegressPct) {
         ? withRegressLimit(fullBrotli, maxRegressPct)
         : DEFAULT_BUDGETS.full.brotli,
     },
+    entries,
   };
 }
 
@@ -185,10 +209,18 @@ const minSelectiveSavingsRatio =
   DEFAULT_MIN_SAVINGS_RATIO;
 const budgets = resolveBudgets(baselineEntry, maxRegressPct);
 
-for (const [name, limit] of Object.entries(budgets)) {
+for (const [name, limit] of Object.entries({
+  selective: budgets.selective,
+  full: budgets.full,
+})) {
   ensureFinitePositive(`${name}.raw`, limit.raw);
   ensureFinitePositive(`${name}.gzip`, limit.gzip);
   ensureFinitePositive(`${name}.brotli`, limit.brotli);
+}
+for (const [name, limit] of Object.entries(budgets.entries)) {
+  ensureFinitePositive(`entries.${name}.raw`, limit.raw);
+  ensureFinitePositive(`entries.${name}.gzip`, limit.gzip);
+  ensureFinitePositive(`entries.${name}.brotli`, limit.brotli);
 }
 ensureFinitePositive('IO_TREE_SHAKING_MIN_SAVINGS_RATIO', minSelectiveSavingsRatio);
 
@@ -198,11 +230,34 @@ const selective = await buildStats(
 );
 const full = await buildStats(
   'full',
-  "import * as store from '@iostore/store';\nconsole.log(Object.keys(store).length);",
+  [
+    "import * as store from '@iostore/store';",
+    "import * as derived from '@iostore/store/derived';",
+    "import * as patches from '@iostore/store/patches';",
+    "import * as debug from '@iostore/store/debug';",
+    "import * as extensions from '@iostore/store/extensions';",
+    'console.log(Object.keys(store).length + Object.keys(derived).length + Object.keys(patches).length + Object.keys(debug).length + Object.keys(extensions).length);',
+  ].join('\n'),
 );
+const entrySources = {
+  derived: "import { derived } from '@iostore/store/derived';\nconsole.log(typeof derived);",
+  patches:
+    "import { applyUpdate } from '@iostore/store/patches';\nconsole.log(typeof applyUpdate);",
+  debug:
+    "import { onError } from '@iostore/store/debug';\nconsole.log(typeof onError);",
+  extensions:
+    "import { relocate } from '@iostore/store/extensions';\nconsole.log(typeof relocate);",
+};
+const entryStats = {};
+for (const [name, source] of Object.entries(entrySources)) {
+  entryStats[name] = await buildStats(`entry-${name}`, source);
+}
 
 assertWithinBudget('selective', selective, budgets.selective);
 assertWithinBudget('full', full, budgets.full);
+for (const [name, stats] of Object.entries(entryStats)) {
+  assertWithinBudget(`${name} entry`, stats, budgets.entries[name]);
+}
 const treeShaking = assertTreeShakingSavings(
   selective,
   full,
@@ -232,6 +287,19 @@ console.log(
         brotliBytes: full.brotli,
         brotliKiB: bytesToKiB(full.brotli),
       },
+      entries: Object.fromEntries(
+        Object.entries(entryStats).map(([name, stats]) => [
+          name,
+          {
+            rawBytes: stats.raw,
+            rawKiB: bytesToKiB(stats.raw),
+            gzipBytes: stats.gzip,
+            gzipKiB: bytesToKiB(stats.gzip),
+            brotliBytes: stats.brotli,
+            brotliKiB: bytesToKiB(stats.brotli),
+          },
+        ]),
+      ),
       budgets,
       baseline: {
         path:

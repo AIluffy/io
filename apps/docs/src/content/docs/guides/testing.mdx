@@ -40,7 +40,8 @@ expect(updates[0].patches[0].op).toBe('set');
 ## 回放测试
 
 ```ts
-import { io, replay } from '@iostore/store';
+import { io } from '@iostore/store';
+import { replay } from '@iostore/store/patches';
 
 const base = io({ count: 0 });
 const updates: unknown[] = [];

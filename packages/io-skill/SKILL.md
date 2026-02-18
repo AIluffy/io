@@ -10,7 +10,8 @@ Use this skill to guide consumers of IO packages, not monorepo contributors.
 ## Packages And Roles
 
 - `@iostore/store`: core state primitives and utilities.
-  - Main exports: `io`, `derived`, `batch`, `applyUpdate`, `replay`, `undoUpdate`, `mergeUpdates`, `createHistory`, `onError`, `onMutation`, `link`.
+  - Main exports: `io`, `batch`, `createScheduledDispatcher`, `scheduleTask`, `isServerEnv`.
+  - Subpath exports: `@iostore/store/derived`, `@iostore/store/patches`, `@iostore/store/debug`, `@iostore/store/extensions`.
 - `@iostore/react`: React adapter.
   - Main export: `useIO`.
 - `@iostore/solid`: Solid adapter.
@@ -58,7 +59,8 @@ unsub();
 ### 4) Derived values and batching
 
 ```ts
-import { derived, batch } from '@iostore/store';
+import { batch } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const total = derived([count], (c) => c * 2);
 
@@ -71,7 +73,7 @@ batch(() => {
 ### 5) Commit/update history
 
 ```ts
-import { createHistory, applyUpdate, undoUpdate } from '@iostore/store';
+import { createHistory, applyUpdate, undoUpdate } from '@iostore/store/patches';
 
 const history = createHistory(user);
 // user mutations...

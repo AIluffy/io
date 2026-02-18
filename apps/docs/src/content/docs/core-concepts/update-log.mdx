@@ -35,7 +35,8 @@ stop();
 ## 回放与撤销
 
 ```ts
-import { applyUpdate, mergeUpdates, undoUpdate, replay, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { applyUpdate, mergeUpdates, undoUpdate, replay } from '@iostore/store/patches';
 
 const store = io({ count: 0 });
 const updates: unknown[] = [];
@@ -56,7 +57,8 @@ applyUpdate(store, inverted);
 ## Undo / Redo
 
 ```ts
-import { createHistory, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { createHistory } from '@iostore/store/patches';
 
 const store = io({ count: 0 });
 const history = createHistory(store, { limit: 100 });
@@ -71,7 +73,8 @@ history.redo();
 ## 调试钩子
 
 ```ts
-import { io, onMutation, onError } from '@iostore/store';
+import { io } from '@iostore/store';
+import { onMutation, onError } from '@iostore/store/debug';
 
 const store = io({ count: 0 });
 

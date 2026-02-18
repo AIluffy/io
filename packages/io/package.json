@@ -17,6 +17,26 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
+    "./debug": {
+      "types": "./dist/debug.d.ts",
+      "import": "./dist/debug.js",
+      "default": "./dist/debug.js"
+    },
+    "./derived": {
+      "types": "./dist/derived.d.ts",
+      "import": "./dist/derived.js",
+      "default": "./dist/derived.js"
+    },
+    "./extensions": {
+      "types": "./dist/extensions.d.ts",
+      "import": "./dist/extensions.js",
+      "default": "./dist/extensions.js"
+    },
+    "./patches": {
+      "types": "./dist/patches.d.ts",
+      "import": "./dist/patches.js",
+      "default": "./dist/patches.js"
+    },
     "./behavior": {
       "types": "./dist/behavior.d.ts",
       "import": "./dist/behavior.js",
@@ -80,7 +100,7 @@
         "executor": "nx:run-commands",
         "options": {
           "cwd": "packages/io",
-          "command": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\" && tsc --build tsconfig.lib.json"
+          "command": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\" && tsc --build tsconfig.lib.json"
         },
         "cache": true,
         "inputs": [

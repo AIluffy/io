@@ -24,7 +24,8 @@ export function Counter() {
 ## Derived Values
 
 ```tsx
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 import { useIO } from '@iostore/react';
 
 const store = io({ count: 0 });

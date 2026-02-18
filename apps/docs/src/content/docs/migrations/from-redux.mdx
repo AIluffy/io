@@ -56,7 +56,7 @@ const updateProfile = (name: string, age: number) => {
 ## 类似时间旅行的撤销/重做
 
 ```ts
-import { createHistory } from '@iostore/store';
+import { createHistory } from '@iostore/store/patches';
 
 const history = createHistory(store);
 history.undo();

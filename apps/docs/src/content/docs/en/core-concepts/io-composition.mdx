@@ -10,7 +10,8 @@ IO supports explicit composition via `link()`, so nodes are not mistaken for pla
 ## Usage
 
 ```ts
-import { io, link } from '@iostore/store';
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
 
 const count = io(0);
 const store = io({ count: link(count) });

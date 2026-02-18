@@ -10,7 +10,8 @@ sidebar:
 ## 方式一：显式依赖
 
 ```ts
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const count = io(0);
 const doubled = derived([count], (value) => value * 2);
@@ -19,7 +20,8 @@ const doubled = derived([count], (value) => value * 2);
 当你的状态来自 Tree 时，也可以把“路径 Unit”当作原子依赖传入：
 
 ```ts
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const store = io({ user: { name: 'Ada' }, count: 0 });
 const summary = derived(
@@ -69,7 +71,8 @@ const stop = doubled.subscribe((value) => {
 当你需要“任一依赖变化就执行某个函数”时，可以先组合一个 `derived`，再订阅它：
 
 ```ts
-import { batch, derived, io } from '@iostore/store';
+import { batch, io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const user = io({ age: 18, level: 1 });
 const order = io({ amount: 99 });

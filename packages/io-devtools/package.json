@@ -60,7 +60,7 @@
         "executor": "nx:run-commands",
         "options": {
           "cwd": "packages/io-devtools",
-          "command": "node --input-type=module -e \"import { rmSync } from \\\"node:fs\\\"; rmSync(\\\"dist\\\", { recursive: true, force: true });\" && tsc --build tsconfig.lib.json"
+          "command": "node --input-type=module -e \"import { rmSync } from \\\"node:fs\\\"; rmSync(\\\"dist\\\", { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\" && tsc --build tsconfig.lib.json"
         },
         "cache": true,
         "inputs": [

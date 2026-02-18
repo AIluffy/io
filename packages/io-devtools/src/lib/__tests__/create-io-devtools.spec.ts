@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { io, link } from '@iostore/store';
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
 import { createIoDevtools } from '../create-io-devtools.js';
 
 describe('@iostore/devtools: createIoDevtools', () => {

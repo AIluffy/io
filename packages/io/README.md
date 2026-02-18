@@ -28,7 +28,8 @@ view(1); // view() 读取，view(next) 写入
 也可在树形结构中按路径构造视图：
 
 ```ts
-import { io, relocate } from '@iostore/store';
+import { io } from '@iostore/store';
+import { relocate } from '@iostore/store/extensions';
 
 const state = io({ user: { age: 1 } });
 const age = relocate<number>(state, ['user', 'age']);

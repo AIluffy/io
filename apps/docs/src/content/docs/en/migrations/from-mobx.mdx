@@ -49,7 +49,7 @@ get double() {
 IO:
 
 ```ts
-import { derived } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const double = derived([store.count], (count) => count * 2);
 ```

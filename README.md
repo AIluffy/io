@@ -30,7 +30,8 @@ npm i @iostore/solid
 ## Quick Start
 
 ```ts
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const state = io({ count: 0, items: [1, 2, 3] });
 state.count.set((v) => v + 1);
@@ -42,7 +43,7 @@ const doubled = derived([state.count], (count) => count * 2);
 Replay and undo updates:
 
 ```ts
-import { applyUpdate, replay, undoUpdate } from '@iostore/store';
+import { applyUpdate, replay, undoUpdate } from '@iostore/store/patches';
 
 const updates = [];
 state.subscribeUpdate((u) => updates.push(u));

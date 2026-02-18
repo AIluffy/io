@@ -10,7 +10,8 @@ IO 支持通过 `link()` 显式复用已有 IO 节点，避免误把节点当作
 ## 使用方式
 
 ```ts
-import { io, link } from '@iostore/store';
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
 
 const count = io(0);
 const store = io({ count: link(count) });

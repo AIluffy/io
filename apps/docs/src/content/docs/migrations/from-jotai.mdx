@@ -36,7 +36,7 @@ const doubleAtom = atom((get) => get(countAtom) * 2);
 IO：
 
 ```ts
-import { derived } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const double = derived([count], (v) => v * 2);
 ```

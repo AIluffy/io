@@ -1,4 +1,4 @@
-import type { IoPatch, IoUpdate } from '@iostore/store';
+import type { IoPatch, IoUpdate } from '@iostore/store/patches';
 import type {
   IoDevtoolsEvent,
   IoDevtoolsOptions,

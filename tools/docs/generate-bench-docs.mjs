@@ -166,7 +166,7 @@ async function runBenchmarks() {
     pathToFileURL(path.join(ioDistRoot, 'lib', 'units', 'unit.js')).href
   );
   const { createDraft, finishDraft } = await import(
-    pathToFileURL(path.join(ioDistRoot, 'lib', 'utils', 'cow.js')).href
+    pathToFileURL(path.join(ioDistRoot, 'lib', 'utils', 'immutable', 'cow.js')).href
   );
 
   const bench = new Bench({

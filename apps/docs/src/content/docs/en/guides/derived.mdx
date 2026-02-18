@@ -10,7 +10,8 @@ Derived values are read-only computations that update when dependencies change.
 ## Option 1: Explicit Dependencies
 
 ```ts
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const count = io(0);
 const doubled = derived([count], (value) => value * 2);
@@ -19,7 +20,8 @@ const doubled = derived([count], (value) => value * 2);
 If your state comes from a Tree, you can also pass “path Units” as atom-like dependencies:
 
 ```ts
-import { derived, io } from '@iostore/store';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const store = io({ user: { name: 'Ada' }, count: 0 });
 const summary = derived(
@@ -69,7 +71,8 @@ const stop = doubled.subscribe((value) => {
 When you want to run a function whenever any dependency changes, compose a `derived` and subscribe to it:
 
 ```ts
-import { batch, derived, io } from '@iostore/store';
+import { batch, io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 
 const user = io({ age: 18, level: 1 });
 const order = io({ amount: 99 });

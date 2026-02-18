@@ -32,7 +32,7 @@ export const game = io<GameState>({
 用 `derived()` 计算只读派生值。
 
 ```ts
-import { derived } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 import { game } from './game';
 
 const LINES = [
@@ -126,8 +126,9 @@ export function resetGame() {
 订阅更新日志并在新 Store 中回放，UI 逻辑无需更改。
 
 ```ts
-import { io, replay } from '@iostore/store';
-import type { IoUpdate } from '@iostore/store';
+import { io } from '@iostore/store';
+import { replay } from '@iostore/store/patches';
+import type { IoUpdate } from '@iostore/store/patches';
 import { game } from './game';
 
 const updates: IoUpdate[] = [];
@@ -149,7 +150,8 @@ export function replayFromStart() {
 ## Live 示例
 
 ```tsx live props={{ "client:load": true }}
-import { batch, derived, io } from '@iostore/store';
+import { batch, io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
 import { useIO } from '@iostore/react';
 
 type Player = 'X' | 'O';
