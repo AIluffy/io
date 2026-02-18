@@ -29,7 +29,7 @@ type CommitExecutorFactory<TState> = (
     emitError: CommitFactoryTreeDeps['emitError'];
   },
   state: TState,
-  path: NodePath,
+  getPath: () => NodePath,
   getNode: () => TreeNode,
 ) => CommitExecutor<TState>;
 
@@ -83,7 +83,7 @@ export function createCommitFactory<TState, TData>(
       emitError: deps.emitError,
     },
     state,
-    path,
+    () => ((state as { path?: NodePath }).path ?? path),
     getNode,
   );
   const commitDeps = createSharedCommitDeps(

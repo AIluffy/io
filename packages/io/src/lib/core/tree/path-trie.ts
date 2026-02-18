@@ -161,6 +161,7 @@ export function registerSubtree<TNode>(
   access: SubtreeAccess<TNode>,
   visited?: WeakSet<object>,
 ): void {
+  if (!ctx.devtools) return;
   const seen = visited ?? new WeakSet<object>();
   registerSubtreeWithPathStack(ctx, clonePath(path), node, access, seen);
 }
@@ -172,6 +173,7 @@ export function unregisterSubtree<TNode>(
   access: SubtreeAccess<TNode>,
   visited?: WeakSet<object>,
 ): void {
+  if (!ctx.devtools) return;
   const seen = visited ?? new WeakSet<object>();
   unregisterSubtreeWithPathStack(ctx, clonePath(path), node, access, seen);
 }
@@ -181,6 +183,7 @@ export function rebuildSubtreeMapping<TNode>(
   node: TNode,
   access: SubtreeAccess<TNode>,
 ): void {
+  if (!state.ctx.devtools) return;
   unregisterSubtree(state.ctx, state.path, node, access);
   registerSubtree(state.ctx, state.path, node, access);
 }

@@ -34,7 +34,7 @@ describe('core/commands: executor', () => {
     const { runCommand } = createArrayExecutor(
       deps as never,
       state as never,
-      ['list'],
+      () => ['list'],
       () => ({ kind: 'array-node' } as never),
     );
     const update = runCommand(
@@ -66,7 +66,7 @@ describe('core/commands: executor', () => {
     const { runCommand } = createArrayExecutor(
       deps as never,
       state as never,
-      ['list'],
+      () => ['list'],
       () => ({ kind: 'array-node' } as never),
     );
     runCommand({
@@ -91,7 +91,7 @@ describe('core/commands: executor', () => {
     const { runCommand } = createScopeExecutor(
       deps as never,
       state as never,
-      ['root'],
+      () => ['root'],
       () => ({ kind: 'scope-node' } as never),
     );
 
@@ -114,12 +114,14 @@ describe('core/commands: executor', () => {
       isCommitting: false,
     };
     const node = { kind: 'scope-node' };
+    let path: PropertyKey[] = ['root', 'a'];
     const { runCommand } = createScopeExecutor(
       deps as never,
       state as never,
-      ['root', 'a'],
+      () => path,
       () => node as never,
     );
+    path = ['root', 'b'];
 
     expect(() =>
       runCommand({
@@ -134,7 +136,7 @@ describe('core/commands: executor', () => {
     expect(deps.emitError).toHaveBeenCalledWith(
       node,
       expect.any(Error),
-      ['root', 'a'],
+      ['root', 'b'],
       'set',
     );
   });

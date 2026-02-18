@@ -27,6 +27,7 @@ describe('core/node-factory/array/index-mutation', () => {
       revision: 0,
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();
@@ -106,6 +107,7 @@ describe('core/node-factory/array/index-mutation', () => {
       revision: 0,
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
+      path: ['items'],
     };
     const emitError = vi.fn();
 
@@ -160,6 +162,7 @@ describe('core/node-factory/array/index-mutation', () => {
       revision: 0,
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
+      path: ['items'],
     };
     const emitError = vi.fn();
     const deps = {
@@ -211,6 +214,7 @@ describe('core/node-factory/array/index-mutation', () => {
       revision: 0,
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();
@@ -268,6 +272,7 @@ describe('core/node-factory/array/index-mutation', () => {
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
       updateListeners: new Set<() => void>(),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();
@@ -323,6 +328,7 @@ describe('core/node-factory/array/index-mutation', () => {
       revision: 0,
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();
@@ -379,6 +385,7 @@ describe('core/node-factory/array/index-mutation', () => {
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
       updateListeners: new Set<() => void>(),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();
@@ -429,6 +436,7 @@ describe('core/node-factory/array/index-mutation', () => {
       valueEpoch: 0,
       dirtyIndices: createDirtyIndexState(1),
       updateListeners: new Set<() => void>(),
+      path: ['items'],
     };
     const emitArrayUpdate = vi.fn();
     const emitArrayValue = vi.fn();

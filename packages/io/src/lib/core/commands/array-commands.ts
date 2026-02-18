@@ -17,7 +17,7 @@ type PerformSpliceResult = {
 type CompareFn = (a: unknown, b: unknown) => number;
 
 export type ArrayChildrenContext = {
-  path: NodePath;
+  getPath: () => NodePath;
   createTreeNode: (path: NodePath, initial: unknown) => TreeNode;
 };
 
@@ -66,7 +66,7 @@ export class PushCommand implements TreeCommand<TreeArrayState> {
     const start = state.children.length;
     const created = this.items.map((value, index) =>
       this.children.createTreeNode(
-        appendPath(this.children.path, start + index),
+        appendPath(this.children.getPath(), start + index),
         value,
       ),
     );
@@ -95,7 +95,7 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
   result: unknown = undefined;
 
   constructor(
-    private readonly children: Pick<ArrayChildrenContext, 'path'>,
+    private readonly children: Pick<ArrayChildrenContext, 'getPath'>,
     private readonly lifecycle: Pick<
       ArrayLifecycleContext,
       'detachChildFromArray' | 'unregisterSubtree'
@@ -119,7 +119,7 @@ export class PopCommand implements TreeCommand<TreeArrayState> {
     this.result = removedValue;
     this.lifecycle.detachChildFromArray(state, removed);
     this.lifecycle.unregisterSubtree(
-      appendPath(this.children.path, start),
+      appendPath(this.children.getPath(), start),
       removed,
     );
     state.dirtyStructure = true;

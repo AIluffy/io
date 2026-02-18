@@ -37,7 +37,7 @@ export type TreeScopeInternal = {
   applySet: (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ) => void;
   getState: () => TreeScopeState;
 };

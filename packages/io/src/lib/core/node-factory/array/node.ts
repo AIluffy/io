@@ -1,7 +1,9 @@
 import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
 import type {
+  TreeArrayInternal,
   TreeArrayState,
+  TreeScopeInternal,
   TreeContext,
   TreeInternal,
   TreeNode,
@@ -11,6 +13,7 @@ import { createArrayOps } from './array-ops.js';
 import { isIndexKey } from '../../../utils/internal/is-index-key.js';
 import { createNodeStateBase } from '../create-node-base.js';
 import { appendPath } from '../../tree/path-utils.js';
+import { rebindSubtreePaths } from '../../tree/rebind-paths.js';
 import {
   createNodeKindPlugin,
   createNodeFromKindPlugin,
@@ -129,6 +132,26 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       node,
     }) => {
       const rebuildMapping = (): void => {
+        rebindSubtreePaths(node, state.path, {
+          getInternalKind: (candidate) =>
+            deps.internals.getInternal(candidate as TreeNode)?.kind,
+          getScopeState: (candidate) =>
+            (
+              deps.internals.requireInternalOfKind(
+                candidate as TreeNode,
+                'scope',
+                'ioTree array: invalid scope internal',
+              ) as TreeScopeInternal
+            ).getState(),
+          getArrayState: (candidate) =>
+            (
+              deps.internals.requireInternalOfKind(
+                candidate as TreeNode,
+                'array',
+                'ioTree array: invalid array internal',
+              ) as TreeArrayInternal
+            ).getState(),
+        });
         deps.registry.rebuildSubtreeMapping(state.path, node);
       };
 

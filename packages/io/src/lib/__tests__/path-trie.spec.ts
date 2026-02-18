@@ -1,9 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createTrieNode,
   deletePathNode,
   getPathNode,
+  rebuildSubtreeMapping,
+  registerSubtree,
   setPathNode,
+  unregisterSubtree,
 } from '../core/tree/path-trie.js';
 
 describe('core/tree/path-trie', () => {
@@ -42,5 +45,24 @@ describe('core/tree/path-trie', () => {
     deletePathNode(ctx, ['a']);
     expect(ctx.root.children.size).toBe(0);
     expect(ctx.root.node).toBeUndefined();
+  });
+
+  it('skips subtree traversal helpers when devtools is disabled', () => {
+    const ctx = {
+      devtools: false,
+      root: createTrieNode<object>(),
+    };
+    const node = {};
+    const access = {
+      getScopeChildren: vi.fn(() => undefined),
+      getArrayChildren: vi.fn(() => undefined),
+    };
+
+    registerSubtree(ctx, ['a'], node, access);
+    unregisterSubtree(ctx, ['a'], node, access);
+    rebuildSubtreeMapping({ ctx, path: ['a'] }, node, access);
+
+    expect(access.getScopeChildren).not.toHaveBeenCalled();
+    expect(access.getArrayChildren).not.toHaveBeenCalled();
   });
 });

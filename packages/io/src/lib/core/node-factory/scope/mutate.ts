@@ -34,12 +34,12 @@ export function createScopeMutations(
   applySet: (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ) => void;
 } {
-  const { deps, ctx, path, state, createTreeNode, getNode } = options;
+  const { deps, ctx, state, createTreeNode, getNode } = options;
   const commandDeps = {
-    path,
+    getPath: () => state.path,
     isUnit,
     requireInternalOfKind: deps.internals.requireInternalOfKind,
     detachChildFromScope: deps.lifecycle.detachChildFromScope,
@@ -68,7 +68,7 @@ export function createScopeMutations(
         emitError: deps.emitError,
       },
       state,
-      appendPath(path, key),
+      () => appendPath(state.path, key),
       getNode,
     );
     executors.set(key, created);
@@ -78,12 +78,11 @@ export function createScopeMutations(
   const applySet = (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ): void => {
     resolveExecutor(key).runCommand(
       new ScopeMutateCommand(commandDeps, key, next, options),
       {
-        emitUpdate: false,
         emitValue: options?.emitValue,
         structural: false,
       },

@@ -25,8 +25,8 @@ export function createArrayIndexMutation(
     next: unknown,
     options?: { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
-} {
-  const { deps, ctx, path, state, createTreeNode, getNode } = options;
+  } {
+  const { deps, ctx, state, createTreeNode, getNode } = options;
   const emitError = (
     'emitError' in deps && typeof deps.emitError === 'function'
       ? deps.emitError
@@ -82,8 +82,8 @@ export function createArrayIndexMutation(
       if (isLink(next)) {
         const prevValue = readNodeValue(existing);
         deps.lifecycle.detachChildFromArray(state, existing);
-        deps.registry.unregisterSubtree(appendPath(path, index), existing);
-        const replaced = createTreeNode(ctx, appendPath(path, index), next);
+        deps.registry.unregisterSubtree(appendPath(state.path, index), existing);
+        const replaced = createTreeNode(ctx, appendPath(state.path, index), next);
         state.children[index] = replaced;
         deps.lifecycle.attachChildToArray(state, replaced);
         readCache?.clear();
@@ -130,8 +130,8 @@ export function createArrayIndexMutation(
 
       const prevValue = readNodeValue(existing);
       deps.lifecycle.detachChildFromArray(state, existing);
-      deps.registry.unregisterSubtree(appendPath(path, index), existing);
-      const replaced = createTreeNode(ctx, appendPath(path, index), next);
+      deps.registry.unregisterSubtree(appendPath(state.path, index), existing);
+      const replaced = createTreeNode(ctx, appendPath(state.path, index), next);
       state.children[index] = replaced;
       deps.lifecycle.attachChildToArray(state, replaced);
       postSetIndex(
@@ -148,7 +148,7 @@ export function createArrayIndexMutation(
         { emitUpdate: shouldEmitUpdate, emitValue },
       );
     } catch (error) {
-      emitError(getNode(), error, appendPath(path, index), 'set');
+      emitError(getNode(), error, appendPath(state.path, index), 'set');
       throw error;
     }
   };

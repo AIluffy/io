@@ -14,6 +14,7 @@ describe('core/node-factory/scope/mutate', () => {
       revision: initialRevision(),
       isCommitting: false,
       valueEpoch: initialEpoch(),
+      path: ['root'],
       dirtyKeys: new Set<PropertyKey>(),
       dirtyStructure: false,
       valueListeners: new Set([(value: unknown) => value]),

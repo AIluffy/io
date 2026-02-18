@@ -53,7 +53,6 @@ export function createArrayStructuralMutations(
   const {
     deps,
     ctx,
-    path,
     state,
     createTreeNode,
     resolvePatchValue,
@@ -67,11 +66,12 @@ export function createArrayStructuralMutations(
     deleteCount: number,
     items: unknown[],
   ): { normalizedStart: number; dc: number; removedValues: unknown[] } => {
+    const length = state.children.length;
     const normalizedStart =
-      start < 0 ? Math.max(0, state.children.length + start) : start;
+      start < 0 ? Math.max(0, length + start) : Math.min(start, length);
     const dc = Math.max(
       0,
-      Math.min(deleteCount, state.children.length - normalizedStart),
+      Math.min(deleteCount, length - normalizedStart),
     );
 
     const removed = state.children.splice(normalizedStart, dc);
@@ -84,13 +84,13 @@ export function createArrayStructuralMutations(
       const child = removed[i];
       deps.lifecycle.detachChildFromArray(state, child);
       deps.registry.unregisterSubtree(
-        appendPath(path, normalizedStart + i),
+        appendPath(state.path, normalizedStart + i),
         child,
       );
     }
 
     const created = items.map((v, i) =>
-      createTreeNode(ctx, appendPath(path, normalizedStart + i), v),
+      createTreeNode(ctx, appendPath(state.path, normalizedStart + i), v),
     );
     for (const child of created) deps.lifecycle.attachChildToArray(state, child);
     state.children.splice(normalizedStart, 0, ...created);
@@ -100,7 +100,7 @@ export function createArrayStructuralMutations(
   };
 
   const childrenContext: ArrayChildrenContext = {
-    path,
+    getPath: () => state.path,
     createTreeNode: (absPath: NodePath, initial: unknown) =>
       createTreeNode(ctx, absPath, initial),
   };
@@ -133,7 +133,7 @@ export function createArrayStructuralMutations(
       emitError: deps.emitError,
     },
     state,
-    path,
+    () => state.path,
     getNode,
   );
 

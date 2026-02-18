@@ -6,7 +6,7 @@ import type {
   ScopeStateLike,
 } from './diff-shared.js';
 
-const validateScopeKeys = resolveScopeKeyValidationEnabled();
+const defaultValidateScopeKeys = resolveScopeKeyValidationEnabled();
 
 function resolveScopeKeyValidationEnabled(): boolean {
   const override = (globalThis as Record<PropertyKey, unknown>)
@@ -45,7 +45,19 @@ export function createApplyScopeDiff<
         next: Record<PropertyKey, unknown>;
       }
     | undefined,
+  options?: { validateKeys?: boolean },
 ) {
+  const shouldValidateScopeKeys =
+    options?.validateKeys ?? defaultValidateScopeKeys;
+
+  const isHotValueChildShape = (scopeState: TScopeState): boolean => {
+    return (
+      scopeState.children.size === 2 &&
+      scopeState.children.has('value') &&
+      scopeState.children.has('child')
+    );
+  };
+
   const findSingleChangedKey = (
     scopeState: TScopeState,
     prevObj: Record<PropertyKey, unknown>,
@@ -61,11 +73,7 @@ export function createApplyScopeDiff<
     }
 
     // Fast lane for the hot deep benchmark shape: { value, child }.
-    if (
-      size === 2 &&
-      scopeState.children.has('value') &&
-      scopeState.children.has('child')
-    ) {
+    if (isHotValueChildShape(scopeState)) {
       const valueChanged = !Object.is(prevObj.value, nextObj.value);
       const childChanged = !Object.is(prevObj.child, nextObj.child);
       if (valueChanged === childChanged) return undefined;
@@ -93,7 +101,7 @@ export function createApplyScopeDiff<
     let currentNext = nextObj;
 
     while (true) {
-      if (validateScopeKeys) {
+      if (shouldValidateScopeKeys) {
         for (const key of Reflect.ownKeys(currentNext)) {
           if (!currentState.children.has(key))
             throw new Error(`ioTree scope: unknown key ${String(key)}`);

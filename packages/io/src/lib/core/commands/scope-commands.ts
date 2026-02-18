@@ -10,7 +10,7 @@ import type { TreeCommand } from './command.js';
 import { appendPath } from '../tree/path-utils.js';
 
 type ScopeMutateCommandDeps = {
-  path: NodePath;
+  getPath: () => NodePath;
   isUnit: (value: unknown) => boolean;
   requireInternalOfKind: InternalDeps['requireInternalOfKind'];
   detachChildFromScope: LifecycleDeps['detachChildFromScope'];
@@ -27,7 +27,7 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
     private readonly deps: ScopeMutateCommandDeps,
     private readonly key: PropertyKey,
     private readonly next: unknown,
-    private readonly options?: { emitUpdate?: boolean; emitValue?: boolean },
+    private readonly options?: { emitValue?: boolean },
   ) {}
 
   execute(state: TreeScopeState): IoPatch[] | null {
@@ -57,10 +57,11 @@ export class ScopeMutateCommand implements TreeCommand<TreeScopeState> {
       return [];
     }
 
+    const parentPath = this.deps.getPath();
     this.deps.detachChildFromScope(state, this.key);
-    this.deps.unregisterSubtree(appendPath(this.deps.path, this.key), existing);
+    this.deps.unregisterSubtree(appendPath(parentPath, this.key), existing);
     const replaced = this.deps.createTreeNode(
-      appendPath(this.deps.path, this.key),
+      appendPath(parentPath, this.key),
       this.next,
     );
     state.children.set(this.key, replaced);

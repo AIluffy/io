@@ -711,6 +711,24 @@ describe('link', () => {
 });
 
 describe('array structural updates', () => {
+  it('clamps splice start to array end when start is out of range', () => {
+    const items = io([1, 2]);
+    const updates: IoUpdate[] = [];
+    const unsub = items.subscribeUpdate((u) => updates.push(u));
+
+    items.splice(99, 1, 3);
+    unsub();
+
+    expect(items.get()).toEqual([1, 2, 3]);
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'splice',
+      path: [],
+      start: 2,
+      deleteCount: 0,
+      items: [3],
+    });
+  });
+
   it('supports replacing full array value with set()', () => {
     const items = io([1, 2, 3]);
     const updates: IoUpdate[] = [];

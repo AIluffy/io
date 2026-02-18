@@ -48,7 +48,7 @@ type ExecutorConfig<TState extends ExecutorState> = {
 function createExecutor<TState extends ExecutorState>(
   deps: ExecutorDeps,
   state: TState,
-  path: NodePath,
+  getPath: () => NodePath,
   getNode: () => TreeNode,
   config: ExecutorConfig<TState>,
 ): {
@@ -81,7 +81,7 @@ function createExecutor<TState extends ExecutorState>(
       }
       return update;
     } catch (error) {
-      deps.emitError(getNode(), error, path, command.op);
+      deps.emitError(getNode(), error, getPath(), command.op);
       throw error;
     } finally {
       config.afterExecute?.(state);
@@ -94,7 +94,7 @@ function createExecutor<TState extends ExecutorState>(
 export function createArrayExecutor(
   deps: ExecutorDeps,
   state: TreeArrayState,
-  path: NodePath,
+  getPath: () => NodePath,
   getNode: () => TreeNode,
 ): {
   runCommand: (
@@ -102,7 +102,7 @@ export function createArrayExecutor(
     options?: ExecuteOptions,
   ) => IoUpdate | undefined;
 } {
-  return createExecutor(deps, state, path, getNode, {
+  return createExecutor(deps, state, getPath, getNode, {
     onStructural: (currentState) => {
       resetDirtyIndices(currentState.dirtyIndices, currentState.children.length);
     },
@@ -115,7 +115,7 @@ export function createArrayExecutor(
 export function createScopeExecutor(
   deps: ExecutorDeps,
   state: TreeScopeState,
-  path: NodePath,
+  getPath: () => NodePath,
   getNode: () => TreeNode,
 ): {
   runCommand: (
@@ -123,7 +123,7 @@ export function createScopeExecutor(
     options?: ExecuteOptions,
   ) => IoUpdate | undefined;
 } {
-  return createExecutor(deps, state, path, getNode, {
+  return createExecutor(deps, state, getPath, getNode, {
     beforeExecute: (currentState) => {
       currentState.isCommitting = true;
     },

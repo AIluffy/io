@@ -9,7 +9,7 @@ describe('core/commands: ScopeMutateCommand', () => {
     };
     const command = new ScopeMutateCommand(
       {
-        path: [],
+        getPath: () => [],
         isUnit: () => false,
         requireInternalOfKind: vi.fn(),
         detachChildFromScope: vi.fn(),
@@ -36,7 +36,7 @@ describe('core/commands: ScopeMutateCommand', () => {
     };
     const command = new ScopeMutateCommand(
       {
-        path: [],
+        getPath: () => [],
         isUnit: () => true,
         requireInternalOfKind: () =>
           ({
@@ -69,7 +69,7 @@ describe('core/commands: ScopeMutateCommand', () => {
     };
     const command = new ScopeMutateCommand(
       {
-        path: ['root'],
+        getPath: () => ['root'],
         isUnit: () => true,
         requireInternalOfKind: () =>
           ({
@@ -108,7 +108,7 @@ describe('core/commands: ScopeMutateCommand', () => {
     };
     const command = new ScopeMutateCommand(
       {
-        path: ['root'],
+        getPath: () => ['root'],
         isUnit: () => false,
         requireInternalOfKind: vi.fn(),
         detachChildFromScope,

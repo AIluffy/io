@@ -6,6 +6,9 @@ import { io } from '@iostore/store';
 
 import { useIO } from '../use-io.js';
 
+const createRenderer = (element: unknown): TestRenderer.ReactTestRenderer =>
+  TestRenderer.create(element as never);
+
 async function setup(schedule: 'sync' | 'microtask') {
   const count = io(0);
   const renders: number[] = [];
@@ -18,7 +21,9 @@ async function setup(schedule: 'sync' | 'microtask') {
 
   let renderer: TestRenderer.ReactTestRenderer;
   await act(async () => {
-    renderer = TestRenderer.create(React.createElement(App));
+    renderer = createRenderer(
+      React.createElement(App),
+    );
   });
 
   const getText = () => {
@@ -73,7 +78,9 @@ describe('@iostore/react', () => {
 
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(React.createElement(App));
+      renderer = createRenderer(
+        React.createElement(App),
+      );
     });
 
     act(() => {

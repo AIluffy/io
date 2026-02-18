@@ -21,7 +21,7 @@ type InternalScope = {
   applySet: (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ) => void;
   getState?: () => unknown;
 };
@@ -177,7 +177,6 @@ export function applyUpdate(
           throw new Error('applyUpdate: invalid scope key');
 
         parentInternal.applySet(last, patch.next, {
-          emitUpdate: false,
           emitValue: true,
         });
         return;

@@ -9,6 +9,7 @@ import type {
   ScopeStateLike,
 } from './diff-shared.js';
 import { appendPath } from '../tree/path-utils.js';
+import { rebindSubtreePaths } from '../tree/rebind-paths.js';
 
 export function createRebuildArrayChildren<
   TNode,
@@ -81,6 +82,9 @@ export function createRebuildArrayChildren<
 
     arrayState.children = nextChildren;
     if ('childIndicesDirty' in arrayState) arrayState.childIndicesDirty = true;
+    for (let i = 0; i < nextChildren.length; i += 1) {
+      rebindSubtreePaths(nextChildren[i], appendPath(arrayState.path, i), deps);
+    }
 
     if (arrayNode) deps.registerSubtree(arrayState.path, arrayNode);
 
