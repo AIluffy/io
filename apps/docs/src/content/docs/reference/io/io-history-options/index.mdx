@@ -1,8 +1,12 @@
 ---
 title: "IoHistoryOptions"
-description: "type export"
+description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
@@ -17,10 +21,26 @@ IoHistoryOptions
 | limit | `number` |
 | emitUpdate | `boolean` |
 
-## 错误
+## 最小示例
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+```ts
+import type { IoHistoryOptions } from '@iostore/store/patches';
+
+let value!: IoHistoryOptions;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## 源码
 

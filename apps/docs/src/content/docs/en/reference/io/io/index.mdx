@@ -1,8 +1,12 @@
 ---
 title: "io"
-description: "function export"
+description: "Function API reference."
 ---
 
+
+## When to Use
+
+Create an IO node from any value.
 
 ## Signature
 
@@ -21,10 +25,26 @@ description: "function export"
 
 `IoNode<T>`
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import { io } from '@iostore/store';
+
+const result = io(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## Source
 

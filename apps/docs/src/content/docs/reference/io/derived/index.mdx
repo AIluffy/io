@@ -1,8 +1,12 @@
 ---
 title: "derived"
-description: "function export"
+description: "函数 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
@@ -21,10 +25,26 @@ description: "function export"
 
 `IoDerived<T>`
 
-## 错误
+## 最小示例
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+```ts
+import { derived } from '@iostore/store/derived';
+
+const result = derived(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## 源码
 

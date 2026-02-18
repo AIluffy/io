@@ -1,8 +1,12 @@
 ---
 title: "IoArrayUnit"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,27 +14,26 @@ description: "type export"
 IoArrayUnit<T>
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| get | `() => (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infe...` |
-| set | `(next: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (inf...` |
-| push | `(...items: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly ...` |
-| pop | `() => IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer...` |
-| splice | `(start: number, deleteCount: number, ...items: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? N...` |
-| sort | `(compareFn?: (a: IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends read...` |
-| commit | `(fn: (draft: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonl...` |
-| reduce | `<R>(reducer: (acc: R, item: IoTreeNode<T, 1>, index: number) => R, initialValue: R) => R` |
-| snapshot | `() => (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infe...` |
-| subscribe | `(fn: (v: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (i...` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
-| __@iterator@429 | `() => Iterator<IoTreeNode<T, 1>, any, any>` |
+```ts
+import type { IoArrayUnit } from '@iostore/store';
 
-## Errors
+let value!: IoArrayUnit;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
+- [IoErrorHandlerFor](../io-error-handler-for/)
 
 ## Source
 

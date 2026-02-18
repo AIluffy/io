@@ -1,8 +1,12 @@
 ---
 title: "IoScope"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,20 +14,26 @@ description: "type export"
 IoScope<T>
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| get | `() => IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer...` |
-| commit | `(fn: (draft: IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly...` |
-| snapshot | `() => IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer...` |
-| subscribe | `(fn: (v: IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (in...` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+```ts
+import type { IoScope } from '@iostore/store';
 
-## Errors
+let value!: IoScope;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## Source
 

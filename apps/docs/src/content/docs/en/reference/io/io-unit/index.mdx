@@ -1,8 +1,12 @@
 ---
 title: "IoUnit"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -21,10 +25,26 @@ IoUnit<T>
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
 | reset | `() => void` |
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import type { IoUnit } from '@iostore/store';
+
+let value!: IoUnit;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## Source
 

@@ -30,6 +30,7 @@ jobs:
 
       - run: npx nx run @iostore/store:perf-budget
       - run: npx nx run @iostore/store:bundle-size
+      - run: npm run docs:check:reference
 
       - run: npx nx-cloud fix-ci
         if: always()

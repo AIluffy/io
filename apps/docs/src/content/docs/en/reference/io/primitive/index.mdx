@@ -1,8 +1,12 @@
 ---
 title: "Primitive"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,18 +14,26 @@ description: "type export"
 Primitive
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| toString | `(() => string) \| (() => string) \| ((radix?: number) => string) \| ((radix?: number) => string) \| (() => string)` |
-| valueOf | `(() => string) \| (() => number) \| (() => bigint) \| (() => boolean) \| (() => symbol)` |
-| toLocaleString | `(() => string) \| { (locales?: string \| string[], options?: Intl.NumberFormatOptions): string; (locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions): string; } \| ((locales?: Intl.LocalesArgument, options?: BigIntToLocaleStringOptions) => string)` |
+```ts
+import type { Primitive } from '@iostore/store';
 
-## Errors
+let value!: Primitive;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## Source
 

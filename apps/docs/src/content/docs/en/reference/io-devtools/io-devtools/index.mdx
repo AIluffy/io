@@ -1,8 +1,12 @@
 ---
 title: "IoDevtools"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -25,10 +29,26 @@ IoDevtools
 | export | `{ json: () => string; reduxDevToolsImport: () => ReduxDevToolsImportState; }` |
 | connectReduxDevToolsExtension | `(options?: { window?: unknown; name?: string; }) => IoDevtoolsBridge \| null` |
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import type { IoDevtools } from '@iostore/devtools';
+
+let value!: IoDevtools;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDevtoolsBridge](../io-devtools-bridge/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
+- [IoDevtoolsPerfSample](../io-devtools-perf-sample/)
 
 ## Source
 

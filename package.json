@@ -8,7 +8,9 @@
     "lint:mdx": "markdownlint-cli2 --config .markdownlint.json \"apps/docs/src/content/docs/**/*.{md,mdx}\"",
     "docs:generate-api": "node tools/docs/generate-api-docs.mjs",
     "docs:generate-bench": "node tools/docs/generate-bench-docs.mjs",
-    "docs:check": "node tools/docs/generate-api-docs.mjs && node tools/docs/generate-bench-docs.mjs && git diff --exit-code apps/docs/src/content/docs"
+    "docs:quality": "node tools/docs/check-doc-quality.mjs",
+    "docs:check:reference": "node tools/docs/generate-api-docs.mjs && node tools/docs/check-doc-quality.mjs && git diff --exit-code apps/docs/src/content/docs/reference apps/docs/src/content/docs/en/reference",
+    "docs:check": "node tools/docs/generate-api-docs.mjs && node tools/docs/generate-bench-docs.mjs && node tools/docs/check-doc-quality.mjs && git diff --exit-code apps/docs/src/content/docs"
   },
   "private": true,
   "devDependencies": {

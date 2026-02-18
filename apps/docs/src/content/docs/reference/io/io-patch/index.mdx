@@ -1,8 +1,12 @@
 ---
 title: "IoPatch"
-description: "type export"
+description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
@@ -10,17 +14,26 @@ description: "type export"
 IoPatch
 ```
 
-## 属性
+## 最小示例
 
-| Name | Type |
-| --- | --- |
-| op | `"set" \| "splice" \| "sort"` |
-| path | `IoPath` |
+```ts
+import type { IoPatch } from '@iostore/store/patches';
 
-## 错误
+let value!: IoPatch;
+console.log(value);
+```
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## 源码
 

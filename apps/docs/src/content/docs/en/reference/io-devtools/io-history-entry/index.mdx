@@ -1,8 +1,12 @@
 ---
 title: "IoHistoryEntry"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -22,10 +26,26 @@ IoHistoryEntry
 | snapshotAfter | `unknown` |
 | perf | `IoDevtoolsPerfSample` |
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import type { IoHistoryEntry } from '@iostore/devtools';
+
+let value!: IoHistoryEntry;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDevtools](../io-devtools/)
+- [IoDevtoolsBridge](../io-devtools-bridge/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
 
 ## Source
 

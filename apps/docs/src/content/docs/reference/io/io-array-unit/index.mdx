@@ -1,8 +1,12 @@
 ---
 title: "IoArrayUnit"
-description: "type export"
+description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
@@ -10,27 +14,26 @@ description: "type export"
 IoArrayUnit<T>
 ```
 
-## 属性
+## 最小示例
 
-| Name | Type |
-| --- | --- |
-| get | `() => (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infe...` |
-| set | `(next: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (inf...` |
-| push | `(...items: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly ...` |
-| pop | `() => IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer...` |
-| splice | `(start: number, deleteCount: number, ...items: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? N...` |
-| sort | `(compareFn?: (a: IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends read...` |
-| commit | `(fn: (draft: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonl...` |
-| reduce | `<R>(reducer: (acc: R, item: IoTreeNode<T, 1>, index: number) => R, initialValue: R) => R` |
-| snapshot | `() => (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infe...` |
-| subscribe | `(fn: (v: (IsArray<T> extends true ? NormalizeIoInput<T> extends readonly (infer U)[] ? (IsArray<U> extends true ? NormalizeIoInput<U> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (infer U)[] ? (IsArray<...> extends true ? NormalizeIoInput<...> extends readonly (i...` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
-| __@iterator@429 | `() => Iterator<IoTreeNode<T, 1>, any, any>` |
+```ts
+import type { IoArrayUnit } from '@iostore/store';
 
-## 错误
+let value!: IoArrayUnit;
+console.log(value);
+```
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
+- [IoErrorHandlerFor](../io-error-handler-for/)
 
 ## 源码
 

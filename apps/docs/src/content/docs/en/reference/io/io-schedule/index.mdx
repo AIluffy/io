@@ -1,8 +1,12 @@
 ---
 title: "IoSchedule"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,65 +14,26 @@ description: "type export"
 IoSchedule
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| toString | `() => string` |
-| charAt | `(pos: number) => string` |
-| charCodeAt | `(index: number) => number` |
-| concat | `(...strings: string[]) => string` |
-| indexOf | `(searchString: string, position?: number) => number` |
-| lastIndexOf | `(searchString: string, position?: number) => number` |
-| localeCompare | `{ (that: string): number; (that: string, locales?: string \| string[], options?: Intl.CollatorOptions): number; (that: string, locales?: Intl.LocalesArgument, options?: Intl.CollatorOptions): number; }` |
-| match | `{ (regexp: string \| RegExp): RegExpMatchArray \| null; (matcher: { [Symbol.match](string: string): RegExpMatchArray \| null; }): RegExpMatchArray \| null; }` |
-| replace | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; (searchValue: { [Symbol.replace](string: string, replaceValue: string): string; }, replaceValue: string): string; (searchValue: { [Symbol.replace](string: s...` |
-| search | `{ (regexp: string \| RegExp): number; (searcher: { [Symbol.search](string: string): number; }): number; }` |
-| slice | `(start?: number, end?: number) => string` |
-| split | `{ (separator: string \| RegExp, limit?: number): string[]; (splitter: { [Symbol.split](string: string, limit?: number): string[]; }, limit?: number): string[]; }` |
-| substring | `(start: number, end?: number) => string` |
-| toLowerCase | `() => string` |
-| toLocaleLowerCase | `{ (locales?: string \| string[]): string; (locales?: Intl.LocalesArgument): string; }` |
-| toUpperCase | `() => string` |
-| toLocaleUpperCase | `{ (locales?: string \| string[]): string; (locales?: Intl.LocalesArgument): string; }` |
-| trim | `() => string` |
-| length | `number` |
-| substr | `(from: number, length?: number) => string` |
-| valueOf | `() => string` |
-| codePointAt | `(pos: number) => number \| undefined` |
-| includes | `(searchString: string, position?: number) => boolean` |
-| endsWith | `(searchString: string, endPosition?: number) => boolean` |
-| normalize | `{ (form: "NFC" \| "NFD" \| "NFKC" \| "NFKD"): string; (form?: string): string; }` |
-| repeat | `(count: number) => string` |
-| startsWith | `(searchString: string, position?: number) => boolean` |
-| anchor | `(name: string) => string` |
-| big | `() => string` |
-| blink | `() => string` |
-| bold | `() => string` |
-| fixed | `() => string` |
-| fontcolor | `(color: string) => string` |
-| fontsize | `{ (size: number): string; (size: string): string; }` |
-| italics | `() => string` |
-| link | `(url: string) => string` |
-| small | `() => string` |
-| strike | `() => string` |
-| sub | `() => string` |
-| sup | `() => string` |
-| padStart | `(maxLength: number, fillString?: string) => string` |
-| padEnd | `(maxLength: number, fillString?: string) => string` |
-| trimEnd | `() => string` |
-| trimStart | `() => string` |
-| trimLeft | `() => string` |
-| trimRight | `() => string` |
-| matchAll | `(regexp: RegExp) => RegExpStringIterator<RegExpExecArray>` |
-| replaceAll | `{ (searchValue: string \| RegExp, replaceValue: string): string; (searchValue: string \| RegExp, replacer: (substring: string, ...args: any[]) => string): string; }` |
-| at | `(index: number) => string \| undefined` |
-| __@iterator@429 | `() => StringIterator<string>` |
+```ts
+import type { IoSchedule } from '@iostore/store';
 
-## Errors
+let value!: IoSchedule;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
 
 ## Source
 

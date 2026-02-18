@@ -357,7 +357,7 @@ async function runGcBenchmarks() {
   };
 }
 
-function buildMarkdown({ locale, history }) {
+function buildBenchmarkDocs({ locale, history }) {
   const labels =
     locale === 'zh-cn'
       ? {
@@ -410,6 +410,11 @@ function buildMarkdown({ locale, history }) {
           trendByGroup: '分组趋势图',
           trendFocusedHeading: '关键场景趋势',
           trendAppendixHeading: '全部场景趋势（附录）',
+          detailsTitle: 'Benchmark 明细',
+          detailsDescription: 'IO 核心链路性能基准明细（自动生成）。',
+          detailsLinkLabel: '查看完整明细（全部场景与附录趋势）',
+          backToSummaryLabel: '返回 Benchmark 摘要',
+          summaryHeading: '摘要',
           noFiniteData: '无有效数据',
         }
       : {
@@ -462,13 +467,25 @@ function buildMarkdown({ locale, history }) {
           trendByGroup: 'Trend Charts by Group',
           trendFocusedHeading: 'Focused Trends',
           trendAppendixHeading: 'All Scenario Trends (Appendix)',
+          detailsTitle: 'Benchmark Details',
+          detailsDescription: 'Detailed benchmark report for core IO paths (generated).',
+          detailsLinkLabel: 'Open full details (all scenarios and appendix trends)',
+          backToSummaryLabel: 'Back to Benchmark summary',
+          summaryHeading: 'Summary',
           noFiniteData: 'No finite data',
         };
 
-  const frontmatter = `---\ntitle: ${JSON.stringify(
+  const summaryFrontmatter = `---\ntitle: ${JSON.stringify(
     labels.title,
   )}\ndescription: ${JSON.stringify(labels.description)}\nsidebar:\n  order: 6\n---\n`;
+  const detailsFrontmatter = `---\ntitle: ${JSON.stringify(
+    labels.detailsTitle,
+  )}\ndescription: ${JSON.stringify(
+    labels.detailsDescription,
+  )}\nsidebar:\n  hidden: true\n---\n`;
   const imports = "import { Tabs, TabItem } from '@astrojs/starlight/components';";
+  const detailsPath = locale === 'zh-cn' ? '/guides/benchmark-details/' : '/en/guides/benchmark-details/';
+  const summaryPath = locale === 'zh-cn' ? '/guides/benchmark/' : '/en/guides/benchmark/';
 
   const historyWindow = history.slice(-DOC_HISTORY_WINDOW);
   const globalStartIndex = history.length - historyWindow.length;
@@ -766,7 +783,7 @@ function buildMarkdown({ locale, history }) {
     `${labels.disclaimer}`,
   ].join('\n');
 
-  const timeSection = [
+  const summaryTimeSection = [
     `## ${labels.quickHeading}`,
     '',
     `### ${labels.slowestHeading}`,
@@ -819,6 +836,20 @@ function buildMarkdown({ locale, history }) {
       ? [`| ${labels.scenario} | ${labels.delta} | ${labels.absDelta} |`, '| --- | --- | --- |', topChangesRows].join('\n')
       : labels.noPrevious,
     '',
+    `### ${labels.trendFocusedHeading}`,
+    '',
+    focusedTrendByGroup.length > 0 ? focusedTrendByGroup : labels.noFiniteData,
+    '',
+    `## ${labels.summaryHeading}`,
+    '',
+    `- [${labels.detailsLinkLabel}](${detailsPath})`,
+  ].join('\n');
+
+  const detailsTimeSection = [
+    `## ${labels.latestByGroupHeading}`,
+    '',
+    groupedLatestSections.length > 0 ? groupedLatestSections : labels.noFiniteData,
+    '',
     `## ${labels.historyHeading}`,
     '',
     `${labels.trendByGroup}`,
@@ -830,25 +861,27 @@ function buildMarkdown({ locale, history }) {
     `### ${labels.trendAppendixHeading}`,
     '',
     appendixTrendByGroup.length > 0 ? appendixTrendByGroup : labels.noFiniteData,
+    '',
+    `- [${labels.backToSummaryLabel}](${summaryPath})`,
   ].join('\n');
 
-  return [
-    frontmatter,
+  const summaryMarkdown = [
+    summaryFrontmatter,
     imports,
     '',
     `${labels.note}`,
     '',
     `## ${labels.commandsHeading}`,
     '',
-    `- ${labels.perfCommandLabel}: \`npx nx run @iostore/store:bench -- src/lib/__bench__/core-perf.bench.ts\``,
-    `- ${labels.gcCommandLabel}: \`npx nx run @iostore/store:bench-gc\``,
+    `- ${labels.perfCommandLabel}: \`npm exec nx -- run @iostore/store:bench -- src/lib/__bench__/core-perf.bench.ts\``,
+    `- ${labels.gcCommandLabel}: \`npm exec nx -- run @iostore/store:bench-gc\``,
     '',
     `## ${labels.metricsViewHeading}`,
     '',
     `<Tabs default="${labels.timeTabLabel}">`,
     `  <TabItem label="${labels.timeTabLabel}">`,
     '',
-    indentBlock(timeSection, 4),
+    indentBlock(summaryTimeSection, 4),
     '',
     '  </TabItem>',
     `  <TabItem label="${labels.gcTabLabel}">`,
@@ -859,16 +892,51 @@ function buildMarkdown({ locale, history }) {
     '</Tabs>',
     '',
   ].join('\n');
+
+  const detailsMarkdown = [
+    detailsFrontmatter,
+    imports,
+    '',
+    `${labels.note}`,
+    '',
+    `## ${labels.metricsViewHeading}`,
+    '',
+    `<Tabs default="${labels.timeTabLabel}">`,
+    `  <TabItem label="${labels.timeTabLabel}">`,
+    '',
+    indentBlock(detailsTimeSection, 4),
+    '',
+    '  </TabItem>',
+    `  <TabItem label="${labels.gcTabLabel}">`,
+    '',
+    indentBlock(gcSection, 4),
+    '',
+    '  </TabItem>',
+    '</Tabs>',
+    '',
+  ].join('\n');
+
+  return { summaryMarkdown, detailsMarkdown };
 }
 
 async function writeDocs(history) {
   const locales = ['en', 'zh-cn'];
   for (const locale of locales) {
-    const markdown = buildMarkdown({ locale, history });
+    const { summaryMarkdown, detailsMarkdown } = buildBenchmarkDocs({
+      locale,
+      history,
+    });
     const localeDir = locale === 'zh-cn' ? '' : locale;
-    const filePath = path.join(docsRoot, localeDir, 'guides', 'benchmark.mdx');
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, markdown);
+    const summaryFilePath = path.join(docsRoot, localeDir, 'guides', 'benchmark.mdx');
+    const detailsFilePath = path.join(
+      docsRoot,
+      localeDir,
+      'guides',
+      'benchmark-details.mdx',
+    );
+    await fs.mkdir(path.dirname(summaryFilePath), { recursive: true });
+    await fs.writeFile(summaryFilePath, summaryMarkdown);
+    await fs.writeFile(detailsFilePath, detailsMarkdown);
   }
 }
 

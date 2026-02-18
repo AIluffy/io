@@ -1,8 +1,12 @@
 ---
 title: "batch"
-description: "function export"
+description: "Function API reference."
 ---
 
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
@@ -20,10 +24,26 @@ description: "function export"
 
 `R`
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import { batch } from '@iostore/store';
+
+const result = batch(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
+- [derived](../derived/)
 
 ## Source
 

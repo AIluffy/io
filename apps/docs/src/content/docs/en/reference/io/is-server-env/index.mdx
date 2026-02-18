@@ -1,8 +1,12 @@
 ---
 title: "isServerEnv"
-description: "value export"
+description: "Value export reference."
 ---
 
+
+## When to Use
+
+Use this exported value as a shared constant or runtime capability.
 
 ## Signature
 
@@ -10,10 +14,25 @@ description: "value export"
 any
 ```
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import { isServerEnv } from '@iostore/store';
+
+console.log(isServerEnv);
+```
+
+## Common Pitfalls
+
+- Treat exported values as read-only unless docs explicitly say otherwise.
+- Avoid mutating shared references across modules.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## Source
 

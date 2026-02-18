@@ -7,8 +7,11 @@ import rehypeSortable from './src/rehype/rehype-sortable.js';
 import liveCode from 'astro-live-code';
 import mermaid from 'astro-mermaid';
 
+const docsSite = process.env.DOCS_SITE_URL ?? 'https://docs.iostore.dev';
+
 // https://astro.build/config
 export default defineConfig({
+  site: docsSite,
   output: 'static',
   markdown: {
     rehypePlugins: [rehypeSortable],
