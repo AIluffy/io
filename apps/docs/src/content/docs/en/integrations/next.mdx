@@ -1,0 +1,95 @@
+---
+title: Next.js
+description: SSR + hydration practices with Next.js App Router.
+sidebar:
+  order: 7
+---
+
+This guide focuses on three things:
+
+- Per-request store (no cross-request state leaks)
+- Hydration boundary (only pass serializable payloads)
+- Server/client data flow (pass plain data, not store instances)
+
+## Per-Request Store
+
+Do not keep a global store at module scope:
+
+```ts
+// bad: shared by the whole Node.js process
+export const store = io({ count: 0 });
+```
+
+Use a factory and create a store inside request flow:
+
+```ts
+// lib/store.ts
+import { io } from '@iostore/store';
+
+export type AppState = {
+  count: number;
+  user: { id: string; name: string } | null;
+};
+
+export function createStore(initial: AppState) {
+  return io(initial);
+}
+```
+
+```tsx
+// app/dashboard/page.tsx (Server Component)
+import { createStore } from '@/lib/store';
+import { DashboardClient } from './dashboard-client';
+
+export default async function Page() {
+  const user = await fetch('https://example.com/api/me').then((r) => r.json());
+  const serverStore = createStore({ count: 0, user });
+  return <DashboardClient initialState={serverStore.snapshot()} />;
+}
+```
+
+## Hydration Boundary
+
+In App Router, the usual hydration boundary is Server Component -> Client Component props.
+
+```tsx
+// app/dashboard/dashboard-client.tsx
+'use client';
+
+import { useRef } from 'react';
+import { useIO } from '@iostore/react';
+import { createStore, type AppState } from '@/lib/store';
+
+export function DashboardClient({ initialState }: { initialState: AppState }) {
+  const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createStore(initialState);
+  }
+
+  const count = useIO(storeRef.current.count);
+  return <button onClick={() => storeRef.current?.count.set((v) => v + 1)}>{count}</button>;
+}
+```
+
+Rules:
+
+- Pass only serializable data across the boundary (for example `initialState`).
+- Create the store on client side and reuse it for the component lifetime.
+
+## Server / Client Value Passing
+
+Recommended flow: `server fetch -> plain initialState -> client createStore(initialState)`.
+
+```tsx
+return <DashboardClient initialState={serverStore.snapshot()} />;
+```
+
+Avoid:
+
+- Passing `io(...)` node instances directly to Client Components.
+- Returning store instances from route handlers or server actions.
+
+## Next Steps
+
+- Use [React](/en/integrations/react/) with `useIOSelector` for narrower subscriptions.
+- Add [Persist](/en/behaviors/persist/) for browser-side persistence.
