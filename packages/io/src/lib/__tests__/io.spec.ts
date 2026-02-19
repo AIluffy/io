@@ -332,6 +332,64 @@ describe('history: createHistory', () => {
     expect(history.canUndo).toBe(false);
   });
 
+  it('supports grouped undo/redo with groupBy strategy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      groupBy: (update) => update.action,
+    });
+
+    store.count.set(1);
+    store.count.set(2);
+    expect(history.length).toBe(2);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(0);
+    expect(history.canUndo).toBe(false);
+    expect(history.canRedo).toBe(true);
+
+    history.redoGroup();
+    expect(store.count.get()).toBe(2);
+    expect(history.canUndo).toBe(true);
+    expect(history.canRedo).toBe(false);
+  });
+
+  it('supports checkpoint to split undo groups', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      groupBy: (update) => update.action,
+    });
+
+    store.count.set(1);
+    store.count.set(2);
+    history.checkpoint();
+    store.count.set(3);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(2);
+    expect(history.canUndo).toBe(true);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(0);
+    expect(history.canUndo).toBe(false);
+  });
+
+  it('supports custom filter strategy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      filter: (update) => update.action === 'reset',
+    });
+
+    store.count.set(1);
+    store.count.reset();
+
+    expect(history.length).toBe(1);
+    expect(history.cursor).toBe(0);
+    expect(store.count.get()).toBe(0);
+
+    history.undo();
+    expect(store.count.get()).toBe(1);
+  });
+
   it('is a no-op when undo/redo are called at bounds', () => {
     const store = io({ count: 0 });
     const history = createHistory(store, { limit: 0 });

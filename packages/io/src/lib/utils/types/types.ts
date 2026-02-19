@@ -51,11 +51,21 @@ export type IoUpdate = {
 export type IoHistoryOptions = {
   limit?: number;
   emitUpdate?: boolean;
+  filter?: IoHistoryFilterStrategy;
+  groupBy?: (update: IoUpdate) => PropertyKey | undefined;
 };
+
+export type IoHistoryFilterStrategy =
+  | 'all'
+  | 'exclude-undo-redo'
+  | ((update: IoUpdate) => boolean);
 
 export type IoHistory = {
   undo(): void;
+  undoGroup(): void;
   redo(): void;
+  redoGroup(): void;
+  checkpoint(): void;
   clear(): void;
   destroy(): void;
   readonly canUndo: boolean;

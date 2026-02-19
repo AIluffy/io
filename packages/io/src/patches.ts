@@ -1,6 +1,7 @@
 export { createHistory } from './lib/utils/patches/history.js';
 export type {
   IoHistory,
+  IoHistoryFilterStrategy,
   IoHistoryOptions,
   IoMutationOp,
   IoPatch,

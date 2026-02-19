@@ -19,7 +19,10 @@ IoHistory
 | Name | Type |
 | --- | --- |
 | undo | `() => void` |
+| undoGroup | `() => void` |
 | redo | `() => void` |
+| redoGroup | `() => void` |
+| checkpoint | `() => void` |
 | clear | `() => void` |
 | destroy | `() => void` |
 | canUndo | `boolean` |
@@ -36,17 +39,23 @@ let value!: IoHistory;
 console.log(value);
 ```
 
+## Behavior Notes
+
+- `undo/redo`: move one recorded update at a time.
+- `undoGroup/redoGroup`: move by grouped updates (based on `groupBy`).
+- `checkpoint`: forces the next recorded update into a new group.
+- `cursor`: current pointer (`-1` means before first history entry).
+
 ## Common Pitfalls
 
-- Avoid over-expanding complex aliases in user-facing docs.
-- Keep aliases stable to prevent downstream type breakage.
+- Expecting `undoGroup` batching without configuring `groupBy`.
+- Reusing a history instance after calling `destroy`.
 
 ## Related APIs
 
-- [IoArrayUnit](../io-array-unit/)
-- [IoBehavior](../io-behavior/)
-- [IoDerived](../io-derived/)
-- [IoErrorHandler](../io-error-handler/)
+- [createHistory](../create-history/)
+- [IoHistoryOptions](../io-history-options/)
+- [undoUpdate](../undo-update/)
 
 ## Source
 
