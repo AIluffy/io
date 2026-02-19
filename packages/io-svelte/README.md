@@ -5,6 +5,7 @@ IO 的 Svelte 适配层（stores）。
 ## Exports
 
 - `toReadable`
+- `toReadableSelector`
 - `toWritable`
 - `toQueryStore`
 - `createQueryStore`

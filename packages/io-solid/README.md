@@ -5,6 +5,7 @@ IO 的 Solid 适配层（hooks）。
 ## Exports
 
 - `useIO`
+- `useIOSelector`
 - `useQuery`
 - `useResource`
 

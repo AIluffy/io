@@ -13,6 +13,10 @@ type IoVueOptions = {
   schedule?: IoSchedule;
 };
 
+type IoSelectorOptions<TSelected> = IoVueOptions & {
+  isEqual?: (prev: TSelected, next: TSelected) => boolean;
+};
+
 export function useIO<T>(
   source: IoSource<T>,
   options?: IoVueOptions,
@@ -24,6 +28,35 @@ export function useIO<T>(
     state.value = value;
   });
   const unsub = source.subscribe((v) => updater.dispatch(v));
+  onScopeDispose(() => {
+    updater.cancel();
+    unsub();
+  });
+
+  return state;
+}
+
+export function useIOSelector<TSource, TSelected>(
+  source: IoSource<TSource>,
+  selector: (value: TSource) => TSelected,
+  options?: IoSelectorOptions<TSelected>,
+): ShallowRef<TSelected> {
+  const isEqual = options?.isEqual ?? Object.is;
+  let selected = selector(source.snapshot());
+  const state = shallowRef(selected) as ShallowRef<TSelected>;
+
+  const schedule = options?.schedule ?? 'microtask';
+  const updater = createScheduledDispatcher<[TSelected]>(schedule, (value) => {
+    state.value = value;
+  });
+  const unsub = source.subscribe((nextSource) => {
+    const nextSelected = selector(nextSource);
+    if (isEqual(selected, nextSelected)) {
+      return;
+    }
+    selected = nextSelected;
+    updater.dispatch(nextSelected);
+  });
   onScopeDispose(() => {
     updater.cancel();
     unsub();

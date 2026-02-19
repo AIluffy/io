@@ -19,6 +19,10 @@ type IoSvelteOptions = {
   schedule?: IoSchedule;
 };
 
+type IoSelectorOptions<TSelected> = IoSvelteOptions & {
+  isEqual?: (prev: TSelected, next: TSelected) => boolean;
+};
+
 type IoQueryStoreOptions = {
   enabled?: boolean;
   cancelOnUnsubscribe?: boolean;
@@ -54,7 +58,7 @@ export function toReadable<T>(
   return {
     subscribe(run) {
       run(source.snapshot());
-      const schedule = options?.schedule ?? 'sync';
+      const schedule = options?.schedule ?? 'microtask';
       const updater = createScheduledDispatcher<[T]>(schedule, (value) => {
         run(value);
       });
@@ -74,7 +78,7 @@ export function toWritable<T>(
   return {
     subscribe(run) {
       run(unit.get());
-      const schedule = options?.schedule ?? 'sync';
+      const schedule = options?.schedule ?? 'microtask';
       const updater = createScheduledDispatcher<[T]>(schedule, (value) => {
         run(value);
       });
@@ -89,6 +93,37 @@ export function toWritable<T>(
     },
     update(updater) {
       unit.set((prev) => updater(prev));
+    },
+  };
+}
+
+export function toReadableSelector<TSource, TSelected>(
+  source: IoSource<TSource>,
+  selector: (value: TSource) => TSelected,
+  options?: IoSelectorOptions<TSelected>,
+): Readable<TSelected> {
+  return {
+    subscribe(run) {
+      const isEqual = options?.isEqual ?? Object.is;
+      let selected = selector(source.snapshot());
+      run(selected);
+
+      const schedule = options?.schedule ?? 'microtask';
+      const updater = createScheduledDispatcher<[TSelected]>(schedule, (value) => {
+        run(value);
+      });
+      const unsub = source.subscribe((nextSource) => {
+        const nextSelected = selector(nextSource);
+        if (isEqual(selected, nextSelected)) {
+          return;
+        }
+        selected = nextSelected;
+        updater.dispatch(nextSelected);
+      });
+      return () => {
+        updater.cancel();
+        unsub();
+      };
     },
   };
 }

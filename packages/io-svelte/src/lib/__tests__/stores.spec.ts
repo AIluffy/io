@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 import { fromStore } from 'svelte/store';
-import { toReadable, toWritable } from '../stores.js';
+import { toReadable, toReadableSelector, toWritable } from '../stores.js';
 
 describe('@iostore/svelte', () => {
   it('creates readable and writable stores', async () => {
     const unit = io(1);
-    const writable = toWritable(unit);
+    const writable = toWritable(unit, { schedule: 'sync' });
     const seen: number[] = [];
     const unsub = writable.subscribe((v) => seen.push(v));
     writable.set(2);
@@ -56,6 +56,18 @@ describe('@iostore/svelte', () => {
     expect(seen).toEqual([0]);
   });
 
+  it('defaults to microtask schedule', async () => {
+    const unit = io(0);
+    const writable = toWritable(unit);
+    const seen: number[] = [];
+    const unsub = writable.subscribe((v) => seen.push(v));
+    writable.set(1);
+    expect(seen).toEqual([0]);
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(seen).toEqual([0, 1]);
+    unsub();
+  });
+
   it('works in SSR-like environment without window/document', () => {
     const ioGlobal = globalThis as unknown as {
       window?: unknown;
@@ -88,5 +100,44 @@ describe('@iostore/svelte', () => {
     expect(runeView.current).toBe(2);
     unit.set(3);
     expect(runeView.current).toBe(3);
+  });
+
+  it('supports selector stores and skips unchanged selected values', () => {
+    const store = io({ count: 0, label: 'a' });
+    const selected = toReadableSelector(store, (state) => state.count, {
+      schedule: 'sync',
+    });
+
+    const seen: number[] = [];
+    const unsub = selected.subscribe((value) => seen.push(value));
+    store.label.set('b');
+    store.count.set(1);
+    store.label.set('c');
+    store.count.set(2);
+
+    unsub();
+    expect(seen).toEqual([0, 1, 2]);
+  });
+
+  it('supports custom selector equality', () => {
+    const store = io({ values: [1, 2] });
+    const selected = toReadableSelector(
+      store,
+      (state) => [...state.values],
+      {
+        schedule: 'sync',
+        isEqual: (prev, next) =>
+          prev.length === next.length &&
+          prev.every((value, index) => value === next[index]),
+      },
+    );
+
+    const seen: number[][] = [];
+    const unsub = selected.subscribe((value) => seen.push(value));
+    store.values.set([1, 2]);
+    store.values.set([1, 2, 3]);
+    unsub();
+
+    expect(seen).toEqual([[1, 2], [1, 2, 3]]);
   });
 });

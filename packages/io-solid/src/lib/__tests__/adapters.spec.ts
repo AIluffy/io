@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 import { createRoot } from 'solid-js';
 
-import { useIO } from '../adapters.js';
+import { useIO, useIOSelector } from '../adapters.js';
 
 describe('@iostore/solid', () => {
   it('exports adapters', () => {
     expect(typeof useIO).toBe('function');
+    expect(typeof useIOSelector).toBe('function');
   });
 
   it('supports updates', async () => {
@@ -52,5 +53,43 @@ describe('@iostore/solid', () => {
     await new Promise<void>((resolve) => queueMicrotask(resolve));
     expect(countRef?.get()).toBe(1);
     expect(state?.()).toBe(0);
+  });
+
+  it('skips selector updates when selected value is unchanged', () => {
+    createRoot((dispose) => {
+      const store = io({ count: 0, label: 'a' });
+      const selected = useIOSelector(store, (state) => state.count, {
+        schedule: 'sync',
+      });
+      expect(selected()).toBe(0);
+      store.label.set('b');
+      expect(selected()).toBe(0);
+      store.count.set(1);
+      expect(selected()).toBe(1);
+      dispose();
+    });
+  });
+
+  it('supports custom selector equality', () => {
+    createRoot((dispose) => {
+      const store = io({ values: [1, 2] });
+      const selected = useIOSelector(
+        store,
+        (state) => [...state.values],
+        {
+          schedule: 'sync',
+          isEqual: (prev, next) =>
+            prev.length === next.length &&
+            prev.every((value, index) => value === next[index]),
+        },
+      );
+
+      const first = selected();
+      store.values.set([1, 2]);
+      expect(selected()).toBe(first);
+      store.values.set([1, 2, 3]);
+      expect(selected()).not.toBe(first);
+      dispose();
+    });
   });
 });

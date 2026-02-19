@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Ref, ShallowRef } from 'vue';
 import { effectScope } from 'vue';
 import { io } from '@iostore/store';
-import { ioRef, useIO } from '../adapters.js';
+import { ioRef, useIO, useIOSelector } from '../adapters.js';
 
 describe('@iostore/vue', () => {
   it('exports adapters', () => {
     expect(typeof useIO).toBe('function');
+    expect(typeof useIOSelector).toBe('function');
     expect(typeof ioRef).toBe('function');
   });
 
@@ -109,5 +110,50 @@ describe('@iostore/vue', () => {
     expect(state?.value).toBe(2);
     ioGlobal.window = previousWindow;
     ioGlobal.document = previousDocument;
+  });
+
+  it('skips selector updates when selected value is unchanged', () => {
+    const scope = effectScope();
+    let selected: ShallowRef<number> | undefined;
+
+    scope.run(() => {
+      const store = io({ count: 0, label: 'a' });
+      selected = useIOSelector(store, (state) => state.count, {
+        schedule: 'sync',
+      });
+      expect(selected?.value).toBe(0);
+      store.label.set('b');
+      expect(selected?.value).toBe(0);
+      store.count.set(1);
+      expect(selected?.value).toBe(1);
+    });
+
+    scope.stop();
+  });
+
+  it('supports custom selector equality', () => {
+    const scope = effectScope();
+    let selected: ShallowRef<number[]> | undefined;
+
+    scope.run(() => {
+      const store = io({ values: [1, 2] });
+      selected = useIOSelector(
+        store,
+        (state) => [...state.values],
+        {
+          schedule: 'sync',
+          isEqual: (prev, next) =>
+            prev.length === next.length &&
+            prev.every((value, index) => value === next[index]),
+        },
+      );
+      const first = selected?.value;
+      store.values.set([1, 2]);
+      expect(selected?.value).toBe(first);
+      store.values.set([1, 2, 3]);
+      expect(selected?.value).not.toBe(first);
+    });
+
+    scope.stop();
   });
 });

@@ -5,6 +5,7 @@ IO 的 Vue 适配层（Composition API utilities）。
 ## Exports
 
 - `useIO`
+- `useIOSelector`
 - `ioRef`
 - `useQuery`
 - `useResource`
