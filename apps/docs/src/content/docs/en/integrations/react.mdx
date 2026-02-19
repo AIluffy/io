@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-The npm package `@iostore/react` provides `useIO`, aligned with React rendering via `useSyncExternalStore`.
+The npm package `@iostore/react` provides `useIO` and `useIOSelector`, aligned with React rendering via `useSyncExternalStore`.
 
 ## Basic Usage
 
@@ -35,6 +35,28 @@ export function Summary() {
   const value = useIO(doubled);
   return <span>{value}</span>;
 }
+```
+
+## useIOSelector
+
+```tsx
+import { io } from '@iostore/store';
+import { useIOSelector } from '@iostore/react';
+
+const store = io({ count: 0, other: 0 });
+
+export function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <span>{count}</span>;
+}
+```
+
+With custom equality:
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
 ```
 
 ## Scheduling

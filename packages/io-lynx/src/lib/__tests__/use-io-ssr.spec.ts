@@ -15,6 +15,7 @@ describe('@iostore/lynx SSR', () => {
 
     vi.resetModules();
     vi.doMock('@lynx-js/react', () => ({
+      useRef: <T,>(initialValue: T) => ({ current: initialValue }),
       useSyncExternalStore: (
         subscribe: (onStoreChange: () => void) => () => void,
         _getSnapshot: () => number,
@@ -32,10 +33,12 @@ describe('@iostore/lynx SSR', () => {
         snapshot: () => 7,
         subscribe,
       };
-      const { useIO } = await import('../use-io.js');
+      const { useIO, useIOSelector } = await import('../use-io.js');
       const value = useIO(source);
+      const selected = useIOSelector(source, (v) => v + 1);
 
       expect(value).toBe(7);
+      expect(selected).toBe(8);
       expect(subscribe).not.toHaveBeenCalled();
     } finally {
       vi.doUnmock('@lynx-js/react');

@@ -1,1 +1,1 @@
-export { useIO } from './lib/use-io.js';
+export { useIO, useIOSelector } from './lib/use-io.js';

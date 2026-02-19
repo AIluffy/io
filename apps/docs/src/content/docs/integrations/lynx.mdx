@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-npm 包 `@iostore/lynx` 提供 `useIO`，用于在 ReactLynx 中订阅 IO 数据源。
+npm 包 `@iostore/lynx` 提供 `useIO` 与 `useIOSelector`，用于在 ReactLynx 中订阅 IO 数据源。
 
 ## 基础用法
 
@@ -40,6 +40,27 @@ root.render(<Counter />);
     "jsxImportSource": "@lynx-js/react"
   }
 }
+```
+
+## useIOSelector
+
+```tsx
+import { useIOSelector } from '@iostore/lynx';
+
+const store = io({ count: 0, other: 0 });
+
+function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <text>{count}</text>;
+}
+```
+
+如需自定义比较逻辑：
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
 ```
 
 ## 调度策略

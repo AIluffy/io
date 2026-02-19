@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-The npm package `@iostore/lynx` provides `useIO` for subscribing to IO sources in ReactLynx.
+The npm package `@iostore/lynx` provides `useIO` and `useIOSelector` for subscribing to IO sources in ReactLynx.
 
 ## Basic Usage
 
@@ -40,6 +40,27 @@ root.render(<Counter />);
     "jsxImportSource": "@lynx-js/react"
   }
 }
+```
+
+## useIOSelector
+
+```tsx
+import { useIOSelector } from '@iostore/lynx';
+
+const store = io({ count: 0, other: 0 });
+
+function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <text>{count}</text>;
+}
+```
+
+With custom equality:
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
 ```
 
 ## Scheduling

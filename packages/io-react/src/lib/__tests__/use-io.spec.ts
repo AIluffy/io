@@ -4,7 +4,7 @@ import { act } from 'react';
 import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 
-import { useIO } from '../use-io.js';
+import { useIO, useIOSelector } from '../use-io.js';
 
 const createRenderer = (element: unknown): TestRenderer.ReactTestRenderer =>
   TestRenderer.create(element as never);
@@ -94,5 +94,74 @@ describe('@iostore/react', () => {
     });
 
     expect(renders).toEqual([0]);
+  });
+
+  it('skips rerenders when selector result is unchanged', async () => {
+    const store = io({ count: 0, other: 0 });
+    const renders: number[] = [];
+
+    const App = () => {
+      const value = useIOSelector(store, (state) => state.count, {
+        schedule: 'sync',
+      });
+      renders.push(value);
+      return React.createElement('span', null, String(value));
+    };
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App));
+    });
+
+    act(() => {
+      store.other.set(1);
+    });
+    expect(renders).toEqual([0]);
+
+    act(() => {
+      store.count.set(1);
+    });
+    expect(renders).toEqual([0, 1]);
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+
+  it('supports custom selector equality', async () => {
+    const store = io({ count: 0 });
+    const renders: number[] = [];
+
+    const App = () => {
+      const selected = useIOSelector(
+        store,
+        (state) => ({ parity: state.count % 2 }),
+        {
+          schedule: 'sync',
+          isEqual: (prev, next) => prev.parity === next.parity,
+        },
+      );
+      renders.push(selected.parity);
+      return React.createElement('span', null, String(selected.parity));
+    };
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App));
+    });
+
+    act(() => {
+      store.count.set(2);
+    });
+    expect(renders).toEqual([0]);
+
+    act(() => {
+      store.count.set(3);
+    });
+    expect(renders).toEqual([0, 1]);
+
+    await act(async () => {
+      renderer.unmount();
+    });
   });
 });
