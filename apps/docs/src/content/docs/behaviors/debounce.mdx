@@ -1,0 +1,44 @@
+---
+title: Debounce
+description: 在连续变更结束后再下发通知。
+sidebar:
+  order: 6
+---
+
+Debounce 用于合并突发更新，只在静默窗口后触发，适合搜索输入等场景。
+
+## 基础用法
+
+```ts
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(200)]);
+
+view.subscribe((value) => {
+  console.log('debounced:', value);
+});
+```
+
+## 选项
+
+```ts
+debounce(200, {
+  leading: false,
+  trailing: true,
+});
+```
+
+- `leading`：窗口开始时是否触发一次（默认 `false`）
+- `trailing`：窗口结束时是否触发最后一次值（默认 `true`）
+
+## 适用场景
+
+- 输入联想、过滤条件合并提交。
+- 只关心“最终态”，不关心中间态。
+
+## 下一步
+
+- 对“固定频率输出”场景使用 [Throttle](/behaviors/throttle/)。
+- 结合 [Effect](/behaviors/effect/) 执行请求或日志副作用。

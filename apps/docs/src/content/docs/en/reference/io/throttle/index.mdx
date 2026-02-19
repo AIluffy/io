@@ -1,0 +1,46 @@
+---
+title: "throttle"
+description: "Behavior API: limit subscription notification rate."
+---
+
+## When to Use
+
+- Frequent updates where fixed-rate notification is enough.
+- Reduce UI noise under continuous writes.
+
+## Signature
+
+```ts
+<T>(waitMs: number, options?: ThrottleBehaviorOptions) => IoBehavior<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| waitMs | `number` |
+| options | `ThrottleBehaviorOptions` |
+
+## Returns
+
+`IoBehavior<T>`
+
+## Example
+
+```ts
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [throttle(50)]);
+```
+
+## Related APIs
+
+- [debounce](../debounce/)
+- [effect](../effect/)
+- [withBehaviors](../with-behaviors/)
+
+## Source
+
+- `packages/io/src/lib/extensions/behaviors/throttle.ts`

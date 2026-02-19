@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { io } from '../core/api/io.js';
 import { withBehaviors } from '../extensions/with-behaviors.js';
 import { schedule } from '../extensions/behaviors/schedule.js';
+import { throttle } from '../extensions/behaviors/throttle.js';
+import { debounce } from '../extensions/behaviors/debounce.js';
+import { effect as effectBehavior } from '../extensions/behaviors/effect.js';
 import { persist } from '../extensions/behaviors/persist.js';
 import { devtools } from '../extensions/behaviors/devtools.js';
 import { derived } from '../core/api/derived.js';
@@ -59,6 +62,107 @@ describe('extensions: behaviors', () => {
     await new Promise<void>((resolve) => queueMicrotask(resolve));
 
     expect(seen).toEqual([]);
+  });
+
+  it('throttles subscription updates with trailing flush', () => {
+    vi.useFakeTimers();
+    try {
+      const unit = io(0);
+      const view = withBehaviors(unit, [throttle(50)]);
+      const seen: number[] = [];
+      const unsub = view.subscribe((value) => seen.push(value));
+
+      view.set?.(1);
+      view.set?.(2);
+      view.set?.(3);
+
+      expect(seen).toEqual([1]);
+
+      vi.advanceTimersByTime(49);
+      expect(seen).toEqual([1]);
+      vi.advanceTimersByTime(1);
+      expect(seen).toEqual([1, 3]);
+
+      view.set?.(4);
+      expect(seen).toEqual([1, 3]);
+      vi.advanceTimersByTime(50);
+      expect(seen).toEqual([1, 3, 4]);
+      unsub();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('debounces subscription updates', () => {
+    vi.useFakeTimers();
+    try {
+      const unit = io(0);
+      const view = withBehaviors(unit, [debounce(30)]);
+      const seen: number[] = [];
+      const unsub = view.subscribe((value) => seen.push(value));
+
+      view.set?.(1);
+      view.set?.(2);
+      view.set?.(3);
+
+      expect(seen).toEqual([]);
+      vi.advanceTimersByTime(29);
+      expect(seen).toEqual([]);
+      vi.advanceTimersByTime(1);
+      expect(seen).toEqual([3]);
+
+      unsub();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('runs effect behavior and cleans up on rerun/destroy', () => {
+    const unit = io(0);
+    const calls: Array<number | undefined> = [];
+    const cleaned: number[] = [];
+    const view = withBehaviors(unit, [
+      effectBehavior((value, previous) => {
+        calls.push(previous);
+        return () => {
+          cleaned.push(value);
+        };
+      }),
+    ]);
+
+    expect(calls).toEqual([undefined]);
+    view.set?.(1);
+    view.set?.(2);
+
+    expect(calls).toEqual([undefined, 0, 1]);
+    expect(cleaned).toEqual([0, 1]);
+
+    view.destroy?.();
+    expect(cleaned).toEqual([0, 1, 2]);
+  });
+
+  it('composes throttle with effect behavior', () => {
+    vi.useFakeTimers();
+    try {
+      const unit = io(0);
+      const seen: number[] = [];
+      withBehaviors(unit, [
+        throttle(40),
+        effectBehavior((value) => {
+          seen.push(value);
+        }, { immediate: false }),
+      ]);
+
+      unit.set(1);
+      unit.set(2);
+      unit.set(3);
+
+      expect(seen).toEqual([1]);
+      vi.advanceTimersByTime(40);
+      expect(seen).toEqual([1, 3]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('persists values via storage adapter', () => {

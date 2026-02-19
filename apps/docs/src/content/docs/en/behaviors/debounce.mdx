@@ -1,0 +1,44 @@
+---
+title: Debounce
+description: Emit after a quiet window instead of every change.
+sidebar:
+  order: 6
+---
+
+Debounce merges bursts of updates and emits after inactivity, ideal for search-like inputs.
+
+## Basic Usage
+
+```ts
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(200)]);
+
+view.subscribe((value) => {
+  console.log('debounced:', value);
+});
+```
+
+## Options
+
+```ts
+debounce(200, {
+  leading: false,
+  trailing: true,
+});
+```
+
+- `leading`: emit once at burst start (default `false`)
+- `trailing`: emit the latest value after the burst (default `true`)
+
+## When to Use
+
+- Search suggestions or filter submissions.
+- Flows where intermediate states are not useful.
+
+## Next Steps
+
+- Use [Throttle](/en/behaviors/throttle/) for fixed-rate delivery.
+- Combine with [Effect](/en/behaviors/effect/) for request/log side effects.

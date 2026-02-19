@@ -1,12 +1,13 @@
 ---
 title: "withBehaviors"
-description: "Function API reference."
+description: "Compose multiple behaviors into one enhanced view."
 ---
 
 
 ## When to Use
 
-Use this function when you need this behavior from the package API.
+- You want one view pipeline with `persist/schedule/throttle/debounce/effect/devtools`.
+- You want unified access to `extensions` and `destroy` lifecycle.
 
 ## Signature
 
@@ -25,26 +26,34 @@ Use this function when you need this behavior from the package API.
 
 `IoView<T>`
 
-## Minimal Example
+## Example
 
 ```ts
+import { io } from '@iostore/store';
 import { withBehaviors } from '@iostore/store/behavior';
+import { debounce, effect, persist } from '@iostore/store/behavior';
 
-const result = withBehaviors(/* ...args */);
-console.log(result);
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  debounce(120),
+  effect((value) => {
+    console.log('count', value);
+  }),
+]);
 ```
 
 ## Common Pitfalls
 
-- Validate argument types and nullability before calling.
-- Confirm import path and runtime environment (server/client) expectations.
+- Random behavior ordering that changes semantics unexpectedly.
+- Not calling `view.destroy()` when composed behaviors allocate resources.
 
 ## Related APIs
 
-- [applyUpdate](../apply-update/)
-- [batch](../batch/)
-- [createHistory](../create-history/)
-- [createScheduledDispatcher](../create-scheduled-dispatcher/)
+- [IoBehavior](../io-behavior/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
 
 ## Source
 

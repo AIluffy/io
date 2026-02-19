@@ -1,12 +1,12 @@
 ---
 title: "IoBehavior"
-description: "Type API reference."
+description: "Type for composable behavior units."
 ---
 
 
 ## When to Use
 
-Use this type alias to model reusable type shapes.
+Use this type when defining or constraining custom behaviors.
 
 ## Signature
 
@@ -14,26 +14,35 @@ Use this type alias to model reusable type shapes.
 IoBehavior<T>
 ```
 
+Semantically it is a higher-order view function:
+
+```ts
+(view: IoView<T>) => IoView<T>
+```
+
 ## Minimal Example
 
 ```ts
 import type { IoBehavior } from '@iostore/store/behavior';
 
-let value!: IoBehavior;
-console.log(value);
+const behavior: IoBehavior<number> = (view) => ({
+  ...view,
+});
+
+console.log(behavior);
 ```
 
 ## Common Pitfalls
 
-- Avoid over-expanding complex aliases in user-facing docs.
-- Keep aliases stable to prevent downstream type breakage.
+- Breaking `get/set/subscribe` semantics inside behavior wrappers.
+- Forgetting to preserve/chain `destroy` and leaking resources.
 
 ## Related APIs
 
-- [IoArrayUnit](../io-array-unit/)
-- [IoDerived](../io-derived/)
-- [IoErrorHandler](../io-error-handler/)
-- [IoErrorHandlerFor](../io-error-handler-for/)
+- [withBehaviors](../with-behaviors/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
 
 ## Source
 

@@ -5,18 +5,26 @@ sidebar:
   order: 1
 ---
 
-行为扩展（Behavior）用于在不改变核心 API 的前提下增加能力，例如持久化、调度、DevTools。
+行为扩展（Behavior）用于在不改变核心 API 的前提下增加能力，例如持久化、调度、节流、防抖、副作用和 DevTools。
 
 ## 基础用法
 
 ```ts
 import { io } from '@iostore/store';
-import { persist, schedule, withBehaviors } from '@iostore/store/behavior';
+import {
+  persist,
+  schedule,
+  throttle,
+  effect,
+  withBehaviors,
+} from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [
   persist({ key: 'count' }),
   schedule('microtask'),
+  throttle(50),
+  effect((value) => console.log(value)),
 ]);
 
 view.subscribe((value) => {
@@ -36,10 +44,13 @@ view.subscribe((value) => {
 ## 组合策略
 
 - 先接入 `persist`，再接入 `schedule` 或 `devtools`。
+- 高频场景建议先 `throttle/debounce`，再接 `effect`。
 - 行为顺序决定包装顺序，按依赖关系排列。
 
 ## 下一步
 
 - 使用 [Persist](/behaviors/persist/) 做持久化。
 - 了解 [Schedule](/behaviors/schedule/) 控制通知节奏。
+- 使用 [Throttle](/behaviors/throttle/) / [Debounce](/behaviors/debounce/) 控制频率。
+- 用 [Effect](/behaviors/effect/) 收敛副作用逻辑。
 - 连接 [DevTools](/behaviors/devtools/) 做调试与回放。

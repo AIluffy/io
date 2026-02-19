@@ -1,12 +1,12 @@
 ---
 title: "IoBehavior"
-description: "类型 API 参考。"
+description: "Behavior 组合单元类型。"
 ---
 
 
 ## 何时使用
 
-当你需要复用类型结构时使用此类型别名。
+当你需要定义或约束自定义 behavior 时使用。
 
 ## 签名
 
@@ -14,26 +14,37 @@ description: "类型 API 参考。"
 IoBehavior<T>
 ```
 
+本质上它是一个高阶视图函数：
+
+```ts
+(view: IoView<T>) => IoView<T>
+```
+
 ## 最小示例
 
 ```ts
 import type { IoBehavior } from '@iostore/store/behavior';
 
-let value!: IoBehavior;
-console.log(value);
+import type { IoBehavior } from '@iostore/store/behavior';
+
+const behavior: IoBehavior<number> = (view) => ({
+  ...view,
+});
+
+console.log(behavior);
 ```
 
 ## 常见误用
 
-- 避免在用户文档中展开过于复杂的类型细节。
-- 调整类型别名时注意下游兼容性。
+- 直接在 behavior 里破坏 `get/set/subscribe` 语义一致性。
+- 忘记在 behavior 中透传 `destroy`，导致资源泄漏。
 
 ## 相关 API
 
-- [IoArrayUnit](../io-array-unit/)
-- [IoDerived](../io-derived/)
-- [IoErrorHandler](../io-error-handler/)
-- [IoErrorHandlerFor](../io-error-handler-for/)
+- [withBehaviors](../with-behaviors/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
 
 ## 源码
 

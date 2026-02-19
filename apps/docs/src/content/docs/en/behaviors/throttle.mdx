@@ -1,0 +1,44 @@
+---
+title: Throttle
+description: Emit subscription notifications at a fixed rate.
+sidebar:
+  order: 5
+---
+
+Throttle limits notification frequency and is useful for noisy high-frequency updates.
+
+## Basic Usage
+
+```ts
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [throttle(50)]);
+
+view.subscribe((value) => {
+  console.log('throttled:', value);
+});
+```
+
+## Options
+
+```ts
+throttle(100, {
+  leading: true,
+  trailing: true,
+});
+```
+
+- `leading`: emit immediately at window start (default `true`)
+- `trailing`: emit the latest value at window end (default `true`)
+
+## When to Use
+
+- Drag/scroll/slider-like continuous updates.
+- Frequent `set()` calls where you want stable render cadence.
+
+## Next Steps
+
+- Use [Debounce](/en/behaviors/debounce/) when you only care about final input.
+- Combine with [Effect](/en/behaviors/effect/) for side-effect pipelines.

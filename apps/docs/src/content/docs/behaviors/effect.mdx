@@ -1,0 +1,66 @@
+---
+title: Effect
+description: 以 behavior 方式声明副作用与清理逻辑。
+sidebar:
+  order: 7
+---
+
+Effect 将订阅值变化与副作用绑定在同一行为中，并支持统一清理。
+
+## 基础用法
+
+```ts
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  effect((value, previous) => {
+    console.log('effect run', { value, previous });
+  }),
+]);
+```
+
+## 清理函数
+
+```ts
+effect((value) => {
+  const timer = setInterval(() => {
+    console.log('tick', value);
+  }, 1000);
+
+  return () => clearInterval(timer);
+});
+```
+
+当值再次变化或 `view.destroy()` 执行时，清理函数会被调用。
+
+## 选项
+
+```ts
+effect(handler, {
+  immediate: true,
+  onError: (error) => console.error(error),
+});
+```
+
+- `immediate`：挂载后是否立即执行一次（默认 `true`）
+- `onError`：effect/cleanup 抛错时的错误处理
+
+## 组合示例
+
+```ts
+import { throttle, effect, withBehaviors } from '@iostore/store/behavior';
+
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    sendMetric(value);
+  }),
+]);
+```
+
+## 下一步
+
+- 在高频场景下先用 [Throttle](/behaviors/throttle/) 或 [Debounce](/behaviors/debounce/)。
+- 了解 [Behaviors 概览](/behaviors/overview/) 的组合顺序建议。

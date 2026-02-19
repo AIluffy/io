@@ -1,0 +1,44 @@
+---
+title: Throttle
+description: 以固定节奏下发订阅通知。
+sidebar:
+  order: 5
+---
+
+Throttle 用于限制通知频率，适合高频写入场景下的 UI 降噪。
+
+## 基础用法
+
+```ts
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [throttle(50)]);
+
+view.subscribe((value) => {
+  console.log('throttled:', value);
+});
+```
+
+## 选项
+
+```ts
+throttle(100, {
+  leading: true,
+  trailing: true,
+});
+```
+
+- `leading`：窗口开始时是否立即触发（默认 `true`）
+- `trailing`：窗口结束时是否触发最后一次值（默认 `true`）
+
+## 适用场景
+
+- 滑块、拖拽、滚动等连续输入。
+- 高频 `set()` 但只需要稳定刷新频率的渲染场景。
+
+## 下一步
+
+- 对“输入结束后再执行”场景使用 [Debounce](/behaviors/debounce/)。
+- 结合 [Effect](/behaviors/effect/) 组织副作用流。

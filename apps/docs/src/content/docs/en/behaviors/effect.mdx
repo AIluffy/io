@@ -1,0 +1,66 @@
+---
+title: Effect
+description: Declare side effects and cleanup as composable behavior.
+sidebar:
+  order: 7
+---
+
+Effect binds value changes to side effects and keeps cleanup in the same behavior lifecycle.
+
+## Basic Usage
+
+```ts
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  effect((value, previous) => {
+    console.log('effect run', { value, previous });
+  }),
+]);
+```
+
+## Cleanup
+
+```ts
+effect((value) => {
+  const timer = setInterval(() => {
+    console.log('tick', value);
+  }, 1000);
+
+  return () => clearInterval(timer);
+});
+```
+
+Cleanup runs before the next effect execution and when `view.destroy()` is called.
+
+## Options
+
+```ts
+effect(handler, {
+  immediate: true,
+  onError: (error) => console.error(error),
+});
+```
+
+- `immediate`: run once on mount (default `true`)
+- `onError`: handle thrown errors from effect or cleanup
+
+## Composition Example
+
+```ts
+import { throttle, effect, withBehaviors } from '@iostore/store/behavior';
+
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    sendMetric(value);
+  }),
+]);
+```
+
+## Next Steps
+
+- Use [Throttle](/en/behaviors/throttle/) or [Debounce](/en/behaviors/debounce/) before effect in high-frequency paths.
+- Check [Behaviors Overview](/en/behaviors/overview/) for composition order guidance.

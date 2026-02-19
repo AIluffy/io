@@ -13,16 +13,26 @@ IO 核心状态库：Unit / ArrayUnit / Scope / Derived / Snapshot，并支持�
 
 ```ts
 import { io } from '@iostore/store';
-import { withBehaviors, schedule, persist } from '@iostore/store/behavior';
+import {
+  withBehaviors,
+  schedule,
+  throttle,
+  effect,
+  persist,
+} from '@iostore/store/behavior';
 
 const count = io(0);
 const view = withBehaviors(count, [
   schedule('microtask'),
+  throttle(50),
+  effect((value) => {
+    console.log('effect', value);
+  }),
   persist({ key: 'count' }),
 ]);
 
 view.subscribe((v) => console.log(v));
-view(1); // view() 读取，view(next) 写入
+view.set?.(1);
 ```
 
 也可在树形结构中按路径构造视图：
