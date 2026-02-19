@@ -54,6 +54,20 @@ describe('io: unit', () => {
     expect(values).toEqual([2, 3]);
     expect(updates).toHaveLength(2);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: [] });
+    expect(updates[0].action).toBe('set');
+  });
+
+  it('emits reset action metadata', () => {
+    const count = io(1);
+    const updates: IoUpdate[] = [];
+    const unsub = count.subscribeUpdate((u) => updates.push(u));
+
+    count.set(2);
+    count.reset();
+    unsub();
+
+    expect(updates).toHaveLength(2);
+    expect(updates[1].action).toBe('reset');
   });
 
   it('returns frozen snapshots for scopes', () => {
@@ -618,6 +632,7 @@ describe('link', () => {
 
     expect(updates).toHaveLength(1);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: ['count'] });
+    expect(updates[0].action).toBe('set');
   });
 
   it('supports commit against linked nodes', () => {
@@ -727,6 +742,7 @@ describe('array structural updates', () => {
       deleteCount: 0,
       items: [3],
     });
+    expect(updates[0].action).toBe('splice');
   });
 
   it('supports replacing full array value with set()', () => {
@@ -743,6 +759,7 @@ describe('array structural updates', () => {
       path: [],
       next: [3, 2, 1],
     });
+    expect(updates[0].action).toBe('set');
   });
 });
 

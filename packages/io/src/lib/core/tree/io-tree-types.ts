@@ -4,6 +4,7 @@ import type {
   IoTreeScope,
   IoUnit,
   IoUnsubscribe,
+  IoUpdateAnnotation,
   IoUpdate,
 } from '../../utils/types/types.js';
 import type { VersionedCache } from '../snapshot/versioned-cache.js';
@@ -26,7 +27,7 @@ export type UnitInternal = {
   getValue: () => unknown;
   setValue: (
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   getState: () => unknown;
 };
@@ -48,7 +49,7 @@ export type TreeArrayInternal = {
   setIndex: (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   applySplice: (
     start: number,

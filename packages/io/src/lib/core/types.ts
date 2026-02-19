@@ -1,4 +1,11 @@
-import type { IoMutationOp, IoPatch, IoPath, IoUnsubscribe, IoUpdate } from '../utils/types/types.js';
+import type {
+  IoMutationOp,
+  IoPatch,
+  IoPath,
+  IoUnsubscribe,
+  IoUpdate,
+  IoUpdateAnnotation,
+} from '../utils/types/types.js';
 import type { SnapshotCache } from './snapshot/snapshot-cache.js';
 import type {
   TreeArrayState,
@@ -13,7 +20,12 @@ export type CommitUtilDeps = {
   cloneValue: (value: unknown) => unknown;
   createDraft: <T>(value: T) => T;
   finishDraft: <T>(draft: T) => T;
-  createUpdate: (base: number, next: number, patches: IoPatch[]) => IoUpdate;
+  createUpdate: (
+    base: number,
+    next: number,
+    patches: IoPatch[],
+    annotation?: IoUpdateAnnotation,
+  ) => IoUpdate;
   applyScopeCommitDiff: typeof import('./mutation/commit.js').applyScopeCommitDiff;
   applyArrayCommitDiff: typeof import('./mutation/commit.js').applyArrayCommitDiff;
 };

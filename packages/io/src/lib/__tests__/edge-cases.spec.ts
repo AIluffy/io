@@ -111,6 +111,8 @@ describe('edge cases: applyUpdate', () => {
         id: 'u3',
         baseRevision: 0,
         revision: 1,
+        action: 'counter/manual',
+        meta: { source: 'spec' },
         patches: [{ op: 'set', path: [], prev: 1, next: 2 }],
       },
       { emitUpdate: true },
@@ -119,6 +121,8 @@ describe('edge cases: applyUpdate', () => {
     expect(store.get()).toBe(2);
     expect(updates).toHaveLength(1);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: [] });
+    expect(updates[0].action).toBe('counter/manual');
+    expect(updates[0].meta).toEqual({ source: 'spec' });
   });
 
   it('rejects root set patches for non-unit targets', () => {
@@ -247,6 +251,7 @@ describe('edge cases: applyUpdate', () => {
       id: 'u10',
       baseRevision: 0,
       revision: 1,
+      action: 'items/replace',
       patches: [
         {
           op: 'splice',
@@ -269,6 +274,11 @@ describe('edge cases: applyUpdate', () => {
         items: [3],
       },
     ]);
+    expect(inverted.action).toBe('undo');
+    expect(inverted.meta).toMatchObject({
+      sourceUpdateId: 'u10',
+      sourceAction: 'items/replace',
+    });
   });
 
   it('rejects invalid scope/array path segments while resolving parent nodes', () => {

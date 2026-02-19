@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 import { link } from '@iostore/store/extensions';
+import { applyUpdate } from '@iostore/store/patches';
 import { createIoDevtools } from '../create-io-devtools.js';
 
 describe('@iostore/devtools: createIoDevtools', () => {
@@ -31,6 +32,28 @@ describe('@iostore/devtools: createIoDevtools', () => {
 
     devtools.timeTravel.redo();
     expect(store.snapshot()).toMatchObject({ count: 1, user: { name: 'b' } });
+  });
+
+  it('records update action/meta into history', () => {
+    const store = io(0);
+    const devtools = createIoDevtools(store, { captureSnapshots: 'always' });
+
+    applyUpdate(
+      store,
+      {
+        id: 'manual-u1',
+        baseRevision: 0,
+        revision: 1,
+        action: 'counter/increment',
+        meta: { source: 'spec' },
+        patches: [{ op: 'set', path: [], prev: 0, next: 1 }],
+      },
+      { emitUpdate: true },
+    );
+
+    const entry = devtools.getState().history[0];
+    expect(entry.update.action).toBe('counter/increment');
+    expect(entry.update.meta).toEqual({ source: 'spec' });
   });
 
   it('truncates future history after time-travel', () => {

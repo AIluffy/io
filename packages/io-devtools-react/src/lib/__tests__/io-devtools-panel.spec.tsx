@@ -2,6 +2,7 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
+import { applyUpdate } from '@iostore/store/patches';
 import { createIoDevtools } from '@iostore/devtools';
 import { IoDevtoolsPanel } from '../io-devtools-panel.js';
 
@@ -37,10 +38,27 @@ describe('@iostore/devtools-react: IoDevtoolsPanel', () => {
       expect(getButton('Clear')?.props.disabled).toBe(true);
 
       act(() => {
-        store.count.set(1);
+        applyUpdate(
+          store,
+          {
+            id: 'manual-u1',
+            baseRevision: 0,
+            revision: 1,
+            action: 'counter/manual',
+            patches: [{ op: 'set', path: ['count'], prev: 0, next: 1 }],
+          },
+          { emitUpdate: true },
+        );
       });
 
       expect(getButton('Clear')?.props.disabled).toBe(false);
+      const actionLabels = mountedRenderer.root.findAll((node) => {
+        if (typeof node.type !== 'string') return false;
+        return node.children.some(
+          (child) => typeof child === 'string' && child.includes('counter/manual'),
+        );
+      });
+      expect(actionLabels.length).toBeGreaterThan(0);
     } finally {
       act(() => {
         mountedRenderer.unmount();

@@ -1,4 +1,10 @@
-import type { IoMutationOp, IoPath, IoPatch, IoUpdate } from '../../utils/types/types.js';
+import type {
+  IoMutationOp,
+  IoPath,
+  IoPatch,
+  IoUpdate,
+  IoUpdateAnnotation,
+} from '../../utils/types/types.js';
 import type { Revision, ValueEpoch } from '../../utils/types/branded.js';
 import type {
   TreeArrayState,
@@ -11,14 +17,19 @@ import type { TreeCommand } from './command.js';
 import { resetDirtyIndices } from '../mutation/dirty-indices.js';
 import { nextEpoch, nextRevision } from '../../utils/types/branded.js';
 
-export type ExecuteOptions = {
+export type ExecuteOptions = IoUpdateAnnotation & {
   emitValue?: boolean;
   emitUpdate?: boolean;
   structural?: boolean;
 };
 
 type ExecutorDeps = {
-  createUpdate: (base: number, next: number, patches: IoPatch[]) => IoUpdate;
+  createUpdate: (
+    base: number,
+    next: number,
+    patches: IoPatch[],
+    annotation?: IoUpdateAnnotation,
+  ) => IoUpdate;
   emitArrayValue: (state: TreeArrayState) => void;
   emitArrayUpdate: (state: TreeArrayState, update: IoUpdate) => void;
   emitScopeValue: (state: TreeScopeState) => void;
@@ -71,7 +82,10 @@ function createExecutor<TState extends ExecutorState>(
 
       const baseRevision = state.revision;
       state.revision = nextRevision(state.revision);
-      const update = deps.createUpdate(baseRevision, state.revision, patches);
+      const update = deps.createUpdate(baseRevision, state.revision, patches, {
+        action: options?.action ?? command.op,
+        meta: options?.meta,
+      });
       if (options?.emitUpdate !== false) {
         config.emitUpdate(state, update);
       }

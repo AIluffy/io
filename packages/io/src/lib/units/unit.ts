@@ -9,6 +9,7 @@ import type {
   IoPatch,
   IoUnit,
   IoUnsubscribe,
+  IoUpdateAnnotation,
   IoUpdate,
 } from '../utils/types/types.js';
 import { createUpdate } from '../utils/patches/updates.js';
@@ -25,7 +26,7 @@ type UnitState<T> = {
   errorListeners: Set<IoErrorHandler>;
 };
 
-type SetOptions = {
+type SetOptions = IoUpdateAnnotation & {
   emitValue?: boolean;
   emitUpdate?: boolean;
 };
@@ -96,7 +97,10 @@ function applyUnitSet<T>(
       prev,
       next: after,
     };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
+    const update = createUpdate(baseRevision, state.revision, [patch], {
+      action: options?.action ?? 'set',
+      meta: options?.meta,
+    });
     emitUpdate(state as UnitState<unknown>, update);
   }
 
@@ -121,7 +125,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
   };
 
   const set = (next: T | ((prev: T) => T)): void => {
-    setValue(next);
+    setValue(next, { action: 'set' });
   };
 
   const snapshot = (): T => readCachedValue(state);
@@ -142,7 +146,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
 
   const reset = (): void => {
     try {
-      setValue(cloneValue(state.initial));
+      setValue(cloneValue(state.initial), { action: 'reset' });
     } catch (error) {
       emitError(unit, error, [], 'reset');
       throw error;

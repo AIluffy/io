@@ -32,11 +32,20 @@ export type IoPatch =
       order: number[];
     };
 
+export type IoUpdateMeta = Readonly<Record<string, unknown>>;
+
+export type IoUpdateAnnotation = {
+  action?: string;
+  meta?: IoUpdateMeta;
+};
+
 export type IoUpdate = {
   id: string;
   baseRevision: number;
   revision: number;
   patches: IoPatch[];
+  action?: string;
+  meta?: IoUpdateMeta;
 };
 
 export type IoHistoryOptions = {

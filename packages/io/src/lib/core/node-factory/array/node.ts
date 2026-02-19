@@ -1,5 +1,6 @@
 import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
+import type { IoUpdateAnnotation } from '../../../utils/types/types.js';
 import type {
   TreeArrayInternal,
   TreeArrayState,
@@ -49,7 +50,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
     fn: (
       index: number,
       next: unknown,
-      options?: { emitUpdate?: boolean; emitValue?: boolean },
+      options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
     ) => void,
   ) => void) | undefined;
 
@@ -74,7 +75,7 @@ export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
       let setIndex!: (
         index: number,
         next: unknown,
-        options?: { emitUpdate?: boolean; emitValue?: boolean },
+        options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
       ) => void;
 
       const array: Record<PropertyKey, unknown> = {};

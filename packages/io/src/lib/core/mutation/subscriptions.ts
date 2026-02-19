@@ -201,7 +201,10 @@ export function createSubscriptions<
         const baseRevision = advanceContainerRevision(state);
         emitScopeUpdate(
           state,
-          createUpdate(baseRevision, state.revision, u.patches),
+          createUpdate(baseRevision, state.revision, u.patches, {
+            action: u.action,
+            meta: u.meta,
+          }),
         );
       },
     });
@@ -263,7 +266,10 @@ export function createSubscriptions<
           }
           emitArrayUpdate(
             state,
-            createUpdate(baseRevision, state.revision, patches),
+            createUpdate(baseRevision, state.revision, patches, {
+              action: u.action,
+              meta: u.meta,
+            }),
           );
         },
       },

@@ -1,5 +1,5 @@
 import { isLink } from '../../../utils/internal/link.js';
-import type { IoPatch } from '../../../utils/types/types.js';
+import type { IoPatch, IoUpdateAnnotation } from '../../../utils/types/types.js';
 import { createUpdate } from '../../../utils/patches/updates.js';
 import { cloneValue } from '../../../utils/immutable/immutable.js';
 import { isUnit } from '../../../units/unit.js';
@@ -23,7 +23,7 @@ export function createArrayIndexMutation(
   setIndex: (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   } {
   const { deps, ctx, state, createTreeNode, getNode } = options;
@@ -37,7 +37,7 @@ export function createArrayIndexMutation(
     index: number,
     baseRevision: number,
     patch: IoPatch | null,
-    flags: { emitUpdate: boolean; emitValue: boolean },
+    flags: IoUpdateAnnotation & { emitUpdate: boolean; emitValue: boolean },
   ): void => {
     state.revision = nextRevision(state.revision);
     markDirtyIndex(state.dirtyIndices, index, state.children.length);
@@ -45,7 +45,10 @@ export function createArrayIndexMutation(
     if (flags.emitUpdate && patch) {
       deps.subscriptions.emitArrayUpdate(
         state,
-        createUpdate(baseRevision, state.revision, [patch]),
+        createUpdate(baseRevision, state.revision, [patch], {
+          action: flags.action ?? 'set',
+          meta: flags.meta,
+        }),
       );
     }
     if (flags.emitValue) deps.subscriptions.emitArrayValue(state);
@@ -54,7 +57,7 @@ export function createArrayIndexMutation(
   const setIndex = (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
   ) => {
     try {
       let readCache: SnapshotCache | undefined;
@@ -99,7 +102,12 @@ export function createArrayIndexMutation(
                 next: cloneValue(nextValue),
               }
             : null,
-          { emitUpdate: shouldEmitUpdate, emitValue },
+          {
+            emitUpdate: shouldEmitUpdate,
+            emitValue,
+            action: options?.action,
+            meta: options?.meta,
+          },
         );
         return;
       }
@@ -123,7 +131,12 @@ export function createArrayIndexMutation(
                 next: cloneValue(after),
               }
             : null,
-          { emitUpdate: shouldEmitUpdate, emitValue },
+          {
+            emitUpdate: shouldEmitUpdate,
+            emitValue,
+            action: options?.action,
+            meta: options?.meta,
+          },
         );
         return;
       }
@@ -145,7 +158,12 @@ export function createArrayIndexMutation(
               next: cloneValue(next),
             }
           : null,
-        { emitUpdate: shouldEmitUpdate, emitValue },
+        {
+          emitUpdate: shouldEmitUpdate,
+          emitValue,
+          action: options?.action,
+          meta: options?.meta,
+        },
       );
     } catch (error) {
       emitError(getNode(), error, appendPath(state.path, index), 'set');

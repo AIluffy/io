@@ -1,5 +1,6 @@
 import type { TreeDepsSlice } from '../../types.js';
 import type { NodePath } from '../../tree/path-trie.js';
+import type { IoUpdateAnnotation } from '../../../utils/types/types.js';
 import type {
   TreeArrayState,
   TreeContext,
@@ -41,7 +42,7 @@ export function createArrayOps(options: CreateArrayOpsOptions): {
   setIndex: (
     index: number,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
   ) => void;
   set: (next: unknown[]) => void;
   push: (...items: unknown[]) => void;

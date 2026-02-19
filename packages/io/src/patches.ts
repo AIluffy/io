@@ -4,6 +4,8 @@ export type {
   IoHistoryOptions,
   IoMutationOp,
   IoPatch,
+  IoUpdateAnnotation,
+  IoUpdateMeta,
   IoUpdate,
 } from './lib/utils/types/types.js';
 export {

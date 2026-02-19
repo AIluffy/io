@@ -90,7 +90,14 @@ export function undoUpdate(update: IoUpdate): IoUpdate {
     inverted.push({ op: 'sort', path: patch.path, order: invOrder });
   }
 
-  return createUpdate(update.revision, update.baseRevision, inverted);
+  return createUpdate(update.revision, update.baseRevision, inverted, {
+    action: 'undo',
+    meta: {
+      sourceUpdateId: update.id,
+      sourceAction: update.action,
+      sourceMeta: update.meta,
+    },
+  });
 }
 
 export function applyUpdate(

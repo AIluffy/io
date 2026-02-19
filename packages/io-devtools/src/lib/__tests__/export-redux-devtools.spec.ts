@@ -5,7 +5,13 @@ import type { IoHistoryEntry } from '../types.js';
 const entry: IoHistoryEntry = {
   id: 'u1',
   timestamp: 0,
-  update: { id: 'u1', baseRevision: 0, revision: 1, patches: [] },
+  update: {
+    id: 'u1',
+    baseRevision: 0,
+    revision: 1,
+    patches: [],
+    action: 'counter/increment',
+  },
   patchDiffs: [
     {
       op: 'set',
@@ -27,6 +33,16 @@ describe('@iostore/devtools: exportReduxDevToolsImportState', () => {
 
     expect(payload.computedStates).toHaveLength(2);
     expect(payload.currentStateIndex).toBe(1);
+    expect(payload.actionsById['1'].type).toBe('counter/increment');
+  });
+
+  it('falls back to patch summary when update.action is missing', () => {
+    const payload = exportReduxDevToolsImportState({
+      initialState: { value: 1 },
+      history: [{ ...entry, update: { ...entry.update, action: undefined } }],
+      cursor: 0,
+    });
+
     expect(payload.actionsById['1'].type).toMatch(/IO_SET/);
     expect(payload.actionsById['1'].type).toMatch(/Symbol/);
   });

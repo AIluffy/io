@@ -47,4 +47,29 @@ describe('patches: update-merge', () => {
     expect(merged.baseRevision).toBe(0);
     expect(merged.revision).toBe(0);
   });
+
+  it('keeps action when merged updates share the same action', () => {
+    const merged = mergeUpdates(
+      createUpdate(0, 1, [], { action: 'counter/increment' }),
+      createUpdate(1, 2, [], { action: 'counter/increment' }),
+    );
+
+    expect(merged.action).toBe('counter/increment');
+  });
+
+  it('marks merged action as batch when actions differ and keeps last meta', () => {
+    const merged = mergeUpdates(
+      createUpdate(0, 1, [], {
+        action: 'counter/increment',
+        meta: { source: 'button' },
+      }),
+      createUpdate(1, 2, [], {
+        action: 'counter/decrement',
+        meta: { source: 'keyboard' },
+      }),
+    );
+
+    expect(merged.action).toBe('batch');
+    expect(merged.meta).toEqual({ source: 'keyboard' });
+  });
 });

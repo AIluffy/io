@@ -1,4 +1,4 @@
-import type { IoPatch, IoUpdate } from '../types/types.js';
+import type { IoPatch, IoUpdate, IoUpdateAnnotation } from '../types/types.js';
 
 const PATH_KEY_CACHE = new WeakMap<object, string>();
 
@@ -20,8 +20,17 @@ export function createUpdate(
   baseRevision: number,
   revision: number,
   patches: IoPatch[],
+  annotation?: IoUpdateAnnotation,
 ): IoUpdate {
-  return { id: newId(), baseRevision, revision, patches };
+  const update: IoUpdate = {
+    id: newId(),
+    baseRevision,
+    revision,
+    patches,
+  };
+  if (annotation?.action !== undefined) update.action = annotation.action;
+  if (annotation?.meta !== undefined) update.meta = annotation.meta;
+  return update;
 }
 
 function pathKey(path: ReadonlyArray<PropertyKey>): string {
@@ -78,5 +87,31 @@ export function mergeUpdates(
 
   const first = updates[0];
   const last = updates[updates.length - 1];
-  return createUpdate(first.baseRevision, last.revision, merged);
+  let mergedAction: string | undefined;
+  let actionMixed = false;
+  for (const update of updates) {
+    if (update.action === undefined) continue;
+    if (mergedAction === undefined) {
+      mergedAction = update.action;
+      continue;
+    }
+    if (mergedAction !== update.action) {
+      actionMixed = true;
+      break;
+    }
+  }
+
+  let mergedMeta: IoUpdate['meta'] | undefined;
+  for (let i = updates.length - 1; i >= 0; i -= 1) {
+    const candidate = updates[i].meta;
+    if (candidate !== undefined) {
+      mergedMeta = candidate;
+      break;
+    }
+  }
+
+  return createUpdate(first.baseRevision, last.revision, merged, {
+    action: actionMixed ? 'batch' : mergedAction,
+    meta: mergedMeta,
+  });
 }
