@@ -33,6 +33,50 @@ const view = withBehaviors(count, [
 ]);
 ```
 
+`storage.getItem/setItem` 支持同步或异步返回值（`Promise`）。
+
+## 版本策略（新版本优先）
+
+```ts
+persist({
+  key: 'count',
+  version: 2,
+});
+```
+
+当检测到存储里的版本与当前 `version` 不一致时，Persist 会忽略旧数据，保留当前内存状态，并立即按新版本格式回写存储。
+
+## 部分字段持久化
+
+```ts
+persist({
+  key: 'profile',
+  partialize: (value) => ({ token: (value as { token: string }).token }),
+  merge: (persisted, current) => ({
+    ...(current as Record<string, unknown>),
+    ...(persisted as Record<string, unknown>),
+  }),
+});
+```
+
+## 节流写入
+
+```ts
+persist({
+  key: 'count',
+  throttleMs: 100,
+});
+```
+
+## 跨标签页同步
+
+```ts
+persist({
+  key: 'count',
+  syncTabs: true,
+});
+```
+
 ## 序列化
 
 ```ts
@@ -47,6 +91,7 @@ persist({
 
 - Persist 目前基于 `set()` 写入存储。
 - 函数式写法 `set((prev) => next)` 也会走同一持久化流程。
+- 如果需要在离开页面前立即落盘，建议避免过大的 `throttleMs`。
 
 ## 下一步
 

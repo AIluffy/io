@@ -33,6 +33,50 @@ const view = withBehaviors(count, [
 ]);
 ```
 
+`storage.getItem/setItem` can be sync or async (`Promise`).
+
+## Version Policy (Newest Wins)
+
+```ts
+persist({
+  key: 'count',
+  version: 2,
+});
+```
+
+When persisted data has a different version than the current `version`, Persist ignores the old payload, keeps current in-memory state, and rewrites storage in the new version format.
+
+## Partial Persistence
+
+```ts
+persist({
+  key: 'profile',
+  partialize: (value) => ({ token: (value as { token: string }).token }),
+  merge: (persisted, current) => ({
+    ...(current as Record<string, unknown>),
+    ...(persisted as Record<string, unknown>),
+  }),
+});
+```
+
+## Throttled Writes
+
+```ts
+persist({
+  key: 'count',
+  throttleMs: 100,
+});
+```
+
+## Cross-Tab Sync
+
+```ts
+persist({
+  key: 'count',
+  syncTabs: true,
+});
+```
+
 ## Serialization
 
 ```ts
@@ -47,6 +91,7 @@ persist({
 
 - Persist currently writes on `set()`.
 - Functional updates are also written through `set((prev) => next)`.
+- If you need immediate durability before page unload, keep `throttleMs` small.
 
 ## Next Steps
 

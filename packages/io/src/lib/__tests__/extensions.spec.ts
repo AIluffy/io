@@ -6,6 +6,36 @@ import { persist } from '../extensions/behaviors/persist.js';
 import { devtools } from '../extensions/behaviors/devtools.js';
 import { derived } from '../core/api/derived.js';
 
+type MockWritableNode<T> = {
+  get: () => T;
+  set: (next: T | ((prev: T) => T)) => void;
+  subscribe: (fn: (value: T) => void) => () => void;
+  snapshot: () => T;
+};
+
+function createMockWritableNode<T>(initial: T): MockWritableNode<T> {
+  let current = initial;
+  const listeners = new Set<(value: T) => void>();
+
+  return {
+    get: () => current,
+    set: (next) => {
+      current = typeof next === 'function' ? (next as (prev: T) => T)(current) : next;
+      for (const listener of listeners) listener(current);
+    },
+    subscribe: (fn) => {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    snapshot: () => current,
+  };
+}
+
+async function flushPromises(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 describe('extensions: behaviors', () => {
   it('schedules subscriber updates', () => {
     const unit = io(0);
@@ -118,6 +148,170 @@ describe('extensions: behaviors', () => {
     } finally {
       globalObj.localStorage = previous;
     }
+  });
+
+  it('hydrates from async storage and persists async writes', async () => {
+    const unit = io(0);
+    let stored = '';
+    const storage = {
+      getItem: async () => '2',
+      setItem: async (_key: string, value: string) => {
+        stored = value;
+      },
+    };
+    const view = withBehaviors(unit, [persist({ key: 'count', storage })]);
+
+    expect(unit.get()).toBe(0);
+    await flushPromises();
+    expect(unit.get()).toBe(2);
+
+    view.set?.(3);
+    await flushPromises();
+    expect(stored).toBe('3');
+  });
+
+  it('does not let async hydration override local writes', async () => {
+    const unit = io(0);
+    let resolveHydrate: (value: string | null) => void = () => undefined;
+    const storage = {
+      getItem: () =>
+        new Promise<string | null>((resolve) => {
+          resolveHydrate = resolve;
+        }),
+      setItem: () => undefined,
+    };
+    const view = withBehaviors(unit, [persist({ key: 'count', storage })]);
+
+    view.set?.(1);
+    resolveHydrate('5');
+    await flushPromises();
+
+    expect(unit.get()).toBe(1);
+  });
+
+  it('keeps current state on version mismatch and rewrites storage', () => {
+    const unit = io(0);
+    let persistedRaw = '';
+    const storage = {
+      getItem: () =>
+        JSON.stringify({
+          __iostore_persist_v1__: true,
+          version: 1,
+          state: 10,
+        }),
+      setItem: (_key: string, value: string) => {
+        persistedRaw = value;
+      },
+    };
+    const view = withBehaviors(
+      unit,
+      [persist({ key: 'count', storage, version: 2 })],
+    );
+
+    expect(unit.get()).toBe(0);
+
+    const hydratedPayload = JSON.parse(persistedRaw) as {
+      __iostore_persist_v1__: boolean;
+      version: number;
+      state: number;
+    };
+    expect(hydratedPayload.__iostore_persist_v1__).toBe(true);
+    expect(hydratedPayload.version).toBe(2);
+    expect(hydratedPayload.state).toBe(0);
+
+    view.set?.(7);
+    const updatedPayload = JSON.parse(persistedRaw) as {
+      __iostore_persist_v1__: boolean;
+      version: number;
+      state: number;
+    };
+    expect(updatedPayload.__iostore_persist_v1__).toBe(true);
+    expect(updatedPayload.version).toBe(2);
+    expect(updatedPayload.state).toBe(7);
+  });
+
+  it('supports partialize and merge for writable nodes', () => {
+    const node = createMockWritableNode({ count: 0, temp: 'keep' });
+    let persistedRaw = '';
+    const storage = {
+      getItem: () => JSON.stringify({ count: 4 }),
+      setItem: (_key: string, value: string) => {
+        persistedRaw = value;
+      },
+    };
+    const view = withBehaviors(
+      node,
+      [
+        persist({
+          key: 'state',
+          storage,
+          partialize: (value) => ({ count: (value as { count: number }).count }),
+          merge: (persisted, current) => ({
+            ...(current as Record<string, unknown>),
+            ...(persisted as Record<string, unknown>),
+          }),
+        }),
+      ],
+    );
+
+    expect(view.get()).toEqual({ count: 4, temp: 'keep' });
+
+    view.set?.({ count: 5, temp: 'next' });
+    expect(JSON.parse(persistedRaw)).toEqual({ count: 5 });
+  });
+
+  it('throttles persistence writes', () => {
+    vi.useFakeTimers();
+    try {
+      const unit = io(0);
+      const setItem = vi.fn();
+      const storage = {
+        getItem: () => null,
+        setItem,
+      };
+      const view = withBehaviors(
+        unit,
+        [persist({ key: 'count', storage, throttleMs: 50 })],
+      );
+
+      view.set?.(1);
+      view.set?.(2);
+      view.set?.(3);
+
+      expect(setItem).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(49);
+      expect(setItem).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(setItem).toHaveBeenCalledTimes(1);
+      expect(setItem).toHaveBeenCalledWith('count', '3');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('subscribes to external sync events and cleans up on destroy', () => {
+    const node = createMockWritableNode(0);
+    let onChange: ((raw: string | null) => void) | undefined;
+    const unsubscribe = vi.fn();
+    const storage = {
+      getItem: () => null,
+      setItem: () => undefined,
+      subscribe: (_key: string, cb: (raw: string | null) => void) => {
+        onChange = cb;
+        return unsubscribe;
+      },
+    };
+
+    const view = withBehaviors(
+      node,
+      [persist({ key: 'count', storage, syncTabs: true })],
+    );
+
+    onChange?.('5');
+    expect(view.get()).toBe(5);
+
+    view.destroy?.();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('reads via view getter', () => {
