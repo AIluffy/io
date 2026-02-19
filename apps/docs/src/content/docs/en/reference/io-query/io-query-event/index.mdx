@@ -1,0 +1,51 @@
+---
+title: "IoQueryEvent"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryEvent
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| type | `"updated" \| "invalidated" \| "removed" \| "cancelled"` |
+| key | `unknown` |
+| hash | `string` |
+| state | `IoQueryState<unknown, unknown>` |
+| action | `string` |
+| meta | `Record<string, unknown>` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryEvent } from '@iostore/query';
+
+let value!: IoQueryEvent;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## Source
+
+- `packages/io-query/src/lib/query-client.ts`

@@ -71,6 +71,33 @@ const value = useIO(count, { schedule: 'microtask' });
 
 可选值：`sync` | `microtask` | `animationFrame`。
 
+## Query / Resource
+
+安装 Query 包：
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/lynx` 提供 `useQuery` 与 `useResource`，并基于 `@iostore/query`：
+
+```tsx
+import { useQuery } from '@iostore/lynx';
+
+function UserName(props: { id: number }) {
+  const user = useQuery({
+    key: ['user', props.id],
+    queryFn: async () => {
+      'background only';
+      return fetch(`/api/users/${props.id}`).then((r) => r.json());
+    },
+  });
+  return <text>{user.data?.name ?? 'loading'}</text>;
+}
+```
+
+注意：Lynx 的副作用与网络请求应在 background thread 执行，建议在 `queryFn` 中显式标注 `'background only'`。
+
 ## 注意事项
 
 - 使用 Lynx 原生标签和事件：`view` / `text` / `input` 与 `bindtap` / `bindinput`。

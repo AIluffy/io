@@ -1,0 +1,51 @@
+---
+title: "useResource"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData>(resource: IoResource<TData>, options?: IoUseResourceOptions) => IoVueQueryResult<TData>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| resource | `IoResource<TData>` |
+| options | `IoUseResourceOptions` |
+
+## Returns
+
+`IoVueQueryResult<TData>`
+
+## Minimal Example
+
+```ts
+import { useResource } from '@iostore/vue';
+
+const result = useResource(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useIO](../use-io/)
+- [useQuery](../use-query/)
+- [IoVueQueryResult](../io-vue-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

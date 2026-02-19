@@ -18,6 +18,9 @@
   "references": [
     {
       "path": "../io/tsconfig.lib.json"
+    },
+    {
+      "path": "../io-query/tsconfig.lib.json"
     }
   ],
   "exclude": [

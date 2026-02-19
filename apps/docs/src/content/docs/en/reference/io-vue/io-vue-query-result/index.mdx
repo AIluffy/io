@@ -1,0 +1,52 @@
+---
+title: "IoVueQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoVueQueryResult<TData>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoQueryState<TData>>` |
+| data | `ShallowRef<TData>` |
+| fetch | `(options?: IoResourceRequestOptions) => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `(options?: IoResourceRequestOptions) => Promise<void>` |
+| invalidate | `(options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
+| cancel | `() => number` |
+
+## Minimal Example
+
+```ts
+import type { IoVueQueryResult } from '@iostore/vue';
+
+let value!: IoVueQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useIO](../use-io/)
+- [useQuery](../use-query/)
+- [useResource](../use-resource/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

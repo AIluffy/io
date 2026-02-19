@@ -45,6 +45,28 @@ const value = useIO(count, { schedule: 'microtask' });
 
 Available: `sync` | `microtask` | `animationFrame`.
 
+## Query / Resource
+
+Install query package:
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/solid` exposes `useQuery` and `useResource`:
+
+```tsx
+import { useQuery } from '@iostore/solid';
+
+export function UserName(props: { id: number }) {
+  const user = useQuery({
+    key: ['user', props.id],
+    queryFn: async () => fetch(`/api/users/${props.id}`).then((r) => r.json()),
+  });
+  return <span>{user.data()?.name ?? 'loading'}</span>;
+}
+```
+
 ## Next Steps
 
 - Learn about [TypeScript](/en/guides/typescript/).

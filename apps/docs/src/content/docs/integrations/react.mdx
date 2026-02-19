@@ -67,6 +67,28 @@ const value = useIO(count, { schedule: 'microtask' });
 
 可选值：`sync` | `microtask` | `animationFrame`。
 
+## Query / Resource
+
+安装 Query 包：
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/react` 提供 `useQuery` 与 `useResource`，底层使用 `@iostore/query`：
+
+```tsx
+import { useQuery } from '@iostore/react';
+
+export function UserName({ id }: { id: number }) {
+  const user = useQuery({
+    key: ['user', id],
+    queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  });
+  return <span>{user.data?.name ?? 'loading'}</span>;
+}
+```
+
 ## 下一步
 
 - 接入 [DevTools](/behaviors/devtools/) 进行时间旅行与调试面板查看。

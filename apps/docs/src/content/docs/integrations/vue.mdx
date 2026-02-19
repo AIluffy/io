@@ -36,6 +36,25 @@ const state = useIO(store.count, { schedule: 'microtask' });
 
 可选值：`sync` | `microtask` | `animationFrame`。
 
+## Query / Resource
+
+安装 Query 包：
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/vue` 提供 `useQuery` 与 `useResource`：
+
+```ts
+import { useQuery } from '@iostore/vue';
+
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
+```
+
 ## 下一步
 
 - 查看 [派生值](/guides/derived/) 的组合方式。

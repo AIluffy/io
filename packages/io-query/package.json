@@ -1,0 +1,73 @@
+{
+  "name": "@iostore/query",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io-query"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
+  "homepage": "https://github.com/AIluffy/oin#readme",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.d.ts.map",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "nx": {
+    "tags": [
+      "scope:io-query"
+    ],
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "packages/io-query",
+          "command": "node --input-type=module -e \"import { rmSync } from \\\"node:fs\\\"; rmSync(\\\"dist\\\", { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\" && tsc --build tsconfig.lib.json"
+        },
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ],
+        "syncGenerators": [
+          "@nx/js:typescript-sync"
+        ]
+      },
+      "coverage": {
+        "executor": "nx:run-commands",
+        "cache": false,
+        "outputs": [
+          "{projectRoot}/test-output/vitest/coverage"
+        ],
+        "options": {
+          "cwd": "packages/io-query",
+          "command": "vitest run --coverage"
+        }
+      }
+    }
+  }
+}

@@ -36,6 +36,25 @@ const state = useIO(store.count, { schedule: 'microtask' });
 
 Available: `sync` | `microtask` | `animationFrame`.
 
+## Query / Resource
+
+Install query package:
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/vue` exposes `useQuery` and `useResource`:
+
+```ts
+import { useQuery } from '@iostore/vue';
+
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
+```
+
 ## Next Steps
 
 - Learn [Derived Values](/en/guides/derived/).

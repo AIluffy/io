@@ -45,6 +45,28 @@ const value = useIO(count, { schedule: 'microtask' });
 
 可选值：`sync` | `microtask` | `animationFrame`。
 
+## Query / Resource
+
+安装 Query 包：
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/solid` 提供 `useQuery` 与 `useResource`：
+
+```tsx
+import { useQuery } from '@iostore/solid';
+
+export function UserName(props: { id: number }) {
+  const user = useQuery({
+    key: ['user', props.id],
+    queryFn: async () => fetch(`/api/users/${props.id}`).then((r) => r.json()),
+  });
+  return <span>{user.data()?.name ?? 'loading'}</span>;
+}
+```
+
 ## 下一步
 
 - 了解 [TypeScript](/guides/typescript/) 的类型提示。

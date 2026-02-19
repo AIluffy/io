@@ -45,6 +45,7 @@ npm exec nx -- run-many -t build
 
 - Prefer dynamic discovery: `npm exec nx -- show projects`
 - Core library: `@iostore/store` (`packages/io`)
+- Query/Resource runtime: `@iostore/query` (`packages/io-query`)
 - Framework adapters: `@iostore/react`, `@iostore/vue`, `@iostore/svelte`, `@iostore/solid`, `@iostore/lynx`
 - DevTools: `@iostore/devtools`, `@iostore/devtools-react`
 - Skills package: `@iostore/skill`
@@ -126,8 +127,11 @@ describe('feature', () => {
 Projects use Nx tags for dependency constraints:
 
 - `scope:io` - Core library
-- `scope:io-react`, `scope:io-vue`, `scope:io-svelte` - Adapters
+- `scope:io-query` - Query/resource runtime
+- `scope:io-react`, `scope:io-vue`, `scope:io-svelte`, `scope:io-solid`, `scope:io-lynx` - Adapters
 - `scope:io-devtools` - DevTools
+
+Adapter projects may depend on both `scope:io` and `scope:io-query` when using query hooks/stores.
 
 ### Key Patterns
 
@@ -135,6 +139,8 @@ Projects use Nx tags for dependency constraints:
 2. **COW updates**: Use `createDraft`/`finishDraft` for mutations
 3. **Batching**: Wrap multiple updates in `batch()`
 4. **Subscription cleanup**: Always return unsubscribe function
+5. **Query keys**: Keep query keys deterministic and serializable
+6. **Query cancellation**: Always respect `AbortSignal` in async `queryFn`
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

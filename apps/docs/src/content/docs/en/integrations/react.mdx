@@ -67,6 +67,28 @@ const value = useIO(count, { schedule: 'microtask' });
 
 Available: `sync` | `microtask` | `animationFrame`.
 
+## Query / Resource
+
+Install query package:
+
+```bash
+npm i @iostore/query
+```
+
+`@iostore/react` exposes `useQuery` and `useResource` backed by `@iostore/query`:
+
+```tsx
+import { useQuery } from '@iostore/react';
+
+export function UserName({ id }: { id: number }) {
+  const user = useQuery({
+    key: ['user', id],
+    queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  });
+  return <span>{user.data?.name ?? 'loading'}</span>;
+}
+```
+
 ## Next Steps
 
 - Add [DevTools](/en/behaviors/devtools/) for time travel and panel inspection.

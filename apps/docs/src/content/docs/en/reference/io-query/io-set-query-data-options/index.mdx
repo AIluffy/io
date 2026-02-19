@@ -1,0 +1,49 @@
+---
+title: "IoSetQueryDataOptions"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSetQueryDataOptions
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| action | `string` |
+| meta | `Record<string, unknown>` |
+| updatedAt | `number` |
+| gcTime | `number` |
+
+## Minimal Example
+
+```ts
+import type { IoSetQueryDataOptions } from '@iostore/query';
+
+let value!: IoSetQueryDataOptions;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## Source
+
+- `packages/io-query/src/lib/query-client.ts`

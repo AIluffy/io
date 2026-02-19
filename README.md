@@ -10,11 +10,13 @@ Language: English | [简体中文](./README.zh-CN.md)
 - Deep object and array operations with a consistent API.
 - Update logs with replay and undo support.
 - One state model shared across multiple frameworks.
+- Query/resource runtime: cache, dedupe, invalidation, retry, cancellation, prefetch.
 
 ## Install
 
 ```bash
 npm i @iostore/store
+npm i @iostore/query
 ```
 
 Install adapters as needed:
@@ -57,43 +59,64 @@ applyUpdate(state, undoUpdate(updates[0]));
 React:
 
 ```tsx
-import { useIO } from '@iostore/react';
+import { useIO, useQuery } from '@iostore/react';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Lynx:
 
 ```tsx
-import { useIO } from '@iostore/lynx';
+import { useIO, useQuery } from '@iostore/lynx';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Vue:
 
 ```ts
-import { ioRef, useIO } from '@iostore/vue';
+import { ioRef, useIO, useQuery } from '@iostore/vue';
 const stateRef = useIO(source);
 const countRef = ioRef(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Svelte:
 
 ```ts
-import { toReadable, toWritable } from '@iostore/svelte';
+import { createQueryStore, toReadable, toWritable } from '@iostore/svelte';
 const readable = toReadable(state);
 const writable = toWritable(unit);
+const user = createQueryStore({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Solid:
 
 ```tsx
-import { useIO } from '@iostore/solid';
+import { useIO, useQuery } from '@iostore/solid';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 ## Packages
 
 - `@iostore/store`
+- `@iostore/query`
 - `@iostore/react`
 - `@iostore/lynx`
 - `@iostore/vue`

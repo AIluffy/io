@@ -1,0 +1,40 @@
+---
+title: "IoFetchQueryOptions"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoFetchQueryOptions<TData>
+```
+
+## 最小示例
+
+```ts
+import type { IoFetchQueryOptions } from '@iostore/query';
+
+let value!: IoFetchQueryOptions;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+- [IoQueryDataUpdater](../io-query-data-updater/)
+
+## 源码
+
+- `packages/io-query/src/lib/query-client.ts`

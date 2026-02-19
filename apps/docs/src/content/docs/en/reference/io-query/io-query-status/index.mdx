@@ -1,0 +1,40 @@
+---
+title: "IoQueryStatus"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryStatus
+```
+
+## Minimal Example
+
+```ts
+import type { IoQueryStatus } from '@iostore/query';
+
+let value!: IoQueryStatus;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## Source
+
+- `packages/io-query/src/lib/query-client.ts`

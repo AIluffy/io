@@ -10,11 +10,13 @@
 - 深层对象与数组可直接操作，API 一致。
 - 支持更新日志、回放与撤销。
 - 一套状态模型，多框架复用。
+- 内置 Query/Resource 运行时：缓存、去重、失效、重试、取消、预取。
 
 ## 安装
 
 ```bash
 npm i @iostore/store
+npm i @iostore/query
 ```
 
 按需安装适配层：
@@ -57,43 +59,64 @@ applyUpdate(state, undoUpdate(updates[0]));
 React:
 
 ```tsx
-import { useIO } from '@iostore/react';
+import { useIO, useQuery } from '@iostore/react';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Lynx:
 
 ```tsx
-import { useIO } from '@iostore/lynx';
+import { useIO, useQuery } from '@iostore/lynx';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Vue:
 
 ```ts
-import { ioRef, useIO } from '@iostore/vue';
+import { ioRef, useIO, useQuery } from '@iostore/vue';
 const stateRef = useIO(source);
 const countRef = ioRef(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Svelte:
 
 ```ts
-import { toReadable, toWritable } from '@iostore/svelte';
+import { createQueryStore, toReadable, toWritable } from '@iostore/svelte';
 const readable = toReadable(state);
 const writable = toWritable(unit);
+const user = createQueryStore({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 Solid:
 
 ```tsx
-import { useIO } from '@iostore/solid';
+import { useIO, useQuery } from '@iostore/solid';
 const value = useIO(countUnit);
+const user = useQuery({
+  key: ['user', id],
+  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+});
 ```
 
 ## 包列表
 
 - `@iostore/store`
+- `@iostore/query`
 - `@iostore/react`
 - `@iostore/lynx`
 - `@iostore/vue`

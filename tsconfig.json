@@ -26,6 +26,9 @@
     },
     {
       "path": "./packages/io-solid"
+    },
+    {
+      "path": "./packages/io-query"
     }
   ]
 }

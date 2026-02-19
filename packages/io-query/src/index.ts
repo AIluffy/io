@@ -1,0 +1,27 @@
+export {
+  createQueryClient,
+  type IoFetchQueryOptions,
+  type IoFetchStatus,
+  type IoQueryClient,
+  type IoQueryClientOptions,
+  type IoQueryDataUpdater,
+  type IoQueryEvent,
+  type IoQueryFilter,
+  type IoQueryFn,
+  type IoQueryFnContext,
+  type IoQueryKey,
+  type IoQueryMatch,
+  type IoQueryOptions,
+  type IoQueryState,
+  type IoQueryStatus,
+  type IoRetryDelayValue,
+  type IoRetryValue,
+  type IoSetQueryDataOptions,
+  type Unsubscribe,
+} from './lib/query-client.js';
+export {
+  createResource,
+  type IoResource,
+  type IoResourceOptions,
+  type IoResourceRequestOptions,
+} from './lib/resource.js';
