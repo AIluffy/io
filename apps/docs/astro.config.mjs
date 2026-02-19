@@ -50,42 +50,43 @@ export default defineConfig({
         {
           label: 'Getting Started',
           translations: { 'zh-CN': '入门' },
+          collapsed: false,
           autogenerate: { directory: 'getting-started' },
         },
         {
-          label: 'Guide',
+          label: 'Core Concepts',
+          translations: { 'zh-CN': '核心概念' },
+          collapsed: false,
+          autogenerate: { directory: 'core-concepts' },
+        },
+        {
+          label: 'Guides',
           translations: { 'zh-CN': '指南' },
-          items: [
-            {
-              label: 'Essentials',
-              translations: { 'zh-CN': '核心概念' },
-              autogenerate: { directory: 'core-concepts' },
-            },
-            {
-              label: 'Advanced',
-              translations: { 'zh-CN': '进阶指南' },
-              autogenerate: { directory: 'guides' },
-            },
-            {
-              label: 'Behaviors',
-              translations: { 'zh-CN': '行为扩展' },
-              autogenerate: { directory: 'behaviors' },
-            },
-          ],
+          collapsed: false,
+          autogenerate: { directory: 'guides' },
+        },
+        {
+          label: 'Behaviors',
+          translations: { 'zh-CN': '行为扩展' },
+          collapsed: true,
+          autogenerate: { directory: 'behaviors' },
         },
         {
           label: 'Integrations',
           translations: { 'zh-CN': '集成' },
+          collapsed: true,
           autogenerate: { directory: 'integrations' },
         },
         {
           label: 'Migrations',
           translations: { 'zh-CN': '迁移' },
+          collapsed: true,
           autogenerate: { directory: 'migrations' },
         },
         {
           label: 'Reference',
           translations: { 'zh-CN': '参考' },
+          collapsed: true,
           autogenerate: { directory: 'reference' },
         },
       ],
