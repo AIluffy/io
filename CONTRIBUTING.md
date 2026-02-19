@@ -35,6 +35,10 @@
 
 - Workspace releases use Nx Release.
 - `CHANGELOG.md` is generated/updated by release automation (`nx release ...` in CI).
+- Release governance docs:
+  - `.github/release-checklist.md`
+  - `.github/regression-matrix.md`
+  - `.github/incident-severity-response.md`
 
 ## Bundle Size Budgets
 
