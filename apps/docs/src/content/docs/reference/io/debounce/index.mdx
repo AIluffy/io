@@ -25,7 +25,7 @@ description: "行为 API：在静默窗口后下发通知。"
 
 `IoBehavior<T>`
 
-## 示例
+## 最小示例
 
 ```ts
 import { io } from '@iostore/store';
@@ -34,6 +34,11 @@ import { debounce, withBehaviors } from '@iostore/store/behavior';
 const keyword = io('');
 const view = withBehaviors(keyword, [debounce(200)]);
 ```
+
+## 常见误用
+
+- 只加 `debounce`，但在上游依然同步触发昂贵副作用。
+- 将 `waitMs` 设得过大，导致交互反馈明显延迟。
 
 ## 相关 API
 

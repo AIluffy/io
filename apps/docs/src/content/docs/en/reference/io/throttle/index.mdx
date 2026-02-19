@@ -25,7 +25,7 @@ description: "Behavior API: limit subscription notification rate."
 
 `IoBehavior<T>`
 
-## Example
+## Minimal Example
 
 ```ts
 import { io } from '@iostore/store';
@@ -34,6 +34,11 @@ import { throttle, withBehaviors } from '@iostore/store/behavior';
 const count = io(0);
 const view = withBehaviors(count, [throttle(50)]);
 ```
+
+## Common Pitfalls
+
+- Expecting every update callback while using `throttle`, so intermediate values are sampled away.
+- Setting a window that is too short to meaningfully reduce notification frequency.
 
 ## Related APIs
 

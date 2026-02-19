@@ -1,0 +1,51 @@
+---
+title: 对比手册（推广版）
+description: IO 对比 Redux/Zustand/Jotai 的决策与沟通模板。
+sidebar:
+  order: 7
+---
+
+这页用于对外推广和团队内部选型评审。目标不是“谁更好”，而是明确在什么约束下选择 IO。
+
+## 一页结论
+
+- 需要深层状态 + 回放/撤销 + 跨框架一致适配时，IO 通常更优。
+- 需要强流程约束（action/reducer 审计）时，Redux 仍然合适。
+- 仅 React 且追求最小接入时，Zustand/Jotai 可能更快起步。
+
+## 决策矩阵（推广版）
+
+| 维度 | IO | Redux | Zustand | Jotai |
+| --- | --- | --- | --- | --- |
+| 深层更新写法 | 路径直改 | reducer/action | set + 自定义 | atom 组合 |
+| 更新追踪 | patch/update 一等 | action 日志 | 依赖中间件 | 依赖工具 |
+| 撤销/回放 | 原生友好 | 需中间层 | 需自建 | 需自建 |
+| 跨框架适配 | React/Vue/Svelte/Solid/Lynx 一致模型 | 主要 React 生态 | 主要 React | 主要 React |
+| 迁移成本 | 中等（状态模型切换） | 高（样板） | 低 | 中等 |
+
+## 销售/推广话术模板
+
+### 30 秒版本
+
+“IO 把深层状态更新、细粒度订阅和可追踪更新日志合在一个模型里。你不用在写法、性能和可观测性之间三选一。”
+
+### 2 分钟版本
+
+1. 你们现在痛点是深层状态可维护性还是回放/审计能力不足？
+2. IO 的路径级 Unit 可以在不拆大量 atom/reducer 的前提下做细粒度订阅。
+3. patch/update 是结构化产物，天然适合 DevTools 时间线、撤销、回放和问题复盘。
+4. 同一模型可复用到多框架，降低团队迁移摩擦。
+
+## 风险与边界
+
+- 团队要接受“路径即状态单元”的模型。
+- 大规模迁移需要 codemod + lint 护栏。
+- 需要在发布流程里引入回归矩阵和错误分级响应。
+
+## 相关文档
+
+- [状态库对比](/getting-started/comparison/)
+- [从 Redux 迁移](/migrations/from-redux/)
+- [从 Zustand 迁移](/migrations/from-zustand/)
+- [从 Jotai 迁移](/migrations/from-jotai/)
+- [10 分钟决策表](/guides/production-case-template/)

@@ -25,7 +25,7 @@ description: "Behavior API: emit after inactivity window."
 
 `IoBehavior<T>`
 
-## Example
+## Minimal Example
 
 ```ts
 import { io } from '@iostore/store';
@@ -34,6 +34,11 @@ import { debounce, withBehaviors } from '@iostore/store/behavior';
 const keyword = io('');
 const view = withBehaviors(keyword, [debounce(200)]);
 ```
+
+## Common Pitfalls
+
+- Adding `debounce` but still triggering expensive work synchronously upstream.
+- Setting `waitMs` too high and making interactions feel laggy.
 
 ## Related APIs
 

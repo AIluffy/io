@@ -28,7 +28,7 @@ description: "行为 API：在订阅链中声明副作用。"
 
 `IoBehavior<T>`
 
-## 示例
+## 最小示例
 
 ```ts
 import { io } from '@iostore/store';
@@ -42,6 +42,11 @@ const view = withBehaviors(count, [
   }),
 ]);
 ```
+
+## 常见误用
+
+- 在 `effect` 内部再写回同一状态，形成无意循环。
+- 忽略清理函数，导致定时器/监听器在销毁后泄漏。
 
 ## 相关 API
 

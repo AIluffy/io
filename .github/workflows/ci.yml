@@ -30,7 +30,20 @@ jobs:
 
       - run: npx nx run @iostore/store:perf-budget
       - run: npx nx run @iostore/store:bundle-size
+      - run: npx nx run apps-docs:generate-bench
       - run: npm run docs:check:reference
+
+      - name: Upload benchmark docs artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-docs
+          path: |
+            tools/docs/bench-history.json
+            apps/docs/src/content/docs/guides/benchmark.mdx
+            apps/docs/src/content/docs/guides/benchmark-details.mdx
+            apps/docs/src/content/docs/en/guides/benchmark.mdx
+            apps/docs/src/content/docs/en/guides/benchmark-details.mdx
 
       - run: npx nx-cloud fix-ci
         if: always()

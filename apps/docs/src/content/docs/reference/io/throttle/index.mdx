@@ -25,7 +25,7 @@ description: "行为 API：限制订阅通知频率。"
 
 `IoBehavior<T>`
 
-## 示例
+## 最小示例
 
 ```ts
 import { io } from '@iostore/store';
@@ -34,6 +34,11 @@ import { throttle, withBehaviors } from '@iostore/store/behavior';
 const count = io(0);
 const view = withBehaviors(count, [throttle(50)]);
 ```
+
+## 常见误用
+
+- 期望每次更新都触发回调，却使用了 `throttle` 导致中间值被采样丢弃。
+- 把节流窗口设得过短，几乎没有降低通知频率。
 
 ## 相关 API
 

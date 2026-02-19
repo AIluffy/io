@@ -28,7 +28,7 @@ description: "Behavior API: declare side effects in behavior pipeline."
 
 `IoBehavior<T>`
 
-## Example
+## Minimal Example
 
 ```ts
 import { io } from '@iostore/store';
@@ -42,6 +42,11 @@ const view = withBehaviors(count, [
   }),
 ]);
 ```
+
+## Common Pitfalls
+
+- Writing back to the same state inside `effect`, causing accidental feedback loops.
+- Forgetting cleanup and leaking timers/listeners after destroy.
 
 ## Related APIs
 
