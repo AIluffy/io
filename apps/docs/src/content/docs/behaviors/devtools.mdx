@@ -98,7 +98,7 @@ function DevtoolsMinimalLiveDemo() {
   return (
     <section className="io-live">
       <div>当前 count：{snapshot.count}</div>
-      <div>历史记录长度：{dt?.state?.get().history.length ?? 0}</div>
+      <div>历史记录长度：{dt?.getState().history.length ?? 0}</div>
       <div>最近导出大小：{exportBytes} chars</div>
       <div className="io-live__row">
         <button type="button" className="io-live__button" onClick={() => store.count.set((n) => n + 1)}>

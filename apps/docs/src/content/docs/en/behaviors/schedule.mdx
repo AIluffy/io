@@ -36,6 +36,7 @@ const syncView = withBehaviors(syncStore, [schedule('sync')]);
 const microtaskView = withBehaviors(microtaskStore, [schedule('microtask')]);
 
 function ScheduleLiveDemo() {
+  const [runs, setRuns] = useState(0);
   const [syncNotifies, setSyncNotifies] = useState(0);
   const [microtaskNotifies, setMicrotaskNotifies] = useState(0);
 
@@ -52,8 +53,7 @@ function ScheduleLiveDemo() {
   }, []);
 
   const burstUpdate = () => {
-    setSyncNotifies(0);
-    setMicrotaskNotifies(0);
+    setRuns((n) => n + 1);
     for (let i = 1; i <= 10; i += 1) {
       syncStore.set(i);
       microtaskStore.set(i);
@@ -63,8 +63,9 @@ function ScheduleLiveDemo() {
   return (
     <section className="io-live">
       <div>For the same 10 writes:</div>
-      <div>`schedule('sync')` notifications: {syncNotifies}</div>
-      <div>`schedule('microtask')` notifications: {microtaskNotifies}</div>
+      <div>Run count: {runs}</div>
+      <div>`schedule('sync')` cumulative notifications: {syncNotifies}</div>
+      <div>`schedule('microtask')` cumulative notifications: {microtaskNotifies}</div>
       <button type="button" className="io-live__button" onClick={burstUpdate}>
         Run 10 consecutive set calls
       </button>

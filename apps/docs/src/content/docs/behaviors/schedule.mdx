@@ -36,6 +36,7 @@ const syncView = withBehaviors(syncStore, [schedule('sync')]);
 const microtaskView = withBehaviors(microtaskStore, [schedule('microtask')]);
 
 function ScheduleLiveDemo() {
+  const [runs, setRuns] = useState(0);
   const [syncNotifies, setSyncNotifies] = useState(0);
   const [microtaskNotifies, setMicrotaskNotifies] = useState(0);
 
@@ -52,8 +53,7 @@ function ScheduleLiveDemo() {
   }, []);
 
   const burstUpdate = () => {
-    setSyncNotifies(0);
-    setMicrotaskNotifies(0);
+    setRuns((n) => n + 1);
     for (let i = 1; i <= 10; i += 1) {
       syncStore.set(i);
       microtaskStore.set(i);
@@ -63,8 +63,9 @@ function ScheduleLiveDemo() {
   return (
     <section className="io-live">
       <div>同样 10 次连续写入：</div>
-      <div>`schedule('sync')` 通知次数：{syncNotifies}</div>
-      <div>`schedule('microtask')` 通知次数：{microtaskNotifies}</div>
+      <div>触发次数：{runs}</div>
+      <div>`schedule('sync')` 累计通知次数：{syncNotifies}</div>
+      <div>`schedule('microtask')` 累计通知次数：{microtaskNotifies}</div>
       <button type="button" className="io-live__button" onClick={burstUpdate}>
         执行 10 次连续 set
       </button>
