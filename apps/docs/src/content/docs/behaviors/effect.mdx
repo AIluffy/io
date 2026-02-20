@@ -21,6 +21,68 @@ const view = withBehaviors(count, [
 ]);
 ```
 
+## Live 示例
+
+你可以递增计数并销毁视图，观察 effect 执行与 cleanup 次数。
+
+```tsx live props={{ "client:load": true }}
+import { useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const metrics = io({ runs: 0, cleanups: 0 });
+const view = withBehaviors(store, [
+  effect(
+    () => {
+      metrics.runs.set((n) => n + 1);
+      return () => metrics.cleanups.set((n) => n + 1);
+    },
+    { immediate: false },
+  ),
+]);
+
+function EffectLiveDemo() {
+  const [destroyed, setDestroyed] = useState(false);
+  const value = useIO(view);
+  const stats = useIO(metrics);
+
+  return (
+    <section className="io-live">
+      <div>当前值：{value}</div>
+      <div>effect 执行次数：{stats.runs}</div>
+      <div>cleanup 执行次数：{stats.cleanups}</div>
+      <div className="io-live__row">
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => store.set((n) => n + 1)}
+          disabled={destroyed}
+        >
+          count +1
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          disabled={destroyed}
+          onClick={() => {
+            view.destroy();
+            setDestroyed(true);
+          }}
+        >
+          destroy view
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default EffectLiveDemo;
+```
+
+观察点：每次值变化会触发新一轮 effect，并在重跑前或销毁时调用 cleanup。
+
 ## 清理函数
 
 ```ts

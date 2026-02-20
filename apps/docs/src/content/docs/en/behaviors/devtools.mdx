@@ -62,6 +62,71 @@ You can customize the panel with CSS variables:
 
 <IoDevtoolsTodoExample client:load />
 
+## Live Example (Minimal Integration)
+
+Use this demo to trigger updates, time travel, and export on a minimal DevTools wiring.
+
+```tsx live props={{ "client:load": true }}
+import { useState, useSyncExternalStore } from 'react';
+import { createIoDevtools } from '@iostore/devtools';
+import { io } from '@iostore/store';
+import { devtools, withBehaviors } from '@iostore/store/behavior';
+
+const store = io({ count: 0 });
+const view = withBehaviors(store, [
+  devtools({
+    target: store,
+    create: (target) =>
+      createIoDevtools(target, {
+        name: 'IO Behavior Live Demo',
+        captureSnapshots: 'always',
+        maxHistory: 80,
+      }),
+  }),
+]);
+
+function DevtoolsMinimalLiveDemo() {
+  const snapshot = useSyncExternalStore(
+    store.subscribe,
+    store.snapshot,
+    store.snapshot,
+  );
+  const [exportBytes, setExportBytes] = useState(0);
+
+  const dt = view.extensions?.devtools;
+
+  return (
+    <section className="io-live">
+      <div>Current count: {snapshot.count}</div>
+      <div>History length: {dt?.state?.get().history.length ?? 0}</div>
+      <div>Last export size: {exportBytes} chars</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={() => store.count.set((n) => n + 1)}>
+          +1
+        </button>
+        <button type="button" className="io-live__button" onClick={() => dt?.timeTravel.undo()}>
+          undo
+        </button>
+        <button type="button" className="io-live__button" onClick={() => dt?.timeTravel.redo()}>
+          redo
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => setExportBytes(dt?.export.json().length ?? 0)}
+        >
+          export json
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default DevtoolsMinimalLiveDemo;
+```
+
+Watch for this: `withBehaviors(devtools(...))` exposes the DevTools instance via `view.extensions` and keeps lifecycle cleanup centralized.
+
 ## Time Travel
 
 - `devtools.timeTravel.undo()`

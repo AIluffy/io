@@ -108,6 +108,64 @@ function createViewProxy<T, N extends object>(
   }) as N & IoView<T>;
 }
 
+function normalizeView<T>(baseView: IoView<T>, enhanced: IoView<T>): IoView<T> {
+  const normalized = Object.create(
+    Object.getPrototypeOf(enhanced),
+  ) as IoView<T>;
+  Object.defineProperties(
+    normalized,
+    Object.getOwnPropertyDescriptors(enhanced),
+  );
+
+  const getImpl =
+    typeof enhanced.get === 'function' ? enhanced.get.bind(enhanced) : baseView.get;
+  Object.defineProperty(normalized, 'get', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: getImpl,
+  });
+
+  const subscribeImpl =
+    typeof enhanced.subscribe === 'function'
+      ? enhanced.subscribe.bind(enhanced)
+      : baseView.subscribe.bind(baseView);
+  Object.defineProperty(normalized, 'subscribe', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: subscribeImpl,
+  });
+
+  const setImpl =
+    typeof enhanced.set === 'function'
+      ? enhanced.set.bind(enhanced)
+      : typeof baseView.set === 'function'
+        ? baseView.set.bind(baseView)
+        : undefined;
+  if (setImpl) {
+    Object.defineProperty(normalized, 'set', {
+      configurable: true,
+      enumerable: false,
+      writable: false,
+      value: setImpl,
+    });
+  }
+
+  const snapshotImpl =
+    typeof enhanced.snapshot === 'function'
+      ? enhanced.snapshot.bind(enhanced)
+      : () => getImpl();
+  Object.defineProperty(normalized, 'snapshot', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: snapshotImpl,
+  });
+
+  return normalized;
+}
+
 export function withBehaviors<T>(
   input: IoView<T>,
   behaviors: IoBehavior<T>[],
@@ -122,5 +180,6 @@ export function withBehaviors(
 ): object {
   const baseView = isView(input) ? input : adaptIo(input as IoLike<unknown>);
   const enhanced = behaviors.reduce((acc, behavior) => behavior(acc), baseView);
-  return createViewProxy(enhanced, input);
+  const normalized = normalizeView(baseView, enhanced);
+  return createViewProxy(normalized, input);
 }

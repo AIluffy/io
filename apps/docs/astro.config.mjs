@@ -24,7 +24,11 @@ export default defineConfig({
   integrations: [
     react(),
     vue(),
-    liveCode({}),
+    liveCode({
+      defaultProps: {
+        theme: 'dark',
+      },
+    }),
     mermaid(),
     starlight({
       plugins: [],

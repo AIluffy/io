@@ -21,6 +21,54 @@ view.subscribe((value) => {
 });
 ```
 
+## Live 示例
+
+你可以连续输入文本，比较即时值与防抖后的最终值。
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(400)]);
+
+function DebounceLiveDemo() {
+  const instant = useIO(view);
+  const [debouncedValue, setDebouncedValue] = useState('');
+  const [notifyCount, setNotifyCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifyCount((n) => n + 1);
+      setDebouncedValue(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <section className="io-live">
+      <input
+        className="io-live__input"
+        value={instant}
+        onChange={(event) => view.set(event.currentTarget.value)}
+        placeholder="快速输入关键词..."
+      />
+      <div>即时值：{instant || '（空）'}</div>
+      <div>防抖后值：{debouncedValue || '（空）'}</div>
+      <div>防抖通知次数：{notifyCount}</div>
+    </section>
+  );
+}
+
+export default DebounceLiveDemo;
+```
+
+观察点：输入过程中的中间值不会立即下发，只有停顿后才会更新防抖结果。
+
 ## 选项
 
 ```ts

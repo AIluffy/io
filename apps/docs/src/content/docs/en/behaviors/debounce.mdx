@@ -21,6 +21,54 @@ view.subscribe((value) => {
 });
 ```
 
+## Live Example
+
+Type continuously to compare immediate input value with debounced output value.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(400)]);
+
+function DebounceLiveDemo() {
+  const instant = useIO(view);
+  const [debouncedValue, setDebouncedValue] = useState('');
+  const [notifyCount, setNotifyCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifyCount((n) => n + 1);
+      setDebouncedValue(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <section className="io-live">
+      <input
+        className="io-live__input"
+        value={instant}
+        onChange={(event) => view.set(event.currentTarget.value)}
+        placeholder="Type quickly..."
+      />
+      <div>Immediate value: {instant || '(empty)'}</div>
+      <div>Debounced value: {debouncedValue || '(empty)'}</div>
+      <div>Debounced notifications: {notifyCount}</div>
+    </section>
+  );
+}
+
+export default DebounceLiveDemo;
+```
+
+Watch for this: intermediate input states are skipped, and output updates after the quiet window.
+
 ## Options
 
 ```ts

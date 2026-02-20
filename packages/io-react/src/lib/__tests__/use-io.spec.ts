@@ -3,6 +3,7 @@ import TestRenderer from 'react-test-renderer';
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
+import { schedule, withBehaviors } from '@iostore/store/behavior';
 
 import { useIO, useIOSelector } from '../use-io.js';
 
@@ -94,6 +95,33 @@ describe('@iostore/react', () => {
     });
 
     expect(renders).toEqual([0]);
+  });
+
+  it('supports behavior views as useIO source', async () => {
+    const count = io(0);
+    const view = withBehaviors(count, [schedule('sync')]);
+    const renders: number[] = [];
+
+    const App = () => {
+      const value = useIO(view, { schedule: 'sync' });
+      renders.push(value);
+      return React.createElement('span', null, String(value));
+    };
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App));
+    });
+
+    act(() => {
+      view.set?.(1);
+    });
+
+    expect(renders).toEqual([0, 1]);
+
+    await act(async () => {
+      renderer.unmount();
+    });
   });
 
   it('skips rerenders when selector result is unchanged', async () => {

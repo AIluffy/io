@@ -21,6 +21,71 @@ view.subscribe((value) => {
 });
 ```
 
+## Live Example
+
+Trigger rapid writes and compare total write count vs throttled notifications.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const view = withBehaviors(store, [throttle(250)]);
+
+function ThrottleLiveDemo() {
+  const [writes, setWrites] = useState(0);
+  const [notifies, setNotifies] = useState(0);
+  const [lastNotified, setLastNotified] = useState<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifies((n) => n + 1);
+      setLastNotified(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const burst = () => {
+    for (let i = 0; i < 20; i += 1) {
+      setWrites((n) => n + 1);
+      store.set((n) => n + 1);
+    }
+  };
+
+  return (
+    <section className="io-live">
+      <div>Write calls: {writes}</div>
+      <div>Throttled notifications: {notifies}</div>
+      <div>Last notified value: {lastNotified ?? 'none yet'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={burst}>
+          20 rapid writes
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            setWrites(0);
+            setNotifies(0);
+            setLastNotified(null);
+            store.set(0);
+          }}
+        >
+          Reset
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default ThrottleLiveDemo;
+```
+
+Watch for this: write volume stays high, but notification frequency is capped by the throttle window.
+
 ## Options
 
 ```ts

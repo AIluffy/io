@@ -62,6 +62,71 @@ import '@iostore/devtools-react/styles.css';
 
 <IoDevtoolsTodoExample client:load />
 
+## Live 示例（最小集成）
+
+你可以直接触发更新、时间旅行和导出，体验最小化的 DevTools 接入链路。
+
+```tsx live props={{ "client:load": true }}
+import { useState, useSyncExternalStore } from 'react';
+import { createIoDevtools } from '@iostore/devtools';
+import { io } from '@iostore/store';
+import { devtools, withBehaviors } from '@iostore/store/behavior';
+
+const store = io({ count: 0 });
+const view = withBehaviors(store, [
+  devtools({
+    target: store,
+    create: (target) =>
+      createIoDevtools(target, {
+        name: 'IO Behavior Live Demo',
+        captureSnapshots: 'always',
+        maxHistory: 80,
+      }),
+  }),
+]);
+
+function DevtoolsMinimalLiveDemo() {
+  const snapshot = useSyncExternalStore(
+    store.subscribe,
+    store.snapshot,
+    store.snapshot,
+  );
+  const [exportBytes, setExportBytes] = useState(0);
+
+  const dt = view.extensions?.devtools;
+
+  return (
+    <section className="io-live">
+      <div>当前 count：{snapshot.count}</div>
+      <div>历史记录长度：{dt?.state?.get().history.length ?? 0}</div>
+      <div>最近导出大小：{exportBytes} chars</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={() => store.count.set((n) => n + 1)}>
+          +1
+        </button>
+        <button type="button" className="io-live__button" onClick={() => dt?.timeTravel.undo()}>
+          undo
+        </button>
+        <button type="button" className="io-live__button" onClick={() => dt?.timeTravel.redo()}>
+          redo
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => setExportBytes(dt?.export.json().length ?? 0)}
+        >
+          export json
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default DevtoolsMinimalLiveDemo;
+```
+
+观察点：`withBehaviors(devtools(...))` 能把 DevTools 实例挂到 `view.extensions`，并统一管理生命周期。
+
 ## 时间旅行
 
 - `devtools.timeTravel.undo()`

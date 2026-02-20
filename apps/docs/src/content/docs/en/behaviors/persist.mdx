@@ -17,6 +17,65 @@ const count = io(0);
 const view = withBehaviors(count, [persist({ key: 'count' })]);
 ```
 
+## Live Example
+
+Try incrementing and clearing storage to compare in-memory value with persisted value.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
+
+const PERSIST_KEY = 'docs-live-persist-counter-en';
+const store = io(0);
+const view = withBehaviors(store, [persist({ key: PERSIST_KEY })]);
+
+function PersistLiveDemo() {
+  const value = useIO(view);
+  const [storedRaw, setStoredRaw] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+  }, [value]);
+
+  return (
+    <section className="io-live">
+      <div>Current count: {ready ? value : 0}</div>
+      <div>localStorage raw value: {ready ? (storedRaw ?? 'null') : 'null'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={() => view.set((n) => n + 1)}>
+          +1
+        </button>
+        <button type="button" className="io-live__button" onClick={() => view.set(0)}>
+          Reset to 0
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            localStorage.removeItem(PERSIST_KEY);
+            setStoredRaw(localStorage.getItem(PERSIST_KEY));
+          }}
+        >
+          Clear storage
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default PersistLiveDemo;
+```
+
+Watch for this: after updates via `view.set()`, persisted storage updates automatically, and manual clear is reflected immediately.
+
 ## Custom Storage
 
 ```ts

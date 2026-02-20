@@ -21,6 +21,68 @@ const view = withBehaviors(count, [
 ]);
 ```
 
+## Live Example
+
+Increment the value and destroy the view to observe effect runs and cleanup runs.
+
+```tsx live props={{ "client:load": true }}
+import { useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const metrics = io({ runs: 0, cleanups: 0 });
+const view = withBehaviors(store, [
+  effect(
+    () => {
+      metrics.runs.set((n) => n + 1);
+      return () => metrics.cleanups.set((n) => n + 1);
+    },
+    { immediate: false },
+  ),
+]);
+
+function EffectLiveDemo() {
+  const [destroyed, setDestroyed] = useState(false);
+  const value = useIO(view);
+  const stats = useIO(metrics);
+
+  return (
+    <section className="io-live">
+      <div>Current value: {value}</div>
+      <div>Effect runs: {stats.runs}</div>
+      <div>Cleanup runs: {stats.cleanups}</div>
+      <div className="io-live__row">
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => store.set((n) => n + 1)}
+          disabled={destroyed}
+        >
+          count +1
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          disabled={destroyed}
+          onClick={() => {
+            view.destroy();
+            setDestroyed(true);
+          }}
+        >
+          destroy view
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default EffectLiveDemo;
+```
+
+Watch for this: each value change reruns effect, and cleanup fires before rerun or on destroy.
+
 ## Cleanup
 
 ```ts

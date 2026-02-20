@@ -21,6 +21,62 @@ view.subscribe((value) => {
 });
 ```
 
+## Live Example
+
+Try one burst write and compare notification counts for `sync` vs `microtask`.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { io } from '@iostore/store';
+import { schedule, withBehaviors } from '@iostore/store/behavior';
+
+const syncStore = io(0);
+const microtaskStore = io(0);
+const syncView = withBehaviors(syncStore, [schedule('sync')]);
+const microtaskView = withBehaviors(microtaskStore, [schedule('microtask')]);
+
+function ScheduleLiveDemo() {
+  const [syncNotifies, setSyncNotifies] = useState(0);
+  const [microtaskNotifies, setMicrotaskNotifies] = useState(0);
+
+  useEffect(() => {
+    const offSync = syncView.subscribe(() => setSyncNotifies((n) => n + 1));
+    const offMicrotask = microtaskView.subscribe(() =>
+      setMicrotaskNotifies((n) => n + 1),
+    );
+
+    return () => {
+      offSync();
+      offMicrotask();
+    };
+  }, []);
+
+  const burstUpdate = () => {
+    setSyncNotifies(0);
+    setMicrotaskNotifies(0);
+    for (let i = 1; i <= 10; i += 1) {
+      syncStore.set(i);
+      microtaskStore.set(i);
+    }
+  };
+
+  return (
+    <section className="io-live">
+      <div>For the same 10 writes:</div>
+      <div>`schedule('sync')` notifications: {syncNotifies}</div>
+      <div>`schedule('microtask')` notifications: {microtaskNotifies}</div>
+      <button type="button" className="io-live__button" onClick={burstUpdate}>
+        Run 10 consecutive set calls
+      </button>
+    </section>
+  );
+}
+
+export default ScheduleLiveDemo;
+```
+
+Watch for this: `microtask` coalesces notifications in one tick, while `sync` emits per write.
+
 ## Strategies
 
 - `sync`: notify immediately
