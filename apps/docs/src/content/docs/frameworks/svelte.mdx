@@ -1,0 +1,93 @@
+---
+title: Svelte
+description: 使用 toReadable / toWritable 将 IO 节点适配为 Svelte Store。
+sidebar:
+  order: 5
+---
+
+`@iostore/svelte` 提供标准 Svelte Store 适配器，便于与 `$store` 语法协作。
+
+## 适用场景
+
+- 在 Svelte 组件中直接订阅 IO。
+- 使用 `$` 语法简化模板读取。
+- 需要可控读写边界（只读 / 可写）。
+
+## 安装
+
+```bash
+npm i @iostore/store @iostore/svelte
+```
+
+## 最小接入
+
+### toReadable（只读）
+
+```ts
+import { io } from '@iostore/store';
+import { toReadable } from '@iostore/svelte';
+
+const store = io({ count: 0 });
+const readable = toReadable(store.count);
+```
+
+### toWritable（可写）
+
+```ts
+import { toWritable } from '@iostore/svelte';
+
+const writable = toWritable(store.count);
+```
+
+## 调度策略
+
+```ts
+const readable = toReadable(store.count, { schedule: 'sync' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## API 速查
+
+| 场景 | API | 说明 |
+| --- | --- | --- |
+| 只读适配 | `toReadable(unitOrDerived, options?)` | 生成只读 Svelte store。 |
+| 可写适配 | `toWritable(unit, options?)` | 生成可写 Svelte store。 |
+| 通知调度 | `options.schedule` | `sync` / `microtask` / `animationFrame`。 |
+| 核心写入 | `unit.set(next | updater)` | 在非模板层更新状态。 |
+| 批量写入 | `batch(fn)` | 合并更新，减少 UI 抖动。 |
+
+## 错误示例与推荐写法
+
+~~~ts
+// 错误：仅展示也使用 toWritable
+const count = toWritable(store.count);
+
+// 推荐：展示优先 toReadable
+const countView = toReadable(store.count);
+~~~
+
+~~~ts
+// 错误：高频更新不控频
+const input = toWritable(store.keyword);
+
+// 推荐：在写入链路上配合 throttle/debounce
+// 详见 /cookbook/throttle 与 /cookbook/debounce
+~~~
+
+## 常见问题
+
+- 只需要展示时使用 `toWritable`，导致写入边界不清晰。
+- 组件外直接持有大量可写 store，增加状态耦合。
+- 高频变更未配合节流/防抖。
+
+## 实践建议
+
+- 默认展示用 `toReadable`，交互输入再切 `toWritable`。
+- 保持“单向数据流 + 局部可写”策略。
+- 高频交互结合 [Throttle](/cookbook/throttle/) / [Debounce](/cookbook/debounce/)。
+
+## 下一步
+
+- 学习 [订阅](/cookbook/subscriptions/) 的值与更新区别。
+- 需要 SSR 时，查看 [SvelteKit](/frameworks/sveltekit/) 实战章节。

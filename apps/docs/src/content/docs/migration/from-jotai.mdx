@@ -1,0 +1,74 @@
+---
+title: 从 Jotai 迁移
+description: 将 atom 体系映射到 IO 的 Unit/derived 路径模型。
+sidebar:
+  order: 4
+---
+
+本页适合已有 atom 体系，希望减少原子拆分负担、同时保留细粒度订阅能力的项目。
+
+## 何时优先迁移
+
+- atom 数量持续膨胀，边界维护成本上升。
+- 想保留原子化订阅，但改成结构化状态建模。
+- 需要跨框架共享状态模型。
+
+## 概念映射
+
+| Jotai | IO 对应 | 说明 |
+| --- | --- | --- |
+| `atom(value)` | `io(value)` | 原子值一一对应。 |
+| `atom((get) => ...)` | `derived([...], compute)` | 派生语义一致。 |
+| writable atom | 动作函数 + `set`/`commit` | 读写职责拆分更清晰。 |
+| `useAtom` | `useIO` | 读写可分离。 |
+
+## 迁移步骤
+
+### 1) 原子态映射
+
+```ts
+import { io } from '@iostore/store';
+
+export const count = io(0);
+```
+
+### 2) 派生态映射
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+export const double = derived([count], (v) => v * 2);
+```
+
+### 3) 可写逻辑映射
+
+```ts
+export const inc = () => count.set((v) => v + 1);
+```
+
+### 4) React 接入
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## 常见问题
+
+- 迁移后仍按“全局 atom 分发”组织，没利用树路径能力。
+- 把复杂读写逻辑都放在组件内，缺少动作边界。
+- 派生计算未抽离到 `derived`，导致重复逻辑。
+
+## 验收清单
+
+- 核心 atom 已迁移为 Unit 或树路径 Unit。
+- 可写派生逻辑已收敛为动作函数。
+- 关键派生计算已统一 `derived` 管理。
+
+## 下一步
+
+- 阅读 [Unit](/fundamentals/unit/) 与 [派生值](/cookbook/derived/)。

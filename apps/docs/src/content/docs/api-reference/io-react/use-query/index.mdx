@@ -1,0 +1,53 @@
+---
+title: "useQuery"
+description: "函数 API 参考。"
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+<TData>(options: IoUseQueryOptions<TData>) => IoQueryResult<TData>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseQueryOptions<TData>` |
+
+## 返回
+
+`IoQueryResult<TData>`
+
+## 最小示例
+
+```ts
+import { useQuery } from '@iostore/react';
+
+const result = useQuery(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useResource](../use-resource/)
+- [IoQueryResult](../io-query-result/)
+
+## 源码
+
+- `packages/io-react/src/lib/use-query.ts`

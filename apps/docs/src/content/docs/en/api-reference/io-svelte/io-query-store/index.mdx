@@ -1,0 +1,43 @@
+---
+title: "IoQueryStore"
+description: "Type API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryStore<TData>
+```
+
+## Minimal Example
+
+```ts
+import type { IoQueryStore } from '@iostore/svelte';
+
+let value!: IoQueryStore;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [createQueryStore](../create-query-store/)
+- [toQueryStore](../to-query-store/)
+- [toReadable](../to-readable/)
+- [toWritable](../to-writable/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

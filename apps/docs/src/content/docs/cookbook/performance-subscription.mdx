@@ -1,0 +1,80 @@
+---
+title: 性能与订阅策略
+description: 用路径 Unit、selector 与批处理控制渲染边界和更新成本。
+sidebar:
+  order: 7
+---
+
+性能优化的核心不是“少写代码”，而是“让订阅边界对齐真实变化边界”。
+
+## 是什么
+
+这篇文档解决三个问题：
+
+- 订阅谁：根节点、路径 Unit，还是 selector？
+- 什么时候合并写入：`batch` / `commit`。
+- 如何快速定位过度渲染。
+
+## 选型表
+
+| 场景 | 推荐 | 原因 |
+| --- | --- | --- |
+| 已有明确路径（如 `store.user.name`） | `useIO(pathUnit)` | 订阅最小，更新最精准 |
+| 需要投影少量字段 | `useIOSelector(store, selector)` | 保持结构化建模并控制渲染范围 |
+| 小组件直接读取完整值 | `useIO(store)` | 写法简单，认知成本低 |
+| 一次动作内多处写入 | `batch` 或 `commit` | 合并通知，减少中间态渲染 |
+
+## 最小策略
+
+### 1) 优先路径订阅
+
+```tsx
+const name = useIO(userStore.profile.name);
+```
+
+### 2) 需要投影时使用 selector
+
+```tsx
+const view = useIOSelector(store, (s) => ({
+  count: s.count,
+  parity: s.count % 2,
+}));
+```
+
+若 selector 返回对象，建议提供 `isEqual`：
+
+```tsx
+const parity = useIOSelector(store, (s) => ({ p: s.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+### 3) 写入侧合并事务
+
+```ts
+batch(() => {
+  store.form.name.set('Ada');
+  store.form.email.set('ada@example.com');
+  store.ui.dirty.set(true);
+});
+```
+
+## 常见反模式
+
+- 列表项组件订阅整个根对象。
+- selector 每次返回新对象，但未提供 `isEqual`。
+- 同一交互触发多次离散 `set`，未做合并。
+- 重置整数组后仍持有旧路径 Unit 进行订阅。
+
+## 快速排查流程
+
+1. 找到频繁重渲染组件，确认它订阅的 Unit/selector。
+2. 将“根订阅”收敛到“路径订阅”。
+3. 给对象型 selector 增加 `isEqual`。
+4. 把同一交互内的多次写入改为 `batch`/`commit`。
+5. 用 DevTools 对照 patch 流验证优化是否生效。
+
+## 下一步
+
+- 回看 [快速开始](/start-here/quick-start/) 的路径订阅示例。
+- 搭配 [订阅](/cookbook/subscriptions/) 与 [批处理](/cookbook/batching/) 完成全链路优化。

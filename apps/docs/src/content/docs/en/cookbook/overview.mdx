@@ -1,0 +1,74 @@
+---
+title: Behaviors Overview
+description: Compose Persist, Schedule, Throttle, Debounce, Effect, and DevTools with withBehaviors().
+sidebar:
+  order: 1
+---
+
+Behaviors add runtime capabilities without changing your core state model.
+
+## What It Is
+
+- Goal: add persistence, scheduling, rate control, side effects, and debugging as composable modules.
+- Entry point: `withBehaviors(target, behaviors)` returns an `IoView`.
+- Benefit: one access layer, one lifecycle, one cleanup path.
+
+## When to Use
+
+- You need to stack multiple runtime capabilities on the same state.
+- You want behavior instances exposed in one place (`extensions`).
+- You want one cleanup call (`destroy()`) for behavior resources.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import {
+  persist,
+  schedule,
+  throttle,
+  effect,
+  withBehaviors,
+} from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  schedule('microtask'),
+  throttle(50),
+  effect((value) => console.log(value)),
+]);
+
+view.subscribe((value) => {
+  console.log(value);
+});
+```
+
+## IoView Capabilities
+
+`withBehaviors` returns an `IoView` with:
+
+- `get()` / `set()` for reads and writes.
+- `subscribe()` / `snapshot()` for subscriptions and snapshots.
+- `extensions` for behavior instances.
+- `destroy()` for unified cleanup.
+
+## Composition Order Guidance
+
+- Apply `persist` before `schedule` or `devtools`.
+- In high-frequency flows, place `throttle/debounce` before `effect`.
+- Behavior order is wrapper order, so arrange by dependency.
+
+## Common Mistakes
+
+- Putting all behaviors on one massive view instead of using business boundaries.
+- Ignoring order, then getting unexpected timing/effect behavior.
+- Forgetting `view.destroy()` and leaking timers/listeners/devtools instances.
+
+## Next Steps
+
+- Use [Persist](/en/cookbook/persist/) to store state.
+- Explore [Schedule](/en/cookbook/schedule/) to control notification cadence.
+- Use [Throttle](/en/cookbook/throttle/) / [Debounce](/en/cookbook/debounce/) for rate control.
+- Use [Effect](/en/cookbook/effect/) to centralize side effects.
+- Hook up [DevTools](/en/cookbook/devtools/) for debugging.

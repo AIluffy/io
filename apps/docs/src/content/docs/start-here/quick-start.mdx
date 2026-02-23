@@ -1,0 +1,94 @@
+---
+title: 快速开始
+description: 以 React 为主，5 分钟完成 IO 入门。
+sidebar:
+  order: 1
+---
+
+本页以 **React** 为主线，带你用最短路径跑通 IO：安装、创建状态、组件读取更新。
+
+## 1. 安装
+
+安装核心包与 React 适配：
+
+```bash
+npm install @iostore/store @iostore/react
+```
+
+## 2. 创建状态（`store.ts`）
+
+```ts
+import { io } from '@iostore/store';
+
+export const counterStore = io({
+  count: 0,
+  user: { name: 'Ada' },
+});
+```
+
+## 3. 在 React 组件中使用（`Counter.tsx`）
+
+```tsx
+import { useIO } from '@iostore/react';
+import { counterStore } from './store';
+
+export function Counter() {
+  const state = useIO(counterStore);
+
+  return (
+    <div>
+      <p>
+        {state.user.name}: {state.count}
+      </p>
+      <button onClick={() => counterStore.count.set((v) => v + 1)}>+1</button>
+      <button onClick={() => counterStore.user.name.set('Grace')}>Rename</button>
+    </div>
+  );
+}
+```
+
+你会得到两个关键体验：
+
+- 可以直接更新深层路径：`counterStore.user.name.set('Grace')`
+- 只用一次 `useIO`，组件上手更快
+
+## 4. 可选：更细粒度订阅
+
+当你只关心某个叶子字段时，直接订阅路径 Unit 能进一步减少渲染：
+
+```tsx
+import { useIO } from '@iostore/react';
+import { counterStore } from './store';
+
+export function CountOnly() {
+  const count = useIO(counterStore.count);
+  return <span>{count}</span>;
+}
+```
+
+## 5. 可选：加入派生值
+
+```ts
+import { derived } from '@iostore/store/derived';
+import { counterStore } from './store';
+
+export const doubled = derived(counterStore, (s) => s.count * 2);
+```
+
+## 常见坑
+
+- 不要在数组里重复放同一个对象实例；每个元素都创建新对象。
+- 当组件订阅的是路径 Unit 时，避免用整数组/对象替换方式“重置”；优先更新路径本身。
+
+## 其他框架
+
+如果你不使用 React，直接查看对应集成页：
+[Vanilla](/frameworks/vanilla/)、[Lynx](/frameworks/lynx/)、[Vue](/frameworks/vue/)、[Svelte](/frameworks/svelte/)、[Solid](/frameworks/solid/)。
+
+## 下一步
+
+- 学习 [核心概念：Unit](/fundamentals/unit/)。
+- 先看 [常见错误与 FAQ](/start-here/faq/) 避免入门阶段高频坑。
+- 再看 [性能与订阅策略](/cookbook/performance-subscription/) 做渲染优化。
+- 查看 [架构概览](/fundamentals/architecture/) 理解运行时分层。
+- 继续阅读 [React 集成](/frameworks/react/)。

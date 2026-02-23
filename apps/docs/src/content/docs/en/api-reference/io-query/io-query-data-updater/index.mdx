@@ -1,0 +1,43 @@
+---
+title: "IoQueryDataUpdater"
+description: "Type API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryDataUpdater<TData>
+```
+
+## Minimal Example
+
+```ts
+import type { IoQueryDataUpdater } from '@iostore/query';
+
+let value!: IoQueryDataUpdater;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## Source
+
+- `packages/io-query/src/lib/query-client.ts`

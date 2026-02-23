@@ -1,0 +1,82 @@
+---
+title: 从 MobX 迁移
+description: 将 observable/action/computed 迁移到 IO 的路径状态模型。
+sidebar:
+  order: 6
+---
+
+本页适合希望从“自动追踪”过渡到“显式路径边界”的 MobX 项目。
+
+## 何时优先迁移
+
+- 需要更清晰的更新来源与订阅边界。
+- 想降低隐式依赖带来的调试成本。
+- 需要跨框架共享状态模型。
+
+## 概念映射
+
+| MobX | IO 对应 | 说明 |
+| --- | --- | --- |
+| `observable` | `io({...})` | 状态树等价。 |
+| `computed` | `derived` | 派生能力一一映射。 |
+| `action` / `runInAction` | `commit` / `batch` | 统一多字段写入。 |
+| `observer` | `useIO` / `useIOSelector` | 在组件侧显式订阅路径。 |
+
+## 迁移步骤
+
+### 1) 类状态迁移为状态 + 动作
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+export const inc = () => store.count.set((v) => v + 1);
+```
+
+### 2) computed 迁移
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+const double = derived([store.count], (count) => count * 2);
+```
+
+### 3) action 迁移
+
+```ts
+const profile = io({ name: 'Ada', age: 18 });
+
+const updateProfile = (name: string, age: number) => {
+  profile.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 4) React 迁移
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## 常见问题
+
+- 把所有逻辑继续塞在“大对象类方法”里，没拆读写边界。
+- 忘记从“自动追踪”迁移为“路径订阅”心智。
+- 复杂更新未使用 `commit`，导致中间态通知。
+
+## 验收清单
+
+- 主要 computed 已迁移为 `derived`。
+- 多字段写入已统一 `commit` 或 `batch`。
+- 核心组件已路径订阅，不再依赖整对象观察。
+
+## 下一步
+
+- 阅读 [快照](/fundamentals/snapshots/) 与 [更新日志](/fundamentals/update-log/)。

@@ -1,0 +1,120 @@
+---
+title: 常见错误与 FAQ
+description: 汇总入门阶段最容易踩到的问题、原因和修复方式。
+sidebar:
+  order: 6
+---
+
+这页覆盖入门阶段最常见的“看起来能跑，但行为不对”的问题。每个问题都给出可直接执行的修复方式。
+
+## Q1: 重置数组后，某些格子不刷新
+
+**现象**
+
+- 组件订阅了 `store.list[index]`。
+- 你用 `store.list.set(newList)` 替换整数组。
+- UI 里某些旧值要到下一次更新才刷新。
+
+**原因**
+
+- 路径 Unit（例如 `store.list[0]`）绑定的是旧数组下的子节点。
+- 整体替换会切换到新节点，旧订阅还挂在旧 Unit 上。
+
+**修复**
+
+- 优先更新路径本身，而不是整体替换：
+
+```ts
+for (let i = 0; i < store.list.get().length; i += 1) {
+  store.list[i].set(null);
+}
+```
+
+- 或者改成订阅整数组，再在渲染中按索引读取。
+
+## Q2: 一次交互触发多次写入，页面抖动明显
+
+**现象**
+
+- 点击一次按钮，组件连续重渲染多次。
+
+**原因**
+
+- 同一业务动作拆成多次独立 `set`，通知没有合并。
+
+**修复**
+
+```ts
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.flag.set(true);
+});
+```
+
+## Q3: 直接改对象字段后，视图没有更新
+
+**现象**
+
+- 你拿到快照对象后直接写字段：`state.user.name = 'Grace'`。
+- UI 不更新，或状态出现不一致。
+
+**原因**
+
+- `snapshot()` 返回的是冻结快照，只能读不能改。
+
+**修复**
+
+- 用路径 Unit 写入：`store.user.name.set('Grace')`。
+- 需要批量修改时用 `commit` 或 `batch`。
+
+## Q4: 为什么有时要用 `batch`，有时用 `commit`
+
+**结论**
+
+- `batch`：组合多次 `set`，合并通知，写法轻量。
+- `commit`：以草稿方式集中修改结构化对象，更适合复杂变更。
+
+```ts
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.flag.set(true);
+});
+```
+
+```ts
+store.commit((draft) => {
+  draft.user.name = 'Ada';
+  draft.count += 1;
+});
+```
+
+## Q5: `useIO` 和 `useIOSelector` 该选哪个
+
+先按这个规则：
+
+- 已有路径 Unit：优先 `useIO(store.user.name)`。
+- 需要从大对象取局部投影：`useIOSelector(store, selector)`。
+- 只是读取整个值且变化不频繁：`useIO(store)` 也可以。
+
+完整选型见 [性能与订阅策略](/cookbook/performance-subscription/)。
+
+## Q6: 如何确认是不是“订阅范围过大”导致慢
+
+从这 3 步开始：
+
+1. 先把 `useIO(store)` 改为 `useIO(store.leaf.path)`，观察渲染次数。
+2. 再对比 `useIOSelector` + `isEqual` 是否减少重渲染。
+3. 最后用 DevTools 检查一次交互触发了哪些 patch。
+
+## Q7: 什么时候不适合马上上 IO
+
+- 你的状态非常扁平，且无深层更新需求。
+- 团队强依赖 action/reducer 审批流，短期不准备调整范式。
+
+这种情况下可以先把 IO 用在局部复杂模块，逐步引入。
+
+## 下一步
+
+- 阅读 [性能与订阅策略](/cookbook/performance-subscription/)。
+- 结合 [Subscriptions](/cookbook/subscriptions/) 与 [Batching](/cookbook/batching/) 做深入优化。
+- 用 [Playground](/start-here/playground/) 验证你的更新路径与订阅边界。

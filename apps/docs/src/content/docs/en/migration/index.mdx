@@ -1,0 +1,83 @@
+---
+title: Migration Overview
+description: A practical roadmap for moving from major state libraries to IO.
+sidebar:
+  order: 0
+---
+
+This section addresses three migration concerns:
+
+- Semantic mapping: how source-library concepts map to IO.
+- Phased rollout: how to migrate with controlled risk.
+- Completion criteria: how to verify migration quality before release.
+
+## Recommended Reading Order
+
+1. Start with [Why IO](/en/migration/why-io/) to validate tradeoffs.
+2. Read your source-library page (Zustand / Valtio / Jotai / Redux / MobX).
+3. Run the release checklist on this page before rollout.
+
+## Common Migration Flow
+
+### 1) Define migration boundaries
+
+- Start with one bounded feature slice, not a full-app rewrite.
+- Document inputs, outputs, side effects, and persistence dependencies.
+
+### 2) Complete semantic mapping
+
+- State model: store/atom/proxy -> `io(...)`.
+- Reads: selector/snapshot/observer -> path-unit subscriptions.
+- Writes: dispatch/action/set/proxy mutation -> `set` / `commit`.
+
+### 3) Replace read paths first, then write paths
+
+- Migrate component subscriptions first to stabilize render boundaries.
+- Migrate writes second to reduce behavior drift during transition.
+
+### 4) Add runtime behaviors
+
+- Persistence: `persist`.
+- Debugging: `devtools` / update log.
+- High-frequency paths: `batch`, `schedule`, `throttle`, `debounce`.
+
+## Release Checklist
+
+- Subscription granularity: path-level units over broad root subscriptions.
+- Serialization boundaries: plain objects only across SSR hydration.
+- Grouped writes: `commit` / `batch` for multi-field updates.
+- Traceability: key flows debuggable via update logs.
+- Cleanup: explicit subscription disposal in lifecycle boundaries.
+
+## Common Pitfalls
+
+- Syntax-only replacement without subscription-boundary redesign.
+- Module-level singleton stores in SSR runtimes.
+- Treating IO as a thin alias without using path-level capabilities.
+
+## FAQ (Top Questions)
+
+### Q1: Do we need a full rewrite to migrate?
+
+No. Use slice-by-slice migration. Complete one full path (read, write, persistence, debugging), then expand.
+
+### Q2: Will performance improve automatically after migration?
+
+Not automatically. Gains depend on path-level subscriptions and controlled write bursts (`batch`/`schedule`).
+
+### Q3: Should we delete old reducers/atoms/actions immediately?
+
+No. Keep old and new paths in parallel during rollout, then remove legacy paths after regression confidence is high.
+
+### Q4: What is the most common SSR migration failure?
+
+Module-scope singleton stores. Create stores per request and pass plain serializable data (usually `snapshot()` output) across hydration boundaries.
+
+### Q5: How do we know migration quality is acceptable?
+
+At minimum: no render regressions on key pages, key flows traceable via update logs, and consistent serializable boundary data.
+
+## Next Steps
+
+- Continue with [Migrate from Zustand](/en/migration/from-zustand/) or your source stack.
+- Review [Core Architecture](/en/fundamentals/architecture/) for model depth.

@@ -1,0 +1,53 @@
+---
+title: "createQueryClient"
+description: "Function API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+(clientOptions?: IoQueryClientOptions) => IoQueryClient
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| clientOptions | `IoQueryClientOptions` |
+
+## Returns
+
+`IoQueryClient`
+
+## Minimal Example
+
+```ts
+import { createQueryClient } from '@iostore/query';
+
+const result = createQueryClient(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createResource](../create-resource/)
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClient](../io-query-client/)
+
+## Source
+
+- `packages/io-query/src/lib/query-client.ts`

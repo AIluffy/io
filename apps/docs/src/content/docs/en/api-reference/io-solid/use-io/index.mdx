@@ -1,0 +1,47 @@
+---
+title: "useIO"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<T>(source: IoSource<T>, options?: IoSolidOptions) => Accessor<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<T>` |
+| options | `IoSolidOptions` |
+
+## Returns
+
+`Accessor<T>`
+
+## Minimal Example
+
+```ts
+import { useIO } from '@iostore/solid';
+
+const result = useIO(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+
+## Source
+
+- `packages/io-solid/src/lib/adapters.ts`

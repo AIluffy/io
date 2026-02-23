@@ -1,0 +1,59 @@
+---
+title: "effect"
+description: "行为 API：在订阅链中声明副作用。"
+---
+
+## 何时使用
+
+- 你希望把副作用逻辑封装进 behavior 管道。
+- 你需要统一的 cleanup 生命周期（重跑前与 destroy 时）。
+
+## 签名
+
+```ts
+<T>(
+  fn: (value: T, previous: T | undefined) => void | (() => void),
+  options?: EffectBehaviorOptions,
+) => IoBehavior<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| fn | `(value: T, previous: T \| undefined) => void \| (() => void)` |
+| options | `EffectBehaviorOptions` |
+
+## 返回
+
+`IoBehavior<T>`
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+import { effect, throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    console.log(value);
+  }),
+]);
+```
+
+## 常见误用
+
+- 在 `effect` 内部再写回同一状态，形成无意循环。
+- 忽略清理函数，导致定时器/监听器在销毁后泄漏。
+
+## 相关 API
+
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [withBehaviors](../with-behaviors/)
+
+## 源码
+
+- `packages/io/src/lib/extensions/cookbook/effect.ts`

@@ -1,0 +1,78 @@
+---
+title: Quick Start
+description: React-first guide to get started with IO in 5 minutes.
+sidebar:
+  order: 1
+---
+
+This page is **React-first** and focuses on the shortest path: install, create state, read/write in a component.
+
+## 1. Install
+
+Install the core package and React adapter:
+
+```bash
+npm install @iostore/store @iostore/react
+```
+
+## 2. Create State (`store.ts`)
+
+```ts
+import { io } from '@iostore/store';
+
+export const counterStore = io({
+  count: 0,
+  user: { name: 'Ada' },
+});
+```
+
+## 3. Use It in React (`Counter.tsx`)
+
+```tsx
+import { useIO } from '@iostore/react';
+import { counterStore } from './store';
+
+export function Counter() {
+  const state = useIO(counterStore);
+
+  return (
+    <div>
+      <p>
+        {state.user.name}: {state.count}
+      </p>
+      <button onClick={() => counterStore.count.set((v) => v + 1)}>+1</button>
+      <button onClick={() => counterStore.user.name.set('Grace')}>Rename</button>
+    </div>
+  );
+}
+```
+
+You immediately get two benefits:
+
+- Direct deep-path updates: `counterStore.user.name.set('Grace')`
+- A faster onboarding path with a single `useIO` call
+
+## 4. Optional: Add Derived Values
+
+```ts
+import { derived } from '@iostore/store/derived';
+import { counterStore } from './store';
+
+export const doubled = derived(counterStore, (s) => s.count * 2);
+```
+
+## Common Gotchas
+
+- Do not put the same object instance into an array multiple times.
+- If a component subscribes to a path Unit, avoid replacing the whole array/object during reset.
+
+## Other Frameworks
+
+If you're not using React, jump to:
+[Vanilla](/en/frameworks/vanilla/), [Lynx](/en/frameworks/lynx/), [Vue](/en/frameworks/vue/), [Svelte](/en/frameworks/svelte/), [Solid](/en/frameworks/solid/).
+
+## Next Steps
+
+- Learn [Core Concepts: Unit](/en/fundamentals/unit/).
+- Read [Architecture Overview](/en/fundamentals/architecture/) to understand runtime layers.
+- Continue with [React Integration](/en/frameworks/react/).

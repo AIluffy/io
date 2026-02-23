@@ -1,0 +1,111 @@
+---
+title: Update Log
+description: Patch/update model, subscriptions, replay, and undo workflows.
+sidebar:
+  order: 6
+---
+
+Every IO write produces structured change data. The update log is the base for debugging, replay, undo, and auditing.
+
+## 1. Core Concepts: `patch` and `update`
+
+- `patch`: one minimal change record.
+- `update`: a grouped set of patches from one write operation.
+
+## 2. Patch Types
+
+- `set`: assign a value at a path
+- `splice`: array insert/delete
+- `sort`: array reorder
+
+## 3. Subscribing to Updates
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+store.count.set(1);
+stop();
+```
+
+:::note
+`subscribeUpdate()` is about what changed. Use `snapshot()` or `subscribe()` for latest values.
+:::
+
+## 4. Replay and Undo (Function-level)
+
+```ts
+import { io } from '@iostore/store';
+import { applyUpdate, mergeUpdates, undoUpdate, replay } from '@iostore/store/patches';
+
+const store = io({ count: 0 });
+const updates: unknown[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
+
+store.count.set(1);
+store.count.set(2);
+stop();
+
+const replayStore = io({ count: 0 });
+replay(replayStore, updates);
+
+const merged = mergeUpdates(...updates);
+const inverted = undoUpdate(merged);
+applyUpdate(store, inverted);
+```
+
+Use this for:
+
+- Reproducing issue timelines
+- Merging multiple updates before rollback
+
+## 5. Undo / Redo (History controller)
+
+```ts
+import { io } from '@iostore/store';
+import { createHistory } from '@iostore/store/patches';
+
+const store = io({ count: 0 });
+const history = createHistory(store, { limit: 100 });
+
+store.count.set(1);
+store.count.set(2);
+
+history.undo();
+history.redo();
+```
+
+`createHistory()` is better for interactive undo/redo UX.
+
+## 6. Debug Hooks
+
+```ts
+import { io } from '@iostore/store';
+import { onMutation, onError } from '@iostore/store/debug';
+
+const store = io({ count: 0 });
+
+const stopMutation = onMutation(store, (patch, path) => {
+  console.log(path, patch.op);
+});
+
+const stopError = onError(store, (error, path, op) => {
+  console.error(op, path, error);
+});
+```
+
+## 7. Practical Guidance
+
+- Use `subscribe` for value-driven UI.
+- Use `subscribeUpdate` for observability and change logs.
+- Prefer `commit()` / `batch()` for multi-step writes to reduce notification noise.
+
+## Next Steps
+
+- Combine with [DevTools](/en/cookbook/devtools/).
+- Learn [Batching](/en/cookbook/batching/) to merge notifications.

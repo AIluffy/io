@@ -1,0 +1,127 @@
+---
+title: SvelteKit
+description: Stable SSR + hydration in SvelteKit by separating server data prep and client reconstruction.
+sidebar:
+  order: 9
+---
+
+In SvelteKit, use a two-stage flow: server `load` returns plain state, client runtime rebuilds IO store from it.
+
+## When to Use
+
+- Server-side preload via `load`.
+- Shared initial state across SSR and client interactivity.
+- Strict serializable boundaries in routing pipeline.
+
+## Core Principles
+
+- Server-side store is request-local only.
+- `load` returns plain objects, not runtime instances.
+- Flow: `+layout.server.ts -> initialState -> +layout.svelte io()`.
+
+## Server Data Preparation
+
+```ts
+// src/routes/+layout.server.ts
+import { io } from '@iostore/store';
+import type { LayoutServerLoad } from './$types';
+
+type AppState = {
+  count: number;
+  user: { id: string; name: string } | null;
+};
+
+export const load: LayoutServerLoad = async ({ fetch }) => {
+  const user = await fetch('/api/me').then((r) => r.json());
+  const store = io<AppState>({ count: 0, user });
+  return {
+    initialState: store.snapshot(),
+  };
+};
+```
+
+## Client Reconstruction and Context
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script lang="ts">
+  import { io } from '@iostore/store';
+  import { setContext } from 'svelte';
+  import type { LayoutData } from './$types';
+
+  type AppState = {
+    count: number;
+    user: { id: string; name: string } | null;
+  };
+
+  export let data: LayoutData;
+  const store = io<AppState>(data.initialState);
+  setContext('io-store', store);
+</script>
+
+<slot />
+```
+
+```svelte
+<!-- src/routes/+page.svelte -->
+<script lang="ts">
+  import { getContext } from 'svelte';
+  import { toWritable } from '@iostore/svelte';
+  import type { IoScope } from '@iostore/store';
+
+  type AppState = {
+    count: number;
+    user: { id: string; name: string } | null;
+  };
+
+  const store = getContext<IoScope<AppState>>('io-store');
+  const count = toWritable(store.count);
+</script>
+
+<button on:click={() => $count += 1}>{$count}</button>
+```
+
+## API Quick Reference
+
+| Phase | API | Notes |
+| --- | --- | --- |
+| Server load | `+layout.server.ts load` | Prepares serializable initial state. |
+| Create state | `io(initialState)` | Build on both sides with clear boundaries. |
+| Boundary transport | `snapshot()` / `load return` | Keep payload plain-object only. |
+| Client distribution | `setContext/getContext` | Provide at layout, consume in pages. |
+| Component binding | `toReadable` / `toWritable` | Controlled template-level access. |
+
+## Wrong vs Recommended
+
+~~~ts
+// Wrong: returning runtime instance from load
+// return { store }
+
+// Recommended: return serializable state
+return { initialState: store.snapshot() };
+~~~
+
+~~~svelte
+<!-- Wrong: recreate root store per page -->
+<!-- const store = io(data.initialState) -->
+
+<!-- Recommended: create in layout and pass via context -->
+<!-- setContext('io-store', store) -->
+~~~
+
+## Common Issues
+
+- Returning store instances from `load`.
+- Shape mismatch between server/client initial state.
+- Inconsistent context keys across layout/page components.
+
+## Practical Guidance
+
+- Share one `AppState` type across server and client.
+- Provide store at layout level, consume path units in pages.
+- Use [Update Log](/en/fundamentals/update-log/) for replay-based debugging.
+
+## Next Steps
+
+- Review [Svelte](/en/frameworks/svelte/) `toReadable` / `toWritable` usage.
+- Add [Persist](/en/cookbook/persist/) for client durability.

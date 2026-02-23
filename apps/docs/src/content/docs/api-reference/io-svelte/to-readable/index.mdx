@@ -1,0 +1,48 @@
+---
+title: "toReadable"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+<T>(source: IoSource<T>, options?: IoSvelteOptions) => Readable<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<T>` |
+| options | `IoSvelteOptions` |
+
+## 返回
+
+`Readable<T>`
+
+## 最小示例
+
+```ts
+import { toReadable } from '@iostore/svelte';
+
+const result = toReadable(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [toWritable](../to-writable/)
+
+## 源码
+
+- `packages/io-svelte/src/lib/stores.ts`

@@ -1,0 +1,130 @@
+---
+title: React
+description: 在 React 中使用 useIO / useIOSelector 高效订阅 IO 状态。
+sidebar:
+  order: 2
+---
+
+`@iostore/react` 基于 `useSyncExternalStore` 对齐 React 渲染模型，适合生产场景的稳定订阅。
+
+## 适用场景
+
+- React 函数组件状态订阅。
+- 需要细粒度更新控制与选择器优化。
+- 需要与派生值、行为扩展组合使用。
+
+## 安装
+
+```bash
+npm i @iostore/store @iostore/react
+```
+
+## 最小接入
+
+```tsx
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
+}
+```
+
+## 常用模式
+
+### 1) 使用派生值
+
+```tsx
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { useIO } from '@iostore/react';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value}</span>;
+}
+```
+
+### 2) 使用 useIOSelector
+
+```tsx
+import { io } from '@iostore/store';
+import { useIOSelector } from '@iostore/react';
+
+const store = io({ count: 0, other: 0 });
+
+export function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <span>{count}</span>;
+}
+```
+
+对象选择器建议提供 `isEqual`：
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+### 3) 调度策略
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## API 速查
+
+| 场景 | API | 说明 |
+| --- | --- | --- |
+| 读取 Unit/Derived | `useIO(unitOrDerived, options?)` | 组件自动订阅并在变更时重渲染。 |
+| 读取 Scope 片段 | `useIOSelector(scope, selector, options?)` | 用选择器裁剪订阅范围。 |
+| 选择器比较 | `options.isEqual(prev, next)` | 避免对象选择器导致重复渲染。 |
+| 通知调度 | `options.schedule` | `sync` / `microtask` / `animationFrame`。 |
+| 批量写入 | `batch(fn)` | 高频交互建议配合使用。 |
+
+## 错误示例与推荐写法
+
+~~~tsx
+// 错误：selector 每次返回新对象，且没有 isEqual
+const view = useIOSelector(store, (s) => ({ count: s.count }));
+
+// 推荐：补充 isEqual
+const view2 = useIOSelector(store, (s) => ({ count: s.count }), {
+  isEqual: (a, b) => a.count === b.count,
+});
+~~~
+
+~~~tsx
+// 错误：组件订阅根节点过大
+const state = useIO(store);
+
+// 推荐：只订阅路径 Unit
+const count = useIO(store.count);
+~~~
+
+## 常见问题
+
+- 选择器每次返回新对象且无比较函数，导致多余渲染。
+- 组件订阅根节点过大，影响渲染范围。
+- 高频写入不做 `batch()`，导致通知过密。
+
+## 实践建议
+
+- 优先路径订阅，其次 selector，最后根订阅。
+- selector 返回对象时优先配置 `isEqual`。
+- 与 [Batching](/cookbook/batching/) 组合减少中间态渲染。
+
+## 下一步
+
+- 接入 [DevTools](/cookbook/devtools/) 查看时间线与差异。
+- 结合 [Persist](/cookbook/persist/) 做本地持久化。
+- 需要 SSR 时，查看 [Next.js](/frameworks/next/) 实战章节。

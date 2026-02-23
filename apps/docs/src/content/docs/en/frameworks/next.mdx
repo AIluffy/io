@@ -1,0 +1,127 @@
+---
+title: Next.js
+description: SSR + hydration in Next.js App Router without cross-request state leaks.
+sidebar:
+  order: 7
+---
+
+Next.js integration succeeds when you keep strict boundaries: request-scoped stores, serializable hydration payloads, and client-side reconstruction.
+
+## When to Use
+
+- App Router pages with server data prefetch.
+- Server + client rendering pipelines.
+- Multi-user environments where request isolation is required.
+
+## Core Principles
+
+- Per-request store creation.
+- Hydration boundaries carry plain serializable data only.
+- Flow: `server fetch -> initialState -> client createStore`.
+
+## Per-Request Store
+
+Avoid module-scope singleton stores:
+
+```ts
+// bad: shared across requests in one Node process
+export const store = io({ count: 0 });
+```
+
+Use a factory:
+
+```ts
+// lib/store.ts
+import { io } from '@iostore/store';
+
+export type AppState = {
+  count: number;
+  user: { id: string; name: string } | null;
+};
+
+export function createStore(initial: AppState) {
+  return io(initial);
+}
+```
+
+## Hydration Boundary
+
+```tsx
+// app/dashboard/page.tsx (Server Component)
+import { createStore } from '@/lib/store';
+import { DashboardClient } from './dashboard-client';
+
+export default async function Page() {
+  const user = await fetch('https://example.com/api/me').then((r) => r.json());
+  const serverStore = createStore({ count: 0, user });
+  return <DashboardClient initialState={serverStore.snapshot()} />;
+}
+```
+
+Pass only serializable `initialState`.
+
+## Client Reconstruction
+
+```tsx
+// app/dashboard/dashboard-client.tsx
+'use client';
+
+import { useRef } from 'react';
+import { useIO } from '@iostore/react';
+import { createStore, type AppState } from '@/lib/store';
+
+export function DashboardClient({ initialState }: { initialState: AppState }) {
+  const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createStore(initialState);
+  }
+
+  const count = useIO(storeRef.current.count);
+  return <button onClick={() => storeRef.current?.count.set((v) => v + 1)}>{count}</button>;
+}
+```
+
+## API Quick Reference
+
+| Phase | API | Notes |
+| --- | --- | --- |
+| Build initial state | `io(initialState)` | Create per request to isolate users. |
+| Export boundary data | `scope.snapshot()` | Produces serializable hydration payload. |
+| Client reconstruction | `createStore(initialState)` | Restores runtime behavior post-hydration. |
+| Component subscription | `useIO(unitOrDerived)` | Consume in client components. |
+| Client writes | `unit.set(next | updater)` | Keep interactive updates explicit. |
+
+## Wrong vs Recommended
+
+~~~ts
+// Wrong: module-level singleton in SSR
+export const store = io({ count: 0 });
+
+// Recommended: create per request
+export const createStore = (initial: AppState) => io(initial);
+~~~
+
+~~~tsx
+// Wrong: passing runtime store instance to client
+// <Client store={serverStore} />
+
+// Recommended: pass serializable state only
+// <Client initialState={serverStore.snapshot()} />
+~~~
+
+## Common Issues
+
+- Passing `io(...)` instances through client props.
+- Global singleton stores in server runtime.
+- Mismatched server/client initial state causing hydration warnings.
+
+## Practical Guidance
+
+- Keep `initialState` strongly typed.
+- Split stores by route/domain for clearer ownership.
+- Add runtime behaviors like `persist` after hydration on client side.
+
+## Next Steps
+
+- Use [React](/en/frameworks/react/) `useIOSelector` for finer subscription boundaries.
+- Add [Persist](/en/cookbook/persist/) for client durability.

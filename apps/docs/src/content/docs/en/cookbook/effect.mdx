@@ -1,0 +1,152 @@
+---
+title: Effect
+description: Declare side effects and cleanup in a behavior with consistent lifecycle semantics.
+sidebar:
+  order: 7
+---
+
+Effect turns "value change -> side effect -> cleanup" into a reusable runtime behavior.
+
+## What It Is
+
+- Core behavior: side-effect wrapper around value updates.
+- Value: centralized side-effect logic with predictable cleanup timing.
+- Supports: immediate run mode and custom error handling.
+
+## When to Use
+
+- You need to bind requests, telemetry, logging, or timers to state changes.
+- You want cleanup on rerun/destroy without scattering lifecycle code.
+- You want side effects outside components for reuse and testing.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  effect((value, previous) => {
+    console.log('effect run', { value, previous });
+  }),
+]);
+```
+
+## Live Example
+
+Increment the value and destroy the view to observe effect runs and cleanup runs.
+
+```tsx live props={{ "client:load": true }}
+import { useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const metrics = io({ runs: 0, cleanups: 0 });
+const view = withBehaviors(store, [
+  effect(
+    () => {
+      metrics.runs.set((n) => n + 1);
+      return () => metrics.cleanups.set((n) => n + 1);
+    },
+    { immediate: false },
+  ),
+]);
+
+function EffectLiveDemo() {
+  const [destroyed, setDestroyed] = useState(false);
+  const value = useIO(view);
+  const stats = useIO(metrics);
+
+  return (
+    <section className="io-live">
+      <div>Current value: {value}</div>
+      <div>Effect runs: {stats.runs}</div>
+      <div>Cleanup runs: {stats.cleanups}</div>
+      <div className="io-live__row">
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => store.set((n) => n + 1)}
+          disabled={destroyed}
+        >
+          count +1
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          disabled={destroyed}
+          onClick={() => {
+            view.destroy();
+            setDestroyed(true);
+          }}
+        >
+          destroy view
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default EffectLiveDemo;
+```
+
+Watch for this: each value change reruns effect, and cleanup fires before rerun or on destroy.
+
+## Cleanup Function
+
+```ts
+effect((value) => {
+  const timer = setInterval(() => {
+    console.log('tick', value);
+  }, 1000);
+
+  return () => clearInterval(timer);
+});
+```
+
+Cleanup runs before next execution and when `view.destroy()` is called.
+
+## Key Options
+
+```ts
+effect(handler, {
+  immediate: true,
+  onError: (error) => console.error(error),
+});
+```
+
+- `immediate`: run once on mount (default `true`).
+- `onError`: handle exceptions from effect or cleanup.
+
+## Composition Example
+
+```ts
+import { throttle, effect, withBehaviors } from '@iostore/store/behavior';
+
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    sendMetric(value);
+  }),
+]);
+```
+
+## Common Mistakes
+
+- Writing back to the same state inside effect without guards.
+- Forgetting cleanup for timers/listeners.
+- Running expensive effects on high-frequency paths without rate control.
+
+## Practical Guidance
+
+- Keep side-effect orchestration in behavior layer; keep components view-focused.
+- For noisy input, use `throttle/debounce -> effect`.
+- Add `onError` for critical side effects to avoid silent failures.
+
+## Next Steps
+
+- Use [Throttle](/en/cookbook/throttle/) or [Debounce](/en/cookbook/debounce/) before effect in high-frequency paths.
+- Check [Behaviors Overview](/en/cookbook/overview/) for composition order guidance.

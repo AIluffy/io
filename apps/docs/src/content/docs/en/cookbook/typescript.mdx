@@ -1,0 +1,69 @@
+---
+title: TypeScript
+description: Use IO inference and path utilities to keep state contracts precise and maintainable.
+sidebar:
+  order: 4
+---
+
+IO provides strong inference by default; exported utility types help tighten cross-layer contracts.
+
+## What It Is
+
+- Inference source: `io()` returns strongly typed state nodes.
+- Core types: `IoUnit`, `IoNode`, `IoScope`, `IoUpdate`, `IoPatch`.
+- Path helpers: `IoPathOf<T>`, `IoPathValue<T, P>`, `UnwrapIo<T>`.
+
+## When to Use
+
+- You want to avoid repetitive manual type declarations.
+- You expose path/value contracts across module boundaries.
+- You build helper APIs that accept typed state paths.
+
+## Core Usage
+
+### 1) Inference-First (default)
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.count.get();
+store.user.name.set('Lin');
+```
+
+### 2) Path Type Utilities
+
+```ts
+import type { IoPathOf, IoPathValue } from '@iostore/store';
+
+type Store = { user: { name: string }; count: number };
+
+type Path = IoPathOf<Store>;
+type NameValue = IoPathValue<Store, ['user', 'name']>;
+```
+
+## Common Type Quick Reference
+
+- `IoUnit<T>`: leaf unit.
+- `IoNode<T>`: tree node.
+- `IoScope<T>`: object scope.
+- `IoUpdate` / `IoPatch`: update log structures.
+- `UnwrapIo<T>`: extract plain data shape from `io()` result.
+
+## Common Mistakes
+
+- Over-annotating local code where inference already works.
+- Using broad `string[]` paths and losing compile-time safety.
+- Exposing internal complex node types across public boundaries.
+
+## Practical Guidance
+
+- Prefer inference as the default.
+- Add explicit types at API boundaries only.
+- Use `IoPathOf` / `IoPathValue` for path-based utilities.
+
+## Next Steps
+
+- See [Derived Values](/en/cookbook/derived/) for typed selectors.
+- Review [Testing](/en/cookbook/testing/) examples.

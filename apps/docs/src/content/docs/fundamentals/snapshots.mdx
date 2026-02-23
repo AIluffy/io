@@ -1,0 +1,84 @@
+---
+title: 快照
+description: 冻结读取、缓存机制与 snapshot/get 的正确使用方式。
+sidebar:
+  order: 5
+---
+
+快照是 IO 读取模型的核心：它提供可安全传递的冻结数据，并通过缓存降低重复构建成本。
+
+## 1. 快照是什么
+
+- `snapshot()` 返回冻结后的结构化值，适合给 UI、日志、网络层使用。
+- 快照不会允许外部直接修改内部状态，避免“读到的数据被误改”。
+- 在树结构中，快照会复用未变路径，减少不必要的对象重建。
+
+## 2. `snapshot()` 与 `get()` 的区别
+
+- `snapshot()`：读取冻结值，用于展示与跨边界传递。
+- `get()`：读取当前值，并参与依赖追踪（如 `derived()`）。
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const snap = store.snapshot();
+const value = store.count.get();
+```
+
+一句话判断：
+
+- 给“外部”用（组件、API、日志）优先 `snapshot()`
+- 给“计算逻辑”用（派生、局部路径计算）优先 `get()`
+
+## 3. 快照为什么要冻结
+
+- 防止 UI 层意外修改状态引用。
+- 保证快照可安全缓存与复用。
+- 保证 Debug / Replay 时前后状态可稳定对比。
+
+## 4. 快照缓存如何工作
+
+IO 会缓存树节点快照，仅在“脏路径”发生变化时重建对应局部，而不是每次全量复制。
+
+这意味着：
+
+- 频繁读取 `snapshot()` 的成本通常可控。
+- 深层结构更新时，未变分支可复用旧快照引用。
+
+## 5. 常见使用模式
+
+### UI 展示
+
+```ts
+const viewModel = store.snapshot();
+render(viewModel);
+```
+
+### 派生计算
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+const total = derived(store, (s) => s.items.reduce((acc, x) => acc + x.price, 0));
+```
+
+### 跨层传递（日志/网络）
+
+```ts
+const payload = store.snapshot();
+send(payload);
+```
+
+## 6. 常见误区
+
+- 误区：`get()` 和 `snapshot()` 完全等价。  
+  实际：语义不同，`get()` 偏计算，`snapshot()` 偏边界传递。
+- 误区：拿到快照后直接改对象就能回写状态。  
+  实际：快照是只读视图，状态变更应通过 `set/commit`。
+
+## 下一步
+
+- 了解 [更新日志](/fundamentals/update-log/) 的 patch 结构。
+- 学习 [订阅](/cookbook/subscriptions/) 的值与更新区别。

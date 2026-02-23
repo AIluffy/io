@@ -1,0 +1,86 @@
+---
+title: 从 Redux 迁移
+description: 将 reducer/action 模式迁移为路径更新与显式动作函数。
+sidebar:
+  order: 5
+---
+
+本页适合希望减少样板代码、但依然保留可追踪更新链路的 Redux 项目。
+
+## 何时优先迁移
+
+- reducer/action 规模持续增长，维护成本高。
+- 需要更自然的深层更新写法。
+- 希望保留时间回放、撤销重做能力。
+
+## 概念映射
+
+| Redux | IO 对应 | 说明 |
+| --- | --- | --- |
+| `createStore + reducer` | `io(initialState)` + 动作函数 | 减少样板，保留显式写入口。 |
+| `dispatch(action)` | 调用动作函数 | 行为边界从 action type 迁移到函数。 |
+| selector | 路径 Unit / `useIOSelector` | 订阅更细粒度。 |
+| devtools/time travel | 更新日志 + `createHistory` | 保留回放能力。 |
+
+## 迁移步骤
+
+### 1) 先迁移 reducer 主路径
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+export const inc = () => store.count.set((v) => v + 1);
+export const setCount = (value: number) => store.count.set(value);
+```
+
+### 2) 迁移多字段更新
+
+```ts
+const user = io({ name: 'Ada', age: 18 });
+
+export const updateProfile = (name: string, age: number) => {
+  user.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 3) 接入回放能力
+
+```ts
+import { createHistory } from '@iostore/store/patches';
+
+const history = createHistory(store);
+history.undo();
+history.redo();
+```
+
+### 4) React 订阅读取
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## 常见问题
+
+- 机械保留大量 `type` 常量，导致迁移后仍然冗长。
+- 仍然以根对象订阅替代路径订阅。
+- 多字段变更未归并，通知过密。
+
+## 验收清单
+
+- 核心 reducer 已收敛为动作函数。
+- 关键流程已支持 `undo/redo` 或更新回放。
+- 主要页面已路径订阅，渲染范围可控。
+
+## 下一步
+
+- 阅读 [更新日志](/fundamentals/update-log/) 与 [组合](/cookbook/composition/)。

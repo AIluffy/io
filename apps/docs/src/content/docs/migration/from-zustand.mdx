@@ -1,0 +1,99 @@
+---
+title: 从 Zustand 迁移
+description: 将 create/set/selector/middleware 模式平滑迁移到 IO。
+sidebar:
+  order: 2
+---
+
+本页适合已经在 React 中使用 Zustand，希望保留轻量心智、同时增强深层状态可维护性的团队。
+
+## 何时优先迁移
+
+- 深层对象更新越来越多，`set` 回调逻辑膨胀。
+- 需要更清晰的路径级订阅边界。
+- 需要回放、撤销或 patch 级更新追踪。
+
+## 概念映射
+
+| Zustand | IO 对应 | 说明 |
+| --- | --- | --- |
+| `create((set, get) => ...)` | `io(initialState)` | 用树结构直接建模。 |
+| `set((s) => ...)` | `unit.set(...)` / `scope.commit(...)` | 单字段用 `set`，多字段用 `commit`。 |
+| `useStore(selector)` | `useIO(pathUnit)` / `useIOSelector(scope, selector)` | 优先路径订阅。 |
+| middleware | behavior (`persist` / `devtools`) | 能力扩展从中间件迁移到行为组合。 |
+
+## 迁移步骤
+
+### 1) 先迁移状态定义
+
+Zustand：
+
+```ts
+const useStore = create((set) => ({
+  count: 0,
+  inc: () => set((s) => ({ count: s.count + 1 })),
+}));
+```
+
+IO：
+
+```ts
+import { io } from '@iostore/store';
+
+export const store = io({ count: 0 });
+export const inc = () => store.count.set((v) => v + 1);
+```
+
+### 2) 迁移组件读取
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const count = useIO(store.count);
+  return <button onClick={inc}>{count}</button>;
+}
+```
+
+### 3) 迁移多字段写入
+
+```ts
+const profile = io({ name: 'Ada', age: 18 });
+
+export const updateProfile = (name: string, age: number) => {
+  profile.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 4) 迁移中间件能力
+
+```ts
+import { withBehaviors, persist, devtools } from '@iostore/store/behavior';
+import { createIoDevtools } from '@iostore/devtools';
+
+const view = withBehaviors(store, [
+  persist({ key: 'app' }),
+  devtools({ target: store, create: createIoDevtools }),
+]);
+```
+
+## 常见问题
+
+- 把整个 `store` 传给大量组件，导致订阅过粗。
+- 本可用路径 Unit 的地方继续写复杂 selector。
+- 将所有写入都塞在组件里，缺少动作函数边界。
+
+## 验收清单
+
+- 主要页面都已改为路径订阅。
+- 多字段更新已统一使用 `commit` 或 `batch`。
+- persist/devtools 行为已替换原中间件链路。
+- 关键交互在 DevTools 中可追踪。
+
+## 下一步
+
+- 阅读 [状态模式总览](/cookbook/overview/)。
+- 查看 [订阅](/cookbook/subscriptions/) 与 [组合](/cookbook/composition/)。

@@ -1,0 +1,113 @@
+---
+title: Nuxt
+description: SSR + hydration in Nuxt 3 with clean runtime boundaries.
+sidebar:
+  order: 8
+---
+
+Nuxt integration follows the same contract: request-scoped creation, plain payload boundaries, and runtime reconstruction.
+
+## When to Use
+
+- Nuxt pages/layouts with server prefetch.
+- Shared initial state across SSR and client runtime.
+- Multi-request safety in server environments.
+
+## Core Principles
+
+- Create stores in request flow, not module scope.
+- Keep `useAsyncData` payload serializable.
+- Flow: `useAsyncData -> initialState -> io(initialState)`.
+
+## Per-Request Store
+
+```vue
+<!-- pages/dashboard.vue -->
+<script setup lang="ts">
+import { provide } from 'vue';
+import { io } from '@iostore/store';
+
+type AppState = {
+  count: number;
+  profile: { id: string; name: string } | null;
+};
+
+const { data } = await useAsyncData('dashboard', () =>
+  $fetch<{ profile: AppState['profile'] }>('/api/dashboard')
+);
+
+const initialState: AppState = {
+  count: 0,
+  profile: data.value?.profile ?? null,
+};
+
+const store = io(initialState);
+provide('io-store', store);
+</script>
+```
+
+## Component Consumption
+
+```vue
+<!-- components/dashboard-panel.vue -->
+<script setup lang="ts">
+import { inject } from 'vue';
+import { ioRef } from '@iostore/vue';
+import type { IoScope } from '@iostore/store';
+
+type AppState = {
+  count: number;
+  profile: { id: string; name: string } | null;
+};
+
+const store = inject<IoScope<AppState>>('io-store');
+if (!store) throw new Error('io-store is not provided');
+
+const count = ioRef(store.count);
+</script>
+```
+
+## API Quick Reference
+
+| Phase | API | Notes |
+| --- | --- | --- |
+| Server prefetch | `useAsyncData(key, fetcher)` | Fetches and shapes initial payload. |
+| Create state | `io(initialState)` | Construct store inside request flow. |
+| Share store | `provide/inject` | Propagate store through component tree. |
+| Component read/write | `useIO` / `ioRef` | Separate display reads and input writes. |
+| Runtime writes | `unit.set(next | updater)` | Keep mutation path observable. |
+
+## Wrong vs Recommended
+
+~~~ts
+// Wrong: module-scope store creation in SSR runtime
+// const store = io({ count: 0 });
+
+// Recommended: create in setup/request flow
+const store = io(initialState);
+~~~
+
+~~~ts
+// Wrong: putting runtime store into payload
+// return { store }
+
+// Recommended: payload contains plain state only
+// return { initialState }
+~~~
+
+## Common Issues
+
+- Module-level singleton store in SSR runtime.
+- Passing store instances through Nuxt payload.
+- Missing null-check for injected store.
+
+## Practical Guidance
+
+- Reuse one `AppState` type across server/client.
+- Prefer path-level subscriptions in components.
+- Use [Schedule](/en/cookbook/schedule/) for noisy update paths.
+
+## Next Steps
+
+- Review [Vue](/en/frameworks/vue/) `useIO` / `ioRef` patterns.
+- Add [Persist](/en/cookbook/persist/) for local persistence.

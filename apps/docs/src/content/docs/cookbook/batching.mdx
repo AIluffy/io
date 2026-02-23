@@ -1,0 +1,74 @@
+---
+title: 批处理
+description: 用 batch 合并同一事务内的多次写入，降低通知与渲染开销。
+sidebar:
+  order: 3
+---
+
+`batch()` 把一组写入视为一次事务，最终只发出合并后的通知。
+
+## 是什么
+
+- 本质：通知层合并，不改变最终状态结果。
+- 影响：减少重复渲染、减少 patch 噪音。
+- 适用：一次交互内多个字段联动更新。
+
+## 何时使用
+
+- 表单提交后同时更新数据与 UI 标志位。
+- 列表操作涉及多个路径写入。
+- 需要保证订阅回调只触发一次“最终态”。
+
+## 核心 API
+
+```ts
+import { batch, io } from '@iostore/store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
+
+## 最小示例
+
+```ts
+import { batch, io } from '@iostore/store';
+
+const store = io({ a: 0, b: 0 });
+
+store.subscribe((value) => {
+  console.log('value', value);
+});
+
+batch(() => {
+  store.a.set(1);
+  store.b.set(2);
+});
+
+// 仅一次订阅通知：{ a: 1, b: 2 }
+```
+
+## 通知范围
+
+- `subscribe`：合并值通知。
+- `subscribeUpdate`：合并 patch 更新（内部 merge）。
+
+## 常见误区
+
+- 把无关交互硬塞进同一个 batch：会降低调试可读性。
+- 误以为 batch 会改变写入顺序：它合并通知，不重排语义。
+- 高频离散写入不做批处理：会产生可避免的渲染抖动。
+
+## 实践建议
+
+- 以“一个用户动作 = 一个 batch”作为默认粒度。
+- 多字段写入优先批处理，再做性能调优。
+- 需要可读性更强的结构化写入时，可考虑 `commit`。
+
+## 下一步
+
+- 结合 [订阅](/cookbook/subscriptions/) 理解通知差异。
+- 在 [性能与订阅策略](/cookbook/performance-subscription/) 中做组件级选型。

@@ -1,0 +1,48 @@
+---
+title: "useIO"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<T>(source: IoSource<T>, options?: IoReactOptions) => T
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<T>` |
+| options | `IoReactOptions` |
+
+## Returns
+
+`T`
+
+## Minimal Example
+
+```ts
+import { useIO } from '@iostore/react';
+
+const result = useIO(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useIOSelector](../use-ioselector/)
+
+## Source
+
+- `packages/io-react/src/lib/use-io.ts`

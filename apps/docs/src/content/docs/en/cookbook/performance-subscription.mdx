@@ -1,0 +1,80 @@
+---
+title: Performance and Subscription Strategy
+description: Use path Units, selectors, and batched writes to control render boundaries and update cost.
+sidebar:
+  order: 7
+---
+
+Performance tuning is mostly about aligning subscription boundaries with actual change boundaries.
+
+## What It Is
+
+This guide answers three questions:
+
+- What to subscribe to: root, path Unit, or selector?
+- When to merge writes: `batch` / `commit`.
+- How to quickly diagnose over-rendering.
+
+## Decision Table
+
+| Scenario | Recommended | Why |
+| --- | --- | --- |
+| You already have a leaf path (for example `store.user.name`) | `useIO(pathUnit)` | Smallest subscription surface |
+| You need a projected subset from root state | `useIOSelector(store, selector)` | Keeps structure while limiting render scope |
+| Small component reads full value | `useIO(store)` | Lowest cognitive overhead |
+| One user action writes multiple fields | `batch` or `commit` | Merges notifications and reduces intermediate renders |
+
+## Minimal Strategy
+
+### 1) Prefer path subscriptions
+
+```tsx
+const name = useIO(userStore.profile.name);
+```
+
+### 2) Use selector only when projection is needed
+
+```tsx
+const view = useIOSelector(store, (s) => ({
+  count: s.count,
+  parity: s.count % 2,
+}));
+```
+
+If selector returns objects, provide `isEqual`:
+
+```tsx
+const parity = useIOSelector(store, (s) => ({ p: s.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+### 3) Merge writes on the write side
+
+```ts
+batch(() => {
+  store.form.name.set('Ada');
+  store.form.email.set('ada@example.com');
+  store.ui.dirty.set(true);
+});
+```
+
+## Common Anti-Patterns
+
+- Subscribing list-item components to large root objects.
+- Returning new objects from selectors without equality guards.
+- Splitting one interaction into many scattered `set` calls.
+- Replacing whole arrays while still subscribing to stale path Units.
+
+## Fast Diagnosis Flow
+
+1. Find frequently re-rendering components and identify their subscription target.
+2. Narrow root subscriptions to path subscriptions.
+3. Add `isEqual` for object-returning selectors.
+4. Convert multi-write interactions to `batch`/`commit`.
+5. Validate with DevTools patch streams.
+
+## Next Steps
+
+- Revisit [Quick Start](/en/start-here/quick-start/) path-subscription examples.
+- Pair [Subscriptions](/en/cookbook/subscriptions/) with [Batching](/en/cookbook/batching/) for end-to-end optimization.

@@ -54,13 +54,13 @@ export function IoPlayground() {
         <div className="io-playground__kicker">Actions</div>
         <div className="io-playground__buttons">
           <button
-            className="io-playground__button"
+            className="io-playground__button io-playground__button--primary"
             onClick={() => store.counter.set((v) => v + 1)}
           >
           counter +1
           </button>
           <button
-            className="io-playground__button"
+            className="io-playground__button io-playground__button--primary"
             onClick={() =>
               batch(() => {
                 store.counter.set((v) => v + 1);

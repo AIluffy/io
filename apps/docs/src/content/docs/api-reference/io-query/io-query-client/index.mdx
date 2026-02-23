@@ -1,0 +1,58 @@
+---
+title: "IoQueryClient"
+description: "类型 API 参考。"
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoQueryClient
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| fetchQuery | `<TData>(options: IoFetchQueryOptions<TData>) => Promise<TData>` |
+| prefetchQuery | `<TData>(options: IoFetchQueryOptions<TData>) => Promise<void>` |
+| getQueryData | `<TData>(key: IoQueryKey) => TData \| undefined` |
+| setQueryData | `<TData>(key: IoQueryKey, updater: IoQueryDataUpdater<TData>, options?: IoSetQueryDataOptions) => TData` |
+| getQueryState | `<TData, TError = unknown>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
+| invalidateQueries | `(filter?: IoQueryFilter, options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
+| cancelQueries | `(filter?: IoQueryFilter) => number` |
+| removeQueries | `(filter?: IoQueryFilter, options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
+| subscribe | `(listener: (event: IoQueryEvent) => void, filter?: IoQueryFilter) => Unsubscribe` |
+| clear | `() => void` |
+
+## 最小示例
+
+```ts
+import type { IoQueryClient } from '@iostore/query';
+
+let value!: IoQueryClient;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoFetchQueryOptions](../io-fetch-query-options/)
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryClientOptions](../io-query-client-options/)
+- [IoQueryDataUpdater](../io-query-data-updater/)
+
+## 源码
+
+- `packages/io-query/src/lib/query-client.ts`

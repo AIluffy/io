@@ -1,0 +1,51 @@
+---
+title: "debounce"
+description: "行为 API：在静默窗口后下发通知。"
+---
+
+## 何时使用
+
+- 输入联想、搜索等只关心最终结果的场景。
+- 希望合并突发更新并减少不必要副作用。
+
+## 签名
+
+```ts
+<T>(waitMs: number, options?: DebounceBehaviorOptions) => IoBehavior<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| waitMs | `number` |
+| options | `DebounceBehaviorOptions` |
+
+## 返回
+
+`IoBehavior<T>`
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(200)]);
+```
+
+## 常见误用
+
+- 只加 `debounce`，但在上游依然同步触发昂贵副作用。
+- 将 `waitMs` 设得过大，导致交互反馈明显延迟。
+
+## 相关 API
+
+- [throttle](../throttle/)
+- [effect](../effect/)
+- [withBehaviors](../with-behaviors/)
+
+## 源码
+
+- `packages/io/src/lib/extensions/cookbook/debounce.ts`

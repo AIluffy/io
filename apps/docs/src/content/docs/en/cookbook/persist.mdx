@@ -1,0 +1,178 @@
+---
+title: Persist
+description: Persist state to storage with support for versioning, partial persistence, and cross-tab sync.
+sidebar:
+  order: 2
+---
+
+Persist writes updated state values to storage (default `localStorage`).
+
+## What It Is
+
+- Core behavior: serialize state and store it outside memory.
+- Value: refresh-safe recovery and cross-session continuity.
+- Supports: custom storage, version policy, partial persistence, and tab sync.
+
+## When to Use
+
+- State must survive page refresh.
+- Critical fields (for example token/preferences) need durable storage.
+- Multiple tabs should stay aligned.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+## Live Example
+
+Try incrementing and clearing storage to compare in-memory value with persisted value.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
+
+const PERSIST_KEY = 'docs-live-persist-counter-en';
+const store = io(0);
+const view = withBehaviors(store, [persist({ key: PERSIST_KEY })]);
+
+function PersistLiveDemo() {
+  const value = useIO(view);
+  const [storedRaw, setStoredRaw] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+  }, [value]);
+
+  return (
+    <section className="io-live">
+      <div>Current count: {ready ? value : 0}</div>
+      <div>localStorage raw value: {ready ? (storedRaw ?? 'null') : 'null'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={() => view.set((n) => n + 1)}>
+          +1
+        </button>
+        <button type="button" className="io-live__button" onClick={() => view.set(0)}>
+          Reset to 0
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            localStorage.removeItem(PERSIST_KEY);
+            setStoredRaw(localStorage.getItem(PERSIST_KEY));
+          }}
+        >
+          Clear storage
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default PersistLiveDemo;
+```
+
+Watch for this: updates via `view.set()` immediately sync to storage, and manual clear is reflected right away.
+
+## Key Capabilities
+
+### Custom Storage
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+`storage.getItem/setItem` can be sync or async (`Promise`).
+
+### Version Policy (Newest Wins)
+
+```ts
+persist({
+  key: 'count',
+  version: 2,
+});
+```
+
+When stored data version differs from current `version`, Persist ignores old payload and rewrites using the current schema.
+
+### Partial Persistence
+
+```ts
+persist({
+  key: 'profile',
+  partialize: (value) => ({ token: (value as { token: string }).token }),
+  merge: (persisted, current) => ({
+    ...(current as Record<string, unknown>),
+    ...(persisted as Record<string, unknown>),
+  }),
+});
+```
+
+### Throttled Writes
+
+```ts
+persist({
+  key: 'count',
+  throttleMs: 100,
+});
+```
+
+### Cross-Tab Sync
+
+```ts
+persist({
+  key: 'count',
+  syncTabs: true,
+});
+```
+
+### Custom Serialization
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## Common Mistakes
+
+- Treating Persist as transaction infrastructure.
+- Setting too-large `throttleMs` on critical paths.
+- Misaligning `partialize` and `merge`, causing incomplete restore shapes.
+
+## Practical Guidance
+
+- Keep throttle windows small for critical user data.
+- Use `version` explicitly on schema changes.
+- Combine with [Schedule](/en/cookbook/schedule/) only after correctness is ensured.
+
+## Next Steps
+
+- Combine with [Schedule](/en/cookbook/schedule/) to coalesce notifications.
+- See the [Behaviors Overview](/en/cookbook/overview/).

@@ -1,0 +1,52 @@
+---
+title: "useQuery"
+description: "Function API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData>(options: IoUseQueryOptions<TData>) => IoSolidQueryResult<TData>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseQueryOptions<TData>` |
+
+## Returns
+
+`IoSolidQueryResult<TData>`
+
+## Minimal Example
+
+```ts
+import { useQuery } from '@iostore/solid';
+
+const result = useQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useIO](../use-io/)
+- [useResource](../use-resource/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-query.ts`

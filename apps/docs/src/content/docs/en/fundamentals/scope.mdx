@@ -1,0 +1,108 @@
+---
+title: Scope
+description: 'Object scope and deep paths: structure, path updates, commit, and shallow mode.'
+sidebar:
+  order: 3
+---
+
+Scope is created when `io()` receives an object. In default deep mode, it expands into a subscribable Tree where every path is an operational Unit.
+
+## 1. What Scope Is
+
+- **Structure container**: organizes state by domain hierarchy.
+- **Path atomization**: each path supports `get/set/subscribe`.
+- **Controlled updates**: use path updates or grouped `commit` updates.
+
+## 2. When to Use Scope
+
+- Your state is object-shaped and deeply nested.
+- You want components to subscribe only to specific paths.
+- One interaction often updates multiple fields together.
+
+## 3. Basic Usage (Deep Paths)
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({
+  user: { profile: { name: 'Ada' } },
+  items: [{ id: 1, count: 0 }],
+});
+
+store.user.profile.name.set('Grace');
+store.items[0].count.set((v) => v + 1);
+```
+
+You can think of this as automatic atomization: Scope organizes structure, while path Units provide minimal update granularity.
+
+## 4. Core Operations (Path Updates + commit)
+
+```ts
+const store = io({
+  user: { profile: { name: 'Ada', age: 36 } },
+  dashboard: { filter: 'all' },
+});
+
+store.user.profile.name.set('Grace');
+store.user.profile.age.set((v) => v + 1);
+store.dashboard.filter.set('open');
+```
+
+```ts
+store.commit((draft) => {
+  draft.user.profile.name = 'Lin';
+  draft.dashboard.filter = 'done';
+});
+```
+
+- Path updates: `store.a.b.c.set(...)`
+- Path subscriptions: `store.a.b.c.subscribe(...)`
+- Grouped updates: `commit((draft) => { ... })`
+- Frozen reads: `snapshot()`
+
+## 5. Deep Mode vs Shallow Mode
+
+Deep mode is the default. If you only want first-level Units, use shallow mode:
+
+```ts
+const shallowStore = io({ name: 'Ada', age: 36 }, { shallow: true });
+
+shallowStore.name.set('Lin');
+```
+
+This is useful for flatter stores with stable boundaries.
+
+## 6. Example: Multi-subtree Updates
+
+```ts
+const dashboardStore = io({
+  user: { name: 'Ada', role: 'admin' },
+  board: {
+    columns: [
+      { id: 'todo', cards: [{ id: 'c1', done: false }] },
+      { id: 'done', cards: [] },
+    ],
+  },
+  notifications: [{ id: 'n1', read: false }],
+});
+
+dashboardStore.user.name.set('Grace');
+dashboardStore.board.columns[0].cards[0].done.set(true);
+dashboardStore.notifications[0].read.set(true);
+```
+
+These updates touch only targeted paths and avoid whole-object replacement.
+
+## 7. Constraints and Pitfalls
+
+- Deep mode supports **plain objects** and **arrays** only.
+- Class instances or non-plain objects throw `TypeError`.
+- Reuse existing IO nodes with `link()`, see [Composition](/en/cookbook/composition/).
+- Prefer path-level updates over full-object replacement.
+- Subscribe to the narrowest path needed by a component.
+
+## Next Steps
+
+- Read [Array](/en/fundamentals/array/) for array-node semantics.
+- Read [Snapshots](/en/fundamentals/snapshots/) for freeze/cache behavior.
+- Read [Architecture Overview](/en/fundamentals/architecture/) for runtime internals.

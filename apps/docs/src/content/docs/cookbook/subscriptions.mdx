@@ -1,0 +1,80 @@
+---
+title: 订阅
+description: 理解 subscribe 与 subscribeUpdate 的职责边界与使用方式。
+sidebar:
+  order: 2
+---
+
+IO 有两类订阅：读“当前值”的 `subscribe`，读“变化过程”的 `subscribeUpdate`。
+
+## 是什么
+
+- `subscribe`：给 UI/计算层提供最新值。
+- `subscribeUpdate`：给日志/同步/审计提供 patch 流。
+- 两者可并存，分别服务“展示”和“追踪”。
+
+## 何时使用
+
+- 组件渲染、派生计算：优先 `subscribe`。
+- 回放、远端同步、审计日志：使用 `subscribeUpdate`。
+- 需要更细粒度更新：订阅路径 Unit，而不是根节点。
+
+## 核心 API
+
+### 1) 值订阅
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const stop = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+```
+
+### 2) 更新订阅
+
+```ts
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+const stopName = store.user.name.subscribe((v) => console.log('name', v));
+const stopRoot = store.subscribeUpdate((u) => console.log('patches', u.patches));
+
+store.user.name.set('Lin');
+
+stopName();
+stopRoot();
+```
+
+## 订阅粒度建议
+
+- 叶子优先：`store.user.name.subscribe(...)`。
+- 根节点谨慎：仅在你确实需要全量更新流时使用。
+- 组件拆分优先通过“路径订阅”完成，而不是在回调里做大量判断。
+
+## 常见误区
+
+- 用 `subscribeUpdate` 驱动 UI：通常会引入不必要复杂度。
+- 根节点重度订阅：会扩大无关变更影响面。
+- 忘记退订：会造成内存泄漏和重复副作用。
+
+## 实践建议
+
+- 统一约定：UI 层只消费值订阅，基础设施层消费更新订阅。
+- 在生命周期结束时始终执行退订函数。
+- 与 [批处理](/cookbook/batching/) 配合，减少一次交互的通知次数。
+
+## 下一步
+
+- 查看 [更新日志](/fundamentals/update-log/) 理解 patch 结构。
+- 结合 [性能与订阅策略](/cookbook/performance-subscription/) 做订阅选型。

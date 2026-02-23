@@ -95,7 +95,7 @@ export function IoDevtoolsTodoExample() {
             onChange={(event) => store.draft.set(event.currentTarget.value)}
             placeholder="What needs to be done?"
           />
-          <button className="io-playground__button" type="submit">
+          <button className="io-playground__button io-playground__button--primary" type="submit">
             Add task
           </button>
         </form>

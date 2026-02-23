@@ -1,0 +1,48 @@
+---
+title: "ioRef"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<T>(unit: IoUnit<T>, options?: IoVueOptions) => Ref<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| unit | `IoUnit<T>` |
+| options | `IoVueOptions` |
+
+## Returns
+
+`Ref<T, T>`
+
+## Minimal Example
+
+```ts
+import { ioRef } from '@iostore/vue';
+
+const result = ioRef(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useIO](../use-io/)
+
+## Source
+
+- `packages/io-vue/src/lib/adapters.ts`

@@ -1,0 +1,152 @@
+---
+title: Effect
+description: 以行为方式声明副作用与清理逻辑，并和状态更新保持一致生命周期。
+sidebar:
+  order: 7
+---
+
+Effect 把“值变化 -> 执行业务副作用 -> 清理资源”收敛到统一行为中。
+
+## 是什么
+
+- 本质：对订阅值变化的副作用包装。
+- 价值：副作用逻辑集中、清理时机可控、可与其他行为组合。
+- 特点：支持错误处理与初始化执行策略。
+
+## 何时使用
+
+- 需要把请求、埋点、日志、定时器等副作用与状态变化绑定。
+- 你希望在重跑或销毁时自动清理资源。
+- 你希望副作用逻辑脱离组件，便于复用和测试。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  effect((value, previous) => {
+    console.log('effect run', { value, previous });
+  }),
+]);
+```
+
+## Live 示例
+
+你可以递增计数并销毁视图，观察 effect 执行与 cleanup 次数。
+
+```tsx live props={{ "client:load": true }}
+import { useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { effect, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const metrics = io({ runs: 0, cleanups: 0 });
+const view = withBehaviors(store, [
+  effect(
+    () => {
+      metrics.runs.set((n) => n + 1);
+      return () => metrics.cleanups.set((n) => n + 1);
+    },
+    { immediate: false },
+  ),
+]);
+
+function EffectLiveDemo() {
+  const [destroyed, setDestroyed] = useState(false);
+  const value = useIO(view);
+  const stats = useIO(metrics);
+
+  return (
+    <section className="io-live">
+      <div>当前值：{value}</div>
+      <div>effect 执行次数：{stats.runs}</div>
+      <div>cleanup 执行次数：{stats.cleanups}</div>
+      <div className="io-live__row">
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => store.set((n) => n + 1)}
+          disabled={destroyed}
+        >
+          count +1
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          disabled={destroyed}
+          onClick={() => {
+            view.destroy();
+            setDestroyed(true);
+          }}
+        >
+          destroy view
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default EffectLiveDemo;
+```
+
+观察点：每次值变化会触发新一轮 effect，并在重跑前或销毁时调用 cleanup。
+
+## 清理函数
+
+```ts
+effect((value) => {
+  const timer = setInterval(() => {
+    console.log('tick', value);
+  }, 1000);
+
+  return () => clearInterval(timer);
+});
+```
+
+当值再次变化或 `view.destroy()` 执行时，清理函数会被调用。
+
+## 关键选项
+
+```ts
+effect(handler, {
+  immediate: true,
+  onError: (error) => console.error(error),
+});
+```
+
+- `immediate`：挂载后是否立即执行一次（默认 `true`）。
+- `onError`：effect/cleanup 抛错时的错误处理。
+
+## 组合示例
+
+```ts
+import { throttle, effect, withBehaviors } from '@iostore/store/behavior';
+
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    sendMetric(value);
+  }),
+]);
+```
+
+## 常见误区
+
+- 在 effect 里直接写回同一状态且无保护：容易形成循环触发。
+- 忘记返回 cleanup：可能遗留计时器或监听器。
+- 在高频场景直接 effect 请求：应先节流或防抖。
+
+## 实践建议
+
+- 把副作用放在行为层，组件只负责展示与交互。
+- 高频输入链路优先 `throttle/debounce -> effect`。
+- 对关键副作用配置 `onError`，避免静默失败。
+
+## 下一步
+
+- 在高频场景下先用 [Throttle](/cookbook/throttle/) 或 [Debounce](/cookbook/debounce/)。
+- 了解 [行为扩展概览](/cookbook/overview/) 的组合顺序建议。

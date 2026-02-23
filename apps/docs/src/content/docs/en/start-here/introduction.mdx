@@ -1,0 +1,59 @@
+---
+title: Introduction
+description: Understand IO through its current package architecture and runtime layers.
+sidebar:
+  order: 1
+---
+
+IO is a TypeScript state management stack for deep state. It combines a core state runtime and framework adapters: update nested fields directly and subscribe to exact paths.
+
+## Architecture Layers (Current)
+
+- **`@iostore/store` (Core Layer)**: `io`/`ioTree`/`derived`, deep path updates, `snapshot`, patch/update log, and behavior extensions.
+- **`@iostore/<framework>` (Adapter Layer)**: React, Lynx, Vue, Svelte, and Solid integrations on top of a shared runtime contract.
+- **`@iostore/devtools` + `@iostore/devtools-react` (Tooling Layer)**: update-stream inspection, time travel, and diff debugging.
+
+IO is not just one package with hooks. It is a composable runtime architecture with adapters.
+
+## When to Choose IO
+
+- Your state is deeply nested and frequently updated.
+- You need path-level subscriptions to reduce unrelated re-renders.
+- You want patch-based replay/undo and better change traceability.
+- You want one state model across multiple frameworks.
+
+## Core Concepts
+
+- **Unit**: the smallest writable cell, with `get/set`.
+- **Tree**: objects/arrays expanded into a deep writable/subscribable graph.
+- **Derived**: read-only computed values with dependency tracking.
+- **Update Log**: each write emits `patch/update` entries.
+
+You can also think of a Unit as “atomic state”: `io(0)` is an atom, and in deep Trees every path is also an atom-like, subscribable unit.
+
+## Design Goals
+
+- **Direct deep updates**: `store.user.name.set('Ada')` without reducers.
+- **Snapshot safety**: reads return frozen snapshots, preventing accidental mutation.
+- **Traceable updates**: patch/update logs are first-class.
+- **Unified adapters**: framework integration through `snapshot()` + `subscribe()`.
+
+## Minimal Example (State)
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const doubled = derived(store, (s) => s.count * 2);
+
+store.count.set((v) => v + 1);
+console.log(doubled.get());
+```
+
+## Next Steps
+
+- Jump to the [Quick Start](/en/start-here/quick-start/).
+- Read [Architecture Overview](/en/fundamentals/architecture/) for runtime data flow.
+- Learn [Unit](/en/fundamentals/unit/) and [Scope](/en/fundamentals/scope/).
+- See [Integrations](/en/frameworks/vanilla/) for framework usage.

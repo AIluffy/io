@@ -1,0 +1,107 @@
+---
+title: Solid
+description: 使用 useIO 将 IO 节点接入 Solid 的细粒度响应系统。
+sidebar:
+  order: 6
+---
+
+`@iostore/solid` 的 `useIO` 返回 `Accessor`，天然契合 Solid 的响应式读取模型。
+
+## 适用场景
+
+- Solid 组件内按路径粒度订阅。
+- 派生值与组件渲染解耦。
+- 高频更新下保持稳定渲染开销。
+
+## 安装
+
+```bash
+npm i @iostore/store @iostore/solid
+```
+
+## 最小接入
+
+```tsx
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/solid';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value()}</button>;
+}
+```
+
+## 常用模式
+
+### 1) 使用派生值
+
+```tsx
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { useIO } from '@iostore/solid';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value()}</span>;
+}
+```
+
+### 2) 调度策略
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## API 速查
+
+| 场景 | API | 说明 |
+| --- | --- | --- |
+| 读取 Unit/Derived | `useIO(unitOrDerived, options?)` | 返回 Accessor，需要 `value()` 调用。 |
+| 通知调度 | `options.schedule` | `sync` / `microtask` / `animationFrame`。 |
+| 路径写入 | `unit.set(next | updater)` | 在事件中安全更新。 |
+| 批量写入 | `batch(fn)` | 降低高频写入下的重算成本。 |
+| 组合派生 | `derived(deps, compute)` | 把计算逻辑从组件中抽离。 |
+
+## 错误示例与推荐写法
+
+~~~tsx
+// 错误：把 Accessor 当普通值
+const value = useIO(store.count);
+// <span>{value}</span>
+
+// 推荐：调用 Accessor
+const value2 = useIO(store.count);
+// <span>{value2()}</span>
+~~~
+
+~~~tsx
+// 错误：组件内做复杂派生
+// const heavy = () => expensive(store.list.get());
+
+// 推荐：把计算放到 derived
+const summary = derived([store.count], (c) => c * 2);
+~~~
+
+## 常见问题
+
+- 忘记 `Accessor` 需要调用（`value()`）。
+- 组件订阅粒度过粗导致无关重算。
+- 高频输入未做通知节制。
+
+## 实践建议
+
+- 优先订阅叶子路径 Unit。
+- 派生计算放在 `derived`，组件仅消费结果。
+- 配合 [Batching](/cookbook/batching/) 或调度策略控制通知频率。
+
+## 下一步
+
+- 了解 [TypeScript](/cookbook/typescript/) 的类型提示。
+- 结合 [Persist](/cookbook/persist/) 做持久化。

@@ -1,0 +1,29 @@
+---
+title: Playground
+description: Try IO updates and DevTools online.
+sidebar:
+  order: 6
+---
+
+import { IoPlayground } from '../../../../components/IoPlayground';
+
+The Playground is a safe interactive space to explore updates, snapshots, and patches.
+
+## Quick Tour
+
+1. Change `count` and `user.name`.
+2. Toggle batching and compare patch output.
+3. Compare leaf vs root subscriptions.
+
+## Suggested Experiments
+
+- Modify deep fields and inspect patch paths.
+- Compare `snapshot()` output to `get()`.
+- Switch schedules and observe notification frequency.
+
+<IoPlayground client:load />
+
+## Next Steps
+
+- See [DevTools](/en/cookbook/devtools/).
+- Read about the [Update Log](/en/fundamentals/update-log/).

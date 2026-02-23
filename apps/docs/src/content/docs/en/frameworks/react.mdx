@@ -1,0 +1,130 @@
+---
+title: React
+description: Use useIO and useIOSelector in React with predictable, efficient subscriptions.
+sidebar:
+  order: 2
+---
+
+`@iostore/react` aligns with React rendering via `useSyncExternalStore`, making it suitable for production-grade subscriptions.
+
+## When to Use
+
+- React function components consuming IO state.
+- Fine-grained render control through selectors.
+- Integration with derived values and runtime behaviors.
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/react
+```
+
+## Minimal Integration
+
+```tsx
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/react';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value}</button>;
+}
+```
+
+## Common Patterns
+
+### 1) Derived Values
+
+```tsx
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { useIO } from '@iostore/react';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value}</span>;
+}
+```
+
+### 2) useIOSelector
+
+```tsx
+import { io } from '@iostore/store';
+import { useIOSelector } from '@iostore/react';
+
+const store = io({ count: 0, other: 0 });
+
+export function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <span>{count}</span>;
+}
+```
+
+For object selectors, provide `isEqual` when needed:
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+### 3) Scheduling
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## API Quick Reference
+
+| Scenario | API | Notes |
+| --- | --- | --- |
+| Read unit/derived | `useIO(unitOrDerived, options?)` | Subscribes and re-renders on change. |
+| Read scoped slice | `useIOSelector(scope, selector, options?)` | Narrows render scope via selector. |
+| Selector equality | `options.isEqual(prev, next)` | Avoids noisy object-selector renders. |
+| Notification scheduling | `options.schedule` | `sync`, `microtask`, `animationFrame`. |
+| Burst writes | `batch(fn)` | Recommended for frequent updates. |
+
+## Wrong vs Recommended
+
+~~~tsx
+// Wrong: object selector without equality guard
+const view = useIOSelector(store, (s) => ({ count: s.count }));
+
+// Recommended: provide isEqual
+const view2 = useIOSelector(store, (s) => ({ count: s.count }), {
+  isEqual: (a, b) => a.count === b.count,
+});
+~~~
+
+~~~tsx
+// Wrong: broad root subscription
+const state = useIO(store);
+
+// Recommended: subscribe to path units
+const count = useIO(store.count);
+~~~
+
+## Common Issues
+
+- Returning new objects in selectors without equality guards.
+- Subscribing to broad root state in leaf components.
+- High-frequency writes without `batch()`.
+
+## Practical Guidance
+
+- Prefer path-level subscriptions first.
+- Add `isEqual` for object selectors.
+- Pair with [Batching](/en/cookbook/batching/) to reduce intermediate renders.
+
+## Next Steps
+
+- Integrate [DevTools](/en/cookbook/devtools/) for timeline and diff inspection.
+- Combine with [Persist](/en/cookbook/persist/) for local durability.
+- For SSR, see [Next.js](/en/frameworks/next/).

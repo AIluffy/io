@@ -1,0 +1,108 @@
+---
+title: Scope
+description: 对象作用域与深层路径：结构组织、路径更新、commit、浅层模式。
+sidebar:
+  order: 3
+---
+
+Scope 是 `io()` 接收对象时创建的对象作用域。在默认深层模式下，Scope 会展开成可订阅的 Tree：每条路径都是可操作 Unit。
+
+## 1. Scope 是什么
+
+- **结构容器**：按业务层级组织状态（如 `user.profile.name`）。
+- **路径原子化**：每条路径都支持 `get/set/subscribe`。
+- **更新可控**：可做路径级更新，也可用 `commit` 组织多字段事务更新。
+
+## 2. 何时使用 Scope
+
+- 状态是对象结构，且层级较深。
+- 希望组件只订阅自己关心的路径，减少无关重渲染。
+- 一个交互常常需要同时修改多个字段。
+
+## 3. 基础用法（深层路径）
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({
+  user: { profile: { name: 'Ada' } },
+  items: [{ id: 1, count: 0 }],
+});
+
+store.user.profile.name.set('Grace');
+store.items[0].count.set((v) => v + 1);
+```
+
+可以把它理解为“自动原子化”：Scope 负责结构，路径 Unit 负责最小更新粒度。
+
+## 4. 核心操作（路径更新 + commit）
+
+```ts
+const store = io({
+  user: { profile: { name: 'Ada', age: 36 } },
+  dashboard: { filter: 'all' },
+});
+
+store.user.profile.name.set('Grace');
+store.user.profile.age.set((v) => v + 1);
+store.dashboard.filter.set('open');
+```
+
+```ts
+store.commit((draft) => {
+  draft.user.profile.name = 'Lin';
+  draft.dashboard.filter = 'done';
+});
+```
+
+- 路径更新：`store.a.b.c.set(...)`
+- 路径订阅：`store.a.b.c.subscribe(...)`
+- 事务更新：`commit((draft) => { ... })`
+- 冻结读取：`snapshot()`
+
+## 5. 深层模式与浅层模式
+
+默认是深层模式。若你只需要第一层是 Unit，可启用浅层模式：
+
+```ts
+const shallowStore = io({ name: 'Ada', age: 36 }, { shallow: true });
+
+shallowStore.name.set('Lin');
+```
+
+适合扁平 store，边界更稳定。
+
+## 6. 示例：多子树结构更新
+
+```ts
+const dashboardStore = io({
+  user: { name: 'Ada', role: 'admin' },
+  board: {
+    columns: [
+      { id: 'todo', cards: [{ id: 'c1', done: false }] },
+      { id: 'done', cards: [] },
+    ],
+  },
+  notifications: [{ id: 'n1', read: false }],
+});
+
+dashboardStore.user.name.set('Grace');
+dashboardStore.board.columns[0].cards[0].done.set(true);
+dashboardStore.notifications[0].read.set(true);
+```
+
+这些更新只影响目标路径，不需要整体替换对象。
+
+## 7. 限制与避坑
+
+- 深层模式仅支持 **plain object** 与 **array**。
+- 类实例或非 plain object 会抛出 `TypeError`。
+- 复用已有 IO 节点请用 `link()`，见 [组合](/cookbook/composition/)。
+- 优先路径级更新，少做整对象替换。
+- 组件优先订阅最小路径，减少渲染扩散。
+
+## 下一步
+
+- 阅读 [Array](/fundamentals/array/) 理解数组节点的特殊语义。
+- 阅读 [快照](/fundamentals/snapshots/) 理解冻结与缓存行为。
+- 阅读 [架构概览](/fundamentals/architecture/) 查看运行时分层。

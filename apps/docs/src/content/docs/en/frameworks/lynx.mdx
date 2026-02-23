@@ -1,0 +1,125 @@
+---
+title: Lynx
+description: Use useIO and useIOSelector in ReactLynx with platform-aware integration details.
+sidebar:
+  order: 3
+---
+
+`@iostore/lynx` provides React-style subscription APIs tailored for ReactLynx runtime semantics.
+
+## When to Use
+
+- State subscription in Lynx pages/components.
+- Selector-based render scope control.
+- Stable update cadence for mobile interactions.
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/lynx @lynx-js/react
+```
+
+## Minimal Integration
+
+```tsx
+import { root } from '@lynx-js/react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/lynx';
+
+const count = io(0);
+
+function Counter() {
+  const value = useIO(count);
+  return (
+    <view>
+      <text>{value}</text>
+      <view bindtap={() => count.set((v) => v + 1)}>
+        <text>+1</text>
+      </view>
+    </view>
+  );
+}
+
+root.render(<Counter />);
+```
+
+## TypeScript Setup
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react"
+  }
+}
+```
+
+## useIOSelector
+
+```tsx
+import { useIOSelector } from '@iostore/lynx';
+
+const store = io({ count: 0, other: 0 });
+
+function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <text>{count}</text>;
+}
+```
+
+For custom equality:
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+## Scheduling
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## API Quick Reference
+
+| Scenario | API | Notes |
+| --- | --- | --- |
+| Read unit/derived | `useIO(unitOrDerived, options?)` | Subscribes inside ReactLynx components. |
+| Read scoped slice | `useIOSelector(scope, selector, options?)` | Keeps render boundaries precise. |
+| Selector equality | `options.isEqual(prev, next)` | Stabilizes object-selector updates. |
+| Notification scheduling | `options.schedule` | `sync`, `microtask`, `animationFrame`. |
+| Write state | `unit.set(next | updater)` | Core runtime write path. |
+
+## Wrong vs Recommended
+
+~~~tsx
+// Wrong: web root API in Lynx runtime
+// createRoot(document.getElementById('root')!).render(<App />);
+
+// Recommended: Lynx root API
+root.render(<App />);
+~~~
+
+~~~tsx
+// Wrong: object selector without equality
+const slice = useIOSelector(store, (s) => ({ p: s.count % 2 }));
+
+// Recommended: add isEqual
+const slice2 = useIOSelector(store, (s) => ({ p: s.count % 2 }), {
+  isEqual: (a, b) => a.p === b.p,
+});
+~~~
+
+## Platform Notes
+
+- Use Lynx-native tags/events: `view`, `text`, `input`, `bindtap`, `bindinput`.
+- Use `root.render(...)` as app entry; do not use web `createRoot`.
+- Recommended pre-read: [Lynx llms.txt](https://lynxjs.org/llms.txt).
+
+## Next Steps
+
+- Combine with [Persist](/en/cookbook/persist/) for durability.
+- Read [Lynx Quick Start](https://lynxjs.org/guide/start/quick-start.html).

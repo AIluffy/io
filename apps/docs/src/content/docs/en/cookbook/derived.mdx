@@ -1,0 +1,82 @@
+---
+title: Derived Values
+description: Build composable, traceable, read-only computed state with derived().
+sidebar:
+  order: 1
+---
+
+`derived` turns one or more dependencies into a read-only computed Unit. When dependencies change, the derived value updates automatically.
+
+## What It Is
+
+- Core idea: a computed Unit based on dependencies.
+- Constraint: read-only, cannot be `set`.
+- Value: keeps computation logic reusable and testable.
+
+## When to Use
+
+- You need to reuse the same computation logic across screens.
+- You need to combine multiple path Units into one view model.
+- You need a stable trigger point for “run when dependencies change”.
+
+## Core API
+
+### 1) Explicit Dependencies (recommended)
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const count = io(0);
+const doubled = derived([count], (value) => value * 2);
+```
+
+### 2) Tree Selector
+
+```ts
+const store = io({ user: { name: 'Ada' }, count: 0 });
+const summary = derived(store, (s) => `${s.user.name} · ${s.count}`);
+```
+
+### 3) Auto Tracking
+
+```ts
+const store = io({ count: 0, rate: 2 });
+const total = derived(() => store.count.get() * store.rate.get());
+```
+
+## Minimal Example
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const store = io({ price: 100, quantity: 2 });
+const amount = derived([store.price, store.quantity], (p, q) => p * q);
+
+console.log(amount.get()); // 200
+
+const stop = amount.subscribe((v) => {
+  console.log('amount', v);
+});
+
+store.quantity.set(3); // amount -> 300
+stop();
+```
+
+## Common Mistakes
+
+- Treating `derived` as writable state.
+- Returning a new object each time from selector-heavy logic without equality strategy.
+- Building overly long dependency chains instead of splitting by domain.
+
+## Practical Guidance
+
+- Prefer explicit dependencies by default for the clearest boundaries.
+- Split complex computations into smaller derived Units, then compose.
+- For side effects, subscribe to derived values instead of mixing effects into computation.
+
+## Next Steps
+
+- Learn [Subscriptions](/en/cookbook/subscriptions/) for value/update streams.
+- Pair with [Batching](/en/cookbook/batching/) to reduce notification fan-out.

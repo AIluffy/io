@@ -1,0 +1,49 @@
+---
+title: "useIOSelector"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TSource, TSelected>(source: IoSource<TSource>, selector: (value: TSource) => TSelected, options?: IoSelectorOptions<TSelected>) => TSelected
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<TSource>` |
+| selector | `(value: TSource) => TSelected` |
+| options | `IoSelectorOptions<TSelected>` |
+
+## Returns
+
+`TSelected`
+
+## Minimal Example
+
+```ts
+import { useIOSelector } from '@iostore/react';
+
+const result = useIOSelector(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useIO](../use-io/)
+
+## Source
+
+- `packages/io-react/src/lib/use-io.ts`

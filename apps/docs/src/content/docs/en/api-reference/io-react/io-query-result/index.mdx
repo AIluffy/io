@@ -1,0 +1,60 @@
+---
+title: "IoQueryResult"
+description: "Type API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryResult<TData>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `IoQueryState<TData>` |
+| data | `TData` |
+| error | `unknown` |
+| status | `IoQueryStatus` |
+| fetchStatus | `IoFetchStatus` |
+| invalidated | `boolean` |
+| updatedAt | `number` |
+| fetch | `(options?: IoResourceRequestOptions) => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `(options?: IoResourceRequestOptions) => Promise<void>` |
+| invalidate | `(options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
+| cancel | `() => number` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryResult } from '@iostore/react';
+
+let value!: IoQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+- [useResource](../use-resource/)
+
+## Source
+
+- `packages/io-react/src/lib/use-query.ts`

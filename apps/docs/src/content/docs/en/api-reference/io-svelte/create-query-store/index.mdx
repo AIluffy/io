@@ -1,0 +1,53 @@
+---
+title: "createQueryStore"
+description: "Function API reference."
+sidebar:
+  hidden: true
+draft: true
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData>(options: IoResourceOptions<TData> & IoQueryStoreOptions) => IoQueryStore<TData>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoResourceOptions<TData> & IoQueryStoreOptions` |
+
+## Returns
+
+`IoQueryStore<TData>`
+
+## Minimal Example
+
+```ts
+import { createQueryStore } from '@iostore/svelte';
+
+const result = createQueryStore(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [toQueryStore](../to-query-store/)
+- [toReadable](../to-readable/)
+- [toWritable](../to-writable/)
+- [IoQueryStore](../io-query-store/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

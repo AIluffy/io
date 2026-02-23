@@ -1,0 +1,118 @@
+---
+title: Vanilla Usage
+description: Use IO core APIs directly in framework-free or custom runtime environments.
+sidebar:
+  order: 1
+---
+
+This page is for using IO as a pure state kernel without any UI framework adapter.
+
+## When to Use
+
+- Node scripts, tooling pipelines, or SDK internals.
+- Custom renderers or existing event systems.
+- Prototyping state models before choosing a UI integration.
+
+## Install
+
+```bash
+npm i @iostore/store
+```
+
+## Minimal Integration
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const stop = store.count.subscribe((value) => {
+  console.log('render', value);
+});
+
+store.count.set(1);
+stop();
+```
+
+## Core Capabilities
+
+### 1) Read and Write
+
+- `get()`: read current value.
+- `set(next | updater)`: write new value.
+- `snapshot()`: get frozen state snapshots.
+
+### 2) Two Subscription Channels
+
+```ts
+const stopValue = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+### 3) Merge Writes
+
+```ts
+import { batch } from '@iostore/store';
+
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
+```
+
+## API Quick Reference
+
+| Capability | API | Notes |
+| --- | --- | --- |
+| Create state | `io(initial)` | Creates the root scope. |
+| Read value | `unit.get()` | Reads the current unit value. |
+| Write value | `unit.set(next | updater)` | Supports direct and functional updates. |
+| Value subscription | `unit.subscribe(listener)` | Watches value changes on a path. |
+| Update stream | `scope.subscribeUpdate(listener)` | Watches patch-level updates. |
+| Frozen snapshot | `scope.snapshot()` | Good for boundaries and tests. |
+| Merge writes | `batch(fn)` | Coalesces notifications for bursts. |
+
+## Wrong vs Recommended
+
+~~~ts
+// Wrong: root-level subscription causes noisy callbacks
+const stop = store.subscribe((v) => console.log(v));
+
+// Recommended: subscribe to the specific path
+const stopCount = store.count.subscribe((v) => console.log(v));
+~~~
+
+~~~ts
+// Wrong: multiple discrete writes
+store.count.set(1);
+store.count.set(2);
+
+// Recommended: coalesce writes with batch
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
+~~~
+
+## Common Issues
+
+- Subscribing only at root and getting noisy callbacks.
+- Forgetting cleanup and leaking subscriptions.
+- Many discrete writes without batching.
+
+## Practical Guidance
+
+- Prefer `snapshot()` for boundary output and tests.
+- Design subscription granularity before optimizing performance.
+- Keep state evolution separate from side-effect execution.
+
+## Next Steps
+
+- Explore [React](/en/frameworks/react/), [Lynx](/en/frameworks/lynx/), or [Vue](/en/frameworks/vue/).
+- For SSR workflows, see [Next.js](/en/frameworks/next/), [Nuxt](/en/frameworks/nuxt/), and [SvelteKit](/en/frameworks/sveltekit/).
+- Read [Subscriptions](/en/cookbook/subscriptions/) for deeper subscription semantics.

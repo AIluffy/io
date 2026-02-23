@@ -1,0 +1,113 @@
+---
+title: Nuxt
+description: 在 Nuxt 3 中实践 SSR + Hydration，确保状态边界清晰可控。
+sidebar:
+  order: 8
+---
+
+Nuxt 集成同样遵循三点：每请求创建 store、边界只传 plain 数据、客户端重建运行时状态。
+
+## 适用场景
+
+- Nuxt 3 页面/布局中的 SSR 数据预取。
+- 需要在客户端继续读写同一份初始状态。
+- 需要避免服务端状态跨请求污染。
+
+## 核心原则
+
+- 每请求 Store：在页面 `setup` 请求链路内创建。
+- Hydrate 边界：`useAsyncData` / payload 只承载可序列化 JSON。
+- 传值流向：`useAsyncData -> initialState -> io(initialState)`。
+
+## 每请求 Store
+
+```vue
+<!-- pages/dashboard.vue -->
+<script setup lang="ts">
+import { provide } from 'vue';
+import { io } from '@iostore/store';
+
+type AppState = {
+  count: number;
+  profile: { id: string; name: string } | null;
+};
+
+const { data } = await useAsyncData('dashboard', () =>
+  $fetch<{ profile: AppState['profile'] }>('/api/dashboard')
+);
+
+const initialState: AppState = {
+  count: 0,
+  profile: data.value?.profile ?? null,
+};
+
+const store = io(initialState);
+provide('io-store', store);
+</script>
+```
+
+## 组件侧消费
+
+```vue
+<!-- components/dashboard-panel.vue -->
+<script setup lang="ts">
+import { inject } from 'vue';
+import { ioRef } from '@iostore/vue';
+import type { IoScope } from '@iostore/store';
+
+type AppState = {
+  count: number;
+  profile: { id: string; name: string } | null;
+};
+
+const store = inject<IoScope<AppState>>('io-store');
+if (!store) throw new Error('io-store is not provided');
+
+const count = ioRef(store.count);
+</script>
+```
+
+## API 速查
+
+| 阶段 | API | 说明 |
+| --- | --- | --- |
+| 服务端预取 | `useAsyncData(key, fetcher)` | 拉取并组装初始业务数据。 |
+| 创建状态 | `io(initialState)` | 在请求链路内创建 store。 |
+| 注入共享 | `provide/inject` | 在组件树中传递 store。 |
+| 组件读写 | `useIO` / `ioRef` | 展示读取与交互写入分离。 |
+| 运行时写入 | `unit.set(next | updater)` | 保持更新路径可追踪。 |
+
+## 错误示例与推荐写法
+
+~~~ts
+// 错误：模块级创建 store
+// const store = io({ count: 0 });
+
+// 推荐：在 setup/request 流中创建
+const store = io(initialState);
+~~~
+
+~~~ts
+// 错误：把 store 放进 payload
+// return { store }
+
+// 推荐：payload 只放 plain 数据
+// return { initialState }
+~~~
+
+## 常见问题
+
+- 在模块顶层 `const store = io(...)` 导致跨请求复用。
+- 把 store 实例放进 payload。
+- 不校验注入对象，导致运行时空引用错误。
+
+## 实践建议
+
+- 统一 `initialState` 类型定义，确保 server/client 一致。
+- 组件内部优先路径订阅，减少无关更新。
+- 高频场景结合 [Schedule](/cookbook/schedule/) 控制通知节奏。
+
+## 下一步
+
+- 查看 [Vue](/frameworks/vue/) 的 `useIO` / `ioRef` 细节。
+- 结合 [Persist](/cookbook/persist/) 管理客户端持久化。

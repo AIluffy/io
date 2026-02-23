@@ -1,0 +1,91 @@
+---
+title: Unit
+description: 'Smallest writable IO cell: reads, writes, subscriptions, snapshots, and reset.'
+sidebar:
+  order: 2
+---
+
+Unit is the smallest writable state object in IO. You can use it standalone or as a path node inside Scope/Array trees.
+
+## Definition and Role
+
+- The smallest operational output of `io(...)` is a Unit.
+- Unit defines the minimal update boundary.
+- Unit powers atom-like behavior; Tree only organizes many Units into structure.
+
+## Core APIs
+
+```ts
+import { io } from '@iostore/store';
+
+const count = io(0);
+
+count.get();
+count.set(1);
+count.set((v) => v + 1);
+count.reset();
+```
+
+- `get()`: read current value.
+- `set(next | updater)`: write directly or derive from previous value.
+- `subscribe(fn)`: subscribe to value changes (UI-focused).
+- `subscribeUpdate(fn)`: subscribe to patch/update events (debug/audit).
+- `snapshot()`: read frozen value.
+- `reset()`: restore initial value.
+
+## Usage Guide
+
+### 1. Standalone Unit
+
+```ts
+const loading = io(false);
+
+loading.subscribe((v) => console.log('loading =', v));
+loading.set(true);
+```
+
+Good for flags, counters, and small state machines.
+
+### 2. Path Unit from a Tree
+
+```ts
+const store = io({ user: { name: 'Ada' }, count: 0 });
+
+const nameUnit = store.user.name;
+const countUnit = store.count;
+
+nameUnit.set('Grace');
+countUnit.set((v) => v + 1);
+```
+
+Use this for precise subscriptions and local updates inside nested state.
+
+### 3. Value Subscription vs Update Subscription
+
+```ts
+const stopValue = count.subscribe((value) => {
+  console.log('value', value);
+});
+
+const stopUpdate = count.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+});
+
+count.set(2);
+stopValue();
+stopUpdate();
+```
+
+Use value subscriptions for rendering, update subscriptions for observability.
+
+## Constraints and Recommendations
+
+- Prefer updater form (`set(prev => next)`) when next value depends on previous value.
+- Prefer `snapshot()` for UI/external boundaries to avoid accidental mutation.
+- Avoid cloning Units as plain objects and writing them back; update path Units directly.
+
+## Next Steps
+
+- Read [Scope](/en/fundamentals/scope/) for object scopes and deep paths.
+- Read [Array](/en/fundamentals/array/) for indexed node semantics.
+- Read [Update Log](/en/fundamentals/update-log/) for patch details.

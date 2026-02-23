@@ -1,0 +1,74 @@
+---
+title: Batching
+description: Merge multiple writes in one transaction to reduce notifications and render cost.
+sidebar:
+  order: 3
+---
+
+`batch()` treats a group of writes as one transaction and emits merged notifications.
+
+## What It Is
+
+- Core effect: notification-level merging; final state semantics stay the same.
+- Benefit: fewer re-renders and less patch noise.
+- Best for: multiple related writes in one user action.
+
+## When to Use
+
+- Submit/update flows that touch data and UI flags together.
+- List operations that update multiple paths.
+- Any interaction where subscribers should react once to the final state.
+
+## Core API
+
+```ts
+import { batch, io } from '@iostore/store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.user.name.set('Lin');
+});
+```
+
+## Minimal Example
+
+```ts
+import { batch, io } from '@iostore/store';
+
+const store = io({ a: 0, b: 0 });
+
+store.subscribe((value) => {
+  console.log('value', value);
+});
+
+batch(() => {
+  store.a.set(1);
+  store.b.set(2);
+});
+
+// One value notification: { a: 1, b: 2 }
+```
+
+## Notification Coverage
+
+- `subscribe`: value notifications are merged.
+- `subscribeUpdate`: patch updates are merged internally.
+
+## Common Mistakes
+
+- Grouping unrelated interactions into one batch.
+- Assuming `batch` changes write order semantics.
+- Leaving frequent multi-write paths unbatched.
+
+## Practical Guidance
+
+- Use “one user action = one batch” as a default rule.
+- Batch first, then optimize selector/subscription granularity.
+- If you need draft-style readability, consider `commit`.
+
+## Next Steps
+
+- Read [Subscriptions](/en/cookbook/subscriptions/) for notification model details.
+- Pair with [Performance and Subscription Strategy](/en/cookbook/performance-subscription/).

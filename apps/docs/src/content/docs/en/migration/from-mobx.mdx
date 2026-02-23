@@ -1,0 +1,82 @@
+---
+title: Migrate from MobX
+description: Move from observable/action/computed to explicit path-based IO state.
+sidebar:
+  order: 6
+---
+
+This page is for teams moving from implicit usage tracking to explicit, path-scoped subscriptions.
+
+## When to Prioritize This Migration
+
+- You need clearer write origins and subscription boundaries.
+- Implicit dependencies are increasing debugging cost.
+- You want one reusable model across frameworks.
+
+## Concept Mapping
+
+| MobX | IO Equivalent | Notes |
+| --- | --- | --- |
+| `observable` | `io({...})` | Tree state model maps directly. |
+| `computed` | `derived` | Derived semantics remain explicit. |
+| `action` / `runInAction` | `commit` / `batch` | Group writes with controlled notifications. |
+| `observer` | `useIO` / `useIOSelector` | UI subscriptions become explicit by path. |
+
+## Migration Steps
+
+### 1) Replace class store with state + actions
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+export const inc = () => store.count.set((v) => v + 1);
+```
+
+### 2) Replace computed values
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+const double = derived([store.count], (count) => count * 2);
+```
+
+### 3) Replace grouped actions
+
+```ts
+const profile = io({ name: 'Ada', age: 18 });
+
+const updateProfile = (name: string, age: number) => {
+  profile.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 4) Replace observer components
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## Common Pitfalls
+
+- Keeping all logic in large object methods after migration.
+- Forgetting to shift from implicit tracking to explicit path subscriptions.
+- Skipping `commit` for multi-field updates.
+
+## Validation Checklist
+
+- Major computed values are migrated to `derived`.
+- Grouped writes use `commit` or `batch`.
+- UI subscriptions are path-scoped and predictable.
+
+## Next Steps
+
+- Read [Snapshots](/en/fundamentals/snapshots/) and [Update Log](/en/fundamentals/update-log/).

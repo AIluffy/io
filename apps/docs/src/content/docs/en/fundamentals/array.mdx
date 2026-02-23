@@ -1,0 +1,157 @@
+---
+title: Array
+description: 'Array state and indexed paths: update strategy, subscription stability, and pitfalls.'
+sidebar:
+  order: 4
+---
+
+Array is an array-shaped Tree node in IO. Every indexed path (for example `todos[0].done`) is a readable, writable, and subscribable Unit.
+
+## 1. What Array Is
+
+- **Subscribable node**: arrays are not opaque containers.
+- **Structured updates**: `push/splice/sort` emit patch records.
+- **Local-first updates**: prefer indexed path updates for minimal change scope.
+
+## 2. When to Use Array
+
+- List, table, and board-like ordered collections.
+- Frequent local updates on specific items/fields.
+- Workflows that benefit from update logs and replay.
+
+## 3. Basic Usage
+
+```ts
+import { io } from '@iostore/store';
+
+const todos = io([
+  { id: 'a', done: false, title: 'Write doc' },
+  { id: 'b', done: false, title: 'Review PR' },
+]);
+```
+
+## 4. Supported APIs (Complete)
+
+`Array` nodes (`IoTreeArrayUnit`) support:
+
+- Read: `get()`, `snapshot()`
+- Write: `set(next)`, `push(...items)`, `pop()`, `splice(start, deleteCount, ...items)`, `sort(compareFn?)`
+- Batch: `commit(fn)`
+- Compute: `reduce(reducer, initialValue)`
+- Subscribe: `subscribe(fn)`, `subscribeUpdate(fn)`
+- Iterate: `[Symbol.iterator]()` (usable via `for...of`)
+
+### Read: `get()` / `snapshot()`
+
+```ts
+const live = todos.get(); // current value for logic reads
+const snap = todos.snapshot(); // frozen value for boundary handoff
+```
+
+### Write: `set()` / `push()` / `pop()` / `splice()` / `sort()`
+
+```ts
+todos.set([{ id: 'x', done: false, title: 'Reset' }]);
+
+todos.push({ id: 'c', done: false, title: 'Ship' });
+
+const last = todos.pop();
+console.log(last?.id);
+
+todos.splice(0, 1, { id: 'a2', done: true, title: 'Rewrite doc' });
+
+todos.sort((a, b) => a.id.localeCompare(b.id));
+```
+
+### Batch: `commit(fn)`
+
+Use `commit` to express one business transaction with multiple array mutations.
+
+```ts
+todos.commit((draft) => {
+  draft.unshift({ id: 'n1', done: false, title: 'Top task' });
+  draft[1].done = true;
+  draft.reverse();
+});
+```
+
+Besides `unshift/reverse`, standard mutable draft APIs like `shift/fill/copyWithin` can be used as needed.
+
+### Compute: `reduce()`
+
+```ts
+const doneCount = todos.reduce((acc, item) => {
+  return item.done.get() ? acc + 1 : acc;
+}, 0);
+```
+
+`item` is the node for each element, so path reads are still available.
+
+### Subscribe: `subscribe()` / `subscribeUpdate()`
+
+```ts
+const stopValue = todos.subscribe((value) => {
+  console.log('length', value.length);
+});
+
+const stopUpdate = todos.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+stopValue();
+stopUpdate();
+```
+
+### Iterate: `for...of`
+
+```ts
+for (const item of todos) {
+  console.log(item.id.get(), item.done.get());
+}
+```
+
+## 5. Recommended Update Style
+
+- Prefer path updates for field changes, e.g. `todos[i].done.set(true)`.
+- Use `push/pop/splice/sort` for structural changes.
+- Use `commit(fn)` when one action requires multiple mutations.
+
+### Indexed path updates (recommended)
+
+```ts
+todos[1].title.set('Review API doc');
+todos[1].done.set(true);
+```
+
+This keeps updates local and subscriptions stable.
+
+## 6. Key Detail: `array.set([...])`
+
+`array.set([...])` replaces child Units under the array. Subscribers bound to previous index Units may appear stale.
+
+Recommended approaches:
+
+- Prefer `array[i].x.set(...)`.
+- Or subscribe to the array root and then read by index.
+
+## 7. Common Pitfalls
+
+:::caution
+Do not reuse the same object instance at multiple indices.
+:::
+
+:::caution
+If you rely on index-level subscriptions, avoid frequent full-array replacements.
+:::
+
+## 8. Recommended Patterns
+
+- Read path: components subscribe only to indices/fields they render.
+- Write path: centralize array mutations in domain functions.
+- Observability: use root `subscribeUpdate()` to inspect array patches.
+
+## Next Steps
+
+- Read [Unit](/en/fundamentals/unit/) for minimal writable cells.
+- Read [Scope](/en/fundamentals/scope/) for object scope and deep paths.
+- Read [Update Log](/en/fundamentals/update-log/) for patch types.
