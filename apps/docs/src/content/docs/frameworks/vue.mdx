@@ -4,6 +4,8 @@ description: 使用 useIO 与 ioRef 将 IO 状态无缝接入 Vue Composition AP
 sidebar:
   order: 4
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/vue` 提供只读订阅与双向绑定两种常见接入方式，适配 Vue `ref` 语义。
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## 安装
 
+安装相关依赖（任选一种包管理工具）：
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/vue
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+</Tabs>
 
 ## 最小接入
 

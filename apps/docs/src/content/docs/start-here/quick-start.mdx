@@ -4,16 +4,45 @@ description: 以 React 为主，5 分钟完成 IO 入门。
 sidebar:
   order: 1
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 本页以 **React** 为主线，带你用最短路径跑通 IO：安装、创建状态、组件读取更新。
 
 ## 1. 安装
 
-安装核心包与 React 适配：
+安装核心包与 React 适配（任选一种包管理工具）：
+
+<Tabs default="npm">
+  <TabItem label="npm">
 
 ```bash
 npm install @iostore/store @iostore/react
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/react
+```
+
+  </TabItem>
+</Tabs>
 
 ## 2. 创建状态（`store.ts`）
 

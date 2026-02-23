@@ -4,6 +4,8 @@ description: Use useIO and useIOSelector in ReactLynx with platform-aware integr
 sidebar:
   order: 3
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/lynx` provides React-style subscription APIs tailored for ReactLynx runtime semantics.
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## Install
 
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/lynx @lynx-js/react
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+</Tabs>
 
 ## Minimal Integration
 

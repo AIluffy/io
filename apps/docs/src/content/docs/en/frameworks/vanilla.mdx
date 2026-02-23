@@ -4,6 +4,8 @@ description: Use IO core APIs directly in framework-free or custom runtime envir
 sidebar:
   order: 1
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 This page is for using IO as a pure state kernel without any UI framework adapter.
 
@@ -15,9 +17,38 @@ This page is for using IO as a pure state kernel without any UI framework adapte
 
 ## Install
 
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store
+```
+
+  </TabItem>
+</Tabs>
 
 ## Minimal Integration
 

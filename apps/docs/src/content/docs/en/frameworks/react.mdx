@@ -4,6 +4,8 @@ description: Use useIO and useIOSelector in React with predictable, efficient su
 sidebar:
   order: 2
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/react` aligns with React rendering via `useSyncExternalStore`, making it suitable for production-grade subscriptions.
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## Install
 
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/react
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/react
+```
+
+  </TabItem>
+</Tabs>
 
 ## Minimal Integration
 

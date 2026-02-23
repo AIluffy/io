@@ -4,6 +4,8 @@ description: 使用 useIO 将 IO 节点接入 Solid 的细粒度响应系统。
 sidebar:
   order: 6
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/solid` 的 `useIO` 返回 `Accessor`，天然契合 Solid 的响应式读取模型。
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## 安装
 
+安装相关依赖（任选一种包管理工具）：
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/solid
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+</Tabs>
 
 ## 最小接入
 

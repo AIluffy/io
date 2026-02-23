@@ -4,16 +4,45 @@ description: React-first guide to get started with IO in 5 minutes.
 sidebar:
   order: 1
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 This page is **React-first** and focuses on the shortest path: install, create state, read/write in a component.
 
 ## 1. Install
 
-Install the core package and React adapter:
+Install the core package and React adapter (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
 
 ```bash
 npm install @iostore/store @iostore/react
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/react
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/react
+```
+
+  </TabItem>
+</Tabs>
 
 ## 2. Create State (`store.ts`)
 

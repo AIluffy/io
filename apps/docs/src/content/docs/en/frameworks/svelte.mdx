@@ -4,6 +4,8 @@ description: Adapt IO nodes to Svelte stores with toReadable and toWritable.
 sidebar:
   order: 5
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/svelte` gives you standard Svelte store adapters for clean integration with `$store` syntax.
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## Install
 
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/svelte
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+</Tabs>
 
 ## Minimal Integration
 

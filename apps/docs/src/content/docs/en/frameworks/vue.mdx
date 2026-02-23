@@ -4,6 +4,8 @@ description: Integrate IO into Vue Composition API with useIO and ioRef.
 sidebar:
   order: 4
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 
 `@iostore/vue` provides both read-only and two-way binding styles that fit Vue ref semantics.
 
@@ -15,9 +17,38 @@ sidebar:
 
 ## Install
 
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
 ```bash
 npm i @iostore/store @iostore/vue
 ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/vue
+```
+
+  </TabItem>
+</Tabs>
 
 ## Minimal Integration
 
