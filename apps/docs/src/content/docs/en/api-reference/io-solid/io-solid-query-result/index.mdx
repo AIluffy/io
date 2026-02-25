@@ -1,55 +1,24 @@
 ---
 title: "IoSolidQueryResult"
 description: "Type API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
-
-
-## When to Use
-
-Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-IoSolidQueryResult<TData>
+IoSolidQueryResult<TData, TError = Error>
 ```
 
 ## Properties
 
 | Name | Type |
 | --- | --- |
-| state | `Accessor<IoQueryState<TData>>` |
-| data | `Accessor<TData>` |
-| error | `Accessor<unknown>` |
-| fetch | `(options?: IoResourceRequestOptions) => Promise<TData>` |
+| state | `Accessor<IoQueryState<TData, TError>>` |
+| data | `Accessor<TData \| undefined>` |
+| error | `Accessor<TError \| null>` |
+| fetch | `() => Promise<TData>` |
 | refetch | `() => Promise<TData>` |
-| prefetch | `(options?: IoResourceRequestOptions) => Promise<void>` |
-| invalidate | `(options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
-| cancel | `() => number` |
-
-## Minimal Example
-
-```ts
-import type { IoSolidQueryResult } from '@iostore/solid';
-
-let value!: IoSolidQueryResult;
-console.log(value);
-```
-
-## Common Pitfalls
-
-- Avoid over-expanding complex aliases in user-facing docs.
-- Keep aliases stable to prevent downstream type breakage.
-
-## Related APIs
-
-- [useIO](../use-io/)
-- [useQuery](../use-query/)
-- [useResource](../use-resource/)
-
-## Source
-
-- `packages/io-solid/src/lib/use-query.ts`
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

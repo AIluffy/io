@@ -7,7 +7,6 @@ IO 的 Lynx 适配层（hooks）。
 - `useIO`
 - `useIOSelector`
 - `useQuery`
-- `useResource`
 
 ## Query quick start
 
@@ -17,9 +16,9 @@ import { useQuery } from '@iostore/lynx';
 function UserName(props: { id: number }) {
   const user = useQuery({
     key: ['user', props.id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       'background only';
-      return fetch(`/api/users/${props.id}`).then((r) => r.json());
+      return fetch(`/api/users/${props.id}`, { signal }).then((r) => r.json());
     },
   });
   return <text>{user.data?.name ?? 'loading'}</text>;

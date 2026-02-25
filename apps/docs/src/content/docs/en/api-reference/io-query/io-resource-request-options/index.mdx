@@ -1,55 +1,14 @@
 ---
-title: "IoResourceRequestOptions"
-description: "Type API reference."
+title: "Removed"
+description: "Removed API."
 sidebar:
   hidden: true
 draft: true
 ---
 
+This API was removed.
 
-## When to Use
+Use the current query model in `@iostore/store/query`:
 
-Use this type alias to model reusable type shapes.
-
-## Signature
-
-```ts
-IoResourceRequestOptions
-```
-
-## Properties
-
-| Name | Type |
-| --- | --- |
-| force | `boolean` |
-| staleTime | `number` |
-| gcTime | `number` |
-| retry | `IoRetryValue` |
-| retryDelay | `IoRetryDelayValue` |
-| action | `string` |
-| meta | `Record<string, unknown>` |
-
-## Minimal Example
-
-```ts
-import type { IoResourceRequestOptions } from '@iostore/query';
-
-let value!: IoResourceRequestOptions;
-console.log(value);
-```
-
-## Common Pitfalls
-
-- Avoid over-expanding complex aliases in user-facing docs.
-- Keep aliases stable to prevent downstream type breakage.
-
-## Related APIs
-
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
-- [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
-
-## Source
-
-- `packages/io-query/src/lib/resource.ts`
+- `client.query({ key, queryFn, ... })`
+- framework hooks/stores built on `IoQuery`

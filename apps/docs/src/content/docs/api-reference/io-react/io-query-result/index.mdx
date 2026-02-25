@@ -1,59 +1,52 @@
 ---
-title: "IoQueryResult"
+title: "UseQueryResult"
 description: "类型 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
-
 
 ## 何时使用
 
-当你需要复用类型结构时使用此类型别名。
+当你需要标注 `useQuery` 返回值类型时使用。
 
 ## 签名
 
 ```ts
-IoQueryResult<TData>
+UseQueryResult<TData, TError = Error>
 ```
 
 ## 属性
 
 | Name | Type |
 | --- | --- |
-| state | `IoQueryState<TData>` |
-| data | `TData` |
-| error | `unknown` |
-| status | `IoQueryStatus` |
+| status | `IoDataStatus` |
 | fetchStatus | `IoFetchStatus` |
-| invalidated | `boolean` |
-| updatedAt | `number` |
-| fetch | `(options?: IoResourceRequestOptions) => Promise<TData>` |
+| data | `TData \| undefined` |
+| error | `TError \| null` |
+| dataUpdatedAt | `number` |
+| errorUpdatedAt | `number` |
+| failureCount | `number` |
+| isPending | `boolean` |
+| isSuccess | `boolean` |
+| isError | `boolean` |
+| isFetching | `boolean` |
+| isLoading | `boolean` |
+| isRefetching | `boolean` |
 | refetch | `() => Promise<TData>` |
-| prefetch | `(options?: IoResourceRequestOptions) => Promise<void>` |
-| invalidate | `(options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
-| cancel | `() => number` |
+| query | `IoQuery<TData, TError>` |
 
 ## 最小示例
 
 ```ts
-import type { IoQueryResult } from '@iostore/react';
+import type { UseQueryResult } from '@iostore/react';
 
-let value!: IoQueryResult;
+let value!: UseQueryResult<number>;
 console.log(value);
 ```
 
-## 常见误用
-
-- 避免在用户文档中展开过于复杂的类型细节。
-- 调整类型别名时注意下游兼容性。
-
 ## 相关 API
 
-- [useIO](../use-io/)
-- [useIOSelector](../use-ioselector/)
 - [useQuery](../use-query/)
-- [useResource](../use-resource/)
+- [useMutation](../use-mutation/)
+- [useSuspenseQuery](../use-suspense-query/)
 
 ## 源码
 

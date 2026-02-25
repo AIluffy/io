@@ -1,0 +1,52 @@
+---
+title: "applyUpdate"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+(target: unknown, update: IoUpdate, options?: { emitUpdate?: boolean; }) => void
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| update | `IoUpdate` |
+| options | `{ emitUpdate?: boolean; }` |
+
+## Returns
+
+`void`
+
+## Minimal Example
+
+```ts
+import { applyUpdate } from '@iostore/store/patches';
+
+const result = applyUpdate(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [batch](../batch/)
+- [createAbortError](../create-abort-error/)
+- [createHistory](../create-history/)
+- [createMutation](../create-mutation/)
+
+## Source
+
+- `packages/io/src/lib/utils/patches/updates.ts`

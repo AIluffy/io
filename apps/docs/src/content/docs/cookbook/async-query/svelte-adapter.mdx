@@ -1,0 +1,62 @@
+---
+title: Svelte 适配
+description: 使用 createQueryStore/toQueryStore 在 Svelte 中消费 Query。
+sidebar:
+  order: 9
+---
+
+## 是什么
+
+Svelte 适配层把 Query 状态暴露为 store，方便 `$store` 语法直接消费。
+
+## 何时使用
+
+- 你要在 Svelte 组件中统一读取 Query 状态。
+- 你希望复用 Svelte store 生态与派生机制。
+
+## 核心 API
+
+- [create-query-store](/api-reference/io-svelte/create-query-store/)
+- [io-query-store](/api-reference/io-svelte/io-query-store/)
+- [to-query-store](/api-reference/io-svelte/to-query-store/)
+
+## 最小示例
+
+```ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const usersQuery = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+```svelte
+<script lang="ts">
+  import { usersQuery } from './query';
+</script>
+
+{#if $usersQuery.isFetching}
+  <p>Loading...</p>
+{:else if $usersQuery.error}
+  <p>Failed</p>
+{:else}
+  <p>Count: {$usersQuery.data?.length ?? 0}</p>
+{/if}
+```
+
+## 常见误区
+
+- 在组件反复创建 store，导致请求重复。
+- 只看 `data` 不看 `error/isFetching`。
+- 忽略 key 参数变化造成缓存错位。
+
+## 实践建议
+
+- 把 query store 定义在可复用模块。
+- 页面级筛选参数变更时同步更新 key。
+- 与分页场景配合时先做主键去重。
+
+## 下一步
+
+- 继续：[Solid 适配](./solid-adapter/)

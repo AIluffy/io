@@ -17,6 +17,11 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
+    "./query": {
+      "types": "./dist/query.d.ts",
+      "import": "./dist/query.js",
+      "default": "./dist/query.js"
+    },
     "./debug": {
       "types": "./dist/debug.d.ts",
       "import": "./dist/debug.js",

@@ -7,20 +7,13 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "declarationMap": false
   },
-  "include": [
-    "src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "references": [
     {
       "path": "../io/tsconfig.lib.json"
-    },
-    {
-      "path": "../io-query/tsconfig.lib.json"
     }
   ],
   "exclude": [

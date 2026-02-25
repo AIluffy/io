@@ -9,7 +9,7 @@
     "docs:generate-api": "node tools/docs/generate-api-docs.mjs",
     "docs:generate-bench": "node tools/docs/generate-bench-docs.mjs",
     "docs:quality": "node tools/docs/check-doc-quality.mjs",
-    "docs:check:reference": "node tools/docs/generate-api-docs.mjs && node tools/docs/check-doc-quality.mjs && git diff --exit-code apps/docs/src/content/docs/reference apps/docs/src/content/docs/en/reference",
+    "docs:check:reference": "node tools/docs/generate-api-docs.mjs && node tools/docs/check-doc-quality.mjs && git diff --exit-code apps/docs/src/content/docs/api-reference apps/docs/src/content/docs/en/api-reference",
     "docs:check": "node tools/docs/generate-api-docs.mjs && node tools/docs/generate-bench-docs.mjs && node tools/docs/check-doc-quality.mjs && git diff --exit-code apps/docs/src/content/docs"
   },
   "private": true,

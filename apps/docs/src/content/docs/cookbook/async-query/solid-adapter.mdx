@@ -1,0 +1,55 @@
+---
+title: Solid 适配
+description: 通过 useQuery 在 Solid 中使用 Accessor 风格读取 Query 状态。
+sidebar:
+  order: 10
+---
+
+## 是什么
+
+Solid 适配层返回 `IoSolidQueryResult`，可在细粒度响应系统下稳定消费 Query 状态。
+
+## 何时使用
+
+- 你在 Solid 页面中需要 Query 生命周期控制。
+- 你需要 cleanup/cancel 与组件生命周期对齐。
+
+## 核心 API
+
+- [use-query](/api-reference/io-solid/use-query/)
+- [io-solid-query-result](/api-reference/io-solid/io-solid-query-result/)
+- [use-resource](/api-reference/io-solid/use-resource/)
+
+## 最小示例
+
+```tsx
+import { Show } from 'solid-js';
+import { useQuery } from '@iostore/solid';
+
+const q = useQuery({
+  key: ['profile', props.id],
+  queryFn: ({ signal }) => fetch(`/api/profile/${props.id}`, { signal }).then((r) => r.json()),
+});
+
+return (
+  <Show when={!q.isFetching()} fallback={<span>Loading...</span>}>
+    <span>{q.data()?.name}</span>
+  </Show>
+);
+```
+
+## 常见误区
+
+- 把 Accessor 当普通值缓存到外层变量。
+- 忽略 cleanup 导致页面切换后仍有在途请求。
+- key 未含依赖参数导致旧缓存复用。
+
+## 实践建议
+
+- 直接在响应上下文读取 `q.data()` 等 Accessor。
+- 对高频切换页面显式启用取消策略。
+- 保持 key 与 props 依赖一一对应。
+
+## 下一步
+
+- 继续：[Lynx 适配](./lynx-adapter/)

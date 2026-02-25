@@ -1,0 +1,52 @@
+---
+title: "IoDevtoolsState"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoDevtoolsState
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| enabled | `boolean` |
+| paused | `boolean` |
+| cursor | `number` |
+| history | `readonly IoHistoryEntry[]` |
+| errors | `readonly unknown[]` |
+| links | `IoLinkInfo` |
+| perf | `{ recent: ReadonlyArray<IoDevtoolsPerfSample>; summary: IoDevtoolsPerfSummary; }` |
+
+## Minimal Example
+
+```ts
+import type { IoDevtoolsState } from '@iostore/devtools';
+
+let value!: IoDevtoolsState;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDevtools](../io-devtools/)
+- [IoDevtoolsBridge](../io-devtools-bridge/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

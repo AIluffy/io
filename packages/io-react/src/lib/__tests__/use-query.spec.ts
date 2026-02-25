@@ -1,11 +1,16 @@
-import type { IoQueryResult } from '../use-query.js';
+import type {
+  UseMutationResult,
+  UseQueryResult,
+  UseSuspenseQueryResult,
+} from '../use-query.js';
 import type { ReactTestRenderer } from 'react-test-renderer';
 
-import { createQueryClient, createResource } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
-import { useQuery, useResource } from '../use-query.js';
+
+import { useMutation, useQuery, useSuspenseQuery } from '../use-query.js';
 
 const createRenderer = (element: unknown): ReactTestRenderer =>
   TestRenderer.create(element as never);
@@ -30,7 +35,7 @@ describe('@iostore/react: useQuery', () => {
   it('fetches query and updates state', async () => {
     const client = createQueryClient();
     const queryFn = vi.fn(async () => 42);
-    let latest: IoQueryResult<number> | undefined;
+    let latest: UseQueryResult<number> | undefined;
 
     const App = () => {
       latest = useQuery({
@@ -41,7 +46,7 @@ describe('@iostore/react: useQuery', () => {
       return React.createElement('span', null, String(latest.data ?? 'loading'));
     };
 
-    let renderer: ReactTestRenderer;
+    let renderer!: ReactTestRenderer;
     await act(async () => {
       renderer = createRenderer(React.createElement(App));
     });
@@ -60,8 +65,8 @@ describe('@iostore/react: useQuery', () => {
     const client = createQueryClient();
     const deferred = createDeferred<number>();
     const queryFn = vi.fn(async () => deferred.promise);
-    let left: IoQueryResult<number> | undefined;
-    let right: IoQueryResult<number> | undefined;
+    let left: UseQueryResult<number> | undefined;
+    let right: UseQueryResult<number> | undefined;
 
     const Left = () => {
       left = useQuery({
@@ -81,7 +86,7 @@ describe('@iostore/react: useQuery', () => {
       return React.createElement('span', null, String(right.data ?? 'loading'));
     };
 
-    let renderer: ReactTestRenderer;
+    let renderer!: ReactTestRenderer;
     await act(async () => {
       renderer = createRenderer(
         React.createElement(
@@ -104,47 +109,169 @@ describe('@iostore/react: useQuery', () => {
       renderer.unmount();
     });
   });
-});
 
-describe('@iostore/react: useResource', () => {
-  it('supports refetch and invalidate actions', async () => {
+  it('does not trigger an extra fetch when autoFetch is already enabled', async () => {
     const client = createQueryClient();
-    let value = 0;
-    const resource = createResource({
-      client,
-      key: ['resource', 1],
-      queryFn: async () => {
-        value += 1;
-        return value;
-      },
-      staleTime: 5_000,
-    });
+    const queryFn = vi.fn(async () => 5);
+    await client
+      .query({
+        key: ['react', 'auto-fetch'],
+        queryFn,
+        autoFetch: true,
+      })
+      .fetch();
 
-    let latest: IoQueryResult<number> | undefined;
+    expect(queryFn).toHaveBeenCalledTimes(1);
+
     const App = () => {
-      latest = useResource(resource);
-      return React.createElement('span', null, String(latest.data ?? 'loading'));
+      useQuery({
+        client,
+        key: ['react', 'auto-fetch'],
+        queryFn,
+        autoFetch: true,
+      });
+      return React.createElement('span', null, 'ok');
     };
 
-    let renderer: ReactTestRenderer;
+    let renderer!: ReactTestRenderer;
     await act(async () => {
       renderer = createRenderer(React.createElement(App));
     });
     await flushAsync();
 
-    expect(latest?.data).toBe(1);
+    expect(queryFn).toHaveBeenCalledTimes(1);
+
     await act(async () => {
-      expect(latest?.invalidate()).toBe(1);
-      await Promise.resolve();
+      renderer.unmount();
+    });
+  });
+});
+
+describe('@iostore/react: useMutation', () => {
+  it('exposes mutate and mutateAsync', async () => {
+    let latest: UseMutationResult<number, number> | undefined;
+
+    const App = () => {
+      latest = useMutation<number, number>({
+        mutationFn: async (value) => value + 1,
+      });
+      return React.createElement('span', null, latest.status);
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App));
+    });
+
+    await act(async () => {
+      latest?.mutate(2);
     });
     await flushAsync();
-    expect(latest?.data).toBe(2);
-
-    await act(async () => {
-      await latest?.refetch();
-    });
 
     expect(latest?.data).toBe(3);
+
+    await act(async () => {
+      const value = await latest?.mutateAsync(4);
+      expect(value).toBe(5);
+    });
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+
+  it('uses latest mutation options across rerenders', async () => {
+    const values: number[] = [];
+    let latest: UseMutationResult<number, number> | undefined;
+
+    const App = ({ multiplier }: { multiplier: number }) => {
+      latest = useMutation<number, number>({
+        mutationFn: async (value) => value * multiplier,
+        onSuccess: (data) => {
+          values.push(data);
+        },
+      });
+      return React.createElement('span', null, latest.status);
+    };
+
+    const getLatest = (): UseMutationResult<number, number> => {
+      if (!latest) {
+        throw new Error('expected mutation result');
+      }
+      return latest;
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App, { multiplier: 2 }));
+    });
+
+    await act(async () => {
+      const first = await getLatest().mutateAsync(3);
+      expect(first).toBe(6);
+    });
+
+    await act(async () => {
+      renderer.update(React.createElement(App, { multiplier: 4 }));
+    });
+
+    await act(async () => {
+      const second = await getLatest().mutateAsync(3);
+      expect(second).toBe(12);
+    });
+
+    expect(values).toEqual([6, 12]);
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+});
+
+describe('@iostore/react: useSuspenseQuery', () => {
+  it('suspends until data resolves', async () => {
+    const client = createQueryClient();
+    const deferred = createDeferred<number>();
+    let latest: UseSuspenseQueryResult<number> | undefined;
+
+    const View = () => {
+      latest = useSuspenseQuery({
+        client,
+        key: ['react', 'suspense'],
+        queryFn: async () => deferred.promise,
+      });
+      return React.createElement('span', null, String(latest.data));
+    };
+
+    const fallback = React.createElement('span', null, 'loading');
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(
+        React.createElement(
+          React.Suspense,
+          { fallback },
+          React.createElement(View),
+        ),
+      );
+    });
+
+    expect(renderer.toJSON()).toMatchObject({
+      type: 'span',
+      children: ['loading'],
+    });
+
+    await act(async () => {
+      deferred.resolve(9);
+      await deferred.promise;
+    });
+    await flushAsync();
+
+    expect(latest?.data).toBe(9);
+    expect(renderer.toJSON()).toMatchObject({
+      type: 'span',
+      children: ['9'],
+    });
 
     await act(async () => {
       renderer.unmount();

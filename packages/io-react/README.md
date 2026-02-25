@@ -7,7 +7,8 @@ IO 的 React 适配层（hooks）。
 - `useIO`
 - `useIOSelector`
 - `useQuery`
-- `useResource`
+- `useMutation`
+- `useSuspenseQuery`
 
 ## Query quick start
 
@@ -17,7 +18,8 @@ import { useQuery } from '@iostore/react';
 export function UserName({ id }: { id: number }) {
   const user = useQuery({
     key: ['user', id],
-    queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+    queryFn: async ({ signal }) =>
+      fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
   });
   return <span>{user.data?.name ?? 'loading'}</span>;
 }

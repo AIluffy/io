@@ -1,9 +1,6 @@
 ---
 title: "IoQueryKey"
 description: "类型 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -14,13 +11,13 @@ draft: true
 ## 签名
 
 ```ts
-unknown
+readonly unknown[]
 ```
 
 ## 最小示例
 
 ```ts
-import type { IoQueryKey } from '@iostore/query';
+import type { IoQueryKey } from '@iostore/store/query';
 
 let value!: IoQueryKey;
 console.log(value);
@@ -30,14 +27,14 @@ console.log(value);
 
 - 避免在用户文档中展开过于复杂的类型细节。
 - 调整类型别名时注意下游兼容性。
+- key 必须可稳定序列化，不能包含 `function`、`symbol` 或循环引用。
 
 ## 相关 API
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
 - [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [IoQueryFilter](../io-query-filter/)
+- [IoQueryOptions](../io-query-options/)
 
 ## 源码
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

@@ -1,0 +1,50 @@
+---
+title: "batch"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<R>(fn: () => R) => R
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| fn | `() => R` |
+
+## Returns
+
+`R`
+
+## Minimal Example
+
+```ts
+import { batch } from '@iostore/store';
+
+const result = batch(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [createAbortError](../create-abort-error/)
+- [createHistory](../create-history/)
+- [createMutation](../create-mutation/)
+
+## Source
+
+- `packages/io/src/lib/utils/reactive/batch.ts`

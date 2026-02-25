@@ -1,0 +1,39 @@
+---
+title: "IoLynxQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoLynxQueryResult<TData, TError>
+```
+
+## Minimal Example
+
+```ts
+import type { IoLynxQueryResult } from '@iostore/lynx';
+
+let value!: IoLynxQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+
+## Source
+
+- `packages/io-lynx/src/lib/use-query.ts`

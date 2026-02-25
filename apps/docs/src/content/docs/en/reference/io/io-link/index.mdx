@@ -1,0 +1,46 @@
+---
+title: "IoLink"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoLink<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| __@IO_LINK@1387 | `T` |
+
+## Minimal Example
+
+```ts
+import type { IoLink } from '@iostore/store/extensions';
+
+let value!: IoLink;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

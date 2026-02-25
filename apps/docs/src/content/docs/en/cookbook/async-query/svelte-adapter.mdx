@@ -1,0 +1,62 @@
+---
+title: Svelte Adapter
+description: Use createQueryStore/toQueryStore to consume query state in Svelte stores.
+sidebar:
+  order: 9
+---
+
+## What It Is
+
+The Svelte adapter maps query state into Svelte stores so components can consume it directly via store syntax.
+
+## When to Use
+
+- You need query lifecycle handling inside Svelte components.
+- You want compatibility with Svelte store composition patterns.
+
+## Core API
+
+- [create-query-store](/en/api-reference/io-svelte/create-query-store/)
+- [io-query-store](/en/api-reference/io-svelte/io-query-store/)
+- [to-query-store](/en/api-reference/io-svelte/to-query-store/)
+
+## Minimal Example
+
+```ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const usersQuery = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+```svelte
+<script lang="ts">
+  import { usersQuery } from './query';
+</script>
+
+{#if $usersQuery.isFetching}
+  <p>Loading...</p>
+{:else if $usersQuery.error}
+  <p>Failed</p>
+{:else}
+  <p>Count: {$usersQuery.data?.length ?? 0}</p>
+{/if}
+```
+
+## Common Pitfalls
+
+- Recreating query stores in component scope.
+- Rendering only `data` and ignoring status fields.
+- Missing key updates for filter/pagination changes.
+
+## Practical Guidance
+
+- Define reusable query stores in dedicated modules.
+- Keep key evolution explicit for route/filter changes.
+- Deduplicate appended rows by stable id.
+
+## Next Steps
+
+- Continue with [Solid Adapter](./solid-adapter/)

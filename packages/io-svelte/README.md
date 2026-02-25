@@ -17,6 +17,7 @@ import { createQueryStore } from '@iostore/svelte';
 
 const userStore = createQueryStore({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```

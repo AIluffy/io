@@ -1,0 +1,40 @@
+---
+title: "IoBehavior"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoBehavior<T>
+```
+
+## Minimal Example
+
+```ts
+import type { IoBehavior } from '@iostore/store/behavior';
+
+let value!: IoBehavior;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoDataStatus](../io-data-status/)
+
+## Source
+
+- `packages/io/src/lib/extensions/types.ts`

@@ -1,9 +1,10 @@
 import type { IoVueQueryResult } from '../query.js';
 
-import { createQueryClient, createResource } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 import { effectScope } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
-import { useQuery, useResource } from '../query.js';
+
+import { useQuery } from '../query.js';
 
 async function flushAsync(): Promise<void> {
   await Promise.resolve();
@@ -34,35 +35,36 @@ describe('@iostore/vue: useQuery', () => {
 
     scope.stop();
   });
-});
 
-describe('@iostore/vue: useResource', () => {
   it('supports invalidate and refetch', async () => {
     const client = createQueryClient();
     let value = 0;
-    const resource = createResource({
-      client,
-      key: ['vue', 'resource'],
-      queryFn: async () => {
-        value += 1;
-        return value;
-      },
-      staleTime: 10_000,
-    });
 
     const scope = effectScope();
     let result: IoVueQueryResult<number> | undefined;
 
     scope.run(() => {
-      result = useResource(resource);
+      result = useQuery({
+        client,
+        key: ['vue', 'query-actions'],
+        queryFn: async () => {
+          value += 1;
+          return value;
+        },
+        staleTime: 10_000,
+      });
     });
 
     await flushAsync();
     expect(result?.state.value.data).toBe(1);
-    expect(result?.invalidate()).toBe(1);
-    await result?.refetch();
+
+    result?.invalidate();
     await flushAsync();
     expect(result?.state.value.data).toBe(2);
+
+    await result?.refetch();
+    await flushAsync();
+    expect(result?.state.value.data).toBe(3);
 
     scope.stop();
   });

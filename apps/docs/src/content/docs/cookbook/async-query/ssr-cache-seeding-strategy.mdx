@@ -1,0 +1,58 @@
+---
+title: SSR 缓存注入策略
+description: 通过 server 预取 + client 注入减少首屏重复请求并保持后续可刷新。
+sidebar:
+  order: 6
+---
+
+## 是什么
+
+SSR Query 的核心是“每请求独立 client + 首屏缓存注入 + 客户端继续可拉取”。
+
+## 何时使用
+
+- 你要提升首屏可用时间。
+- 你要避免 hydration 后重复首请求。
+- 你要统一 SSR 与 CSR 的 key 策略。
+
+## 核心 API
+
+- [create-query-client](/api-reference/io-query/create-query-client/)
+- [get-default-client](/api-reference/io-query/get-default-client/)
+- [reset-default-client](/api-reference/io-query/reset-default-client/)
+
+## 最小示例
+
+```ts
+// server
+const client = createQueryClient({ defaultStaleTime: 10_000 });
+await client
+  .query({
+    key: ['user', id],
+    queryFn: ({ signal }) => fetch(`https://example.com/api/users/${id}`, { signal }).then((r) => r.json()),
+  })
+  .prefetch();
+
+const initialUser = client.getQueryData(['user', id]);
+
+// client
+if (initialUser) {
+  client.setQueryData(['user', id], initialUser);
+}
+```
+
+## 常见误区
+
+- server 复用全局 client，导致请求间串数据。
+- server/client key 不一致，注入不命中。
+- 只注入数据不注册查询，失效后无法自动拉取。
+
+## 实践建议
+
+- 明确“谁负责创建 client、谁负责注入”。
+- 把 key 定义抽到共享模块，减少偏差。
+- SSR 命中后仍保留失效刷新路径。
+
+## 下一步
+
+- 继续：[React 适配](./react-adapter/)

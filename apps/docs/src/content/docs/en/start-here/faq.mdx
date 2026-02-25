@@ -5,10 +5,120 @@ sidebar:
   order: 4
 ---
 
-This page is being aligned with the Chinese version.
+This page covers the most common "it runs, but behaves wrong" issues during onboarding. Each answer includes a direct fix you can apply immediately.
 
-In the meantime:
+## Q1: Some cells do not refresh after resetting an array
 
-- Start with [Quick Start](/en/start-here/quick-start/)
-- Read [Introduction](/en/start-here/introduction/)
-- Continue with [Performance Subscription](/en/cookbook/performance-subscription/)
+**Symptoms**
+
+- The component subscribes to `store.list[index]`.
+- You replace the whole array with `store.list.set(newList)`.
+- Some old values stay in the UI until the next update.
+
+**Why**
+
+- Path Units (for example `store.list[0]`) are attached to child nodes of the old array.
+- Replacing the whole array switches to new nodes, while old subscriptions may still point to old Units.
+
+**Fix**
+
+- Prefer updating each subscribed path instead of replacing the whole array:
+
+```ts
+for (let i = 0; i < store.list.get().length; i += 1) {
+  store.list[i].set(null);
+}
+```
+
+- Or subscribe to the whole array and read by index during render.
+
+## Q2: One interaction causes multiple re-renders and visible jitter
+
+**Symptoms**
+
+- Clicking one button triggers several renders in sequence.
+
+**Why**
+
+- One business action is split into multiple independent `set` calls.
+
+**Fix**
+
+```ts
+import { batch } from '@iostore/store';
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.flag.set(true);
+});
+```
+
+## Q3: I mutated a snapshot object and nothing updated
+
+**Symptoms**
+
+- You mutate snapshot data directly, such as `state.user.name = 'Grace'`.
+- UI does not update, or state looks inconsistent.
+
+**Why**
+
+- `snapshot()` returns frozen data; it is read-only by design.
+
+**Fix**
+
+- Write through path Units: `store.user.name.set('Grace')`.
+- For grouped structural edits, use `commit` or `batch`.
+
+## Q4: When should I use `batch` vs `commit`?
+
+**Rule of thumb**
+
+- `batch`: group multiple `set` calls and merge notifications.
+- `commit`: update a structured object in one draft-based transaction.
+
+```ts
+import { batch } from '@iostore/store';
+
+batch(() => {
+  store.count.set((v) => v + 1);
+  store.flag.set(true);
+});
+```
+
+```ts
+store.commit((draft) => {
+  draft.user.name = 'Ada';
+  draft.count += 1;
+});
+```
+
+## Q5: Should I use `useIO` or `useIOSelector`?
+
+Start with this selection rule:
+
+- If you already have a path Unit, prefer `useIO(store.user.name)`.
+- If you need a projected slice from a larger object, use `useIOSelector(store, selector)`.
+- If you read the whole value and change frequency is low, `useIO(store)` is fine.
+
+For deeper guidance, see [Performance Subscription](/en/cookbook/performance-subscription/).
+
+## Q6: How do I verify whether slow updates come from over-wide subscriptions?
+
+Start with these 3 steps:
+
+1. Replace `useIO(store)` with `useIO(store.leaf.path)` and compare render count.
+2. Try `useIOSelector` (plus `isEqual` when needed) and compare again.
+3. Use DevTools to inspect what patches are emitted per interaction.
+
+## Q7: When should I avoid adopting IO immediately?
+
+- Your state is mostly flat and does not require deep-path updates.
+- Your team heavily depends on strict action/reducer approval flow and is not ready to change patterns yet.
+
+In those cases, start with one complex module first and expand gradually.
+
+## Next Steps
+
+- Read [Performance Subscription](/en/cookbook/performance-subscription/).
+- Follow [Subscriptions](/en/cookbook/subscriptions/) and [Batching](/en/cookbook/batching/) for deeper optimization.
+- Use the [Playground](/en/start-here/playground/) to validate update paths and subscription boundaries.

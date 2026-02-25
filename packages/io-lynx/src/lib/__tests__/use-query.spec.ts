@@ -1,4 +1,4 @@
-import { createQueryClient, createResource } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 import { describe, expect, it, vi } from 'vitest';
 
 const capture = {
@@ -34,7 +34,7 @@ vi.mock('@lynx-js/react', () => ({
   },
 }));
 
-import { useQuery, useResource } from '../use-query.js';
+import { useQuery } from '../use-query.js';
 
 function resetCapture(): void {
   capture.onStoreChangeCalls = 0;
@@ -76,7 +76,7 @@ describe('@iostore/lynx: useQuery', () => {
       queryFn,
     });
 
-    expect(result.status).toBe('idle');
+    expect(result.status).toBe('pending');
     await flushAsync();
 
     expect(queryFn).toHaveBeenCalledTimes(1);
@@ -107,16 +107,15 @@ describe('@iostore/lynx: useQuery', () => {
 
     expect(client.getQueryData<number>(['lynx', 'shared'])).toBe(9);
   });
-});
 
-describe('@iostore/lynx: useResource', () => {
   it('supports invalidate and refetch', async () => {
     resetCapture();
     const client = createQueryClient();
     let value = 0;
-    const resource = createResource({
+
+    const result = useQuery({
       client,
-      key: ['lynx', 'resource'],
+      key: ['lynx', 'query-actions'],
       queryFn: async () => {
         value += 1;
         return value;
@@ -124,16 +123,14 @@ describe('@iostore/lynx: useResource', () => {
       staleTime: 10_000,
     });
 
-    const result = useResource(resource);
     await flushAsync();
-    expect(client.getQueryData<number>(['lynx', 'resource'])).toBe(1);
+    expect(client.getQueryData<number>(['lynx', 'query-actions'])).toBe(1);
 
-    expect(result.invalidate()).toBe(1);
-    useResource(resource);
+    result.invalidate();
     await flushAsync();
-    expect(client.getQueryData<number>(['lynx', 'resource'])).toBe(2);
+    expect(client.getQueryData<number>(['lynx', 'query-actions'])).toBe(2);
 
     await result.refetch();
-    expect(client.getQueryData<number>(['lynx', 'resource'])).toBe(3);
+    expect(client.getQueryData<number>(['lynx', 'query-actions'])).toBe(3);
   });
 });

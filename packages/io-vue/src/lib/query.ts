@@ -1,122 +1,78 @@
 import type {
+  IoQuery,
+  IoQueryClient,
+  IoQueryOptions,
   IoQueryState,
-  IoResource,
-  IoResourceOptions,
-  IoResourceRequestOptions,
-} from '@iostore/query';
+} from '@iostore/store/query';
 import type { ShallowRef } from 'vue';
 
-import { createResource } from '@iostore/query';
-import { onScopeDispose, shallowRef } from 'vue';
+import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
+import { onScopeDispose } from 'vue';
 
-type IoUseResourceOptions = {
-  enabled?: boolean;
-  cancelOnDispose?: boolean;
-};
+import { useIO, useIOSelector } from './adapters.js';
 
-type IoUseQueryOptions<TData> = IoResourceOptions<TData> & IoUseResourceOptions;
+type IoUseQueryOptions<TData, TError = Error> =
+  IoQueryOptions<TData, TError> & {
+    client?: IoQueryClient;
+    enabled?: boolean;
+    cancelOnDispose?: boolean;
+  };
 
-export type IoVueQueryResult<TData> = {
-  state: ShallowRef<IoQueryState<TData>>;
+export type IoVueQueryResult<TData, TError = Error> = {
+  state: ShallowRef<IoQueryState<TData, TError>>;
   data: ShallowRef<TData | undefined>;
-  fetch: (options?: IoResourceRequestOptions) => Promise<TData>;
+  fetch: () => Promise<TData>;
   refetch: () => Promise<TData>;
-  prefetch: (options?: IoResourceRequestOptions) => Promise<void>;
-  invalidate: (options?: {
-    action?: string;
-    meta?: Record<string, unknown>;
-  }) => number;
-  cancel: () => number;
+  prefetch: () => Promise<void>;
+  invalidate: (refetch?: boolean) => void;
+  cancel: () => void;
+  query: IoQuery<TData, TError>;
 };
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
 }
 
-function shouldAutoFetch<TData>(state: IoQueryState<TData>): boolean {
-  if (state.fetchStatus === 'fetching') {
-    return false;
-  }
-  return state.status === 'idle' || state.invalidated;
-}
+export function useQuery<TData, TError = Error>(
+  options: IoUseQueryOptions<TData, TError>,
+): IoVueQueryResult<TData, TError> {
+  const {
+    client: providedClient,
+    enabled = true,
+    cancelOnDispose = false,
+    ...queryOptions
+  } = options;
 
-export function useResource<TData>(
-  resource: IoResource<TData>,
-  options?: IoUseResourceOptions,
-): IoVueQueryResult<TData> {
-  const enabled = options?.enabled ?? true;
-  const cancelOnDispose = options?.cancelOnDispose ?? false;
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
+  );
+  const state = useIO(query);
+  const data = useIOSelector(query, (value) => value.data);
 
-  const state = shallowRef(resource.getState()) as ShallowRef<IoQueryState<TData>>;
-  const data = shallowRef(state.value.data);
-
-  const unsubscribe = resource.subscribe(() => {
-    state.value = resource.getState();
-    data.value = state.value.data ?? resource.read();
-  });
-
-  if (enabled && shouldAutoFetch(state.value)) {
-    void resource.fetch().catch((error: unknown) => {
-      if (isAbortError(error)) {
-        return;
-      }
+  if (enabled && queryOptions.autoFetch !== true) {
+    void query.fetch().catch((error: unknown) => {
+      reportBackgroundError('vue.useQuery(fetch)', error);
     });
   }
 
   onScopeDispose(() => {
-    unsubscribe();
     if (cancelOnDispose) {
-      resource.cancel();
+      query.cancel();
     }
   });
 
   return {
     state,
     data,
-    fetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.fetch(requestOptions),
-    refetch: () => resource.fetch({ force: true }),
-    prefetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.prefetch(requestOptions),
-    invalidate: (invalidateOptions?: {
-      action?: string;
-      meta?: Record<string, unknown>;
-    }) => resource.invalidate(invalidateOptions),
-    cancel: () => resource.cancel(),
+    fetch: () => query.fetch(),
+    refetch: () => forceRefetch(query),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => query.invalidate(refetch),
+    cancel: () => query.cancel(),
+    query,
   };
-}
-
-export function useQuery<TData>(
-  options: IoUseQueryOptions<TData>,
-): IoVueQueryResult<TData> {
-  const {
-    enabled,
-    cancelOnDispose,
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  } = options;
-
-  const resource = createResource<TData>({
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  });
-
-  return useResource(resource, {
-    enabled,
-    cancelOnDispose,
-  });
 }

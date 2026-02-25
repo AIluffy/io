@@ -1,0 +1,49 @@
+---
+title: "IoPatchDiffTreeNode"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoPatchDiffTreeNode
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `PropertyKey` |
+| path | `IoPath` |
+| children | `IoPatchDiffTreeNode[]` |
+| patches | `IoPatchDiff[]` |
+
+## Minimal Example
+
+```ts
+import type { IoPatchDiffTreeNode } from '@iostore/devtools';
+
+let value!: IoPatchDiffTreeNode;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDevtools](../io-devtools/)
+- [IoDevtoolsBridge](../io-devtools-bridge/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

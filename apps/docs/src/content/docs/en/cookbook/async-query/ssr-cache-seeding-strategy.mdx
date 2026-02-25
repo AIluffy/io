@@ -1,0 +1,58 @@
+---
+title: SSR Cache Seeding Strategy
+description: Seed server-prefetched data into client cache while preserving later refetch behavior.
+sidebar:
+  order: 6
+---
+
+## What It Is
+
+SSR query correctness depends on request-scoped clients, deterministic keys, and client-side query reattachment.
+
+## When to Use
+
+- You want faster first usable screen.
+- You want to avoid duplicate first request after hydration.
+- You need one key strategy for SSR and CSR.
+
+## Core API
+
+- [create-query-client](/en/api-reference/io-query/create-query-client/)
+- [get-default-client](/en/api-reference/io-query/get-default-client/)
+- [reset-default-client](/en/api-reference/io-query/reset-default-client/)
+
+## Minimal Example
+
+```ts
+// server
+const client = createQueryClient({ defaultStaleTime: 10_000 });
+await client
+  .query({
+    key: ['user', id],
+    queryFn: ({ signal }) => fetch(`https://example.com/api/users/${id}`, { signal }).then((r) => r.json()),
+  })
+  .prefetch();
+
+const initialUser = client.getQueryData(['user', id]);
+
+// client
+if (initialUser) {
+  client.setQueryData(['user', id], initialUser);
+}
+```
+
+## Common Pitfalls
+
+- Reusing one global server client for multiple requests.
+- Mismatched server/client keys.
+- Seeding data without registering a fetchable query path.
+
+## Practical Guidance
+
+- Treat request-scoped client creation as mandatory.
+- Share key builders between server and client.
+- Keep invalidation/refetch active after hydration.
+
+## Next Steps
+
+- Continue with [React Adapter](./react-adapter/)

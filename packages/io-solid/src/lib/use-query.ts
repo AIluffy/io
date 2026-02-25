@@ -1,134 +1,81 @@
 import type {
+  IoQuery,
+  IoQueryClient,
+  IoQueryOptions,
   IoQueryState,
-  IoResource,
-  IoResourceOptions,
-  IoResourceRequestOptions,
-} from '@iostore/query';
+} from '@iostore/store/query';
 import type { Accessor } from 'solid-js';
 
-import { createResource } from '@iostore/query';
-import { createSignal, onCleanup } from 'solid-js';
+import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
+import { onCleanup } from 'solid-js';
 
-type IoUseResourceOptions = {
-  enabled?: boolean;
-  cancelOnCleanup?: boolean;
-};
+import { useIO, useIOSelector } from './adapters.js';
 
-type IoUseQueryOptions<TData> = IoResourceOptions<TData> & IoUseResourceOptions;
+type IoUseQueryOptions<TData, TError = Error> =
+  IoQueryOptions<TData, TError> & {
+    client?: IoQueryClient;
+    enabled?: boolean;
+    cancelOnCleanup?: boolean;
+  };
 
-export type IoSolidQueryResult<TData> = {
-  state: Accessor<IoQueryState<TData>>;
+export type IoSolidQueryResult<TData, TError = Error> = {
+  state: Accessor<IoQueryState<TData, TError>>;
   data: Accessor<TData | undefined>;
-  error: Accessor<unknown>;
-  fetch: (options?: IoResourceRequestOptions) => Promise<TData>;
+  error: Accessor<TError | null>;
+  fetch: () => Promise<TData>;
   refetch: () => Promise<TData>;
-  prefetch: (options?: IoResourceRequestOptions) => Promise<void>;
-  invalidate: (options?: {
-    action?: string;
-    meta?: Record<string, unknown>;
-  }) => number;
-  cancel: () => number;
+  prefetch: () => Promise<void>;
+  invalidate: (refetch?: boolean) => void;
+  cancel: () => void;
+  query: IoQuery<TData, TError>;
 };
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
 }
 
-function shouldAutoFetch<TData>(state: IoQueryState<TData>): boolean {
-  if (state.fetchStatus === 'fetching') {
-    return false;
-  }
-  return state.status === 'idle' || state.invalidated;
-}
+export function useQuery<TData, TError = Error>(
+  options: IoUseQueryOptions<TData, TError>,
+): IoSolidQueryResult<TData, TError> {
+  const {
+    client: providedClient,
+    enabled = true,
+    cancelOnCleanup = false,
+    ...queryOptions
+  } = options;
 
-export function useResource<TData>(
-  resource: IoResource<TData>,
-  options?: IoUseResourceOptions,
-): IoSolidQueryResult<TData> {
-  const enabled = options?.enabled ?? true;
-  const cancelOnCleanup = options?.cancelOnCleanup ?? false;
-
-  const [state, setState] = createSignal(resource.getState());
-  const [data, setData] = createSignal<TData | undefined>(
-    state().data ?? resource.read(),
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
   );
+  const state = useIO(query);
+  const data = useIOSelector(query, (value) => value.data);
+  const error = useIOSelector(query, (value) => value.error as TError | null);
 
-  const unsubscribe = resource.subscribe(() => {
-    const nextState = resource.getState();
-    setState(() => nextState);
-    setData(() => nextState.data ?? resource.read());
-    if (enabled && shouldAutoFetch(nextState)) {
-      void resource.fetch().catch((error: unknown) => {
-        if (isAbortError(error)) {
-          return;
-        }
-      });
-    }
-  });
-
-  if (enabled && shouldAutoFetch(state())) {
-    void resource.fetch().catch((error: unknown) => {
-      if (isAbortError(error)) {
-        return;
-      }
+  if (enabled && queryOptions.autoFetch !== true) {
+    void query.fetch().catch((cause: unknown) => {
+      reportBackgroundError('solid.useQuery(fetch)', cause);
     });
   }
 
   onCleanup(() => {
-    unsubscribe();
     if (cancelOnCleanup) {
-      resource.cancel();
+      query.cancel();
     }
   });
 
   return {
     state,
     data,
-    error: () => state().error,
-    fetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.fetch(requestOptions),
-    refetch: () => resource.fetch({ force: true }),
-    prefetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.prefetch(requestOptions),
-    invalidate: (invalidateOptions?: {
-      action?: string;
-      meta?: Record<string, unknown>;
-    }) => resource.invalidate(invalidateOptions),
-    cancel: () => resource.cancel(),
+    error,
+    fetch: () => query.fetch(),
+    refetch: () => forceRefetch(query),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => query.invalidate(refetch),
+    cancel: () => query.cancel(),
+    query,
   };
-}
-
-export function useQuery<TData>(
-  options: IoUseQueryOptions<TData>,
-): IoSolidQueryResult<TData> {
-  const {
-    enabled,
-    cancelOnCleanup,
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  } = options;
-
-  const resource = createResource<TData>({
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  });
-
-  return useResource(resource, {
-    enabled,
-    cancelOnCleanup,
-  });
 }

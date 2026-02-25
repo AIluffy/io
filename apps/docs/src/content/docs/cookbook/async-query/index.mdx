@@ -1,0 +1,61 @@
+---
+title: Query 专题
+description: 从 Vanilla 基础到多框架适配的 Query 实战路径。
+sidebar:
+  order: 1
+---
+
+## 是什么
+
+这个专题聚焦 `@iostore/store/query` 及其框架适配层，目标是把 Query 的生命周期、缓存策略、提交回滚和 SSR 注入讲清楚。
+
+## 何时使用
+
+- 你需要统一处理请求、重试、取消、失效刷新。
+- 你希望一套 Query 语义在多框架复用。
+- 你需要把 CSR 与 SSR 的缓存策略对齐。
+
+## 学习路径
+
+1. 先在 [Playground](./playground/) 里走一遍完整交互，建立对 Query 状态机的直觉。
+2. 再从 [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/) 建立公共心智。
+3. 用 [useIO 与通用能力联动](./useio-and-common-capabilities/) 把本地状态与 Query 串起来。
+4. 完成 key、缓存、重试、分页等核心能力。
+5. 最后进入各框架适配页，把同一策略落到 React/Vue/Svelte/Solid/Lynx/SSR 框架。
+
+## 能力地图
+
+| 能力 | 章节 |
+| --- | --- |
+| 交互式演练与故障恢复 | [Playground](./playground/) |
+| Client 创建与请求生命周期 | [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/) |
+| useIO 与通用能力联动 | [useIO 与通用能力联动](./useio-and-common-capabilities/) |
+| Key 设计、缓存命中、手动刷新 | [Query Key、缓存与刷新](./query-keys-cache-and-refetch/) |
+| 提交、乐观更新、回滚与失效 | [提交与乐观更新](./mutation-optimistic-update-and-invalidation/) |
+| 分页、预取与取消 | [分页、预取与取消](./pagination-prefetch-and-cancellation/) |
+| SSR 预取与缓存注入 | [SSR 缓存注入策略](./ssr-cache-seeding-strategy/) |
+| 框架接入 | [React 适配](./react-adapter/) 到 [SvelteKit 适配](./sveltekit-adapter/) |
+
+## 推荐阅读顺序
+
+1. [Playground](./playground/)
+2. [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/)
+3. [useIO 与通用能力联动](./useio-and-common-capabilities/)
+4. [Query Key、缓存与刷新](./query-keys-cache-and-refetch/)
+5. [提交与乐观更新](./mutation-optimistic-update-and-invalidation/)
+6. [分页、预取与取消](./pagination-prefetch-and-cancellation/)
+7. [SSR 缓存注入策略](./ssr-cache-seeding-strategy/)
+8. [React 适配](./react-adapter/)
+9. [Vue 适配](./vue-adapter/)
+10. [Svelte 适配](./svelte-adapter/)
+11. [Solid 适配](./solid-adapter/)
+12. [Lynx 适配](./lynx-adapter/)
+13. [Next.js 适配](./next-adapter/)
+14. [Nuxt 适配](./nuxt-adapter/)
+15. [SvelteKit 适配](./sveltekit-adapter/)
+
+## 下一步
+
+- 开始第一篇：[Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/)
+- 先体验演示：[Playground](./playground/)
+- API 索引：[io-query API](/api-reference/io-query/)

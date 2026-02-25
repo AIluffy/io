@@ -1,0 +1,58 @@
+---
+title: React 适配
+description: 用 useQuery/useMutation/useSuspenseQuery 在 React 中落地 Query。
+sidebar:
+  order: 7
+---
+
+## 是什么
+
+React 适配层把 Query 状态机映射为 hooks 结果，保持渲染语义与取消语义一致。
+
+## 何时使用
+
+- React 页面需要声明式查询与提交。
+- 你要在组件中统一处理 loading/error/success。
+
+## 核心 API
+
+- [useQuery](/api-reference/io-react/use-query/)
+- [useMutation](/api-reference/io-react/use-mutation/)
+- [useSuspenseQuery](/api-reference/io-react/use-suspense-query/)
+
+## 最小示例
+
+```tsx
+import { useMutation, useQuery } from '@iostore/react';
+
+const todos = useQuery({
+  key: ['todos'],
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+const addTodo = useMutation({
+  mutationFn: (title: string) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    }).then((r) => r.json()),
+  onSuccess: () => todos.query.invalidate(),
+});
+```
+
+## 常见误区
+
+- 在 `queryFn` 里忽略 `signal`。
+- 误把 `AbortError` 当业务失败提示。
+- 自定义 client 没有按页面边界隔离。
+
+## 实践建议
+
+- 默认不传 `client`，需要隔离时再传。
+- 优先使用 `query.invalidate()` 保持一致性。
+- Suspense 场景始终搭配 ErrorBoundary。
+
+## 下一步
+
+- 继续：[Vue 适配](./vue-adapter/)

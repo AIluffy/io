@@ -1,29 +1,41 @@
-# IO Documentation
+# IO Documentation Site
 
-This is the documentation site for IO, built with [Starlight](https://starlight.astro.build/).
+IO docs are built with [Starlight](https://starlight.astro.build/) in the `apps/docs` project.
 
-## Project Structure
+## Content Layout
 
-- `src/content/docs/{lang}/`: Content files (e.g., `en/`, `zh-cn/`).
-- `src/components/`: Custom Astro/React components.
-- `src/styles/`: Custom CSS.
-- `astro.config.mjs`: Starlight configuration.
+- `src/content/docs/`: default locale content (Simplified Chinese).
+- `src/content/docs/en/`: English content.
+- `src/content/docs/{,en}/api-reference/`: generated API reference pages.
+- `src/components/`: custom Astro/React components used by docs pages.
+- `src/styles/`: docs-specific styles.
+- `astro.config.mjs`: site and sidebar configuration.
 
-## Commands
+## Commands (run from workspace root)
 
-All commands are run using Nx from the root of the repo.
+Use Nx through `npm exec nx -- ...`.
 
-| Command                   | Description                                 |
-| ------------------------- | ------------------------------------------- |
-| `nx run apps-docs:dev`    | Start local development server              |
-| `nx run apps-docs:build`  | Build for production                        |
-| `nx run apps-docs:preview`| Preview the production build                |
+| Command | Description |
+| --- | --- |
+| `npm exec nx -- run apps-docs:dev` | Start local dev server |
+| `npm exec nx -- run apps-docs:build` | Build production site |
+| `npm exec nx -- run apps-docs:preview` | Preview production build |
+| `npm exec nx -- run apps-docs:generate-api` | Regenerate API docs from package exports |
 
-## Adding Content
+## Authoring Workflow
 
-1.  Add new `.md` or `.mdx` files in `src/content/docs/en/` and `src/content/docs/zh-cn/`.
-2.  Update `sidebar` in `astro.config.mjs` if not using autogenerate (we use a mix).
+1. Edit content under `src/content/docs/` (and `src/content/docs/en/` when needed).
+2. If public APIs changed, regenerate API pages with `apps-docs:generate-api`.
+3. Run `apps-docs:build` locally before opening a PR.
+4. Keep internal links locale-aware:
+   - default locale uses `/...`
+   - English locale uses `/en/...`
 
 ## Deployment
 
-Deployed automatically to GitHub Pages via GitHub Actions on push to `main`.
+- CI entrypoint: `.github/workflows/deploy-docs.yml`
+- Target: Vercel production deployment via GitHub Actions
+- Required secrets:
+  - `VERCEL_TOKEN`
+  - `VERCEL_ORG_ID`
+  - `VERCEL_PROJECT_ID`

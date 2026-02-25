@@ -1,9 +1,6 @@
 ---
 title: "IoQueryState"
 description: "Type API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -21,17 +18,18 @@ IoQueryState<TData, TError>
 
 | Name | Type |
 | --- | --- |
-| status | `IoQueryStatus` |
+| status | `IoDataStatus` |
 | fetchStatus | `IoFetchStatus` |
-| data | `TData` |
-| error | `TError` |
-| updatedAt | `number` |
-| invalidated | `boolean` |
+| data | `TData \| undefined` |
+| error | `TError \| null` |
+| dataUpdatedAt | `number` |
+| errorUpdatedAt | `number` |
+| failureCount | `number` |
 
 ## Minimal Example
 
 ```ts
-import type { IoQueryState } from '@iostore/query';
+import type { IoQueryState } from '@iostore/store/query';
 
 let value!: IoQueryState;
 console.log(value);
@@ -44,11 +42,10 @@ console.log(value);
 
 ## Related APIs
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
 - [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [IoQueryOptions](../io-query-options/)
+- [IoQueryFilter](../io-query-filter/)
 
 ## Source
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

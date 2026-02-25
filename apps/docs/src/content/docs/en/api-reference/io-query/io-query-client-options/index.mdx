@@ -1,9 +1,6 @@
 ---
 title: "IoQueryClientOptions"
 description: "Type API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -23,14 +20,13 @@ IoQueryClientOptions
 | --- | --- |
 | defaultStaleTime | `number` |
 | defaultGcTime | `number` |
-| defaultRetry | `IoRetryValue` |
-| defaultRetryDelay | `IoRetryDelayValue` |
-| hashKey | `(key: IoQueryKey) => string` |
+| defaultRetry | `number` |
+| defaultRetryDelay | `(attempt: number) => number` |
 
 ## Minimal Example
 
 ```ts
-import type { IoQueryClientOptions } from '@iostore/query';
+import type { IoQueryClientOptions } from '@iostore/store/query';
 
 let value!: IoQueryClientOptions;
 console.log(value);
@@ -43,11 +39,10 @@ console.log(value);
 
 ## Related APIs
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
+- [createQueryClient](../create-query-client/)
 - [IoQueryClient](../io-query-client/)
-- [IoQueryDataUpdater](../io-query-data-updater/)
+- [IoQueryOptions](../io-query-options/)
 
 ## Source
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

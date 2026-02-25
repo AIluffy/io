@@ -1,161 +1,87 @@
 import type {
+  IoQuery,
+  IoQueryClient,
+  IoQueryDerivedFlags,
+  IoQueryOptions,
   IoQueryState,
-  IoResource,
-  IoResourceOptions,
-  IoResourceRequestOptions,
-} from '@iostore/query';
+} from '@iostore/store/query';
 
-import { createResource } from '@iostore/query';
-import { useEffect, useMemo, useSyncExternalStore } from '@lynx-js/react';
+import {
+  deriveQueryFlags,
+  getDefaultClient,
+  reportBackgroundError,
+} from '@iostore/store/query';
+import { useEffect } from '@lynx-js/react';
 
-type IoUseResourceOptions = {
-  enabled?: boolean;
-  cancelOnUnmount?: boolean;
-};
+import { useIO } from './use-io.js';
 
-type IoUseQueryOptions<TData> = IoResourceOptions<TData> & IoUseResourceOptions;
+type IoUseQueryOptions<TData, TError = Error> =
+  IoQueryOptions<TData, TError> & {
+    client?: IoQueryClient;
+    enabled?: boolean;
+    cancelOnUnmount?: boolean;
+  };
 
-export type IoLynxQueryResult<TData> = {
-  state: IoQueryState<TData>;
-  data: TData | undefined;
-  error: unknown;
-  status: IoQueryState<TData>['status'];
-  fetchStatus: IoQueryState<TData>['fetchStatus'];
-  invalidated: boolean;
-  updatedAt: number;
-  fetch: (options?: IoResourceRequestOptions) => Promise<TData>;
-  refetch: () => Promise<TData>;
-  prefetch: (options?: IoResourceRequestOptions) => Promise<void>;
-  invalidate: (options?: {
-    action?: string;
-    meta?: Record<string, unknown>;
-  }) => number;
-  cancel: () => number;
-};
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
-function shouldAutoFetch<TData>(state: IoQueryState<TData>): boolean {
-  if (state.fetchStatus === 'fetching') {
-    return false;
-  }
-  return state.status === 'idle' || state.invalidated;
-}
-
-function areStatesEqual<TData>(
-  left: IoQueryState<TData>,
-  right: IoQueryState<TData>,
-): boolean {
-  return (
-    left.status === right.status &&
-    left.fetchStatus === right.fetchStatus &&
-    left.updatedAt === right.updatedAt &&
-    left.invalidated === right.invalidated &&
-    Object.is(left.data, right.data) &&
-    Object.is(left.error, right.error)
-  );
-}
-
-export function useResource<TData>(
-  resource: IoResource<TData>,
-  options?: IoUseResourceOptions,
-): IoLynxQueryResult<TData> {
-  const enabled = options?.enabled ?? true;
-  const cancelOnUnmount = options?.cancelOnUnmount ?? false;
-
-  const getSnapshot = useMemo(() => {
-    let cache = resource.getState();
-    return (): IoQueryState<TData> => {
-      const next = resource.getState();
-      if (areStatesEqual(cache, next)) {
-        return cache;
-      }
-      cache = next;
-      return cache;
+export type IoLynxQueryResult<TData, TError = Error> =
+  IoQueryState<TData, TError> &
+    IoQueryDerivedFlags & {
+      fetch: () => Promise<TData>;
+      refetch: () => Promise<TData>;
+      prefetch: () => Promise<void>;
+      invalidate: (refetch?: boolean) => void;
+      cancel: () => void;
+      query: IoQuery<TData, TError>;
     };
-  }, [resource]);
 
-  const state = useSyncExternalStore(
-    (onStoreChange) => resource.subscribe(() => onStoreChange()),
-    getSnapshot,
-    getSnapshot,
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
+}
+
+export function useQuery<TData, TError = Error>(
+  options: IoUseQueryOptions<TData, TError>,
+): IoLynxQueryResult<TData, TError> {
+  const {
+    client: providedClient,
+    enabled = true,
+    cancelOnUnmount = false,
+    ...queryOptions
+  } = options;
+
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
   );
+  const state = useIO(query);
 
   useEffect(() => {
-    if (!enabled || !shouldAutoFetch(state)) {
+    if (!enabled || queryOptions.autoFetch === true) {
       return;
     }
-    void resource.fetch().catch((error: unknown) => {
-      if (isAbortError(error)) {
-        return;
-      }
+    void query.fetch().catch((error: unknown) => {
+      reportBackgroundError('lynx.useQuery(fetch)', error);
     });
-  }, [enabled, resource, state.fetchStatus, state.invalidated, state.status]);
+  }, [enabled, query, queryOptions.autoFetch]);
 
   useEffect(
     () => () => {
       if (cancelOnUnmount) {
-        resource.cancel();
+        query.cancel();
       }
     },
-    [cancelOnUnmount, resource],
+    [cancelOnUnmount, query],
   );
 
   return {
-    state,
-    data: state.data ?? resource.read(),
-    error: state.error,
-    status: state.status,
-    fetchStatus: state.fetchStatus,
-    invalidated: state.invalidated,
-    updatedAt: state.updatedAt,
-    fetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.fetch(requestOptions),
-    refetch: () => resource.fetch({ force: true }),
-    prefetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.prefetch(requestOptions),
-    invalidate: (invalidateOptions?: {
-      action?: string;
-      meta?: Record<string, unknown>;
-    }) => resource.invalidate(invalidateOptions),
-    cancel: () => resource.cancel(),
+    ...state,
+    ...deriveQueryFlags(state),
+    fetch: () => query.fetch(),
+    refetch: () => forceRefetch(query),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => query.invalidate(refetch),
+    cancel: () => query.cancel(),
+    query,
   };
-}
-
-export function useQuery<TData>(
-  options: IoUseQueryOptions<TData>,
-): IoLynxQueryResult<TData> {
-  const {
-    enabled,
-    cancelOnUnmount,
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  } = options;
-
-  const resource = useMemo(
-    () =>
-      createResource<TData>({
-        client,
-        key,
-        queryFn,
-        staleTime,
-        gcTime,
-        retry,
-        retryDelay,
-        action,
-        meta,
-      }),
-    [action, client, gcTime, key, meta, queryFn, retry, retryDelay, staleTime],
-  );
-
-  return useResource(resource, { enabled, cancelOnUnmount });
 }

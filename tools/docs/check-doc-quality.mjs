@@ -47,7 +47,7 @@ async function checkLocale(locale) {
   const localeRoot = locale.baseDir
     ? path.join(docsRoot, locale.baseDir)
     : docsRoot;
-  const referenceRoot = path.join(localeRoot, 'reference');
+  const referenceRoot = path.join(localeRoot, 'api-reference');
   const files = await listFiles(referenceRoot);
   const issues = [];
 

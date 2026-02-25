@@ -33,13 +33,11 @@
   },
   "peerDependencies": {
     "solid-js": ">=1.9",
-    "@iostore/query": "*",
     "@iostore/store": "*"
   },
   "devDependencies": {
     "solid-js": "^1.9.9",
     "vite": "^7.3.1",
-    "@iostore/query": "*",
     "@iostore/store": "*"
   },
   "nx": {

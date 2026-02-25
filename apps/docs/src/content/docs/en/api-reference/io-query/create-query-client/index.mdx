@@ -1,9 +1,6 @@
 ---
 title: "createQueryClient"
 description: "Function API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -30,7 +27,7 @@ Use this function when you need this behavior from the package API.
 ## Minimal Example
 
 ```ts
-import { createQueryClient } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 
 const result = createQueryClient(/* ...args */);
 console.log(result);
@@ -43,11 +40,9 @@ console.log(result);
 
 ## Related APIs
 
-- [createResource](../create-resource/)
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
 - [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
 
 ## Source
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/client.ts`

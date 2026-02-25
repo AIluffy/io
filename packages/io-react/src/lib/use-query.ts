@@ -1,160 +1,206 @@
 import type {
+  IoMutation,
+  IoMutationDerivedFlags,
+  IoMutationOptions,
+  IoMutationState,
+  IoQuery,
+  IoQueryClient,
+  IoQueryDerivedFlags,
+  IoQueryOptions,
   IoQueryState,
-  IoResource,
-  IoResourceOptions,
-  IoResourceRequestOptions,
-} from '@iostore/query';
+} from '@iostore/store/query';
 
-import { createResource } from '@iostore/query';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import {
+  createMutation,
+  deriveMutationFlags,
+  deriveQueryFlags,
+  getDefaultClient,
+  reportBackgroundError,
+} from '@iostore/store/query';
+import { useEffect, useMemo, useRef } from 'react';
 
-type IoUseResourceOptions = {
-  enabled?: boolean;
-  cancelOnUnmount?: boolean;
-};
+import { useIO } from './use-io.js';
 
-type IoUseQueryOptions<TData> = IoResourceOptions<TData> & IoUseResourceOptions;
-
-export type IoQueryResult<TData> = {
-  state: IoQueryState<TData>;
-  data: TData | undefined;
-  error: unknown;
-  status: IoQueryState<TData>['status'];
-  fetchStatus: IoQueryState<TData>['fetchStatus'];
-  invalidated: boolean;
-  updatedAt: number;
-  fetch: (options?: IoResourceRequestOptions) => Promise<TData>;
-  refetch: () => Promise<TData>;
-  prefetch: (options?: IoResourceRequestOptions) => Promise<void>;
-  invalidate: (options?: {
-    action?: string;
-    meta?: Record<string, unknown>;
-  }) => number;
-  cancel: () => number;
-};
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
 }
 
-function shouldAutoFetch<TData>(state: IoQueryState<TData>): boolean {
-  if (state.fetchStatus === 'fetching') {
-    return false;
-  }
-  return state.status === 'idle' || state.invalidated;
-}
+export type UseQueryOptions<TData, TError = Error> =
+  IoQueryOptions<TData, TError> & {
+    client?: IoQueryClient;
+    enabled?: boolean;
+    cancelOnUnmount?: boolean;
+  };
 
-function areStatesEqual<TData>(
-  left: IoQueryState<TData>,
-  right: IoQueryState<TData>,
-): boolean {
-  return (
-    left.status === right.status &&
-    left.fetchStatus === right.fetchStatus &&
-    left.updatedAt === right.updatedAt &&
-    left.invalidated === right.invalidated &&
-    Object.is(left.data, right.data) &&
-    Object.is(left.error, right.error)
-  );
-}
-
-export function useResource<TData>(
-  resource: IoResource<TData>,
-  options?: IoUseResourceOptions,
-): IoQueryResult<TData> {
-  const enabled = options?.enabled ?? true;
-  const cancelOnUnmount = options?.cancelOnUnmount ?? false;
-
-  const getSnapshot = useMemo(() => {
-    let cache = resource.getState();
-    return (): IoQueryState<TData> => {
-      const next = resource.getState();
-      if (areStatesEqual(cache, next)) {
-        return cache;
-      }
-      cache = next;
-      return cache;
+export type UseQueryResult<TData, TError = Error> =
+  IoQueryState<TData, TError> &
+    IoQueryDerivedFlags & {
+      refetch: () => Promise<TData>;
+      query: IoQuery<TData, TError>;
     };
-  }, [resource]);
-  const state = useSyncExternalStore(
-    (onStoreChange) => resource.subscribe(() => onStoreChange()),
-    getSnapshot,
-    getSnapshot,
+
+export type UseMutationResult<
+  TData,
+  TVariables,
+  TError = Error,
+> = IoMutationState<TData, TError> &
+  IoMutationDerivedFlags & {
+    mutate: (variables: TVariables) => void;
+    mutateAsync: (variables: TVariables) => Promise<TData>;
+    reset: () => void;
+    cancel: () => void;
+    mutation: IoMutation<TData, TVariables, TError>;
+  };
+
+export type UseSuspenseQueryResult<TData, TError = Error> =
+  IoQueryState<TData, TError> &
+    IoQueryDerivedFlags & {
+      data: TData;
+      refetch: () => Promise<TData>;
+      query: IoQuery<TData, TError>;
+    };
+
+export function useQuery<TData, TError = Error>(
+  options: UseQueryOptions<TData, TError>,
+): UseQueryResult<TData, TError> {
+  const {
+    client: providedClient,
+    enabled = true,
+    cancelOnUnmount = false,
+    ...queryOptions
+  } = options;
+
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
   );
+  const state = useIO(query);
 
   useEffect(() => {
-    if (!enabled || !shouldAutoFetch(state)) {
+    if (!enabled || queryOptions.autoFetch === true) {
       return;
     }
-    void resource.fetch().catch((error: unknown) => {
-      if (isAbortError(error)) {
-        return;
-      }
+    void query.fetch().catch((error: unknown) => {
+      reportBackgroundError('react.useQuery(fetch)', error);
     });
-  }, [enabled, resource, state.fetchStatus, state.invalidated, state.status]);
+  }, [enabled, query, queryOptions.autoFetch]);
 
   useEffect(
     () => () => {
       if (cancelOnUnmount) {
-        resource.cancel();
+        query.cancel();
       }
     },
-    [cancelOnUnmount, resource],
+    [cancelOnUnmount, query],
   );
 
   return {
-    state,
-    data: state.data ?? resource.read(),
-    error: state.error,
-    status: state.status,
-    fetchStatus: state.fetchStatus,
-    invalidated: state.invalidated,
-    updatedAt: state.updatedAt,
-    fetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.fetch(requestOptions),
-    refetch: () => resource.fetch({ force: true }),
-    prefetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.prefetch(requestOptions),
-    invalidate: (invalidateOptions?: {
-      action?: string;
-      meta?: Record<string, unknown>;
-    }) => resource.invalidate(invalidateOptions),
-    cancel: () => resource.cancel(),
+    ...state,
+    ...deriveQueryFlags(state),
+    refetch: () => forceRefetch(query),
+    query,
   };
 }
 
-export function useQuery<TData>(
-  options: IoUseQueryOptions<TData>,
-): IoQueryResult<TData> {
+export function useMutation<
+  TData,
+  TVariables,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): UseMutationResult<TData, TVariables, TError> {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  const mutation = useMemo(
+    () =>
+      createMutation<TData, TVariables, TError, TContext>({
+        get mutationFn() {
+          return optionsRef.current.mutationFn;
+        },
+        get retry() {
+          return optionsRef.current.retry;
+        },
+        get retryDelay() {
+          return optionsRef.current.retryDelay;
+        },
+        get onMutate() {
+          return optionsRef.current.onMutate;
+        },
+        get onSuccess() {
+          return optionsRef.current.onSuccess;
+        },
+        get onError() {
+          return optionsRef.current.onError;
+        },
+        get onSettled() {
+          return optionsRef.current.onSettled;
+        },
+      }),
+    [],
+  );
+  const state = useIO(mutation);
+
+  return {
+    ...state,
+    ...deriveMutationFlags(state),
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    reset: mutation.reset,
+    cancel: mutation.cancel,
+    mutation,
+  };
+}
+
+export function useSuspenseQuery<TData, TError = Error>(
+  options: UseQueryOptions<TData, TError>,
+): UseSuspenseQueryResult<TData, TError> {
   const {
-    enabled,
-    cancelOnUnmount,
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
+    client: providedClient,
+    enabled = true,
+    cancelOnUnmount = false,
+    ...queryOptions
   } = options;
 
-  const resource = useMemo(
-    () =>
-      createResource<TData>({
-        client,
-        key,
-        queryFn,
-        staleTime,
-        gcTime,
-        retry,
-        retryDelay,
-        action,
-        meta,
-      }),
-    [action, client, gcTime, key, meta, queryFn, retry, retryDelay, staleTime],
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
+  );
+  const state = useIO(query);
+
+  useEffect(
+    () => () => {
+      if (cancelOnUnmount) {
+        query.cancel();
+      }
+    },
+    [cancelOnUnmount, query],
   );
 
-  return useResource(resource, { enabled, cancelOnUnmount });
+  if (!enabled) {
+    if (state.data === undefined) {
+      throw new Error('useSuspenseQuery: enabled=false requires existing data');
+    }
+    return {
+      ...state,
+      ...deriveQueryFlags(state),
+      data: state.data,
+      refetch: () => forceRefetch(query),
+      query,
+    };
+  }
+
+  const data = query.read();
+
+  return {
+    ...state,
+    ...deriveQueryFlags(state),
+    data,
+    refetch: () => forceRefetch(query),
+    query,
+  };
 }

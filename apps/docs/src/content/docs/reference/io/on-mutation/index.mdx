@@ -1,0 +1,51 @@
+---
+title: "onMutation"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+(target: unknown, fn: (patch: IoPatch, path: IoPath, update: IoUpdate) => void) => IoUnsubscribe
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| fn | `(patch: IoPatch, path: IoPath, update: IoUpdate) => void` |
+
+## 返回
+
+`IoUnsubscribe`
+
+## 最小示例
+
+```ts
+import { onMutation } from '@iostore/store/debug';
+
+const result = onMutation(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createAbortError](../create-abort-error/)
+- [createHistory](../create-history/)
+
+## 源码
+
+- `packages/io/src/lib/utils/debug/debug.ts`

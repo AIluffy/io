@@ -1,0 +1,50 @@
+---
+title: "useQuery"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error>(options: IoUseQueryOptions<TData, TError>) => IoVueQueryResult<TData, TError>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseQueryOptions<TData, TError>` |
+
+## Returns
+
+`IoVueQueryResult<TData, TError>`
+
+## Minimal Example
+
+```ts
+import { useQuery } from '@iostore/vue';
+
+const result = useQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [IoVueQueryResult](../io-vue-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

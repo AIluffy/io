@@ -1,53 +1,16 @@
 ---
 title: "useResource"
-description: "函数 API 参考。"
+description: "Removed API."
 sidebar:
   hidden: true
 draft: true
 ---
 
+`useResource` has been removed.
 
-## 何时使用
+Use `useQuery` with `@iostore/store/query` instead:
 
-当你需要该包提供的这项行为能力时使用此函数。
+- Create or reuse a query via `client.query({ key, queryFn, ... })`
+- Consume it with framework adapters (`useQuery` / `createQueryStore`)
 
-## 签名
-
-```ts
-<TData>(resource: IoResource<TData>, options?: IoUseResourceOptions) => IoSolidQueryResult<TData>
-```
-
-## 参数
-
-| Name | Type |
-| --- | --- |
-| resource | `IoResource<TData>` |
-| options | `IoUseResourceOptions` |
-
-## 返回
-
-`IoSolidQueryResult<TData>`
-
-## 最小示例
-
-```ts
-import { useResource } from '@iostore/solid';
-
-const result = useResource(/* ...args */);
-console.log(result);
-```
-
-## 常见误用
-
-- 调用前请确认参数类型与可空性约束。
-- 注意导入路径与运行环境（服务端/客户端）是否匹配。
-
-## 相关 API
-
-- [useIO](../use-io/)
-- [useQuery](../use-query/)
-- [IoSolidQueryResult](../io-solid-query-result/)
-
-## 源码
-
-- `packages/io-solid/src/lib/use-query.ts`
+`createResource` and `IoResource*` types are no longer part of the current API.

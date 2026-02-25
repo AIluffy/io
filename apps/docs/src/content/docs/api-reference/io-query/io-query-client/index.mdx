@@ -1,9 +1,6 @@
 ---
 title: "IoQueryClient"
 description: "类型 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -21,21 +18,22 @@ IoQueryClient
 
 | Name | Type |
 | --- | --- |
-| fetchQuery | `<TData>(options: IoFetchQueryOptions<TData>) => Promise<TData>` |
-| prefetchQuery | `<TData>(options: IoFetchQueryOptions<TData>) => Promise<void>` |
+| query | `<TData = unknown, TError = Error>(options: IoQueryOptions<TData, TError>) => IoQuery<TData, TError>` |
+| mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
 | getQueryData | `<TData>(key: IoQueryKey) => TData \| undefined` |
-| setQueryData | `<TData>(key: IoQueryKey, updater: IoQueryDataUpdater<TData>, options?: IoSetQueryDataOptions) => TData` |
-| getQueryState | `<TData, TError = unknown>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
-| invalidateQueries | `(filter?: IoQueryFilter, options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
-| cancelQueries | `(filter?: IoQueryFilter) => number` |
-| removeQueries | `(filter?: IoQueryFilter, options?: { action?: string; meta?: Record<string, unknown>; }) => number` |
-| subscribe | `(listener: (event: IoQueryEvent) => void, filter?: IoQueryFilter) => Unsubscribe` |
+| setQueryData | `<TData = unknown>(key: IoQueryKey, updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
+| getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQuery<TData, TError> \| undefined` |
+| getQueries | `(filter?: IoQueryFilter) => IoQuery<unknown, unknown>[]` |
+| invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
+| cancelQueries | `(filter?: IoQueryFilter) => void` |
+| removeQueries | `(filter?: IoQueryFilter) => void` |
+| subscribe | `(fn: (event: IoQueryCacheEvent) => void) => IoUnsubscribe` |
 | clear | `() => void` |
 
 ## 最小示例
 
 ```ts
-import type { IoQueryClient } from '@iostore/query';
+import type { IoQueryClient } from '@iostore/store/query';
 
 let value!: IoQueryClient;
 console.log(value);
@@ -48,11 +46,10 @@ console.log(value);
 
 ## 相关 API
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
 - [IoQueryClientOptions](../io-query-client-options/)
-- [IoQueryDataUpdater](../io-query-data-updater/)
+- [IoQueryFilter](../io-query-filter/)
+- [IoQueryOptions](../io-query-options/)
 
 ## 源码
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

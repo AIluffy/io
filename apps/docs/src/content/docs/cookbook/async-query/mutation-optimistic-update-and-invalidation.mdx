@@ -1,0 +1,58 @@
+---
+title: 提交与乐观更新
+description: 用 onMutate/onError/onSuccess 形成“即时反馈 + 可回滚 + 最终一致”闭环。
+sidebar:
+  order: 4
+---
+
+## 是什么
+
+提交链路由三段组成：乐观写入、失败回滚、成功失效刷新。
+
+## 何时使用
+
+- 你需要提交后立即反馈 UI。
+- 你需要在失败时恢复旧状态。
+- 你需要确保缓存最终与服务端一致。
+
+## 核心 API
+
+- [create-mutation](/api-reference/io-query/create-mutation/)
+- [io-query-client](/api-reference/io-query/io-query-client/)
+
+## 最小示例
+
+```ts
+const updateUser = createMutation({
+  mutationFn: saveUser,
+  onMutate: async (input) => {
+    const previous = client.getQueryData(['user', input.id]);
+    client.setQueryData(['user', input.id], (prev) => ({ ...prev, ...input }));
+    return { previous };
+  },
+  onError: (_error, input, context) => {
+    if (context?.previous) {
+      client.setQueryData(['user', input.id], context.previous);
+    }
+  },
+  onSuccess: (_data, input) => {
+    client.invalidateQueries({ key: ['user', input.id] });
+  },
+});
+```
+
+## 常见误区
+
+- `onMutate` 不返回上下文，导致失败无法回滚。
+- 提交成功后不失效刷新，缓存长期陈旧。
+- 对确定性 4xx 错误仍重试，浪费请求预算。
+
+## 实践建议
+
+- 先定义哪些字段可以乐观写入，再写 mutation。
+- 统一封装错误分类，区分可重试与不可重试。
+- 对关键写操作增加日志，便于回放问题链路。
+
+## 下一步
+
+- 继续：[分页、预取与取消](./pagination-prefetch-and-cancellation/)

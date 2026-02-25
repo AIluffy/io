@@ -1,0 +1,49 @@
+---
+title: "IoHistoryOptions"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoHistoryOptions
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| limit | `number` |
+| emitUpdate | `boolean` |
+| filter | `IoHistoryFilterStrategy` |
+| groupBy | `(update: IoUpdate) => PropertyKey \| undefined` |
+
+## Minimal Example
+
+```ts
+import type { IoHistoryOptions } from '@iostore/store/patches';
+
+let value!: IoHistoryOptions;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

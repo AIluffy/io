@@ -1,0 +1,46 @@
+---
+title: "IoDevtoolsBridge"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoDevtoolsBridge
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| disconnect | `() => void` |
+
+## 最小示例
+
+```ts
+import type { IoDevtoolsBridge } from '@iostore/devtools';
+
+let value!: IoDevtoolsBridge;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoDevtools](../io-devtools/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
+- [IoDevtoolsPerfSample](../io-devtools-perf-sample/)
+
+## 源码
+
+- `packages/io-devtools/src/lib/types.ts`

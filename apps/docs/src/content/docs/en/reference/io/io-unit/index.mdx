@@ -1,0 +1,51 @@
+---
+title: "IoUnit"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoUnit<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| get | `() => T` |
+| set | `(next: T \| ((prev: T) => T)) => void` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+| reset | `() => void` |
+
+## Minimal Example
+
+```ts
+import type { IoUnit } from '@iostore/store';
+
+let value!: IoUnit;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

@@ -1,52 +1,23 @@
 ---
 title: "useQuery"
 description: "Function API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
-
-
-## When to Use
-
-Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-<TData>(options: IoUseQueryOptions<TData>) => IoVueQueryResult<TData>
+<TData, TError = Error>(options: IoQueryOptions<TData, TError> & { client?: IoQueryClient; enabled?: boolean; cancelOnDispose?: boolean }) => IoVueQueryResult<TData, TError>
 ```
 
-## Parameters
+## Notes
 
-| Name | Type |
-| --- | --- |
-| options | `IoUseQueryOptions<TData>` |
+- `options.client` is optional.
+- If omitted, useQuery uses [getDefaultClient](/en/api-reference/io-query/get-default-client/).
+- Pass a custom `client` only for request-scoped SSR, test isolation, or multiple cache domains.
 
 ## Returns
 
-`IoVueQueryResult<TData>`
-
-## Minimal Example
-
-```ts
-import { useQuery } from '@iostore/vue';
-
-const result = useQuery(/* ...args */);
-console.log(result);
-```
-
-## Common Pitfalls
-
-- Validate argument types and nullability before calling.
-- Confirm import path and runtime environment (server/client) expectations.
-
-## Related APIs
-
-- [ioRef](../io-ref/)
-- [useIO](../use-io/)
-- [useResource](../use-resource/)
-- [IoVueQueryResult](../io-vue-query-result/)
+`IoVueQueryResult<TData, TError>`
 
 ## Source
 

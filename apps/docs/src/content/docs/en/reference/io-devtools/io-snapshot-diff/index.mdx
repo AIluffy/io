@@ -1,0 +1,48 @@
+---
+title: "IoSnapshotDiff"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSnapshotDiff
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| path | `IoPath` |
+| prev | `unknown` |
+| next | `unknown` |
+
+## Minimal Example
+
+```ts
+import type { IoSnapshotDiff } from '@iostore/devtools';
+
+let value!: IoSnapshotDiff;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDevtools](../io-devtools/)
+- [IoDevtoolsBridge](../io-devtools-bridge/)
+- [IoDevtoolsEvent](../io-devtools-event/)
+- [IoDevtoolsOptions](../io-devtools-options/)
+
+## Source
+
+- `packages/io-devtools/src/lib/types.ts`

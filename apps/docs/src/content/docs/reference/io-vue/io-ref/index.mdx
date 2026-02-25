@@ -1,0 +1,51 @@
+---
+title: "ioRef"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+<T>(unit: IoUnit<T>, options?: IoVueOptions) => Ref<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| unit | `IoUnit<T>` |
+| options | `IoVueOptions` |
+
+## 返回
+
+`Ref<T, T>`
+
+## 最小示例
+
+```ts
+import { ioRef } from '@iostore/vue';
+
+const result = ioRef(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+- [IoVueQueryResult](../io-vue-query-result/)
+
+## 源码
+
+- `packages/io-vue/src/lib/adapters.ts`

@@ -1,0 +1,52 @@
+---
+title: "diffSnapshots"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+(prev: unknown, next: unknown, options?: DiffOptions) => IoSnapshotDiff[]
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| prev | `unknown` |
+| next | `unknown` |
+| options | `DiffOptions` |
+
+## 返回
+
+`IoSnapshotDiff[]`
+
+## 最小示例
+
+```ts
+import { diffSnapshots } from '@iostore/devtools';
+
+const result = diffSnapshots(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [buildPatchDiffTree](../build-patch-diff-tree/)
+- [createIoDevtools](../create-io-devtools/)
+- [exportReduxDevToolsImportState](../export-redux-dev-tools-import-state/)
+- [IoDevtools](../io-devtools/)
+
+## 源码
+
+- `packages/io-devtools/src/lib/diff-snapshots.ts`

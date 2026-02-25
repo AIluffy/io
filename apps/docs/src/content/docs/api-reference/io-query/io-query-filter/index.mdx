@@ -1,9 +1,6 @@
 ---
 title: "IoQueryFilter"
 description: "类型 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -21,14 +18,14 @@ IoQueryFilter
 
 | Name | Type |
 | --- | --- |
-| key | `unknown` |
+| key | `IoQueryKey` |
 | exact | `boolean` |
-| predicate | `(query: IoQueryMatch) => boolean` |
+| predicate | `(query: IoQuery<unknown, unknown>) => boolean` |
 
 ## 最小示例
 
 ```ts
-import type { IoQueryFilter } from '@iostore/query';
+import type { IoQueryFilter } from '@iostore/store/query';
 
 let value!: IoQueryFilter;
 console.log(value);
@@ -41,11 +38,10 @@ console.log(value);
 
 ## 相关 API
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
 - [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [IoQueryKey](../io-query-key/)
+- [IoQueryOptions](../io-query-options/)
 
 ## 源码
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

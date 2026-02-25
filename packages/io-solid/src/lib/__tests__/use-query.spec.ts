@@ -1,9 +1,10 @@
 import type { IoSolidQueryResult } from '../use-query.js';
 
-import { createQueryClient, createResource } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 import { createRoot } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
-import { useQuery, useResource } from '../use-query.js';
+
+import { useQuery } from '../use-query.js';
 
 async function flushAsync(): Promise<void> {
   await Promise.resolve();
@@ -33,37 +34,37 @@ describe('@iostore/solid: useQuery', () => {
     expect(result?.data()).toBe(11);
     dispose();
   });
-});
 
-describe('@iostore/solid: useResource', () => {
   it('supports invalidate and refetch', async () => {
     const client = createQueryClient();
     let value = 0;
-    const resource = createResource({
-      client,
-      key: ['solid', 'resource'],
-      queryFn: async () => {
-        value += 1;
-        return value;
-      },
-      staleTime: 10_000,
-    });
-
     let result: IoSolidQueryResult<number> | undefined;
     let dispose: () => void = () => undefined;
+
     createRoot((rootDispose) => {
       dispose = rootDispose;
-      result = useResource(resource);
+      result = useQuery({
+        client,
+        key: ['solid', 'query-actions'],
+        queryFn: async () => {
+          value += 1;
+          return value;
+        },
+        staleTime: 10_000,
+      });
     });
 
     await flushAsync();
     expect(result?.data()).toBe(1);
-    expect(result?.invalidate()).toBe(1);
+
+    result?.invalidate();
     await flushAsync();
     expect(result?.data()).toBe(2);
+
     await result?.refetch();
     await flushAsync();
     expect(result?.data()).toBe(3);
+
     dispose();
   });
 });

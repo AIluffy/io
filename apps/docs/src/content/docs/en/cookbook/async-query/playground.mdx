@@ -1,0 +1,32 @@
+---
+title: Playground
+description: Interactive AsyncTodoLiveCode demo for query, mutation, cancellation, and retry behavior.
+sidebar:
+  order: 2
+---
+import { AsyncTodoLiveCode } from '../../../../../components/AsyncTodoLiveCode';
+
+## What It Is
+
+This Playground is an interactive Query sandbox that demonstrates `useQuery`, `useMutation`, invalidation, cancellation, and retry behavior.
+
+## When to Use
+
+- You need to validate query lifecycle behavior quickly.
+- You want to demo failure -> retry -> recovery to your team.
+- You need a reproducible scenario for cancellation and fast switching.
+
+## Demo
+
+<AsyncTodoLiveCode client:load locale="en" />
+
+## Suggested Interactions
+
+- Turn on teaching mode and follow the guided failure-recovery steps.
+- Switch failure mode and compare retry count 0 vs 2 behavior.
+- Trigger cancellation and confirm it is control flow, not a business failure.
+
+## Next Steps
+
+- Go back to [Async Query](./) for the full capability map.
+- Continue with [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/).

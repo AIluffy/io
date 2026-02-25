@@ -1,9 +1,6 @@
 ---
 title: "IoQueryOptions"
 description: "Type API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -14,26 +11,29 @@ Use this type alias to model reusable type shapes.
 ## Signature
 
 ```ts
-IoQueryOptions<TData>
+IoQueryOptions<TData = unknown, TError = Error>
 ```
 
 ## Properties
 
 | Name | Type |
 | --- | --- |
-| key | `unknown` |
-| queryFn | `IoQueryFn<TData>` |
+| key | `IoQueryKey` |
+| queryFn | `(context: { signal: AbortSignal }) => Promise<TData>` |
 | staleTime | `number` |
 | gcTime | `number` |
-| retry | `IoRetryValue` |
-| retryDelay | `IoRetryDelayValue` |
-| action | `string` |
-| meta | `Record<string, unknown>` |
+| retry | `number` |
+| retryDelay | `(attempt: number) => number` |
+| autoFetch | `boolean` |
+| placeholderData | `TData \| (() => TData)` |
+| onSuccess | `(data: TData) => void` |
+| onError | `(error: TError) => void` |
+| onSettled | `(data: TData \| undefined, error: TError \| null) => void` |
 
 ## Minimal Example
 
 ```ts
-import type { IoQueryOptions } from '@iostore/query';
+import type { IoQueryOptions } from '@iostore/store/query';
 
 let value!: IoQueryOptions;
 console.log(value);
@@ -43,14 +43,15 @@ console.log(value);
 
 - Avoid over-expanding complex aliases in user-facing docs.
 - Keep aliases stable to prevent downstream type breakage.
+- `key` must be stably serializable: no `function`, no `symbol`, and no circular references.
+- Forward `signal` inside `queryFn` to actually cancel in-flight network calls.
 
 ## Related APIs
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
+- [createQuery](../create-query/)
 - [IoQueryClient](../io-query-client/)
 - [IoQueryClientOptions](../io-query-client-options/)
 
 ## Source
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

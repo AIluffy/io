@@ -1,52 +1,60 @@
 ---
 title: "useQuery"
 description: "Function API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
-
-
-## When to Use
-
-Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-<TData>(options: IoUseQueryOptions<TData>) => IoQueryResult<TData>
+<TData, TError = Error>(options: UseQueryOptions<TData, TError>) => UseQueryResult<TData, TError>
 ```
 
 ## Parameters
 
 | Name | Type |
 | --- | --- |
-| options | `IoUseQueryOptions<TData>` |
+| options | `UseQueryOptions<TData, TError>` |
+
+## Notes
+
+- `options.client` is optional.
+- If omitted, useQuery uses [getDefaultClient](/en/api-reference/io-query/get-default-client/).
+- Pass a custom `client` only for request-scoped SSR, test isolation, or multiple cache domains.
 
 ## Returns
 
-`IoQueryResult<TData>`
+`UseQueryResult<TData, TError>`
 
 ## Minimal Example
 
 ```ts
 import { useQuery } from '@iostore/react';
 
-const result = useQuery(/* ...args */);
-console.log(result);
+const result = useQuery({
+  key: ['todos'],
+  queryFn: fetchTodos,
+});
 ```
 
-## Common Pitfalls
+```ts
+import { createQueryClient } from '@iostore/store/query';
+import { useQuery } from '@iostore/react';
 
-- Validate argument types and nullability before calling.
-- Confirm import path and runtime environment (server/client) expectations.
+const client = createQueryClient();
+const result = useQuery({
+  client,
+  key: ['todos'],
+  queryFn: fetchTodos,
+});
+```
 
 ## Related APIs
 
 - [useIO](../use-io/)
 - [useIOSelector](../use-ioselector/)
-- [useResource](../use-resource/)
-- [IoQueryResult](../io-query-result/)
+- [useMutation](../use-mutation/)
+- [useSuspenseQuery](../use-suspense-query/)
+- [UseQueryResult](../io-query-result/)
 
 ## Source
 

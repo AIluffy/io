@@ -1,0 +1,50 @@
+---
+title: "exportReduxDevToolsImportState"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+(args: { initialState: unknown; history: ReadonlyArray<IoHistoryEntry>; cursor: number; }) => ReduxDevToolsImportState
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| args | `{ initialState: unknown; history: ReadonlyArray<IoHistoryEntry>; cursor: number; }` |
+
+## Returns
+
+`ReduxDevToolsImportState`
+
+## Minimal Example
+
+```ts
+import { exportReduxDevToolsImportState } from '@iostore/devtools';
+
+const result = exportReduxDevToolsImportState(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [buildPatchDiffTree](../build-patch-diff-tree/)
+- [createIoDevtools](../create-io-devtools/)
+- [diffSnapshots](../diff-snapshots/)
+- [IoDevtools](../io-devtools/)
+
+## Source
+
+- `packages/io-devtools/src/lib/export-redux-devtools.ts`

@@ -1,0 +1,51 @@
+---
+title: Query Keys, Cache, and Refetch
+description: Design deterministic keys and explicit refresh rules.
+sidebar:
+  order: 3
+---
+
+## What It Is
+
+Query keys define cache buckets and invalidation scope. Stable keys are a prerequisite for stable data behavior.
+
+## When to Use
+
+- You need predictable cache hit/miss behavior.
+- You need clean page/filter switching without stale overwrite.
+
+## Core API
+
+- [io-query-key](/en/api-reference/io-query/io-query-key/)
+- [io-query-options](/en/api-reference/io-query/io-query-options/)
+- [io-query-filter](/en/api-reference/io-query/io-query-filter/)
+
+## Minimal Example
+
+```ts
+const list = client.query({
+  key: ['users', { page, pageSize, keyword }],
+  queryFn: ({ signal }) =>
+    fetch(`/api/users?page=${page}&pageSize=${pageSize}&keyword=${keyword}`, { signal }).then((r) => r.json()),
+  staleTime: 3_000,
+});
+
+await list.prefetch();
+await list.refetch();
+```
+
+## Common Pitfalls
+
+- Omitting parameters (for example `keyword`) from key.
+- Using non-serializable values in key.
+- Forcing everything into manual refetch flow.
+
+## Practical Guidance
+
+- Use a consistent `resource + params` key shape.
+- Keep param naming and ordering deterministic.
+- Tune `staleTime` based on data volatility.
+
+## Next Steps
+
+- Continue with [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/)

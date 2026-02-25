@@ -1,0 +1,56 @@
+---
+title: "IoHistory"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoHistory
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| undo | `() => void` |
+| undoGroup | `() => void` |
+| redo | `() => void` |
+| redoGroup | `() => void` |
+| checkpoint | `() => void` |
+| clear | `() => void` |
+| destroy | `() => void` |
+| canUndo | `boolean` |
+| canRedo | `boolean` |
+| length | `number` |
+| cursor | `number` |
+
+## 最小示例
+
+```ts
+import type { IoHistory } from '@iostore/store/patches';
+
+let value!: IoHistory;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+
+## 源码
+
+- `packages/io/src/lib/utils/types/types.ts`

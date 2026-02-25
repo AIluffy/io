@@ -1,52 +1,23 @@
 ---
 title: "useQuery"
 description: "函数 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
-
-
-## 何时使用
-
-当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
 ```ts
-<TData>(options: IoUseQueryOptions<TData>) => IoVueQueryResult<TData>
+<TData, TError = Error>(options: IoQueryOptions<TData, TError> & { client?: IoQueryClient; enabled?: boolean; cancelOnDispose?: boolean }) => IoVueQueryResult<TData, TError>
 ```
 
-## 参数
+## 关键说明
 
-| Name | Type |
-| --- | --- |
-| options | `IoUseQueryOptions<TData>` |
+- `options.client` 可选，不必传。
+- 未传时内部使用 [getDefaultClient](/api-reference/io-query/get-default-client/)。
+- 仅在这些场景传自定义 `client`：SSR 每请求隔离、测试隔离、多缓存域。
 
 ## 返回
 
-`IoVueQueryResult<TData>`
-
-## 最小示例
-
-```ts
-import { useQuery } from '@iostore/vue';
-
-const result = useQuery(/* ...args */);
-console.log(result);
-```
-
-## 常见误用
-
-- 调用前请确认参数类型与可空性约束。
-- 注意导入路径与运行环境（服务端/客户端）是否匹配。
-
-## 相关 API
-
-- [ioRef](../io-ref/)
-- [useIO](../use-io/)
-- [useResource](../use-resource/)
-- [IoVueQueryResult](../io-vue-query-result/)
+`IoVueQueryResult<TData, TError>`
 
 ## 源码
 

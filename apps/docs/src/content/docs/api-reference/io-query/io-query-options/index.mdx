@@ -1,9 +1,6 @@
 ---
 title: "IoQueryOptions"
 description: "类型 API 参考。"
-sidebar:
-  hidden: true
-draft: true
 ---
 
 
@@ -14,26 +11,29 @@ draft: true
 ## 签名
 
 ```ts
-IoQueryOptions<TData>
+IoQueryOptions<TData = unknown, TError = Error>
 ```
 
 ## 属性
 
 | Name | Type |
 | --- | --- |
-| key | `unknown` |
-| queryFn | `IoQueryFn<TData>` |
+| key | `IoQueryKey` |
+| queryFn | `(context: { signal: AbortSignal }) => Promise<TData>` |
 | staleTime | `number` |
 | gcTime | `number` |
-| retry | `IoRetryValue` |
-| retryDelay | `IoRetryDelayValue` |
-| action | `string` |
-| meta | `Record<string, unknown>` |
+| retry | `number` |
+| retryDelay | `(attempt: number) => number` |
+| autoFetch | `boolean` |
+| placeholderData | `TData \| (() => TData)` |
+| onSuccess | `(data: TData) => void` |
+| onError | `(error: TError) => void` |
+| onSettled | `(data: TData \| undefined, error: TError \| null) => void` |
 
 ## 最小示例
 
 ```ts
-import type { IoQueryOptions } from '@iostore/query';
+import type { IoQueryOptions } from '@iostore/store/query';
 
 let value!: IoQueryOptions;
 console.log(value);
@@ -43,14 +43,15 @@ console.log(value);
 
 - 避免在用户文档中展开过于复杂的类型细节。
 - 调整类型别名时注意下游兼容性。
+- `key` 必须可稳定序列化，不能包含 `function`、`symbol` 或循环引用。
+- `queryFn` 应透传 `signal` 到网络层，才能在取消时真正中断请求。
 
 ## 相关 API
 
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
+- [createQuery](../create-query/)
 - [IoQueryClient](../io-query-client/)
 - [IoQueryClientOptions](../io-query-client-options/)
 
 ## 源码
 
-- `packages/io-query/src/lib/query-client.ts`
+- `packages/io/src/lib/query/types.ts`

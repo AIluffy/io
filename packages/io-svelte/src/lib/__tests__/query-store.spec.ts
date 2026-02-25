@@ -1,7 +1,8 @@
-import type { IoQueryState } from '@iostore/query';
+import type { IoQueryState } from '@iostore/store/query';
 
-import { createQueryClient } from '@iostore/query';
+import { createQueryClient } from '@iostore/store/query';
 import { describe, expect, it, vi } from 'vitest';
+
 import { createQueryStore } from '../stores.js';
 
 function createDeferred<T>() {
@@ -37,7 +38,7 @@ describe('@iostore/svelte: query store', () => {
     await flushAsync();
 
     expect(queryFn).toHaveBeenCalledTimes(1);
-    expect(seen[0]?.status).toBe('idle');
+    expect(seen[0]?.status).toBe('pending');
     expect(store.getState().status).toBe('success');
     expect(store.getState().data).toBe(3);
 
@@ -90,10 +91,15 @@ describe('@iostore/svelte: query store', () => {
     const unsubscribe = store.subscribe(() => undefined);
     await flushAsync();
     expect(store.getState().data).toBe(1);
-    expect(store.invalidate()).toBe(1);
-    await store.refetch();
+
+    store.invalidate();
     await flushAsync();
     expect(store.getState().data).toBe(2);
+
+    await store.refetch();
+    await flushAsync();
+    expect(store.getState().data).toBe(3);
+
     unsubscribe();
   });
 });

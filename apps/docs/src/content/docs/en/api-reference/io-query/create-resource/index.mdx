@@ -1,53 +1,14 @@
 ---
-title: "createResource"
-description: "Function API reference."
+title: "Removed"
+description: "Removed API."
 sidebar:
   hidden: true
 draft: true
 ---
 
+This API was removed.
 
-## When to Use
+Use the current query model in `@iostore/store/query`:
 
-Use this function when you need this behavior from the package API.
-
-## Signature
-
-```ts
-<TData>(options: IoResourceOptions<TData>) => IoResource<TData>
-```
-
-## Parameters
-
-| Name | Type |
-| --- | --- |
-| options | `IoResourceOptions<TData>` |
-
-## Returns
-
-`IoResource<TData>`
-
-## Minimal Example
-
-```ts
-import { createResource } from '@iostore/query';
-
-const result = createResource(/* ...args */);
-console.log(result);
-```
-
-## Common Pitfalls
-
-- Validate argument types and nullability before calling.
-- Confirm import path and runtime environment (server/client) expectations.
-
-## Related APIs
-
-- [createQueryClient](../create-query-client/)
-- [IoFetchQueryOptions](../io-fetch-query-options/)
-- [IoFetchStatus](../io-fetch-status/)
-- [IoQueryClient](../io-query-client/)
-
-## Source
-
-- `packages/io-query/src/lib/resource.ts`
+- `client.query({ key, queryFn, ... })`
+- framework hooks/stores built on `IoQuery`

@@ -16,8 +16,9 @@ Language: English | [简体中文](./README.zh-CN.md)
 
 ```bash
 npm i @iostore/store
-npm i @iostore/query
 ```
+
+Query APIs are exported via `@iostore/store/query`.
 
 Install adapters as needed:
 
@@ -63,7 +64,8 @@ import { useIO, useQuery } from '@iostore/react';
 const value = useIO(countUnit);
 const user = useQuery({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```
 
@@ -74,7 +76,8 @@ import { useIO, useQuery } from '@iostore/lynx';
 const value = useIO(countUnit);
 const user = useQuery({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```
 
@@ -86,7 +89,8 @@ const stateRef = useIO(source);
 const countRef = ioRef(countUnit);
 const user = useQuery({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```
 
@@ -98,7 +102,8 @@ const readable = toReadable(state);
 const writable = toWritable(unit);
 const user = createQueryStore({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```
 
@@ -109,14 +114,14 @@ import { useIO, useQuery } from '@iostore/solid';
 const value = useIO(countUnit);
 const user = useQuery({
   key: ['user', id],
-  queryFn: async () => fetch(`/api/users/${id}`).then((r) => r.json()),
+  queryFn: async ({ signal }) =>
+    fetch(`/api/users/${id}`, { signal }).then((r) => r.json()),
 });
 ```
 
 ## Packages
 
 - `@iostore/store`
-- `@iostore/query`
 - `@iostore/react`
 - `@iostore/lynx`
 - `@iostore/vue`

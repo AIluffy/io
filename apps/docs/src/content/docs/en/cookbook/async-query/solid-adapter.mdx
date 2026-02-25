@@ -1,0 +1,55 @@
+---
+title: Solid Adapter
+description: Consume query state via Accessors in Solid with cleanup-aware cancellation.
+sidebar:
+  order: 10
+---
+
+## What It Is
+
+The Solid adapter returns `IoSolidQueryResult` with accessor-based reads aligned to Solid reactivity.
+
+## When to Use
+
+- You need query control in Solid route/component flows.
+- You need cleanup/cancel behavior aligned to component disposal.
+
+## Core API
+
+- [use-query](/en/api-reference/io-solid/use-query/)
+- [io-solid-query-result](/en/api-reference/io-solid/io-solid-query-result/)
+- [use-resource](/en/api-reference/io-solid/use-resource/)
+
+## Minimal Example
+
+```tsx
+import { Show } from 'solid-js';
+import { useQuery } from '@iostore/solid';
+
+const q = useQuery({
+  key: ['profile', props.id],
+  queryFn: ({ signal }) => fetch(`/api/profile/${props.id}`, { signal }).then((r) => r.json()),
+});
+
+return (
+  <Show when={!q.isFetching()} fallback={<span>Loading...</span>}>
+    <span>{q.data()?.name}</span>
+  </Show>
+);
+```
+
+## Common Pitfalls
+
+- Treating accessors as plain values.
+- Missing cleanup in fast route switches.
+- Reusing stale keys when props change.
+
+## Practical Guidance
+
+- Read accessors inside reactive scope.
+- Apply cancellation policy on navigation-heavy pages.
+- Keep key and prop dependency aligned.
+
+## Next Steps
+
+- Continue with [Lynx Adapter](./lynx-adapter/)

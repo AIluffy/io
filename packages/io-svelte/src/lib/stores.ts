@@ -1,14 +1,14 @@
-import type {
-  IoQueryState,
-  IoResource,
-  IoResourceOptions,
-  IoResourceRequestOptions,
-} from '@iostore/query';
 import type { IoSchedule, IoUnit } from '@iostore/store';
+import type {
+  IoQuery,
+  IoQueryClient,
+  IoQueryOptions,
+  IoQueryState,
+} from '@iostore/store/query';
 import type { Readable, Writable } from 'svelte/store';
 
-import { createResource } from '@iostore/query';
 import { createScheduledDispatcher } from '@iostore/store';
+import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
 
 type IoSource<T> = {
   snapshot(): T;
@@ -28,27 +28,22 @@ type IoQueryStoreOptions = {
   cancelOnUnsubscribe?: boolean;
 };
 
-export type IoQueryStore<TData> = Readable<IoQueryState<TData>> & {
-  getState: () => IoQueryState<TData>;
-  fetch: (options?: IoResourceRequestOptions) => Promise<TData>;
-  refetch: () => Promise<TData>;
-  prefetch: (options?: IoResourceRequestOptions) => Promise<void>;
-  invalidate: (options?: {
-    action?: string;
-    meta?: Record<string, unknown>;
-  }) => number;
-  cancel: () => number;
-};
+export type IoQueryStore<TData, TError = Error> =
+  Readable<IoQueryState<TData, TError>> & {
+    getState: () => IoQueryState<TData, TError>;
+    fetch: () => Promise<TData>;
+    refetch: () => Promise<TData>;
+    prefetch: () => Promise<void>;
+    invalidate: (refetch?: boolean) => void;
+    cancel: () => void;
+    query: IoQuery<TData, TError>;
+  };
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
-function shouldAutoFetch<TData>(state: IoQueryState<TData>): boolean {
-  if (state.fetchStatus === 'fetching') {
-    return false;
-  }
-  return state.status === 'idle' || state.invalidated;
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
 }
 
 export function toReadable<T>(
@@ -128,10 +123,10 @@ export function toReadableSelector<TSource, TSelected>(
   };
 }
 
-export function toQueryStore<TData>(
-  resource: IoResource<TData>,
+export function toQueryStore<TData, TError = Error>(
+  query: IoQuery<TData, TError>,
   options?: IoQueryStoreOptions,
-): IoQueryStore<TData> {
+): IoQueryStore<TData, TError> {
   let subscriberCount = 0;
   const enabled = options?.enabled ?? true;
   const cancelOnUnsubscribe = options?.cancelOnUnsubscribe ?? false;
@@ -139,16 +134,14 @@ export function toQueryStore<TData>(
   return {
     subscribe(run) {
       subscriberCount += 1;
-      run(resource.getState());
-      const unsubscribe = resource.subscribe(() => {
-        run(resource.getState());
+      run(query.snapshot());
+      const unsubscribe = query.subscribe((state) => {
+        run(state);
       });
 
-      if (enabled && subscriberCount === 1 && shouldAutoFetch(resource.getState())) {
-        void resource.fetch().catch((error: unknown) => {
-          if (isAbortError(error)) {
-            return;
-          }
+      if (enabled && subscriberCount === 1) {
+        void query.fetch().catch((error: unknown) => {
+          reportBackgroundError('svelte.toQueryStore(fetch)', error);
         });
       }
 
@@ -156,55 +149,40 @@ export function toQueryStore<TData>(
         subscriberCount = Math.max(0, subscriberCount - 1);
         unsubscribe();
         if (cancelOnUnsubscribe && subscriberCount === 0) {
-          resource.cancel();
+          query.cancel();
         }
       };
     },
-    getState: () => resource.getState(),
-    fetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.fetch(requestOptions),
-    refetch: () => resource.fetch({ force: true }),
-    prefetch: (requestOptions?: IoResourceRequestOptions) =>
-      resource.prefetch(requestOptions),
-    invalidate: (invalidateOptions?: {
-      action?: string;
-      meta?: Record<string, unknown>;
-    }) => resource.invalidate(invalidateOptions),
-    cancel: () => resource.cancel(),
+    getState: () => query.snapshot(),
+    fetch: () => query.fetch(),
+    refetch: () => forceRefetch(query),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => query.invalidate(refetch),
+    cancel: () => query.cancel(),
+    query,
   };
 }
 
-export function createQueryStore<TData>(
-  options: IoResourceOptions<TData> & IoQueryStoreOptions,
-): IoQueryStore<TData> {
+export function createQueryStore<TData, TError = Error>(
+  options: IoQueryOptions<TData, TError> &
+    IoQueryStoreOptions & { client?: IoQueryClient },
+): IoQueryStore<TData, TError> {
   const {
     enabled,
     cancelOnUnsubscribe,
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
+    client: providedClient,
+    ...queryOptions
   } = options;
 
-  const resource = createResource<TData>({
-    client,
-    key,
-    queryFn,
-    staleTime,
-    gcTime,
-    retry,
-    retryDelay,
-    action,
-    meta,
-  });
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
+  );
+  const shouldFetchOnSubscribe =
+    (enabled ?? true) && queryOptions.autoFetch !== true;
 
-  return toQueryStore(resource, {
-    enabled,
+  return toQueryStore(query, {
+    enabled: shouldFetchOnSubscribe,
     cancelOnUnsubscribe,
   });
 }
