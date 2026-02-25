@@ -13,8 +13,8 @@ const docsSite = process.env.DOCS_SITE_URL ?? 'https://docs.iostore.dev';
 const sidebarTopics = [
   {
     id: 'docs',
-    label: { 'zh-CN': '普通文档', en: 'Docs' },
-    link: '/',
+    label: { 'zh-CN': '基础文档', en: 'Docs' },
+    link: '/start-here/quick-start/',
     items: [
       {
         label: 'Start Here',
@@ -97,7 +97,9 @@ const sidebarTopics = [
           { slug: 'cookbook/async-query/vanilla-query-client-and-lifecycle' },
           { slug: 'cookbook/async-query/useio-and-common-capabilities' },
           { slug: 'cookbook/async-query/query-keys-cache-and-refetch' },
-          { slug: 'cookbook/async-query/mutation-optimistic-update-and-invalidation' },
+          {
+            slug: 'cookbook/async-query/mutation-optimistic-update-and-invalidation',
+          },
           { slug: 'cookbook/async-query/pagination-prefetch-and-cancellation' },
           { slug: 'cookbook/async-query/ssr-cache-seeding-strategy' },
         ],

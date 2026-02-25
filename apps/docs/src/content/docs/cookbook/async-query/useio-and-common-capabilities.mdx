@@ -67,6 +67,24 @@ export function TodoPage() {
 }
 ```
 
+## 直接读取 client.query 返回对象
+
+可以。`useIO` 能直接读取 `client.query(...)` 返回的对象，因为它本身就是可订阅、可快照读取的 IO 节点。
+
+```tsx
+const query = client.query({
+  key: ['todo', id],
+  queryFn: ({ signal }) => fetchTodo(id, signal),
+});
+
+const state = useIO(query);
+```
+
+但要注意两点：
+
+- `useIO(query)` 只负责读取和订阅，不会自动帮你触发请求。
+- 页面场景通常优先用 `useQuery(...)`，它会把拉取、重拉、状态标记一起处理好。
+
 ## 常见误区
 
 - 把 Query data 全量复制到本地 IO，再双向维护两份真值源。

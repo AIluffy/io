@@ -67,6 +67,24 @@ export function TodoPage() {
 }
 ```
 
+## Reading client.query() directly with useIO
+
+Yes. `useIO` can read the object returned by `client.query(...)` directly, because that object is an IO node with snapshot and subscription capabilities.
+
+```tsx
+const query = client.query({
+  key: ['todo', id],
+  queryFn: ({ signal }) => fetchTodo(id, signal),
+});
+
+const state = useIO(query);
+```
+
+Two important notes:
+
+- `useIO(query)` only reads/subscribes. It does not auto-trigger fetching.
+- For page-level query flows, prefer `useQuery(...)` so fetch/refetch/status are handled together.
+
 ## Common Pitfalls
 
 - Duplicating query data into local IO as a second source of truth.

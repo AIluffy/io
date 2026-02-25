@@ -212,7 +212,7 @@ describe('@iostore/react: useMutation', () => {
     });
 
     await act(async () => {
-      renderer.update(React.createElement(App, { multiplier: 4 }));
+      renderer.update(React.createElement(App, { multiplier: 4 }) as never);
     });
 
     await act(async () => {

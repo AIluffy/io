@@ -9,10 +9,15 @@ import { Bench } from 'tinybench';
 const repoRoot = process.cwd();
 const docsRoot = path.join(repoRoot, 'apps', 'docs', 'src', 'content', 'docs');
 const ioDistRoot = path.join(repoRoot, 'packages', 'io', 'dist');
-const benchHistoryPath = path.join(repoRoot, 'tools', 'docs', 'bench-history.json');
+const benchHistoryPath = path.join(
+  repoRoot,
+  'tools',
+  'docs',
+  'bench-history.json',
+);
 const BENCH_TIME_MS = 2000;
 const BENCH_WARMUP_MS = 250;
-const BENCH_HISTORY_LIMIT = 50;
+const BENCH_HISTORY_LIMIT = 10;
 const DOC_HISTORY_WINDOW = 20;
 const execFile = promisify(execFileCallback);
 
@@ -74,7 +79,11 @@ function getScenarioGroup(name, locale) {
   if (name.startsWith('snapshot:')) return map.snapshot;
   if (name.startsWith('commit')) return map.commit;
   if (name.startsWith('draft/finish')) return map.draft;
-  if (name.startsWith('batch') || name.startsWith('no batch') || name.startsWith('sequential'))
+  if (
+    name.startsWith('batch') ||
+    name.startsWith('no batch') ||
+    name.startsWith('sequential')
+  )
     return map.batch;
   return map.default;
 }
@@ -83,7 +92,11 @@ function getScenarioGroupRank(name) {
   if (name.startsWith('snapshot:')) return 1;
   if (name.startsWith('commit')) return 2;
   if (name.startsWith('draft/finish')) return 3;
-  if (name.startsWith('batch') || name.startsWith('no batch') || name.startsWith('sequential'))
+  if (
+    name.startsWith('batch') ||
+    name.startsWith('no batch') ||
+    name.startsWith('sequential')
+  )
     return 4;
   return 5;
 }
@@ -95,7 +108,12 @@ async function readBenchHistory() {
     if (!Array.isArray(parsed)) return [];
     return parsed;
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
       return [];
     }
     throw error;
@@ -166,7 +184,8 @@ async function runBenchmarks() {
     pathToFileURL(path.join(ioDistRoot, 'lib', 'units', 'unit.js')).href
   );
   const { createDraft, finishDraft } = await import(
-    pathToFileURL(path.join(ioDistRoot, 'lib', 'utils', 'immutable', 'cow.js')).href
+    pathToFileURL(path.join(ioDistRoot, 'lib', 'utils', 'immutable', 'cow.js'))
+      .href
   );
 
   const bench = new Bench({
@@ -468,8 +487,10 @@ function buildBenchmarkDocs({ locale, history }) {
           trendFocusedHeading: 'Focused Trends',
           trendAppendixHeading: 'All Scenario Trends (Appendix)',
           detailsTitle: 'Benchmark Details',
-          detailsDescription: 'Detailed benchmark report for core IO paths (generated).',
-          detailsLinkLabel: 'Open full details (all scenarios and appendix trends)',
+          detailsDescription:
+            'Detailed benchmark report for core IO paths (generated).',
+          detailsLinkLabel:
+            'Open full details (all scenarios and appendix trends)',
           backToSummaryLabel: 'Back to Benchmark summary',
           summaryHeading: 'Summary',
           noFiniteData: 'No finite data',
@@ -483,9 +504,14 @@ function buildBenchmarkDocs({ locale, history }) {
   )}\ndescription: ${JSON.stringify(
     labels.detailsDescription,
   )}\nsidebar:\n  hidden: true\n---\n`;
-  const imports = "import { Tabs, TabItem } from '@astrojs/starlight/components';";
-  const detailsPath = locale === 'zh-cn' ? '/guides/benchmark-details/' : '/en/guides/benchmark-details/';
-  const summaryPath = locale === 'zh-cn' ? '/guides/benchmark/' : '/en/guides/benchmark/';
+  const imports =
+    "import { Tabs, TabItem } from '@astrojs/starlight/components';";
+  const detailsPath =
+    locale === 'zh-cn'
+      ? '/guides/benchmark-details/'
+      : '/en/guides/benchmark-details/';
+  const summaryPath =
+    locale === 'zh-cn' ? '/guides/benchmark/' : '/en/guides/benchmark/';
 
   const historyWindow = history.slice(-DOC_HISTORY_WINDOW);
   const globalStartIndex = history.length - historyWindow.length;
@@ -495,8 +521,11 @@ function buildBenchmarkDocs({ locale, history }) {
   }));
 
   const latestRun = indexedRuns[indexedRuns.length - 1];
-  const previousRun = indexedRuns.length > 1 ? indexedRuns[indexedRuns.length - 2] : undefined;
-  const latestResults = Array.isArray(latestRun?.results) ? latestRun.results : [];
+  const previousRun =
+    indexedRuns.length > 1 ? indexedRuns[indexedRuns.length - 2] : undefined;
+  const latestResults = Array.isArray(latestRun?.results)
+    ? latestRun.results
+    : [];
   const latestGcResults = Array.isArray(latestRun?.gcResults)
     ? latestRun.gcResults
     : [];
@@ -504,7 +533,9 @@ function buildBenchmarkDocs({ locale, history }) {
     ? latestRun.gcApproximations
     : [];
   const previousByName = new Map(
-    (Array.isArray(previousRun?.results) ? previousRun.results : []).map((row) => [row.name, row]),
+    (Array.isArray(previousRun?.results) ? previousRun.results : []).map(
+      (row) => [row.name, row],
+    ),
   );
 
   const envLines = latestRun
@@ -657,18 +688,21 @@ function buildBenchmarkDocs({ locale, history }) {
       if (points.length === 0) return null;
 
       const latestPoint = points[points.length - 1];
-      const previousPoint = points.length > 1 ? points[points.length - 2] : undefined;
+      const previousPoint =
+        points.length > 1 ? points[points.length - 2] : undefined;
       const delta =
         previousPoint &&
         Number.isFinite(previousPoint.meanMs) &&
         previousPoint.meanMs !== 0
-          ? ((latestPoint.meanMs - previousPoint.meanMs) / previousPoint.meanMs) * 100
+          ? ((latestPoint.meanMs - previousPoint.meanMs) /
+              previousPoint.meanMs) *
+            100
           : Number.NaN;
 
       const yValues = points.map((point) => Number(point.meanMs.toFixed(4)));
       const xValues = points.map((point) => point.runId);
       const yMaxRaw = Math.max(...yValues);
-      const yMax = Number((Math.max(0.1, yMaxRaw * 1.15)).toFixed(4));
+      const yMax = Number(Math.max(0.1, yMaxRaw * 1.15).toFixed(4));
 
       const lines = [
         `### ${row.name}`,
@@ -833,7 +867,11 @@ function buildBenchmarkDocs({ locale, history }) {
     `## ${labels.topChangesHeading}`,
     '',
     topChangesRows.length > 0
-      ? [`| ${labels.scenario} | ${labels.delta} | ${labels.absDelta} |`, '| --- | --- | --- |', topChangesRows].join('\n')
+      ? [
+          `| ${labels.scenario} | ${labels.delta} | ${labels.absDelta} |`,
+          '| --- | --- | --- |',
+          topChangesRows,
+        ].join('\n')
       : labels.noPrevious,
     '',
     `### ${labels.trendFocusedHeading}`,
@@ -848,7 +886,9 @@ function buildBenchmarkDocs({ locale, history }) {
   const detailsTimeSection = [
     `## ${labels.latestByGroupHeading}`,
     '',
-    groupedLatestSections.length > 0 ? groupedLatestSections : labels.noFiniteData,
+    groupedLatestSections.length > 0
+      ? groupedLatestSections
+      : labels.noFiniteData,
     '',
     `## ${labels.historyHeading}`,
     '',
@@ -860,7 +900,9 @@ function buildBenchmarkDocs({ locale, history }) {
     '',
     `### ${labels.trendAppendixHeading}`,
     '',
-    appendixTrendByGroup.length > 0 ? appendixTrendByGroup : labels.noFiniteData,
+    appendixTrendByGroup.length > 0
+      ? appendixTrendByGroup
+      : labels.noFiniteData,
     '',
     `- [${labels.backToSummaryLabel}](${summaryPath})`,
   ].join('\n');
@@ -927,7 +969,12 @@ async function writeDocs(history) {
       history,
     });
     const localeDir = locale === 'zh-cn' ? '' : locale;
-    const summaryFilePath = path.join(docsRoot, localeDir, 'guides', 'benchmark.mdx');
+    const summaryFilePath = path.join(
+      docsRoot,
+      localeDir,
+      'guides',
+      'benchmark.mdx',
+    );
     const detailsFilePath = path.join(
       docsRoot,
       localeDir,
