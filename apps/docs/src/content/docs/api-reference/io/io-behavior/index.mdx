@@ -1,0 +1,51 @@
+---
+title: "IoBehavior"
+description: "Behavior 组合单元类型。"
+---
+
+
+## 何时使用
+
+当你需要定义或约束自定义 behavior 时使用。
+
+## 签名
+
+```ts
+IoBehavior<T>
+```
+
+本质上它是一个高阶视图函数：
+
+```ts
+(view: IoView<T>) => IoView<T>
+```
+
+## 最小示例
+
+```ts
+import type { IoBehavior } from '@iostore/store/behavior';
+
+import type { IoBehavior } from '@iostore/store/behavior';
+
+const behavior: IoBehavior<number> = (view) => ({
+  ...view,
+});
+
+console.log(behavior);
+```
+
+## 常见误用
+
+- 直接在 behavior 里破坏 `get/set/subscribe` 语义一致性。
+- 忘记在 behavior 中透传 `destroy`，导致资源泄漏。
+
+## 相关 API
+
+- [withBehaviors](../with-behaviors/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
+
+## 源码
+
+- `packages/io/src/lib/extensions/types.ts`

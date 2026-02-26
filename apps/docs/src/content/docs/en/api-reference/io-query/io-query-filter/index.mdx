@@ -1,0 +1,47 @@
+---
+title: "IoQueryFilter"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryFilter
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| exact | `boolean` |
+| predicate | `(query: IoQuery<unknown, unknown>) => boolean` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryFilter } from '@iostore/store/query';
+
+let value!: IoQueryFilter;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoQueryClient](../io-query-client/)
+- [IoQueryKey](../io-query-key/)
+- [IoQueryOptions](../io-query-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

@@ -35,7 +35,19 @@ export default [
             },
             {
               sourceTag: 'scope:io-react',
-              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-react'],
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-query',
+                'scope:io-react',
+              ],
+            },
+            {
+              sourceTag: 'scope:io-lynx',
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-query',
+                'scope:io-lynx',
+              ],
             },
             {
               sourceTag: 'scope:io-devtools-react',
@@ -47,15 +59,31 @@ export default [
             },
             {
               sourceTag: 'scope:io-svelte',
-              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-svelte'],
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-query',
+                'scope:io-svelte',
+              ],
             },
             {
               sourceTag: 'scope:io-solid',
-              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-solid'],
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-query',
+                'scope:io-solid',
+              ],
             },
             {
               sourceTag: 'scope:io-vue',
-              onlyDependOnLibsWithTags: ['scope:io', 'scope:io-vue'],
+              onlyDependOnLibsWithTags: [
+                'scope:io',
+                'scope:io-query',
+                'scope:io-vue',
+              ],
+            },
+            {
+              sourceTag: 'scope:io-query',
+              onlyDependOnLibsWithTags: ['scope:io-query'],
             },
             {
               sourceTag: 'scope:io-example',

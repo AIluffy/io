@@ -1,0 +1,74 @@
+---
+title: 行为扩展概览
+description: 用 withBehaviors 组合 Persist、Schedule、Throttle、Debounce、Effect、DevTools 等运行时能力。
+sidebar:
+  order: 1
+---
+
+行为扩展（Behavior）用于在不改动核心状态模型的前提下，为状态增加运行时能力。
+
+## 是什么
+
+- 目标：把持久化、调度、频率控制、副作用、调试能力做成可组合模块。
+- 方式：通过 `withBehaviors(target, behaviors)` 生成 `IoView`。
+- 好处：统一订阅入口、统一生命周期、统一清理。
+
+## 何时使用
+
+- 你需要给同一状态叠加多个运行时能力。
+- 你希望在一个视图对象里管理扩展实例（`extensions`）。
+- 你希望在销毁时统一清理行为资源（`destroy()`）。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import {
+  persist,
+  schedule,
+  throttle,
+  effect,
+  withBehaviors,
+} from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  schedule('microtask'),
+  throttle(50),
+  effect((value) => console.log(value)),
+]);
+
+view.subscribe((value) => {
+  console.log(value);
+});
+```
+
+## IoView 能力
+
+`withBehaviors` 产物是 `IoView`，常用能力包括：
+
+- `get()` / `set()`：读取与写入。
+- `subscribe()` / `snapshot()`：订阅与快照读取。
+- `extensions`：扩展实例容器。
+- `destroy()`：统一释放行为资源。
+
+## 组合顺序建议
+
+- 先接入 `persist`，再接入 `schedule` 或 `devtools`。
+- 高频输入场景优先 `throttle/debounce`，再接 `effect`。
+- 行为顺序就是包装顺序，按依赖关系从“数据处理”到“副作用”排列。
+
+## 常见误区
+
+- 把所有行为都堆到一个 view：建议按业务边界拆分。
+- 忽略行为顺序：会导致通知节奏和副作用触发顺序不符合预期。
+- 忘记调用 `view.destroy()`：可能遗留定时器、监听器或调试实例。
+
+## 下一步
+
+- 使用 [Persist](/cookbook/persist/) 做持久化。
+- 了解 [Schedule](/cookbook/schedule/) 控制通知节奏。
+- 使用 [Throttle](/cookbook/throttle/) / [Debounce](/cookbook/debounce/) 控制频率。
+- 用 [Effect](/cookbook/effect/) 收敛副作用逻辑。
+- 连接 [DevTools](/cookbook/devtools/) 做调试与回放。

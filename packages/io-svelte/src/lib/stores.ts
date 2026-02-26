@@ -1,7 +1,14 @@
 import type { IoSchedule, IoUnit } from '@iostore/store';
+import type {
+  IoQuery,
+  IoQueryClient,
+  IoQueryOptions,
+  IoQueryState,
+} from '@iostore/store/query';
 import type { Readable, Writable } from 'svelte/store';
 
-import { scheduleTask } from '@iostore/store';
+import { createScheduledDispatcher } from '@iostore/store';
+import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
 
 type IoSource<T> = {
   snapshot(): T;
@@ -12,40 +19,31 @@ type IoSvelteOptions = {
   schedule?: IoSchedule;
 };
 
-function createUpdater<T>(
-  schedule: IoSchedule,
-  apply: (value: T) => void,
-): { push: (value: T) => void; cancel: () => void } {
-  if (schedule === 'sync') {
-    return {
-      push: (value) => apply(value),
-      cancel: () => undefined,
-    };
-  }
+type IoSelectorOptions<TSelected> = IoSvelteOptions & {
+  isEqual?: (prev: TSelected, next: TSelected) => boolean;
+};
 
-  let active = true;
-  let pending = false;
-  let token = 0;
-  let last: T;
-  return {
-    push: (value: T) => {
-      last = value;
-      if (pending) return;
-      pending = true;
-      token += 1;
-      const currentToken = token;
-      scheduleTask(schedule, () => {
-        if (!active || !pending || currentToken !== token) return;
-        pending = false;
-        apply(last);
-      });
-    },
-    cancel: () => {
-      active = false;
-      pending = false;
-      token += 1;
-    },
+type IoQueryStoreOptions = {
+  enabled?: boolean;
+  cancelOnUnsubscribe?: boolean;
+};
+
+export type IoQueryStore<TData, TError = Error> =
+  Readable<IoQueryState<TData, TError>> & {
+    getState: () => IoQueryState<TData, TError>;
+    fetch: () => Promise<TData>;
+    refetch: () => Promise<TData>;
+    prefetch: () => Promise<void>;
+    invalidate: (refetch?: boolean) => void;
+    cancel: () => void;
+    query: IoQuery<TData, TError>;
   };
+
+function forceRefetch<TData, TError>(
+  query: IoQuery<TData, TError>,
+): Promise<TData> {
+  query.invalidate(false);
+  return query.fetch();
 }
 
 export function toReadable<T>(
@@ -55,11 +53,11 @@ export function toReadable<T>(
   return {
     subscribe(run) {
       run(source.snapshot());
-      const schedule = options?.schedule ?? 'sync';
-      const updater = createUpdater<T>(schedule, (value) => {
+      const schedule = options?.schedule ?? 'microtask';
+      const updater = createScheduledDispatcher<[T]>(schedule, (value) => {
         run(value);
       });
-      const unsub = source.subscribe((v) => updater.push(v));
+      const unsub = source.subscribe((v) => updater.dispatch(v));
       return () => {
         updater.cancel();
         unsub();
@@ -75,11 +73,11 @@ export function toWritable<T>(
   return {
     subscribe(run) {
       run(unit.get());
-      const schedule = options?.schedule ?? 'sync';
-      const updater = createUpdater<T>(schedule, (value) => {
+      const schedule = options?.schedule ?? 'microtask';
+      const updater = createScheduledDispatcher<[T]>(schedule, (value) => {
         run(value);
       });
-      const unsub = unit.subscribe((v) => updater.push(v));
+      const unsub = unit.subscribe((v) => updater.dispatch(v));
       return () => {
         updater.cancel();
         unsub();
@@ -92,4 +90,99 @@ export function toWritable<T>(
       unit.set((prev) => updater(prev));
     },
   };
+}
+
+export function toReadableSelector<TSource, TSelected>(
+  source: IoSource<TSource>,
+  selector: (value: TSource) => TSelected,
+  options?: IoSelectorOptions<TSelected>,
+): Readable<TSelected> {
+  return {
+    subscribe(run) {
+      const isEqual = options?.isEqual ?? Object.is;
+      let selected = selector(source.snapshot());
+      run(selected);
+
+      const schedule = options?.schedule ?? 'microtask';
+      const updater = createScheduledDispatcher<[TSelected]>(schedule, (value) => {
+        run(value);
+      });
+      const unsub = source.subscribe((nextSource) => {
+        const nextSelected = selector(nextSource);
+        if (isEqual(selected, nextSelected)) {
+          return;
+        }
+        selected = nextSelected;
+        updater.dispatch(nextSelected);
+      });
+      return () => {
+        updater.cancel();
+        unsub();
+      };
+    },
+  };
+}
+
+export function toQueryStore<TData, TError = Error>(
+  query: IoQuery<TData, TError>,
+  options?: IoQueryStoreOptions,
+): IoQueryStore<TData, TError> {
+  let subscriberCount = 0;
+  const enabled = options?.enabled ?? true;
+  const cancelOnUnsubscribe = options?.cancelOnUnsubscribe ?? false;
+
+  return {
+    subscribe(run) {
+      subscriberCount += 1;
+      run(query.snapshot());
+      const unsubscribe = query.subscribe((state) => {
+        run(state);
+      });
+
+      if (enabled && subscriberCount === 1) {
+        void query.fetch().catch((error: unknown) => {
+          reportBackgroundError('svelte.toQueryStore(fetch)', error);
+        });
+      }
+
+      return () => {
+        subscriberCount = Math.max(0, subscriberCount - 1);
+        unsubscribe();
+        if (cancelOnUnsubscribe && subscriberCount === 0) {
+          query.cancel();
+        }
+      };
+    },
+    getState: () => query.snapshot(),
+    fetch: () => query.fetch(),
+    refetch: () => forceRefetch(query),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => query.invalidate(refetch),
+    cancel: () => query.cancel(),
+    query,
+  };
+}
+
+export function createQueryStore<TData, TError = Error>(
+  options: IoQueryOptions<TData, TError> &
+    IoQueryStoreOptions & { client?: IoQueryClient },
+): IoQueryStore<TData, TError> {
+  const {
+    enabled,
+    cancelOnUnsubscribe,
+    client: providedClient,
+    ...queryOptions
+  } = options;
+
+  const client = providedClient ?? getDefaultClient();
+  const query = client.query<TData, TError>(
+    queryOptions as IoQueryOptions<TData, TError>,
+  );
+  const shouldFetchOnSubscribe =
+    (enabled ?? true) && queryOptions.autoFetch !== true;
+
+  return toQueryStore(query, {
+    enabled: shouldFetchOnSubscribe,
+    cancelOnUnsubscribe,
+  });
 }

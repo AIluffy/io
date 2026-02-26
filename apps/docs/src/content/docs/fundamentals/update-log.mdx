@@ -1,0 +1,111 @@
+---
+title: 更新日志
+description: patch/update 结构、订阅方式与回放撤销实践。
+sidebar:
+  order: 6
+---
+
+IO 的每次写入都会生成结构化变更记录。更新日志是调试、回放、撤销和审计的基础设施。
+
+## 1. 核心概念：`patch` 与 `update`
+
+- `patch`：一条最小变更记录（例如某路径被 `set`）。
+- `update`：一次写操作产生的 patch 集合，带 revision 与元信息。
+
+## 2. Patch 类型
+
+- `set`：设置某个路径的值
+- `splice`：数组插入/删除
+- `sort`：数组排序
+
+## 3. 如何订阅更新
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const stop = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+store.count.set(1);
+stop();
+```
+
+:::note
+`subscribeUpdate()` 关注“发生了什么变化”。若需要最新值，用 `snapshot()` 或 `subscribe()`。
+:::
+
+## 4. 回放与撤销（函数级）
+
+```ts
+import { io } from '@iostore/store';
+import { applyUpdate, mergeUpdates, undoUpdate, replay } from '@iostore/store/patches';
+
+const store = io({ count: 0 });
+const updates: unknown[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
+
+store.count.set(1);
+store.count.set(2);
+stop();
+
+const replayStore = io({ count: 0 });
+replay(replayStore, updates);
+
+const merged = mergeUpdates(...updates);
+const inverted = undoUpdate(merged);
+applyUpdate(store, inverted);
+```
+
+适用场景：
+
+- 回放线上问题操作序列
+- 合并多个更新并做一次回滚
+
+## 5. Undo / Redo（历史管理）
+
+```ts
+import { io } from '@iostore/store';
+import { createHistory } from '@iostore/store/patches';
+
+const store = io({ count: 0 });
+const history = createHistory(store, { limit: 100 });
+
+store.count.set(1);
+store.count.set(2);
+
+history.undo();
+history.redo();
+```
+
+`createHistory()` 更适合交互型“撤销/重做”体验。
+
+## 6. 调试钩子
+
+```ts
+import { io } from '@iostore/store';
+import { onMutation, onError } from '@iostore/store/debug';
+
+const store = io({ count: 0 });
+
+const stopMutation = onMutation(store, (patch, path) => {
+  console.log(path, patch.op);
+});
+
+const stopError = onError(store, (error, path, op) => {
+  console.error(op, path, error);
+});
+```
+
+## 7. 使用建议
+
+- UI 渲染使用 `subscribe`，日志审计使用 `subscribeUpdate`。
+- 大量联动更新优先 `commit()` 或 `batch()`，降低通知噪音。
+- 需要可回放能力时，尽早在根节点接入 update 采集。
+
+## 下一步
+
+- 结合 [DevTools](/cookbook/devtools/) 使用时间旅行。
+- 学习 [批处理](/cookbook/batching/) 合并通知。

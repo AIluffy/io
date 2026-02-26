@@ -1,0 +1,48 @@
+---
+title: "createQueryClient"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+(clientOptions?: IoQueryClientOptions) => IoQueryClient
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| clientOptions | `IoQueryClientOptions` |
+
+## 返回
+
+`IoQueryClient`
+
+## 最小示例
+
+```ts
+import { createQueryClient } from '@iostore/store/query';
+
+const result = createQueryClient(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## 源码
+
+- `packages/io/src/lib/query/client.ts`

@@ -1,0 +1,52 @@
+---
+title: Vue 适配
+description: 在 Vue 3 中用 useQuery 构建响应式请求与刷新链路。
+sidebar:
+  order: 8
+---
+
+## 是什么
+
+Vue 适配层把 Query 结果转换为 Vue 友好的响应式读取接口。
+
+## 何时使用
+
+- Vue 页面要统一处理请求状态与提交流程。
+- 你需要在组合式 API 中组织 query 生命周期。
+
+## 核心 API
+
+- [useQuery](/api-reference/io-vue/use-query/)
+- [io-vue-query-result](/api-reference/io-vue/io-vue-query-result/)
+- [use-resource](/api-reference/io-vue/use-resource/)
+
+## 最小示例
+
+```ts
+import { computed } from 'vue';
+import { useQuery } from '@iostore/vue';
+
+const users = useQuery({
+  key: ['users', keyword.value],
+  queryFn: ({ signal }) =>
+    fetch(`/api/users?keyword=${keyword.value}`, { signal }).then((r) => r.json()),
+});
+
+const isReady = computed(() => !users.isFetching.value && !users.error.value);
+```
+
+## 常见误区
+
+- key 没绑定响应式参数，导致切换条件不刷新。
+- 在 setup 外持有页面级 query 状态，影响复用。
+- 忽略取消语义导致快速切换时结果闪烁。
+
+## 实践建议
+
+- 把依赖参数同时放进 key 与触发条件。
+- 统一封装请求函数，始终透传 `signal`。
+- 写操作后统一失效刷新，不直接猜测缓存。
+
+## 下一步
+
+- 继续：[Svelte 适配](./svelte-adapter/)

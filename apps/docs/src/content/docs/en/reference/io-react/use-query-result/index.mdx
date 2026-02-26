@@ -1,0 +1,40 @@
+---
+title: "UseQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+UseQueryResult<TData, TError>
+```
+
+## Minimal Example
+
+```ts
+import type { UseQueryResult } from '@iostore/react';
+
+let value!: UseQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [UseMutationResult](../use-mutation-result/)
+- [UseQueryOptions](../use-query-options/)
+- [UseSuspenseQueryResult](../use-suspense-query-result/)
+- [useIO](../use-io/)
+
+## Source
+
+- `packages/io-react/src/lib/use-query.ts`

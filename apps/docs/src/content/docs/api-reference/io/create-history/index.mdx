@@ -1,0 +1,73 @@
+---
+title: "createHistory"
+description: "为 IO 节点创建可撤销/重做的历史记录器。"
+---
+
+
+## 何时使用
+
+- 你希望给 store 增加 `undo/redo` 能力。
+- 你需要把连续操作按组撤销（`undoGroup`）。
+- 你需要通过 `checkpoint` 人为切分撤销边界。
+- 你希望过滤哪些 update 可以进入历史（如忽略某些 action）。
+
+## 签名
+
+```ts
+(target: unknown, options?: IoHistoryOptions) => IoHistory
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| options | `IoHistoryOptions` |
+
+## 返回
+
+`IoHistory`
+
+## 最小示例
+
+```ts
+import { createHistory } from '@iostore/store/patches';
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const history = createHistory(store, {
+  groupBy: (update) => update.action,
+  filter: 'exclude-undo-redo',
+});
+
+store.count.set(1);
+store.count.set(2);
+history.checkpoint();
+store.count.set(3);
+
+history.undoGroup(); // 仅撤销到 2
+history.undoGroup(); // 再撤销到 0
+```
+
+## 关键选项
+
+- `limit`：最大历史条数，超出会从最旧记录开始裁剪。
+- `emitUpdate`：undo/redo 回放时是否继续向外发 update。
+- `groupBy`：返回同一个 key 的连续更新会归为同组。
+- `filter`：控制 update 是否进入历史，默认 `exclude-undo-redo`。
+
+## 常见误用
+
+- 把高频瞬时更新（如拖拽中间态）全部记入历史，导致历史噪音过大。
+- 未设置 `checkpoint` 导致不希望合并的操作被 `undoGroup` 一次回退。
+
+## 相关 API
+
+- [applyUpdate](../apply-update/)
+- [IoHistory](../io-history/)
+- [IoHistoryOptions](../io-history-options/)
+- [undoUpdate](../undo-update/)
+
+## 源码
+
+- `packages/io/src/lib/utils/patches/history.ts`

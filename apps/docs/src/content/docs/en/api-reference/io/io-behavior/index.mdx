@@ -1,0 +1,49 @@
+---
+title: "IoBehavior"
+description: "Type for composable behavior units."
+---
+
+
+## When to Use
+
+Use this type when defining or constraining custom behaviors.
+
+## Signature
+
+```ts
+IoBehavior<T>
+```
+
+Semantically it is a higher-order view function:
+
+```ts
+(view: IoView<T>) => IoView<T>
+```
+
+## Minimal Example
+
+```ts
+import type { IoBehavior } from '@iostore/store/behavior';
+
+const behavior: IoBehavior<number> = (view) => ({
+  ...view,
+});
+
+console.log(behavior);
+```
+
+## Common Pitfalls
+
+- Breaking `get/set/subscribe` semantics inside behavior wrappers.
+- Forgetting to preserve/chain `destroy` and leaking resources.
+
+## Related APIs
+
+- [withBehaviors](../with-behaviors/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
+
+## Source
+
+- `packages/io/src/lib/extensions/types.ts`

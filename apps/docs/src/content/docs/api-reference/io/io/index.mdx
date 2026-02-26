@@ -1,0 +1,51 @@
+---
+title: "io"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+Create an IO node from any value.
+
+## 签名
+
+```ts
+<T>(target: T, options: { shallow: true; }) => IoNode<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| target | `T` |
+| options | `{ shallow: true; }` |
+
+## 返回
+
+`IoNode<T>`
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+
+const result = io(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
+
+## 源码
+
+- `packages/io/src/lib/core/api/io.ts`

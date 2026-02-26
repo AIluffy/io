@@ -1,0 +1,48 @@
+---
+title: Nuxt Adapter
+description: Bridge useAsyncData and query client cache strategy across SSR and CSR.
+sidebar:
+  order: 13
+---
+
+## What It Is
+
+Nuxt flows typically prefetch with `useAsyncData`, then seed the query client to keep client-side invalidation and refresh semantics consistent.
+
+## When to Use
+
+- Nuxt pages need SSR-prefetched first-screen data.
+- You want unified cache behavior after hydration.
+
+## Core API
+
+- [Nuxt framework guide](/en/frameworks/nuxt/)
+- [create-query-client](/en/api-reference/io-query/create-query-client/)
+- [use-query](/en/api-reference/io-vue/use-query/)
+
+## Minimal Example
+
+```ts
+const { data } = await useAsyncData('dashboard', () => $fetch('/api/dashboard'));
+
+const client = createQueryClient();
+if (data.value) {
+  client.setQueryData(['dashboard'], data.value);
+}
+```
+
+## Common Pitfalls
+
+- Relying only on `useAsyncData` without invalidation paths.
+- Payload shape and key strategy drifting apart.
+- Mixing multiple cache contracts in one page.
+
+## Practical Guidance
+
+- Define clear SSR vs CSR responsibility boundaries.
+- Standardize key prefixes by feature area.
+- Preserve manual refresh/invalidation after hydration.
+
+## Next Steps
+
+- Continue with [SvelteKit Adapter](./sveltekit-adapter/)

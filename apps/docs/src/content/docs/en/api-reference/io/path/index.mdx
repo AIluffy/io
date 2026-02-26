@@ -1,0 +1,40 @@
+---
+title: "Path"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+Path<T, MaxDepth>
+```
+
+## Minimal Example
+
+```ts
+import type { Path } from '@iostore/store';
+
+let value!: Path;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

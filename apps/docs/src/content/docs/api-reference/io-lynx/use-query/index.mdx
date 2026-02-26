@@ -1,0 +1,24 @@
+---
+title: "useQuery"
+description: "函数 API 参考。"
+---
+
+## 签名
+
+```ts
+<TData, TError = Error>(options: IoQueryOptions<TData, TError> & { client?: IoQueryClient; enabled?: boolean; cancelOnUnmount?: boolean }) => IoLynxQueryResult<TData, TError>
+```
+
+## 关键说明
+
+- `options.client` 可选，不必传。
+- 未传时内部使用 [getDefaultClient](/api-reference/io-query/get-default-client/)。
+- 仅在这些场景传自定义 `client`：SSR 每请求隔离、测试隔离、多缓存域。
+
+## 返回
+
+`IoLynxQueryResult<TData, TError>`
+
+## 源码
+
+- `packages/io-lynx/src/lib/use-query.ts`

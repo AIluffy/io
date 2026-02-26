@@ -1,0 +1,82 @@
+---
+title: Snapshots
+description: Frozen reads, snapshot caching, and when to use snapshot vs get.
+sidebar:
+  order: 5
+---
+
+Snapshots are the center of IO read semantics: they give you safe frozen data while using cache reuse to avoid unnecessary rebuild work.
+
+## 1. What a Snapshot Is
+
+- `snapshot()` returns frozen structured data for UI and boundary handoff.
+- Frozen snapshots prevent accidental external mutation.
+- Tree snapshots reuse unchanged paths where possible.
+
+## 2. `snapshot()` vs `get()`
+
+- `snapshot()`: frozen read for UI, logging, transport, and external boundaries.
+- `get()`: live read for computations and dependency tracking.
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const snap = store.snapshot();
+const value = store.count.get();
+```
+
+Rule of thumb:
+
+- Use `snapshot()` for boundary output.
+- Use `get()` for reactive/computed logic.
+
+## 3. Why Snapshots Are Frozen
+
+- Prevents accidental mutation in UI layers.
+- Enables safe caching and reuse.
+- Makes diffing and replay reliable.
+
+## 4. How Snapshot Cache Works
+
+Tree nodes cache snapshots and rebuild only dirty paths instead of copying everything.
+
+This gives you:
+
+- Predictable read safety.
+- Better performance on deep structures with local updates.
+
+## 5. Common Usage Patterns
+
+### UI rendering
+
+```ts
+const viewModel = store.snapshot();
+render(viewModel);
+```
+
+### Derived/computed logic
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+const total = derived(store, (s) => s.items.reduce((acc, x) => acc + x.price, 0));
+```
+
+### External boundary handoff
+
+```ts
+const payload = store.snapshot();
+send(payload);
+```
+
+## 6. Common Pitfalls
+
+- Treating `get()` and `snapshot()` as identical.
+- Trying to mutate snapshot objects directly and expecting state updates.
+
+## Next Steps
+
+- Explore the [Update Log](/en/fundamentals/update-log/).
+- Learn the difference between [Subscriptions](/en/cookbook/subscriptions/).

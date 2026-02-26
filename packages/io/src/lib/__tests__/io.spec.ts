@@ -6,22 +6,22 @@ import type {
   IoTreeNode,
   IoUnit,
   IoUpdate,
-} from '../utils/types.js';
-import { batch } from '../utils/batch.js';
-import { onError, onMutation } from '../utils/debug.js';
-import { derived } from '../core/derived.js';
-import { io } from '../core/io.js';
-import { ioTree } from '../core/io-tree.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
-import { link } from '../utils/link.js';
-import { Signal, computed, effect } from '../utils/signals.js';
-import { createHistory } from '../utils/history.js';
+} from '../utils/types/types.js';
+import { batch } from '../utils/reactive/batch.js';
+import { onError, onMutation } from '../utils/debug/debug.js';
+import { derived } from '../core/api/derived.js';
+import { io } from '../core/api/io.js';
+import { ioTree } from '../core/api/io-tree.js';
+import { INTERNAL } from '../utils/internal/internal-access.js';
+import { link } from '../utils/internal/link.js';
+import { Signal, computed, effect } from '../utils/reactive/signals.js';
+import { createHistory } from '../utils/patches/history.js';
 import {
   applyUpdate,
   undoUpdate,
   mergeUpdates,
   replay,
-} from '../utils/updates.js';
+} from '../utils/patches/updates.js';
 
 describe('io: unit', () => {
   it('supports get/set/reset', () => {
@@ -54,6 +54,20 @@ describe('io: unit', () => {
     expect(values).toEqual([2, 3]);
     expect(updates).toHaveLength(2);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: [] });
+    expect(updates[0].action).toBe('set');
+  });
+
+  it('emits reset action metadata', () => {
+    const count = io(1);
+    const updates: IoUpdate[] = [];
+    const unsub = count.subscribeUpdate((u) => updates.push(u));
+
+    count.set(2);
+    count.reset();
+    unsub();
+
+    expect(updates).toHaveLength(2);
+    expect(updates[1].action).toBe('reset');
   });
 
   it('returns frozen snapshots for scopes', () => {
@@ -61,7 +75,7 @@ describe('io: unit', () => {
     const snap = scope.snapshot();
     expect(Object.isFrozen(snap)).toBe(true);
     expect(() => {
-      (snap as unknown as Record<string, unknown>).a = 2;
+      (snap as Record<string, unknown>).a = 2;
     }).toThrow();
     expect(scope.a.get()).toBe(1);
   });
@@ -93,6 +107,14 @@ describe('io: array', () => {
     expect(values[values.length - 1]).toEqual([10, 2, 3]);
   });
 
+  it('supports non-index property assignment on array proxy', () => {
+    const arr = io([1, 2, 3]) as unknown as Record<string, unknown>;
+    arr.meta = 'ok';
+
+    expect(arr.meta).toBe('ok');
+    expect((arr[0] as { get: () => number }).get()).toBe(1);
+  });
+
   it('supports push/pop/splice/sort', () => {
     const arr = io([3, 1, 2]);
     arr.push(4);
@@ -105,7 +127,7 @@ describe('io: array', () => {
     expect(arr.get()).toEqual([2, 3, 9]);
   });
 
-  it('only marks dirty indices as lazy getters on incremental array rebuild', () => {
+  it('recomputes only dirty indices on incremental array rebuild', () => {
     const arr = io([1, 2, 3]);
     const s1 = arr.snapshot() as number[];
 
@@ -116,7 +138,7 @@ describe('io: array', () => {
     const d2 = Object.getOwnPropertyDescriptor(s2, '2');
 
     expect(d0?.get).toBeUndefined();
-    expect(typeof d1?.get).toBe('function');
+    expect(d1?.get).toBeUndefined();
     expect(d2?.get).toBeUndefined();
     expect(s2[0]).toBe(s1[0]);
     expect(s2[2]).toBe(s1[2]);
@@ -138,17 +160,18 @@ describe('io: scope', () => {
     expect(counter.step.get()).toBe(2);
   });
 
-  it('builds first rebuilt scope snapshot with lazy getters', () => {
+  it('builds first rebuilt scope snapshot with eager values', () => {
     const store = io({ a: { n: 1 }, b: { n: 2 } });
     const snap = store.snapshot() as Record<string, unknown>;
     const aDesc = Object.getOwnPropertyDescriptor(snap, 'a');
     const bDesc = Object.getOwnPropertyDescriptor(snap, 'b');
 
-    expect(typeof aDesc?.get).toBe('function');
-    expect(typeof bDesc?.get).toBe('function');
+    expect(aDesc?.get).toBeUndefined();
+    expect(bDesc?.get).toBeUndefined();
+    expect(snap).toMatchObject({ a: { n: 1 }, b: { n: 2 } });
   });
 
-  it('only marks dirty keys as lazy getters on incremental scope rebuild', () => {
+  it('recomputes only dirty keys on incremental scope rebuild', () => {
     const store = io({ a: { n: 1 }, b: { n: 2 } });
     const s1 = store.snapshot() as { a: { n: number }; b: { n: number } };
 
@@ -157,9 +180,10 @@ describe('io: scope', () => {
     const aDesc = Object.getOwnPropertyDescriptor(s2, 'a');
     const bDesc = Object.getOwnPropertyDescriptor(s2, 'b');
 
-    expect(typeof aDesc?.get).toBe('function');
+    expect(aDesc?.get).toBeUndefined();
     expect(bDesc?.get).toBeUndefined();
     expect(s2.b).toBe(s1.b);
+    expect(s2.a).not.toBe(s1.a);
     expect(s2.a.n).toBe(3);
   });
 
@@ -269,6 +293,119 @@ describe('history: createHistory', () => {
     expect(history.canUndo).toBe(false);
     expect(history.canRedo).toBe(true);
   });
+
+  it('trims redo stack and respects history limit', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, { limit: 2 });
+
+    store.count.set(1);
+    store.count.set(2);
+    store.count.set(3);
+    expect(history.length).toBe(2);
+    expect(history.cursor).toBe(1);
+
+    history.undo();
+    expect(store.count.get()).toBe(2);
+    expect(history.canRedo).toBe(true);
+
+    store.count.set(4);
+    expect(history.length).toBe(2);
+    expect(history.cursor).toBe(1);
+    expect(history.canRedo).toBe(false);
+  });
+
+  it('supports clear/destroy and ignores updates after destroy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store);
+
+    store.count.set(1);
+    expect(history.length).toBe(1);
+
+    history.clear();
+    expect(history.length).toBe(0);
+    expect(history.cursor).toBe(-1);
+
+    history.destroy();
+    history.destroy();
+    store.count.set(2);
+    expect(history.length).toBe(0);
+    expect(history.canUndo).toBe(false);
+  });
+
+  it('supports grouped undo/redo with groupBy strategy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      groupBy: (update) => update.action,
+    });
+
+    store.count.set(1);
+    store.count.set(2);
+    expect(history.length).toBe(2);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(0);
+    expect(history.canUndo).toBe(false);
+    expect(history.canRedo).toBe(true);
+
+    history.redoGroup();
+    expect(store.count.get()).toBe(2);
+    expect(history.canUndo).toBe(true);
+    expect(history.canRedo).toBe(false);
+  });
+
+  it('supports checkpoint to split undo groups', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      groupBy: (update) => update.action,
+    });
+
+    store.count.set(1);
+    store.count.set(2);
+    history.checkpoint();
+    store.count.set(3);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(2);
+    expect(history.canUndo).toBe(true);
+
+    history.undoGroup();
+    expect(store.count.get()).toBe(0);
+    expect(history.canUndo).toBe(false);
+  });
+
+  it('supports custom filter strategy', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, {
+      filter: (update) => update.action === 'reset',
+    });
+
+    store.count.set(1);
+    store.count.reset();
+
+    expect(history.length).toBe(1);
+    expect(history.cursor).toBe(0);
+    expect(store.count.get()).toBe(0);
+
+    history.undo();
+    expect(store.count.get()).toBe(1);
+  });
+
+  it('is a no-op when undo/redo are called at bounds', () => {
+    const store = io({ count: 0 });
+    const history = createHistory(store, { limit: 0 });
+
+    history.undo();
+    history.redo();
+    expect(store.count.get()).toBe(0);
+    expect(history.length).toBe(0);
+    expect(history.cursor).toBe(-1);
+  });
+
+  it('throws for non-io targets', () => {
+    expect(() => createHistory({})).toThrow(
+      'createHistory: target is not an IO node',
+    );
+  });
 });
 
 describe('ioTree: deep path replay', () => {
@@ -312,7 +449,7 @@ describe('ioTree: nested split', () => {
 
   it('supports deep path mapping via internal ctx', () => {
     const user = ioTree({ profile: { name: 'a', age: 1 } });
-    const rootInternal = (user as unknown as Record<PropertyKey, unknown>)[
+    const rootInternal = (user as Record<PropertyKey, unknown>)[
       INTERNAL
     ] as {
       getState: () => {
@@ -324,7 +461,7 @@ describe('ioTree: nested split', () => {
         };
       };
     };
-    const ctxRoot = rootInternal.getState().ctx.root as unknown as {
+    const ctxRoot = rootInternal.getState().ctx.root as {
       node?: unknown;
       children: Map<string | number, unknown>;
     };
@@ -363,6 +500,73 @@ describe('signals: computed/effect', () => {
     expect(double.get()).toBe(2);
     count.set(2);
     expect(double.get()).toBe(4);
+  });
+
+  it('runs cleanup on rerun and on dispose', async () => {
+    const count = new Signal.State(0);
+    const cleanup = vi.fn();
+    const stop = effect(() => {
+      count.get();
+      return cleanup;
+    });
+
+    count.set(1);
+    await Promise.resolve();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+
+    stop();
+    expect(cleanup).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips notifications when state value is unchanged', () => {
+    const count = new Signal.State(1);
+    const listener = vi.fn();
+    count.subscribe(listener);
+
+    count.set(1);
+    count.set((prev) => prev);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('coalesces multiple synchronous writes into one effect rerun', async () => {
+    const count = new Signal.State(0);
+    const seen: number[] = [];
+    const stop = effect(() => {
+      seen.push(count.get());
+    });
+
+    count.set(1);
+    count.set(2);
+    await Promise.resolve();
+    stop();
+
+    expect(seen).toEqual([0, 2]);
+  });
+
+  it('switches tracked dependencies and unsubscribes stale ones', async () => {
+    const useLeft = new Signal.State(true);
+    const left = new Signal.State(1);
+    const right = new Signal.State(10);
+    const seen: number[] = [];
+
+    const stop = effect(() => {
+      seen.push(useLeft.get() ? left.get() : right.get());
+    });
+
+    left.set(2);
+    await Promise.resolve();
+
+    useLeft.set(false);
+    await Promise.resolve();
+
+    left.set(3);
+    await Promise.resolve();
+
+    right.set(11);
+    await Promise.resolve();
+    stop();
+
+    expect(seen).toEqual([1, 2, 10, 11]);
   });
 });
 
@@ -445,6 +649,22 @@ describe('debug hooks', () => {
     unsub();
     expect(seen[0]).toMatchObject({ path: [], op: 'commit' });
   });
+
+  it('onError rejects non-io targets', () => {
+    expect(() => onError({}, () => undefined)).toThrow(
+      'onError: target is not an IO node',
+    );
+  });
+
+  it('onMutation validates target capabilities', () => {
+    expect(() =>
+      onMutation(null, () => undefined),
+    ).toThrow('onMutation: invalid target');
+
+    expect(() =>
+      onMutation({}, () => undefined),
+    ).toThrow('onMutation: target does not support subscribeUpdate');
+  });
 });
 
 describe('link', () => {
@@ -470,6 +690,7 @@ describe('link', () => {
 
     expect(updates).toHaveLength(1);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: ['count'] });
+    expect(updates[0].action).toBe('set');
   });
 
   it('supports commit against linked nodes', () => {
@@ -537,11 +758,66 @@ describe('link', () => {
     expect(paths).toContainEqual(['items', 1]);
   });
 
+  it('supports linking an existing sibling node in the same tree array', () => {
+    const store = io({ items: [{ n: 1 }] });
+    const updates: IoUpdate[] = [];
+    const unsub = store.subscribeUpdate((u) => updates.push(u));
+
+    store.items.push(link(store.items[0]) as never);
+    store.items[0].n.set(2);
+    unsub();
+
+    expect(store.snapshot()).toEqual({ items: [{ n: 2 }, { n: 2 }] });
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'splice',
+      path: ['items'],
+      items: [{ n: 1 }],
+    });
+  });
+
   it('rejects link cycles', () => {
     const store = io({ items: [] as unknown[] });
     expect(() => {
       store.items.push(link(store));
     }).toThrow(/cycle/i);
+  });
+});
+
+describe('array structural updates', () => {
+  it('clamps splice start to array end when start is out of range', () => {
+    const items = io([1, 2]);
+    const updates: IoUpdate[] = [];
+    const unsub = items.subscribeUpdate((u) => updates.push(u));
+
+    items.splice(99, 1, 3);
+    unsub();
+
+    expect(items.get()).toEqual([1, 2, 3]);
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'splice',
+      path: [],
+      start: 2,
+      deleteCount: 0,
+      items: [3],
+    });
+    expect(updates[0].action).toBe('splice');
+  });
+
+  it('supports replacing full array value with set()', () => {
+    const items = io([1, 2, 3]);
+    const updates: IoUpdate[] = [];
+    const unsub = items.subscribeUpdate((u) => updates.push(u));
+
+    items.set([3, 2, 1]);
+    unsub();
+
+    expect(items.get()).toEqual([3, 2, 1]);
+    expect(updates[0].patches[0]).toMatchObject({
+      op: 'set',
+      path: [],
+      next: [3, 2, 1],
+    });
+    expect(updates[0].action).toBe('set');
   });
 });
 
@@ -605,7 +881,7 @@ describe('derived: unit-level deps and release', () => {
   it('subscribes and unsubscribes from deps without leaking', () => {
     const user = ioTree({ profile: { age: 1 } });
     const unitInternal = (
-      user.profile.age as unknown as Record<PropertyKey, unknown>
+      user.profile.age as Record<PropertyKey, unknown>
     )[INTERNAL] as {
       getState: () => { valueListeners: Set<unknown> };
     };

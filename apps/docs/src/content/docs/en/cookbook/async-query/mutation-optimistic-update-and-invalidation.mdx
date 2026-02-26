@@ -1,0 +1,58 @@
+---
+title: Mutation and Optimistic Update
+description: Build a stable write flow with optimistic UI, rollback, and invalidation.
+sidebar:
+  order: 4
+---
+
+## What It Is
+
+A reliable mutation flow has three parts: optimistic write, rollback on failure, and invalidation on success.
+
+## When to Use
+
+- You need immediate UI feedback after a write.
+- You need deterministic rollback behavior.
+- You need eventual consistency with server state.
+
+## Core API
+
+- [create-mutation](/en/api-reference/io-query/create-mutation/)
+- [io-query-client](/en/api-reference/io-query/io-query-client/)
+
+## Minimal Example
+
+```ts
+const updateUser = createMutation({
+  mutationFn: saveUser,
+  onMutate: async (input) => {
+    const previous = client.getQueryData(['user', input.id]);
+    client.setQueryData(['user', input.id], (prev) => ({ ...prev, ...input }));
+    return { previous };
+  },
+  onError: (_error, input, context) => {
+    if (context?.previous) {
+      client.setQueryData(['user', input.id], context.previous);
+    }
+  },
+  onSuccess: (_data, input) => {
+    client.invalidateQueries({ key: ['user', input.id] });
+  },
+});
+```
+
+## Common Pitfalls
+
+- Not returning rollback context from `onMutate`.
+- Skipping invalidation after success.
+- Retrying deterministic 4xx errors.
+
+## Practical Guidance
+
+- Define optimistic fields explicitly per mutation.
+- Centralize retry classification by error type.
+- Track mutation events for incident replay.
+
+## Next Steps
+
+- Continue with [Pagination, Prefetch, and Cancellation](./pagination-prefetch-and-cancellation/)

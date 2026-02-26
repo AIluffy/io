@@ -1,0 +1,51 @@
+---
+title: "IoView"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoView<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| get | `() => T` |
+| set | `(next: T \| ((prev: T) => T)) => void` |
+| subscribe | `(fn: (v: T) => void) => () => void` |
+| snapshot | `() => T` |
+| extensions | `IoViewExtensions` |
+| destroy | `() => void` |
+
+## Minimal Example
+
+```ts
+import type { IoView } from '@iostore/store/behavior';
+
+let value!: IoView;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
+
+## Source
+
+- `packages/io/src/lib/extensions/types.ts`

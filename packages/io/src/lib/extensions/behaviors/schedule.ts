@@ -1,7 +1,7 @@
 import type { IoBehavior, IoView } from '../types.js';
-import type { IoSchedule } from '../../utils/schedule.js';
+import type { IoSchedule } from '../../utils/reactive/schedule.js';
 
-import { scheduleTask } from '../../utils/schedule.js';
+import { scheduleTask } from '../../utils/reactive/schedule.js';
 
 export function schedule<T>(kind: IoSchedule = 'microtask'): IoBehavior<T> {
   return (view) => {

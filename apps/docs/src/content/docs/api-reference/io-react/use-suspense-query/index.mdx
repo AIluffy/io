@@ -1,0 +1,31 @@
+---
+title: "useSuspenseQuery"
+description: "函数 API 参考。"
+---
+
+## 签名
+
+```ts
+<TData, TError = Error>(options: UseQueryOptions<TData, TError>) => UseSuspenseQueryResult<TData, TError>
+```
+
+## 最小示例
+
+```tsx
+import { Suspense } from 'react';
+import { useSuspenseQuery } from '@iostore/react';
+
+function User() {
+  const result = useSuspenseQuery({ key: ['user', 1], queryFn: fetchUser });
+  return <div>{result.data.name}</div>;
+}
+```
+
+## 相关 API
+
+- [useQuery](../use-query/)
+- [useMutation](../use-mutation/)
+
+## 源码
+
+- `packages/io-react/src/lib/use-query.ts`

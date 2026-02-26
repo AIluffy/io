@@ -1,17 +1,37 @@
-import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
-
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import type { TreeDepsSlice } from '../../types.js';
+import type { NodePath } from '../../tree/path-trie.js';
+import type { IoUpdateAnnotation } from '../../../utils/types/types.js';
 import type {
+  TreeArrayInternal,
   TreeArrayState,
+  TreeScopeInternal,
   TreeContext,
+  TreeInternal,
   TreeNode,
-} from '../../io-tree-types.js';
-import { createDirtyIndexState } from '../../dirty-indices.js';
-import { createArrayOps } from './ops.js';
+} from '../../tree/io-tree-types.js';
+import { createDirtyIndexState } from '../../mutation/dirty-indices.js';
+import { createArrayOps } from './array-ops.js';
+import { isIndexKey } from '../../../utils/internal/is-index-key.js';
+import { createNodeStateBase } from '../create-node-base.js';
+import { appendPath } from '../../tree/path-utils.js';
+import { rebindSubtreePaths } from '../../tree/rebind-paths.js';
+import {
+  createNodeKindPlugin,
+  createNodeFromKindPlugin,
+} from '../node-kind-plugin.js';
+
+type ArrayNodeDeps = TreeDepsSlice<
+  | 'emitError'
+  | 'trackRead'
+  | 'snapshots'
+  | 'subscriptions'
+  | 'registry'
+  | 'internals'
+  | 'lifecycle'
+>;
 
 type CreateArrayNodeOptions = {
-  deps: NodeFactoryDeps;
+  deps: ArrayNodeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: unknown[];
@@ -23,134 +43,146 @@ type CreateArrayNodeOptions = {
   resolvePatchValue: (value: unknown) => unknown;
 };
 
+type ArrayOperations = ReturnType<typeof createArrayOps>;
+
 export function createArrayNode(options: CreateArrayNodeOptions): TreeNode {
-  const { deps, ctx, path, initial, createTreeNode, resolvePatchValue } =
-    options;
+  let bindSetIndex: ((
+    fn: (
+      index: number,
+      next: unknown,
+      options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
+    ) => void,
+  ) => void) | undefined;
 
-  const state: TreeArrayState = {
-    children: new Array(initial.length),
-    childIndices: new Map(),
-    childIndicesDirty: true,
-    node: undefined as unknown as TreeNode,
-    revision: 0,
-    isCommitting: false,
-    valueEpoch: 0,
-    snapshotCache: { value: undefined, version: -1, hasValue: false },
-    dirtyIndices: createDirtyIndexState(initial.length),
-    dirtyStructure: false,
-    valueListeners: new Set(),
-    updateListeners: new Set(),
-    childValueUnsubs: new Map(),
-    childUpdateUnsubs: new Map(),
-    ctx,
-    path,
-  };
+  const arrayPlugin = createNodeKindPlugin<
+    unknown[],
+    TreeArrayState,
+    unknown[],
+    ArrayOperations,
+    ArrayNodeDeps
+  >({
+    kind: 'array',
+    createState: ({ ctx, path, initial, initialNode }) => ({
+      children: new Array(initial.length),
+      childIndices: new Map<TreeNode, Set<number>>(),
+      childIndicesDirty: true,
+      dirtyIndices: createDirtyIndexState(initial.length),
+      childValueUnsubs: new Map(),
+      childUpdateUnsubs: new Map(),
+      ...createNodeStateBase<unknown[], unknown[]>(ctx, path, initialNode),
+    }),
+    createNode: ({ state }) => {
+      let setIndex!: (
+        index: number,
+        next: unknown,
+        options?: IoUpdateAnnotation & { emitUpdate?: boolean; emitValue?: boolean },
+      ) => void;
 
-  const snapshot = (): unknown[] => deps.getArraySnapshot(state);
-  let node = undefined as unknown as TreeNode;
-  const array: Record<PropertyKey, unknown> = {};
-  const get = (): unknown[] => {
-    deps.trackRead(
-      node as unknown as {
-        subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
-      },
-    );
-    return snapshot();
-  };
-  const proxy = new Proxy(array as TreeNode & object, {
-    get(target, prop, receiver) {
-      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
-        return state.children[Number(prop)];
-      }
-      return Reflect.get(target, prop, receiver);
+      const array: Record<PropertyKey, unknown> = {};
+      const proxy = new Proxy(array as TreeNode & object, {
+        get(target, prop, receiver) {
+          if (isIndexKey(prop)) {
+            return state.children[Number(prop)];
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+        set(target, prop, value, receiver) {
+          if (isIndexKey(prop)) {
+            setIndex(Number(prop), value, {
+              emitUpdate: true,
+              emitValue: true,
+            });
+            return true;
+          }
+          if (typeof prop === 'string' && prop === 'length')
+            throw new Error('ioTree array: length is read-only');
+          return Reflect.set(target, prop, value, receiver);
+        },
+      }) as TreeNode;
+
+      bindSetIndex = (fn) => {
+        setIndex = fn;
+      };
+
+      return {
+        target: array as object,
+        node: proxy,
+        registerTargets: [array as object, proxy as object],
+      };
     },
-    set(target, prop, value, receiver) {
-      if (typeof prop === 'string' && /^[0-9]+$/.test(prop)) {
-        setIndex(Number(prop), value, {
-          emitUpdate: true,
-          emitValue: true,
+    initialize: ({ deps, ctx, path, initial, state, node, createTreeNode }) => {
+      deps.registry.setPathNode(path, node);
+      for (let i = 0; i < initial.length; i += 1) {
+        const value = i in initial ? initial[i] : undefined;
+        const child = createTreeNode(ctx, appendPath(path, i), value);
+        state.children[i] = child;
+        deps.lifecycle.attachChildToArray(state, child);
+      }
+    },
+    createSnapshot: ({ deps, state }) => (): unknown[] =>
+      deps.snapshots.getArraySnapshot(state),
+    createOperations: ({
+      deps,
+      ctx,
+      path,
+      state,
+      createTreeNode,
+      resolvePatchValue,
+      snapshot,
+      getNode,
+      node,
+    }) => {
+      const rebuildMapping = (): void => {
+        rebindSubtreePaths(node, state.path, {
+          getInternalKind: (candidate) =>
+            deps.internals.getInternal(candidate as TreeNode)?.kind,
+          getScopeState: (candidate) =>
+            (
+              deps.internals.requireInternalOfKind(
+                candidate as TreeNode,
+                'scope',
+                'ioTree array: invalid scope internal',
+              ) as TreeScopeInternal
+            ).getState(),
+          getArrayState: (candidate) =>
+            (
+              deps.internals.requireInternalOfKind(
+                candidate as TreeNode,
+                'array',
+                'ioTree array: invalid array internal',
+              ) as TreeArrayInternal
+            ).getState(),
         });
-        return true;
-      }
-      if (prop === 'length')
-        throw new Error('ioTree array: length is read-only');
-      return Reflect.set(target, prop, value, receiver);
+        deps.registry.rebuildSubtreeMapping(state.path, node);
+      };
+
+      const operations = createArrayOps({
+        deps,
+        ctx,
+        path,
+        state,
+        createTreeNode,
+        resolvePatchValue,
+        snapshot,
+        rebuildMapping,
+        getNode,
+      });
+      bindSetIndex?.(operations.setIndex);
+      return operations;
     },
-  }) as TreeNode;
-
-  node = proxy as unknown as TreeNode;
-  state.node = node;
-  ctx.seen.set(initial as unknown as object, proxy as unknown as TreeNode);
-  deps.setPathNode(ctx, path, proxy as unknown as TreeNode);
-
-  const rebuildMapping = (): void => {
-    deps.rebuildSubtreeMapping(state, proxy as unknown as TreeNode);
-  };
-
-  const subscribe = (fn: (v: unknown[]) => void): IoUnsubscribe => {
-    state.valueListeners.add(fn);
-    return () => {
-      state.valueListeners.delete(fn);
-    };
-  };
-
-  const subscribeUpdate = (fn: (u: IoUpdate) => void): IoUnsubscribe => {
-    state.updateListeners.add(fn);
-    return () => {
-      state.updateListeners.delete(fn);
-    };
-  };
-
-  const {
-    internal,
-    setIndex,
-    set,
-    push,
-    pop,
-    splice,
-    sort,
-    commit,
-    reduce,
-    iterator,
-  } = createArrayOps({
-    deps,
-    ctx,
-    path,
-    state,
-    createTreeNode,
-    resolvePatchValue,
-    snapshot,
-    rebuildMapping,
-    getNode: () => node,
+    createCommit: ({ operations }) => operations.commit,
+    createInternal: ({ operations }) => operations.internal as TreeInternal,
+    defineProperties: ({ operations }) => ({
+      set: { value: operations.set },
+      push: { value: operations.push },
+      pop: { value: operations.pop },
+      splice: { value: operations.splice },
+      sort: { value: operations.sort },
+      commit: { value: operations.commit },
+      reduce: { value: operations.reduce },
+      [Symbol.iterator]: { value: operations.iterator },
+    }),
   });
 
-  Object.defineProperties(array, {
-    get: { value: get },
-    snapshot: { value: snapshot },
-    subscribe: { value: subscribe },
-    subscribeUpdate: { value: subscribeUpdate },
-    set: { value: set },
-    push: { value: push },
-    pop: { value: pop },
-    splice: { value: splice },
-    sort: { value: sort },
-    commit: { value: commit },
-    reduce: { value: reduce },
-    [Symbol.iterator]: { value: iterator },
-    [deps.INTERNAL]: {
-      value: internal,
-    },
-  });
-
-  for (let i = 0; i < initial.length; i += 1) {
-    const value = i in initial ? initial[i] : undefined;
-    const child = createTreeNode(ctx, [...path, i], value);
-    state.children[i] = child;
-    deps.attachChildToArray(state, child);
-  }
-
-  deps.registerInternal(array as unknown as object, internal);
-  deps.registerInternal(proxy as unknown as object, internal);
-
-  return proxy as unknown as TreeNode;
+  return createNodeFromKindPlugin(options, arrayPlugin);
 }

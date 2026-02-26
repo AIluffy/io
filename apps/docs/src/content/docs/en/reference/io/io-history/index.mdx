@@ -1,8 +1,12 @@
 ---
 title: "IoHistory"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -15,7 +19,10 @@ IoHistory
 | Name | Type |
 | --- | --- |
 | undo | `() => void` |
+| undoGroup | `() => void` |
 | redo | `() => void` |
+| redoGroup | `() => void` |
+| checkpoint | `() => void` |
 | clear | `() => void` |
 | destroy | `() => void` |
 | canUndo | `boolean` |
@@ -23,11 +30,27 @@ IoHistory
 | length | `number` |
 | cursor | `number` |
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import type { IoHistory } from '@iostore/store/patches';
+
+let value!: IoHistory;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

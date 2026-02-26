@@ -1,0 +1,50 @@
+---
+title: SvelteKit 适配
+description: 通过 load 预取与客户端重建，在 SvelteKit 落地 Query 工作流。
+sidebar:
+  order: 14
+---
+
+## 是什么
+
+SvelteKit 适配遵循“load 返回 plain data，客户端用 query store 重建缓存并继续刷新”。
+
+## 何时使用
+
+- 你在 SvelteKit 中需要 SSR 首屏可用。
+- 你要把 server 预取结果与 client Query 生命周期打通。
+
+## 核心 API
+
+- [frameworks/sveltekit](/frameworks/sveltekit/)
+- [create-query-store](/api-reference/io-svelte/create-query-store/)
+- [to-query-store](/api-reference/io-svelte/to-query-store/)
+
+## 最小示例
+
+```ts
+// +page.server.ts
+export const load = async ({ fetch }) => {
+  const initialUsers = await fetch('/api/users').then((r) => r.json());
+  return { initialUsers };
+};
+
+// client
+client.setQueryData(['users'], data.initialUsers);
+```
+
+## 常见误区
+
+- 在 load 返回中传运行时实例而非 plain data。
+- 客户端重建后不注册 queryFn，无法后续刷新。
+- 页面切换时未处理在途请求取消。
+
+## 实践建议
+
+- 让 load 输出结构与 query key 一致。
+- 客户端注入后立即建立可拉取 query。
+- 对列表页预取和取消策略做统一封装。
+
+## 下一步
+
+- 返回 [Query 专题](./) 做完整能力复盘。

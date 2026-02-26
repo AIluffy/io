@@ -1,8 +1,12 @@
 ---
 title: "toReadable"
-description: "function export"
+description: "Function API reference."
 ---
 
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
@@ -21,10 +25,26 @@ description: "function export"
 
 `Readable<T>`
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import { toReadable } from '@iostore/svelte';
+
+const result = toReadable(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createQueryStore](../create-query-store/)
+- [toQueryStore](../to-query-store/)
+- [toReadableSelector](../to-readable-selector/)
+- [toWritable](../to-writable/)
 
 ## Source
 

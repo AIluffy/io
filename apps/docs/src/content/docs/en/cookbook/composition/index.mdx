@@ -1,0 +1,72 @@
+---
+title: Composition
+description: Reuse existing nodes explicitly with link() to keep identity and semantics intact.
+sidebar:
+  order: 2
+---
+
+Composition is about reusing node identity, not copying node values.
+
+## What It Is
+
+- `link(node)` attaches an existing IO node into a new tree.
+- Result: identity is preserved and updates bubble through the new path.
+- Typical use: shared state across modules or composed view trees.
+
+## When to Use
+
+- You already have independent Units/Trees and want to mount them in a new structure.
+- Multiple trees need to observe the same source state.
+- You want to preserve subscriptions, snapshots, and update semantics.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
+
+const count = io(0);
+const store = io({ count: link(count) });
+
+store.count === count; // true
+```
+
+## Minimal Example
+
+```ts
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
+
+const profile = io({ name: 'Ada' });
+const pageState = io({
+  user: link(profile),
+  tab: 'overview',
+});
+
+pageState.user.name.set('Lin');
+console.log(profile.name.get()); // 'Lin'
+```
+
+## Semantics
+
+- **Identity preserved**: `linked === original`.
+- **Snapshot pass-through**: parent `snapshot()` reads referenced node values.
+- **Update bubbling**: child updates bubble up with parent path prefixes.
+- **Array reuse rule**: repeating one node in arrays can emit updates on multiple indices.
+
+## Common Mistakes
+
+- Passing IO nodes directly as plain object values instead of `link()`.
+- Creating cycles in composition graphs.
+- Writing across module boundaries without ownership rules.
+
+## Practical Guidance
+
+- Define write ownership at module boundaries.
+- Expose stable path Units from composed structures.
+- Sketch dependency links before implementation to avoid hidden coupling.
+
+## Next Steps
+
+- Review [Scope](/en/fundamentals/scope/) for tree/path organization.
+- Combine with [Derived Values](/en/cookbook/derived/) for reusable view models.

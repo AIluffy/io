@@ -1,6 +1,23 @@
 import { defineConfig } from 'vite';
 
-// @ts-ignore
+const STORE_COVERAGE_THRESHOLDS = {
+  lines: 80,
+  functions: 80,
+  branches: 65,
+  statements: 80,
+  'src/lib/core/*.ts': {
+    lines: 80,
+    functions: 80,
+    branches: 80,
+    statements: 80,
+  },
+  'src/lib/core/node-factory/**/*.ts': {
+    lines: 75,
+    functions: 60,
+    branches: 60,
+    statements: 75,
+  },
+} as const;
 
 export default defineConfig(() => ({
   root: __dirname,
@@ -12,28 +29,16 @@ export default defineConfig(() => ({
     environment: 'node',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    benchmark: {
+      include: ['src/**/*.bench.ts'],
+      reporters: ['default'],
+      outputJson: './test-output/vitest/bench-results.json',
+    },
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
       reporter: ['text', 'json-summary', 'lcov'],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 65,
-        statements: 80,
-        'src/lib/core/*.ts': {
-          lines: 80,
-          functions: 80,
-          branches: 80,
-          statements: 80,
-        },
-        'src/lib/core/node-factory/**/*.ts': {
-          lines: 75,
-          functions: 60,
-          branches: 60,
-          statements: 75,
-        },
-      },
+      thresholds: STORE_COVERAGE_THRESHOLDS,
     },
   },
 }));

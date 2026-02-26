@@ -1,0 +1,48 @@
+---
+title: "IoDerived"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoDerived<T>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| get | `() => T` |
+| snapshot | `() => T` |
+| subscribe | `(fn: (v: T) => void) => IoUnsubscribe` |
+
+## Minimal Example
+
+```ts
+import type { IoDerived } from '@iostore/store/derived';
+
+let value!: IoDerived;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoErrorHandler](../io-error-handler/)
+- [IoErrorHandlerFor](../io-error-handler-for/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

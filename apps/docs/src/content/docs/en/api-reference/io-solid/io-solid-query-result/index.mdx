@@ -1,0 +1,24 @@
+---
+title: "IoSolidQueryResult"
+description: "Type API reference."
+---
+
+## Signature
+
+```ts
+IoSolidQueryResult<TData, TError = Error>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoQueryState<TData, TError>>` |
+| data | `Accessor<TData \| undefined>` |
+| error | `Accessor<TError \| null>` |
+| fetch | `() => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

@@ -1,0 +1,40 @@
+---
+title: "IoQueryKey"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+readonly unknown[]
+```
+
+## Minimal Example
+
+```ts
+import type { IoQueryKey } from '@iostore/store/query';
+
+let value!: IoQueryKey;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+- Keys must be stably serializable: no `function`, no `symbol`, and no circular references.
+
+## Related APIs
+
+- [IoQueryClient](../io-query-client/)
+- [IoQueryFilter](../io-query-filter/)
+- [IoQueryOptions](../io-query-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

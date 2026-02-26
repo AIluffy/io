@@ -1,0 +1,86 @@
+---
+title: Migrate from Redux
+description: Move from reducer/action flow to path-based updates with explicit action functions.
+sidebar:
+  order: 5
+---
+
+This page is for Redux teams wanting less boilerplate while keeping clear update traceability.
+
+## When to Prioritize This Migration
+
+- Reducer/action surfaces are becoming expensive to maintain.
+- Deep state updates need lower ceremony.
+- You still want replay/undo workflows.
+
+## Concept Mapping
+
+| Redux | IO Equivalent | Notes |
+| --- | --- | --- |
+| `createStore + reducer` | `io(initialState)` + action functions | Less boilerplate, explicit write boundaries. |
+| `dispatch(action)` | call action functions | Behavior boundary moves from action type to function API. |
+| selector | path units / `useIOSelector` | Finer subscription scope. |
+| devtools/time travel | update log + `createHistory` | Replay remains available. |
+
+## Migration Steps
+
+### 1) Replace reducer hot paths
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+export const inc = () => store.count.set((v) => v + 1);
+export const setCount = (value: number) => store.count.set(value);
+```
+
+### 2) Replace multi-field updates
+
+```ts
+const user = io({ name: 'Ada', age: 18 });
+
+export const updateProfile = (name: string, age: number) => {
+  user.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 3) Restore undo/redo workflows
+
+```ts
+import { createHistory } from '@iostore/store/patches';
+
+const history = createHistory(store);
+history.undo();
+history.redo();
+```
+
+### 4) Replace component reads
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(store.count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## Common Pitfalls
+
+- Keeping action-type boilerplate without value.
+- Subscribing to broad root objects in UI.
+- Splitting grouped writes into noisy discrete updates.
+
+## Validation Checklist
+
+- Core reducers are replaced by explicit action functions.
+- Replay/undo is validated for key flows.
+- Main screens use path-level subscriptions.
+
+## Next Steps
+
+- Read [Update Log](/en/fundamentals/update-log/) and [Composition](/en/cookbook/composition/).

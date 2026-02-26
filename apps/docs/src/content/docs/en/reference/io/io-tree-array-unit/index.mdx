@@ -1,8 +1,12 @@
 ---
 title: "IoTreeArrayUnit"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -25,13 +29,29 @@ IoTreeArrayUnit<T, MaxDepth>
 | snapshot | `() => UnwrapIo<T>[]` |
 | subscribe | `(fn: (v: UnwrapIo<T>[]) => void) => IoUnsubscribe` |
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
-| __@iterator@413 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
+| __@iterator@789 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import type { IoTreeArrayUnit } from '@iostore/store';
+
+let value!: IoTreeArrayUnit;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

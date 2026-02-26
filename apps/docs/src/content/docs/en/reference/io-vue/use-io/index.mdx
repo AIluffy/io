@@ -1,8 +1,12 @@
 ---
 title: "useIO"
-description: "function export"
+description: "Function API reference."
 ---
 
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
@@ -21,10 +25,26 @@ description: "function export"
 
 `ShallowRef<T>`
 
-## Errors
+## Minimal Example
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+```ts
+import { useIO } from '@iostore/vue';
+
+const result = useIO(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+- [IoVueQueryResult](../io-vue-query-result/)
 
 ## Source
 

@@ -1,0 +1,91 @@
+---
+title: Unit
+description: IO 的最小状态单元：读写、订阅、快照与重置。
+sidebar:
+  order: 2
+---
+
+Unit 是 IO 中最小的可写状态对象。它既能单独使用，也能作为 Scope / Array 的路径节点存在。
+
+## 定义与定位
+
+- `io(primitive | object | array)` 的最小可操作结果就是 Unit。
+- Unit 负责“最小更新边界”：变更只影响订阅它的消费者。
+- Unit 是 IO 原子能力的基础，Tree 只是把多个 Unit 组织成结构。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+
+const count = io(0);
+
+count.get();
+count.set(1);
+count.set((v) => v + 1);
+count.reset();
+```
+
+- `get()`：读取当前值。
+- `set(next | updater)`：直接写值或基于旧值计算新值。
+- `subscribe(fn)`：订阅值变化，适合 UI 渲染。
+- `subscribeUpdate(fn)`：订阅 patch/update，适合审计与调试。
+- `snapshot()`：读取冻结快照，避免隐式突变。
+- `reset()`：回到初始值。
+
+## 使用说明
+
+### 1. 独立 Unit（最轻量）
+
+```ts
+const loading = io(false);
+
+loading.subscribe((v) => console.log('loading =', v));
+loading.set(true);
+```
+
+适合布尔开关、计数器、状态机标志位等简单状态。
+
+### 2. 路径 Unit（来自 Tree）
+
+```ts
+const store = io({ user: { name: 'Ada' }, count: 0 });
+
+const nameUnit = store.user.name;
+const countUnit = store.count;
+
+nameUnit.set('Grace');
+countUnit.set((v) => v + 1);
+```
+
+适合在复杂对象里做精确订阅与局部更新。
+
+### 3. 订阅值 vs 订阅更新
+
+```ts
+const stopValue = count.subscribe((value) => {
+  console.log('value', value);
+});
+
+const stopUpdate = count.subscribeUpdate((update) => {
+  console.log('patches', update.patches);
+});
+
+count.set(2);
+stopValue();
+stopUpdate();
+```
+
+值订阅用于渲染，更新订阅用于调试和回放。
+
+## 常见约束与建议
+
+- 依赖旧值时，优先 `set((prev) => next)`，减少覆盖风险。
+- 对外部层（UI/日志）优先传 `snapshot()`，避免外部误修改。
+- 不要把 Unit 当普通对象深拷贝后再写回；直接使用路径 Unit 更新更稳定。
+
+## 下一步
+
+- 阅读 [Scope](/fundamentals/scope/) 理解对象作用域与深层路径。
+- 阅读 [Array](/fundamentals/array/) 理解数组节点的更新策略。
+- 深入 [更新日志](/fundamentals/update-log/) 理解 patch 结构。

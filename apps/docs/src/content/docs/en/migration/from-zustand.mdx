@@ -1,0 +1,88 @@
+---
+title: Migrate from Zustand
+description: Move from create/set/selector/middleware to IO with clear path-level boundaries.
+sidebar:
+  order: 2
+---
+
+This page is for teams using Zustand in React and wanting better deep-state maintainability without losing lightweight ergonomics.
+
+## When to Prioritize This Migration
+
+- Deep updates are growing and `set` callbacks are hard to maintain.
+- You need clearer subscription boundaries.
+- You want patch-level replay or undo workflows.
+
+## Concept Mapping
+
+| Zustand | IO Equivalent | Notes |
+| --- | --- | --- |
+| `create((set, get) => ...)` | `io(initialState)` | Model state as a tree directly. |
+| `set((s) => ...)` | `unit.set(...)` / `scope.commit(...)` | `set` for single-field, `commit` for multi-field updates. |
+| `useStore(selector)` | `useIO(pathUnit)` / `useIOSelector(scope, selector)` | Prefer path-level subscriptions first. |
+| middleware | behaviors (`persist` / `devtools`) | Move middleware concerns into behavior composition. |
+
+## Migration Steps
+
+### 1) Replace state definition
+
+```ts
+import { io } from '@iostore/store';
+
+export const store = io({ count: 0 });
+export const inc = () => store.count.set((v) => v + 1);
+```
+
+### 2) Replace component reads
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const count = useIO(store.count);
+  return <button onClick={inc}>{count}</button>;
+}
+```
+
+### 3) Replace grouped writes
+
+```ts
+const profile = io({ name: 'Ada', age: 18 });
+
+export const updateProfile = (name: string, age: number) => {
+  profile.commit((draft) => {
+    draft.name = name;
+    draft.age = age;
+  });
+};
+```
+
+### 4) Replace middleware stack
+
+```ts
+import { withBehaviors, persist, devtools } from '@iostore/store/behavior';
+import { createIoDevtools } from '@iostore/devtools';
+
+const view = withBehaviors(store, [
+  persist({ key: 'app' }),
+  devtools({ target: store, create: createIoDevtools }),
+]);
+```
+
+## Common Pitfalls
+
+- Passing root store into many leaf components.
+- Keeping heavy selector logic where path units are enough.
+- Leaving all writes inside UI components without action boundaries.
+
+## Validation Checklist
+
+- Main screens use path-level subscriptions.
+- Multi-field writes are normalized with `commit` or `batch`.
+- Persist/devtools behavior replaced middleware chain.
+- Key interactions are traceable in DevTools/update logs.
+
+## Next Steps
+
+- Read [State Patterns](/en/cookbook/overview/).
+- Continue with [Subscriptions](/en/cookbook/subscriptions/) and [Composition](/en/cookbook/composition/).

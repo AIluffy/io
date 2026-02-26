@@ -1,0 +1,76 @@
+---
+title: Production Case Template
+description: Reusable case-study template plus a 10-minute decision sheet.
+sidebar:
+  order: 8
+  hidden: true
+pagefind: false
+---
+
+Use this page to produce repeatable “production case” assets for internal sharing and external promotion.
+
+## A. Case Template (copy-ready)
+
+```md
+# Case Title
+
+## 1. Context
+- Business domain:
+- Page/module scale:
+- Previous state solution:
+- Top pain points (max 3):
+
+## 2. Migration Goals
+- Measurable targets (perf/stability/dev velocity):
+- Non-goals (out of scope):
+
+## 3. Scope
+- Migrated modules:
+- Affected frameworks (React/Vue/Svelte/Solid/Lynx):
+- Major risks:
+
+## 4. Rollout Steps
+1. Adapter + baseline behavior integration
+2. Core module migration (by page or by domain)
+3. Regression validation + staged rollout
+
+## 5. Outcome Metrics (before/after)
+- First interaction latency:
+- Render count:
+- Error rate:
+- Delivery lead time:
+
+## 6. Issues and Rollback
+- Issues encountered:
+- How they were resolved:
+- Rollback plan:
+
+## 7. Reuse Guidance
+- Best-fit business scenarios:
+- Scenarios not recommended:
+```
+
+## B. 10-Minute Decision Sheet
+
+Score each question from 0 to 2. Total score >= 8 usually indicates IO priority.
+
+| Question | 0 | 1 | 2 |
+| --- | --- | --- | --- |
+| Deep-state complexity | flat/simple | medium | deep/complex |
+| Replay/undo/audit need | none | occasional | strong |
+| Multi-framework collaboration | single framework | 2 frameworks | >= 3 frameworks |
+| Migration window | very short | phased | planned migration |
+| Perf bottleneck source | not state-related | partly state-related | state-update dominant |
+
+## C. Minimum Release Evidence
+
+- Change scope (modules/files)
+- Regression matrix results (P0/P1)
+- Production observation window (>= 24h)
+- Severity log summary (SEV counts)
+
+## Related Docs
+
+- [Release Checklist (repo)](https://github.com/AIluffy/oin/blob/main/.github/release-checklist.md)
+- [Regression Matrix (repo)](https://github.com/AIluffy/oin/blob/main/.github/regression-matrix.md)
+- [Severity Response (repo)](https://github.com/AIluffy/oin/blob/main/.github/incident-severity-response.md)

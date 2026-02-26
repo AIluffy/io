@@ -1,0 +1,128 @@
+---
+title: Throttle
+description: 以固定频率下发通知，降低高频输入带来的渲染压力。
+sidebar:
+  order: 5
+---
+
+Throttle 用于限制通知频率，适合连续高频写入场景。
+
+## 是什么
+
+- 本质：在时间窗口内限制通知次数。
+- 价值：降低 UI 更新频率，提升交互稳定性。
+- 语义：写入不丢失，通知按窗口策略输出。
+
+## 何时使用
+
+- 滑块、拖拽、滚动等高频输入。
+- 你关心“稳定刷新频率”，而不是每次中间值。
+- 渲染或副作用成本较高，需要限流。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [throttle(50)]);
+
+view.subscribe((value) => {
+  console.log('throttled:', value);
+});
+```
+
+## Live 示例
+
+你可以快速连续触发写入，比较写入次数与节流后通知次数。
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const view = withBehaviors(store, [throttle(250)]);
+
+function ThrottleLiveDemo() {
+  const [writes, setWrites] = useState(0);
+  const [notifies, setNotifies] = useState(0);
+  const [lastNotified, setLastNotified] = useState<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifies((n) => n + 1);
+      setLastNotified(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const burst = () => {
+    for (let i = 0; i < 20; i += 1) {
+      setWrites((n) => n + 1);
+      store.set((n) => n + 1);
+    }
+  };
+
+  return (
+    <section className="io-live">
+      <div>写入次数：{writes}</div>
+      <div>节流后通知次数：{notifies}</div>
+      <div>最近通知值：{lastNotified ?? '暂无'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={burst}>
+          连续写入 20 次
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            setWrites(0);
+            setNotifies(0);
+            setLastNotified(null);
+            store.set(0);
+          }}
+        >
+          重置
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default ThrottleLiveDemo;
+```
+
+观察点：写入总数持续增长，但通知会按节流窗口压缩到更低频率。
+
+## 关键选项
+
+```ts
+throttle(100, {
+  leading: true,
+  trailing: true,
+});
+```
+
+- `leading`：窗口开始时是否立即触发（默认 `true`）。
+- `trailing`：窗口结束时是否触发最后一次值（默认 `true`）。
+
+## 常见误区
+
+- 只开 `leading` 且关闭 `trailing`，导致最后值不下发。
+- 过大的窗口造成 UI 响应迟缓。
+- 需要“输入结束再执行”时仍使用 Throttle。
+
+## 实践建议
+
+- 交互型场景优先 `leading + trailing`。
+- 先用较小窗口（如 50-150ms）再按体验调优。
+- 与 [Effect](/cookbook/effect/) 配合时，优先先节流再副作用。
+
+## 下一步
+
+- 对“输入结束后再执行”场景使用 [Debounce](/cookbook/debounce/)。
+- 结合 [Effect](/cookbook/effect/) 组织副作用流。

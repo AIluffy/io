@@ -1,8 +1,12 @@
 ---
 title: "IoPatch"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,18 +14,27 @@ description: "type export"
 IoPatch
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| op | `"set" \| "splice" \| "sort"` |
-| path | `IoPath` |
+```ts
+import type { IoPatch } from '@iostore/store/patches';
 
-## Errors
+let value!: IoPatch;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

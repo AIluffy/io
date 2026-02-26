@@ -1,0 +1,32 @@
+---
+title: Playground
+description: 通过可交互的 AsyncTodoLiveCode 演示 Query 的查询、提交、取消与重试。
+sidebar:
+  order: 2
+---
+import { AsyncTodoLiveCode } from '../../../../components/AsyncTodoLiveCode';
+
+## 是什么
+
+这个 Playground 提供一个可交互的 Query 演示环境，覆盖 `useQuery`、`useMutation`、失效刷新、取消请求和失败重试。
+
+## 何时使用
+
+- 你要快速验证 Query 生命周期行为。
+- 你要向团队演示“失败 -> 重试 -> 恢复”的链路。
+- 你要复现取消请求与并发切换场景。
+
+## 演示
+
+<AsyncTodoLiveCode client:load locale="zh-CN" />
+
+## 操作建议
+
+- 打开“教学模式”，按步骤观察失败与恢复过程。
+- 切换失败模式并调整重试次数，对比行为差异。
+- 触发“取消进行中的请求”，验证取消不是业务失败。
+
+## 下一步
+
+- 返回 [Query 专题](./) 查看完整能力地图。
+- 继续阅读 [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/)。

@@ -1,0 +1,153 @@
+---
+title: 原生使用
+description: 在无框架或任意运行时环境中，直接使用 IO 的核心 API。
+sidebar:
+  order: 1
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+本页适合你在不依赖 UI 框架时，直接把 IO 作为状态内核使用。
+
+## 适用场景
+
+- Node 脚本、工具链、SDK 内部状态。
+- 自定义渲染器或已有事件系统。
+- 先验证状态模型，再接入前端框架。
+
+## 安装
+
+安装相关依赖（任选一种包管理工具）：
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
+```bash
+npm i @iostore/store
+```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store
+```
+
+  </TabItem>
+</Tabs>
+
+## 最小接入
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+
+const stop = store.count.subscribe((value) => {
+  console.log('render', value);
+});
+
+store.count.set(1);
+stop();
+```
+
+## 核心能力
+
+### 1) 读取与写入
+
+- `get()`：读当前值。
+- `set(next | updater)`：写入新值。
+- `snapshot()`：获取冻结快照（适合断言/序列化）。
+
+### 2) 两类订阅
+
+```ts
+// 值订阅
+const stopValue = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+
+// 更新订阅（patch）
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+### 3) 合并更新
+
+当同一动作包含多次写入时，建议使用 `batch()`：
+
+```ts
+import { batch } from '@iostore/store';
+
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
+```
+
+## API 速查
+
+| 能力 | API | 说明 |
+| --- | --- | --- |
+| 创建状态 | `io(initial)` | 创建根 Scope。 |
+| 读取当前值 | `unit.get()` | 读取 Unit 的即时值。 |
+| 写入状态 | `unit.set(next | updater)` | 支持直接值与函数式更新。 |
+| 值订阅 | `unit.subscribe(listener)` | 监听某一路径值变化。 |
+| 更新订阅 | `scope.subscribeUpdate(listener)` | 监听 patch 级更新流。 |
+| 冻结快照 | `scope.snapshot()` | 适合边界传输与测试断言。 |
+| 合并写入 | `batch(fn)` | 合并多次写入，减少中间通知。 |
+
+## 错误示例与推荐写法
+
+~~~ts
+// 错误：只订阅根节点，任何字段变化都触发
+const stop = store.subscribe((v) => console.log(v));
+
+// 推荐：按路径订阅，只关注需要的字段
+const stopCount = store.count.subscribe((v) => console.log(v));
+~~~
+
+~~~ts
+// 错误：多次离散写入，触发多次通知
+store.count.set(1);
+store.count.set(2);
+
+// 推荐：用 batch 合并通知
+batch(() => {
+  store.count.set(1);
+  store.count.set(2);
+});
+~~~
+
+## 常见问题
+
+- 只订阅根节点导致回调过于频繁：优先订阅路径 Unit。
+- 忘记调用退订函数：可能出现重复回调。
+- 多次离散写入不批处理：会增加不必要通知。
+
+## 实践建议
+
+- 优先用 `snapshot()` 做边界输出和测试断言。
+- 读写密集场景先设计订阅粒度，再优化性能。
+- 把“状态演进”与“副作用执行”拆分，便于维护。
+
+## 下一步
+
+- 查看 [React](/frameworks/react/)、[Lynx](/frameworks/lynx/) 或 [Vue](/frameworks/vue/)。
+- 查看 SSR 实战：[Next.js](/frameworks/next/)、[Nuxt](/frameworks/nuxt/)、[SvelteKit](/frameworks/sveltekit/)。
+- 阅读 [订阅](/cookbook/subscriptions/) 细节。

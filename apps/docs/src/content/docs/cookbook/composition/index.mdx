@@ -1,0 +1,72 @@
+---
+title: 组合
+description: 用 link() 显式复用已有节点，避免隐式展开导致的语义混乱。
+sidebar:
+  order: 2
+---
+
+组合的目标是“复用节点身份”，而不是“复制节点值”。
+
+## 是什么
+
+- `link(node)`：把已有 IO 节点挂接到新树中。
+- 结果：引用身份保持一致，更新可沿路径冒泡。
+- 场景：跨模块复用状态、拼装视图树、共享同一源状态。
+
+## 何时使用
+
+- 你已经有独立 Unit/Tree，希望挂到新的结构中复用。
+- 你需要多个树观察同一个状态源。
+- 你希望保留原节点语义（订阅、快照、更新日志）。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
+
+const count = io(0);
+const store = io({ count: link(count) });
+
+store.count === count; // true
+```
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+import { link } from '@iostore/store/extensions';
+
+const profile = io({ name: 'Ada' });
+const pageState = io({
+  user: link(profile),
+  tab: 'overview',
+});
+
+pageState.user.name.set('Lin');
+console.log(profile.name.get()); // 'Lin'
+```
+
+## 语义说明
+
+- **身份保持**：`linked === original`。
+- **快照透传**：父树 `snapshot()` 可读到被引用节点当前值。
+- **更新冒泡**：子节点更新会携带父路径前缀向上通知。
+- **数组复用**：同一节点在数组中重复出现，会映射到多个索引路径。
+
+## 常见误区
+
+- 直接把 IO 节点当普通对象塞进树：应使用 `link()`。
+- 在组合关系中引入循环引用：会导致路径和调试复杂化。
+- 跨边界随意写入：缺乏写入约束会让状态来源不清晰。
+
+## 实践建议
+
+- 在模块边界约定“谁负责写入”。
+- 对外暴露组合结果时，优先暴露稳定路径 Unit。
+- 复杂组合先画出依赖关系，再实现 `link()`，避免隐性耦合。
+
+## 下一步
+
+- 在 [Scope](/fundamentals/scope/) 中理解树与路径组织。
+- 结合 [派生值](/cookbook/derived/) 构建可复用视图模型。

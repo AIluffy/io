@@ -1,0 +1,80 @@
+---
+title: Subscriptions
+description: Understand the boundary between subscribe and subscribeUpdate.
+sidebar:
+  order: 2
+---
+
+IO has two subscription channels: `subscribe` for current values and `subscribeUpdate` for patch streams.
+
+## What It Is
+
+- `subscribe`: feeds UI and reactive computations with latest values.
+- `subscribeUpdate`: feeds logs, sync, replay, and audit pipelines.
+- Use both when you need both rendering and traceability.
+
+## When to Use
+
+- UI rendering and computed reactions: prefer `subscribe`.
+- Logging/replay/sync/audit: use `subscribeUpdate`.
+- Fine-grained updates: subscribe to path Units, not just roots.
+
+## Core API
+
+### 1) Value Subscription
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const stop = store.count.subscribe((value) => {
+  console.log('value', value);
+});
+```
+
+### 2) Update Subscription
+
+```ts
+const stopUpdate = store.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+```
+
+## Minimal Example
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ user: { name: 'Ada' }, counter: 0 });
+
+const stopName = store.user.name.subscribe((v) => console.log('name', v));
+const stopRoot = store.subscribeUpdate((u) => console.log('patches', u.patches));
+
+store.user.name.set('Lin');
+
+stopName();
+stopRoot();
+```
+
+## Granularity Guidance
+
+- Prefer leaf/path subscriptions whenever possible.
+- Use root subscriptions only when full update streams are truly required.
+- Split components by subscription boundary, not by callback conditionals.
+
+## Common Mistakes
+
+- Driving UI directly from `subscribeUpdate`.
+- Overusing root subscriptions for local rendering concerns.
+- Forgetting to unsubscribe at lifecycle end.
+
+## Practical Guidance
+
+- Keep a convention: UI consumes `subscribe`, infra consumes `subscribeUpdate`.
+- Always call returned cleanup functions.
+- Combine with [Batching](/en/cookbook/batching/) to reduce per-action notifications.
+
+## Next Steps
+
+- Review [Update Log](/en/fundamentals/update-log/) for patch shape and merge behavior.
+- Continue with [Performance and Subscription Strategy](/en/cookbook/performance-subscription/).

@@ -1,0 +1,74 @@
+---
+title: State Library Comparison
+description: Use a practical decision flow and matrix to evaluate whether IO fits your project.
+sidebar:
+  order: 1
+---
+
+This is not a “best library” page. It is a decision page for real project constraints.
+
+## 3-Step Decision Flow
+
+### Step 1: Identify your primary pain
+
+- If you need strict team process and auditability first: evaluate Redux.
+- If you need fast React-only delivery with minimal overhead: evaluate Zustand/Jotai.
+- If you need deep-state updates, replay debugging, and cross-framework reuse: prioritize IO.
+
+### Step 2: Check your state shape
+
+- If your team is comfortable maintaining large atom graphs: Jotai/Recoil can fit well.
+- If your domain is naturally tree-shaped with frequent nested updates: IO is usually a better fit.
+- If your team prefers object-oriented domain stores: MobX may feel more natural.
+
+### Step 3: Check runtime boundaries
+
+- React-only runtime: all options are viable.
+- Cross-framework reuse (React/Vue/Svelte/vanilla): IO has clear advantage.
+- Built-in patch-level traceability/replay needs: IO is more direct.
+
+## Quick Comparison Matrix
+
+| Dimension | IO | Redux | Zustand | MobX | Jotai | Valtio |
+| --- | --- | --- | --- | --- | --- | --- |
+| State organization | tree paths + Units | reducer/action | store + selector | observable objects | atom graph | proxy objects |
+| Deep updates | direct path writes | reducer-heavy | depends on set patterns | natural writes | depends on atom design | natural writes |
+| Subscription granularity | path-level (fine) | usually selector-based | usually selector-based | usage-tracked (fine) | atom-level (fine) | usage-path |
+| Traceability | patch/update first-class | action logs | middleware-convention dependent | tooling dependent | tooling dependent | snapshot-first |
+| Cross-framework reuse | strong | medium | weak (React-leaning) | medium | weak (React-leaning) | weak (React-leaning) |
+
+## Where IO Fits Best
+
+- Your state is deeply nested and frequently updated.
+- You want path-based subscription boundaries and predictable rerenders.
+- You need update logs for replay, undo, auditing, or incident debugging.
+- You want one reusable model across multiple framework adapters.
+
+## When IO Is Not the First Choice
+
+- You only need very lightweight local React state with shallow updates.
+- Your team is deeply optimized around Redux governance and migration payoff is low.
+- Your architecture is intentionally atom-first and maintainable at scale.
+
+## Practical Migration Guidance
+
+1. Start with one bounded feature slice, not a full rewrite.  
+2. Migrate read/subscription paths first, write paths second.  
+3. Normalize grouped writes with `commit`, high-frequency paths with `batch`/`schedule`.  
+4. Validate behavior through update-log replay before scaling rollout.
+
+## Common Mistakes
+
+- Treating IO as syntax replacement without subscription redesign.
+- Keeping module-scope singleton stores in SSR runtimes.
+- Passing runtime instances across boundaries instead of snapshots.
+
+## Next Steps
+
+- Go to [Migration Overview](/en/migration/) for the full migration workflow.
+- Continue with source-specific guides:
+  - [Migrate from Zustand](/en/migration/from-zustand/)
+  - [Migrate from Valtio](/en/migration/from-valtio/)
+  - [Migrate from Jotai](/en/migration/from-jotai/)
+  - [Migrate from Redux](/en/migration/from-redux/)
+  - [Migrate from MobX](/en/migration/from-mobx/)

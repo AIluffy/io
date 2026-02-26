@@ -1,0 +1,47 @@
+---
+title: "ThrottleBehaviorOptions"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+ThrottleBehaviorOptions
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| leading | `boolean` |
+| trailing | `boolean` |
+
+## Minimal Example
+
+```ts
+import type { ThrottleBehaviorOptions } from '@iostore/store/behavior';
+
+let value!: ThrottleBehaviorOptions;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+
+## Source
+
+- `packages/io/src/lib/extensions/behaviors/throttle.ts`

@@ -1,0 +1,51 @@
+---
+title: Query Key、缓存与刷新
+description: 建立稳定 key 与缓存命中规则，控制自动/手动刷新边界。
+sidebar:
+  order: 3
+---
+
+## 是什么
+
+Query key 决定缓存分桶和失效粒度。key 稳定，缓存语义才稳定。
+
+## 何时使用
+
+- 你需要明确“什么时候命中缓存，什么时候发请求”。
+- 你需要在列表筛选、分页、切页中避免串数据。
+
+## 核心 API
+
+- [io-query-key](/api-reference/io-query/io-query-key/)
+- [io-query-options](/api-reference/io-query/io-query-options/)
+- [io-query-filter](/api-reference/io-query/io-query-filter/)
+
+## 最小示例
+
+```ts
+const list = client.query({
+  key: ['users', { page, pageSize, keyword }],
+  queryFn: ({ signal }) =>
+    fetch(`/api/users?page=${page}&pageSize=${pageSize}&keyword=${keyword}`, { signal }).then((r) => r.json()),
+  staleTime: 3_000,
+});
+
+await list.prefetch();
+await list.refetch();
+```
+
+## 常见误区
+
+- key 漏掉查询参数（例如 `keyword`），不同请求共享缓存。
+- 用函数或不可序列化值作为 key 组成部分。
+- 把所有刷新都做成手动触发，丢失声明式收益。
+
+## 实践建议
+
+- 统一使用“资源名 + 参数对象”的 key 结构。
+- 参数对象字段顺序与命名保持稳定。
+- 为高频页面设置合理 `staleTime`，减少无意义重复请求。
+
+## 下一步
+
+- 继续：[提交与乐观更新](./mutation-optimistic-update-and-invalidation/)

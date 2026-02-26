@@ -1,0 +1,127 @@
+---
+title: SvelteKit
+description: 在 SvelteKit 中分离 server 数据准备与 client 状态重建，稳定完成 SSR + Hydration。
+sidebar:
+  order: 9
+---
+
+SvelteKit 推荐把 SSR 数据流拆成两段：server `load` 产出初始数据，client 基于初始数据创建 store。
+
+## 适用场景
+
+- 需要在 `load` 阶段预取业务数据。
+- 需要将初始状态平滑下发到客户端继续交互。
+- 需要严格避免把运行时实例塞入序列化边界。
+
+## 核心原则
+
+- 每请求 Store：server 侧 store 仅用于当前请求计算。
+- Hydrate 边界：`load` 返回值只放 plain object。
+- 传值流向：`+layout.server.ts -> initialState -> +layout.svelte io()`。
+
+## Server 侧准备数据
+
+```ts
+// src/routes/+layout.server.ts
+import { io } from '@iostore/store';
+import type { LayoutServerLoad } from './$types';
+
+type AppState = {
+  count: number;
+  user: { id: string; name: string } | null;
+};
+
+export const load: LayoutServerLoad = async ({ fetch }) => {
+  const user = await fetch('/api/me').then((r) => r.json());
+  const store = io<AppState>({ count: 0, user });
+  return {
+    initialState: store.snapshot(),
+  };
+};
+```
+
+## Client 侧重建并下发
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script lang="ts">
+  import { io } from '@iostore/store';
+  import { setContext } from 'svelte';
+  import type { LayoutData } from './$types';
+
+  type AppState = {
+    count: number;
+    user: { id: string; name: string } | null;
+  };
+
+  export let data: LayoutData;
+  const store = io<AppState>(data.initialState);
+  setContext('io-store', store);
+</script>
+
+<slot />
+```
+
+```svelte
+<!-- src/routes/+page.svelte -->
+<script lang="ts">
+  import { getContext } from 'svelte';
+  import { toWritable } from '@iostore/svelte';
+  import type { IoScope } from '@iostore/store';
+
+  type AppState = {
+    count: number;
+    user: { id: string; name: string } | null;
+  };
+
+  const store = getContext<IoScope<AppState>>('io-store');
+  const count = toWritable(store.count);
+</script>
+
+<button on:click={() => $count += 1}>{$count}</button>
+```
+
+## API 速查
+
+| 阶段 | API | 说明 |
+| --- | --- | --- |
+| 服务端载入 | `+layout.server.ts load` | 准备可序列化初始状态。 |
+| 创建状态 | `io(initialState)` | server/client 两侧按边界创建。 |
+| 边界传输 | `snapshot()` / `load return` | 仅传 plain object。 |
+| 客户端下发 | `setContext/getContext` | 布局提供，页面消费。 |
+| 组件绑定 | `toReadable` / `toWritable` | 模板层安全读写。 |
+
+## 错误示例与推荐写法
+
+~~~ts
+// 错误：load 返回 runtime 实例
+// return { store }
+
+// 推荐：只返回可序列化数据
+return { initialState: store.snapshot() };
+~~~
+
+~~~svelte
+<!-- 错误：页面层重复创建根 store -->
+<!-- const store = io(data.initialState) -->
+
+<!-- 推荐：布局层创建并通过 context 下发 -->
+<!-- setContext('io-store', store) -->
+~~~
+
+## 常见问题
+
+- 在 `load` 返回里放 store 实例（不可序列化）。
+- server/client 初始结构不一致导致 hydration 偏差。
+- context key 管理混乱，组件读取失败。
+
+## 实践建议
+
+- 统一 `AppState` 类型并复用到 server/client。
+- 布局层下发 store，页面层只消费路径。
+- 关键流程配合 [更新日志](/fundamentals/update-log/) 做回放排障。
+
+## 下一步
+
+- 查看 [Svelte](/frameworks/svelte/) 的 `toReadable` / `toWritable` 细节。
+- 结合 [Persist](/cookbook/persist/) 管理客户端持久化。

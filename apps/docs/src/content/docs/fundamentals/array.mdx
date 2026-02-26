@@ -1,0 +1,157 @@
+---
+title: Array
+description: 数组状态与索引路径：更新策略、订阅稳定性与常见误区。
+sidebar:
+  order: 4
+---
+
+Array 是 Tree 中的数组结构节点。每个索引路径（如 `todos[0].done`）都是可读写、可订阅的 Unit。
+
+## 1. Array 是什么
+
+- **可订阅节点**：数组不是黑盒，索引路径可以单独订阅。
+- **结构化变更**：`push/splice/sort` 会生成 patch，便于追踪与回放。
+- **局部更新优先**：推荐通过索引路径更新字段，变更范围更小。
+
+## 2. 何时使用 Array
+
+- 列表、表格、看板卡片等“顺序集合”状态。
+- 需要高频局部更新（只变一个元素或某个字段）。
+- 需要保留更新历史，支持调试或回放。
+
+## 3. 基础用法
+
+```ts
+import { io } from '@iostore/store';
+
+const todos = io([
+  { id: 'a', done: false, title: 'Write doc' },
+  { id: 'b', done: false, title: 'Review PR' },
+]);
+```
+
+## 4. 支持的 API（完整）
+
+`Array` 节点（`IoTreeArrayUnit`）支持以下方法：
+
+- 读取类：`get()`、`snapshot()`
+- 写入类：`set(next)`、`push(...items)`、`pop()`、`splice(start, deleteCount, ...items)`、`sort(compareFn?)`
+- 批量类：`commit(fn)`
+- 计算类：`reduce(reducer, initialValue)`
+- 订阅类：`subscribe(fn)`、`subscribeUpdate(fn)`
+- 迭代类：`[Symbol.iterator]()`（可 `for...of`）
+
+### 读取：`get()` / `snapshot()`
+
+```ts
+const live = todos.get(); // 当前值（用于逻辑读取）
+const snap = todos.snapshot(); // 冻结快照（适合对外传递）
+```
+
+### 写入：`set()` / `push()` / `pop()` / `splice()` / `sort()`
+
+```ts
+todos.set([{ id: 'x', done: false, title: 'Reset' }]);
+
+todos.push({ id: 'c', done: false, title: 'Ship' });
+
+const last = todos.pop();
+console.log(last?.id);
+
+todos.splice(0, 1, { id: 'a2', done: true, title: 'Rewrite doc' });
+
+todos.sort((a, b) => a.id.localeCompare(b.id));
+```
+
+### 批量：`commit(fn)`
+
+`commit` 里可以按一次业务事务执行多个数组操作。
+
+```ts
+todos.commit((draft) => {
+  draft.unshift({ id: 'n1', done: false, title: 'Top task' });
+  draft[1].done = true;
+  draft.reverse();
+});
+```
+
+除了 `unshift/reverse`，也可以在 `draft` 上使用 `shift/fill/copyWithin` 等标准可变数组 API。
+
+### 计算：`reduce()`
+
+```ts
+const doneCount = todos.reduce((acc, item) => {
+  return item.done.get() ? acc + 1 : acc;
+}, 0);
+```
+
+`item` 是数组元素对应的节点（可继续 `.get()` / 路径读取）。
+
+### 订阅：`subscribe()` / `subscribeUpdate()`
+
+```ts
+const stopValue = todos.subscribe((value) => {
+  console.log('length', value.length);
+});
+
+const stopUpdate = todos.subscribeUpdate((update) => {
+  console.log(update.patches);
+});
+
+stopValue();
+stopUpdate();
+```
+
+### 迭代：`for...of`
+
+```ts
+for (const item of todos) {
+  console.log(item.id.get(), item.done.get());
+}
+```
+
+## 5. 推荐更新方式
+
+- 字段改动优先用“路径级更新”，例如 `todos[i].done.set(true)`。
+- 结构变动用 `push/pop/splice/sort`。
+- 多步骤逻辑用 `commit(fn)` 聚合。
+
+### 路径级更新（推荐）
+
+```ts
+todos[1].title.set('Review API doc');
+todos[1].done.set(true);
+```
+
+这类更新最利于订阅稳定与渲染性能。
+
+## 6. 重点：`array.set([...])` 的影响
+
+`array.set([...])` 会替换该数组节点下的子 Unit。若组件订阅的是旧索引 Unit，可能看起来“不刷新”。
+
+建议写法：
+
+- 优先 `array[i].x.set(...)`。
+- 或让组件订阅数组本身，再按索引读取。
+
+## 7. 常见误区
+
+:::caution
+不要在数组内复用同一个对象实例。多个索引共享引用会导致联动更新，增加排查成本。
+:::
+
+:::caution
+当你依赖索引订阅时，避免频繁整数组替换。优先表达“最小必要变更”。
+:::
+
+## 8. 推荐模式
+
+- 读路径：组件只订阅它渲染所需的索引/字段。
+- 写路径：业务函数集中处理数组变更，避免 UI 层散写。
+- 日志：在根上使用 `subscribeUpdate()` 观察数组 patch。
+
+## 下一步
+
+- 阅读 [Unit](/fundamentals/unit/) 理解最小状态单元。
+- 阅读 [Scope](/fundamentals/scope/) 理解对象作用域与深层路径。
+- 阅读 [更新日志](/fundamentals/update-log/) 查看 patch 类型。

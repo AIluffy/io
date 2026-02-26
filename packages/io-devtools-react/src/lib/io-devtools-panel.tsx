@@ -46,6 +46,21 @@ function formatPath(path: PatchPath): string {
   );
 }
 
+function formatTimelineLabel(entry: IoHistoryEntry): string {
+  if (entry.update.action) return entry.update.action;
+  const first = entry.patchDiffs[0];
+  if (!first) return 'update';
+  return `${first.op} ${formatPath(first.path)}`;
+}
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return '"[unserializable meta]"';
+  }
+}
+
 function downloadText(filename: string, text: string) {
   const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -329,10 +344,7 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
           {state.history.map((e, idx) => {
             const active = idx === selected;
             const cursorHere = idx === state.cursor;
-            const first = e.patchDiffs[0];
-            const label = first
-              ? `${first.op} ${formatPath(first.path)}`
-              : 'update';
+            const label = formatTimelineLabel(e);
             return (
               <button
                 key={e.id}
@@ -398,11 +410,29 @@ export function IoDevtoolsPanel(props: IoDevtoolsPanelProps) {
           ) : (
             <div style={{ padding: 10, display: 'grid', gap: 12 }}>
               <div style={{ display: 'grid', gap: 6 }}>
-                <div style={{ fontWeight: 700 }}>Patch diffs</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    className="io-devtools-panel__button"
-                    onClick={() => setPatchView('tree')}
+                  <div style={{ fontWeight: 700 }}>Patch diffs</div>
+                  <div className="io-devtools-panel__muted">
+                    Action: {selectedEntry.update.action ?? 'update'}
+                  </div>
+                  {selectedEntry.update.meta !== undefined ? (
+                    <pre
+                      style={{
+                        margin: 0,
+                        maxHeight: 120,
+                        overflow: 'auto',
+                        background: 'var(--io-devtools-surface)',
+                        border: '1px solid var(--io-devtools-divider)',
+                        borderRadius: 8,
+                        padding: 8,
+                      }}
+                    >
+                      {safeStringify(selectedEntry.update.meta)}
+                    </pre>
+                  ) : null}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="io-devtools-panel__button"
+                      onClick={() => setPatchView('tree')}
                     disabled={patchView === 'tree'}
                   >
                     Tree

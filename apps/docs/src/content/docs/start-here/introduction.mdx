@@ -1,0 +1,74 @@
+---
+title: 介绍
+description: 基于当前代码架构理解 IO 的定位、分层与核心概念。
+sidebar:
+  order: 2
+---
+
+IO 是一个面向“深层状态”的 TypeScript 状态管理体系。它由核心状态运行时与多框架适配层组成：你可以直接修改嵌套字段，并只订阅实际使用路径。
+
+## 你将获得什么
+
+- 1 个清晰心智模型：Tree/Unit/Derived/Update Log 如何配合。
+- 2 条入门路径：快速上手与完整教程。
+- 3 个判断点：IO 适不适合你的当前约束。
+
+## 当前架构分层
+
+- **`@iostore/store`（核心层）**：`io`/`ioTree`/`derived`、深层路径更新、`snapshot`、`patch` 更新日志与行为扩展。
+- **`@iostore/<framework>`（适配层）**：React、Lynx、Vue、Svelte、Solid 基于统一契约接入 UI。
+- **`@iostore/devtools` + `@iostore/devtools-react`（调试层）**：更新流观测、时间旅行与差异调试。
+
+这意味着 IO 不是“单一库 + 多个 hook”，而是“可组合运行时 + 适配层”的架构。
+
+## 适合什么场景
+
+- 状态层级深、更新频繁，希望保持直观写法（直接改路径）。
+- 需要细粒度订阅，减少无关重渲染。
+- 需要可回放/可撤销的更新日志（patch）。
+- 需要同一状态模型跨框架复用。
+
+## 核心概念
+
+- **Unit**：最小可写单元，提供 `get/set`。
+- **Tree**：对象/数组展开成深层可读写结构，每条路径都是可订阅单元。
+- **Derived**：只读派生值，按读取依赖自动追踪。
+- **Update Log**：每次写入产出 `patch/update`，支持回放与撤销。
+
+你也可以把 Unit 理解为“原子状态”：`io(0)` 是一个原子，而深层 Tree 的每条路径同样是可订阅的原子单元。
+
+## 3 分钟心智模型
+
+- Tree 负责“结构”，Unit 负责“变化最小化”，Derived 负责“计算结果”。
+- 读：`snapshot()` 返回冻结数据，避免隐式突变。
+- 写：写任意路径都会产出结构化更新日志，便于调试与回放。
+
+## 设计目标
+
+- **直改深层状态**：`store.user.name.set('Ada')` 无需 reducer。
+- **快照安全**：读取返回冻结快照，避免隐式突变。
+- **更新可追踪**：patch/update 是一等公民，便于调试、同步与回放。
+- **统一契约适配**：基于 `snapshot()` + `subscribe()` 接入不同框架。
+
+## 最小示例（状态）
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+const doubled = derived(store, (s) => s.count * 2);
+
+store.count.set((v) => v + 1);
+console.log(doubled.get());
+```
+
+## 下一步
+
+- 直接进入 [快速开始](/start-here/quick-start/)。
+- 需要完整示例时看 [井字棋教程](/start-here/tutorial-tic-tac-toe/)。
+- 优先浏览 [常见错误与 FAQ](/start-here/faq/)。
+- 进入 [性能与订阅策略](/cookbook/performance-subscription/) 做订阅选型。
+- 理解 [架构概览](/fundamentals/architecture/) 的运行时数据流。
+- 学习 [Unit](/fundamentals/unit/) 与 [Scope](/fundamentals/scope/)。
+- 查看 [集成](/frameworks/vanilla/) 如何在框架中使用。

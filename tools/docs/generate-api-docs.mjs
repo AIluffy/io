@@ -18,14 +18,64 @@ const LOCALES = [
       returns: 'Returns',
       errors: 'Errors',
       source: 'Source',
+      whenToUse: 'When to Use',
+      example: 'Minimal Example',
+      pitfalls: 'Common Pitfalls',
+      related: 'Related APIs',
       indexTitle: 'API Reference',
       experimentalTitle: 'Experimental (@iostore/store/experimental)',
       experimentalNote: '**Experimental**: import from `@iostore/store/experimental`.',
       none: '(none)',
-      errorsBody: [
-        '- This library does not define standardized error codes.',
-        '- Mutations can report failures through `onError(listener)` (operation, path, value).',
-      ].join('\n'),
+      noRelated: '- No related exports in this package.',
+      packageDescription: (packageName) => `Exports available in ${packageName}.`,
+      kindDescription: {
+        function: 'Function API reference.',
+        class: 'Class API reference.',
+        interface: 'Interface API reference.',
+        type: 'Type API reference.',
+        enum: 'Enum API reference.',
+        value: 'Value export reference.',
+        unknown: 'API reference.',
+      },
+      whenToUseByKind: {
+        function: 'Use this function when you need this behavior from the package API.',
+        class: 'Use this class when you need an object with lifecycle/stateful behavior.',
+        interface: 'Use this interface to type contracts between modules.',
+        type: 'Use this type alias to model reusable type shapes.',
+        enum: 'Use this enum when you need a constrained set of named values.',
+        value: 'Use this exported value as a shared constant or runtime capability.',
+        unknown: 'Use this export according to its package-level intent.',
+      },
+      pitfallsByKind: {
+        function: [
+          '- Validate argument types and nullability before calling.',
+          '- Confirm import path and runtime environment (server/client) expectations.',
+        ],
+        class: [
+          '- Prefer explicit construction over ad-hoc object literals.',
+          '- Release subscriptions/resources created by class instances.',
+        ],
+        interface: [
+          '- Keep interface shape aligned with runtime data.',
+          '- Avoid using interfaces as runtime validation.',
+        ],
+        type: [
+          '- Avoid over-expanding complex aliases in user-facing docs.',
+          '- Keep aliases stable to prevent downstream type breakage.',
+        ],
+        enum: [
+          '- Handle unknown values safely when reading external input.',
+          '- Keep serialized enum values stable across versions.',
+        ],
+        value: [
+          '- Treat exported values as read-only unless docs explicitly say otherwise.',
+          '- Avoid mutating shared references across modules.',
+        ],
+        unknown: [
+          '- Verify usage from source and tests when docs are minimal.',
+          '- Prefer explicit imports from documented entry points.',
+        ],
+      },
     },
   },
   {
@@ -39,21 +89,70 @@ const LOCALES = [
       returns: '返回',
       errors: '错误',
       source: '源码',
+      whenToUse: '何时使用',
+      example: '最小示例',
+      pitfalls: '常见误用',
+      related: '相关 API',
       indexTitle: 'API 参考',
       experimentalTitle: '实验特性（@iostore/store/experimental）',
       experimentalNote: '**实验特性**：请从 `@iostore/store/experimental` 引入。',
       none: '（无）',
-      errorsBody: [
-        '- 本库未定义标准化错误码。',
-        '- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。',
-      ].join('\n'),
+      noRelated: '- 当前包中暂无可推荐的相关导出。',
+      packageDescription: (packageName) => `${packageName} 的导出 API 列表。`,
+      kindDescription: {
+        function: '函数 API 参考。',
+        class: '类 API 参考。',
+        interface: '接口 API 参考。',
+        type: '类型 API 参考。',
+        enum: '枚举 API 参考。',
+        value: '值导出 API 参考。',
+        unknown: 'API 参考。',
+      },
+      whenToUseByKind: {
+        function: '当你需要该包提供的这项行为能力时使用此函数。',
+        class: '当你需要带生命周期或状态封装的对象能力时使用此类。',
+        interface: '当你需要约束模块间类型契约时使用此接口。',
+        type: '当你需要复用类型结构时使用此类型别名。',
+        enum: '当你需要一组受限且可读的命名值时使用此枚举。',
+        value: '当你需要共享常量或运行时能力时使用此导出值。',
+        unknown: '当你需要该导出提供的能力时使用，必要时结合源码确认。',
+      },
+      pitfallsByKind: {
+        function: [
+          '- 调用前请确认参数类型与可空性约束。',
+          '- 注意导入路径与运行环境（服务端/客户端）是否匹配。',
+        ],
+        class: [
+          '- 优先使用显式构造，避免用对象字面量“模拟”实例。',
+          '- 及时释放实例创建的订阅或资源。',
+        ],
+        interface: [
+          '- 保持接口定义与真实运行时数据一致。',
+          '- 不要把接口当作运行时校验手段。',
+        ],
+        type: [
+          '- 避免在用户文档中展开过于复杂的类型细节。',
+          '- 调整类型别名时注意下游兼容性。',
+        ],
+        enum: [
+          '- 处理外部输入时为未知值留出兜底分支。',
+          '- 保持序列化值稳定，避免破坏兼容性。',
+        ],
+        value: [
+          '- 除非文档明确说明，否则将导出值视为只读。',
+          '- 避免跨模块直接修改共享引用。',
+        ],
+        unknown: [
+          '- 文档信息不足时，请结合源码与测试确认行为。',
+          '- 优先使用文档声明的入口路径进行导入。',
+        ],
+      },
     },
   },
 ];
 
-const TYPE_FLAGS =
-  ts.TypeFormatFlags.NoTruncation |
-  ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
+const TYPE_FLAGS = ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
+const MAX_TYPE_TEXT_LENGTH = 320;
 
 function kebabCase(input) {
   return input
@@ -77,8 +176,57 @@ async function ensureDir(dirPath) {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+async function cleanupStaleExportDirs(pkgDir, validSlugs) {
+  const entries = await fs.readdir(pkgDir, { withFileTypes: true });
+  const valid = new Set(validSlugs);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (valid.has(entry.name)) continue;
+    await fs.rm(path.join(pkgDir, entry.name), { recursive: true, force: true });
+  }
+}
+
+async function cleanupStalePackageDirs(referenceDir, validPackageDirs) {
+  const entries = await fs.readdir(referenceDir, { withFileTypes: true });
+  const valid = new Set(validPackageDirs);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (valid.has(entry.name)) continue;
+    await fs.rm(path.join(referenceDir, entry.name), { recursive: true, force: true });
+  }
+}
+
 function normalizeTypeText(text) {
-  return text.replace(/import\(".*?"\)\./g, '');
+  const normalized = text
+    .replace(/import\(".*?"\)\./g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (normalized.length <= MAX_TYPE_TEXT_LENGTH) return normalized;
+  return `${normalized.slice(0, MAX_TYPE_TEXT_LENGTH - 1)}…`;
+}
+
+function renderExportDescription(labels, exportKind) {
+  return labels.kindDescription[exportKind] ?? labels.kindDescription.unknown;
+}
+
+function toTagText(tagText) {
+  if (!tagText) return '';
+  if (typeof tagText === 'string') return tagText.trim();
+  if (Array.isArray(tagText)) return tagText.map((part) => part.text ?? '').join('').trim();
+  return '';
+}
+
+function getSymbolDocs(checker, symbol) {
+  const docs = ts.displayPartsToString(symbol.getDocumentationComment(checker)).trim();
+  return docs.length > 0 ? docs : '';
+}
+
+function getThrowsEntries(symbol) {
+  return symbol
+    .getJsDocTags()
+    .filter((tag) => tag.name === 'throws' || tag.name === 'throw')
+    .map((tag) => toTagText(tag.text))
+    .filter((text) => text.length > 0);
 }
 
 function createProgram(entryFile) {
@@ -164,15 +312,22 @@ function getDeclaredType(checker, symbol) {
   if (!decl) return null;
   const type = checker.getDeclaredTypeOfSymbol(symbol);
   const typeTextRaw = checker.typeToString(type, decl, TYPE_FLAGS);
-  const properties = type.getProperties().map((p) => {
-    const pDecl = p.valueDeclaration ?? p.declarations?.[0] ?? decl;
-    const pTypeRaw = checker.typeToString(
-      checker.getTypeOfSymbolAtLocation(p, pDecl),
-      pDecl,
-      TYPE_FLAGS
-    );
-    return { name: p.getName(), type: normalizeTypeText(pTypeRaw) };
-  });
+  const shouldRenderProperties =
+    ts.isInterfaceDeclaration(decl) ||
+    ts.isClassDeclaration(decl) ||
+    (ts.isTypeAliasDeclaration(decl) && ts.isTypeLiteralNode(decl.type));
+
+  const properties = shouldRenderProperties
+    ? type.getProperties().map((p) => {
+        const pDecl = p.valueDeclaration ?? p.declarations?.[0] ?? decl;
+        const pTypeRaw = checker.typeToString(
+          checker.getTypeOfSymbolAtLocation(p, pDecl),
+          pDecl,
+          TYPE_FLAGS
+        );
+        return { name: p.getName(), type: normalizeTypeText(pTypeRaw) };
+      })
+    : [];
   return { typeText: normalizeTypeText(typeTextRaw), properties };
 }
 
@@ -202,13 +357,19 @@ function renderFrontmatter({ title, description, extra }) {
   )}\ndescription: ${JSON.stringify(safeDescription)}${extraBlock}\n---\n`;
 }
 
+function escapeMarkdownTableCell(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|');
+}
+
 function renderParamsTable(params, labels) {
   if (!params || params.length === 0)
     return `\n## ${labels.parameters}\n\n${labels.none}\n`;
   const rows = params
     .map((p) => {
-      const safeName = String(p.name).replace(/\|/g, '\\|');
-      const safeType = String(p.type).replace(/\|/g, '\\|');
+      const safeName = escapeMarkdownTableCell(p.name);
+      const safeType = escapeMarkdownTableCell(p.type);
       return `| ${safeName} | \`${safeType}\` |`;
     })
     .join('\n');
@@ -219,16 +380,18 @@ function renderPropertiesTable(properties, labels) {
   if (!properties || properties.length === 0) return '';
   const rows = properties
     .map((p) => {
-      const safeName = String(p.name).replace(/\|/g, '\\|');
-      const safeType = String(p.type).replace(/\|/g, '\\|');
+      const safeName = escapeMarkdownTableCell(p.name);
+      const safeType = escapeMarkdownTableCell(p.type);
       return `| ${safeName} | \`${safeType}\` |`;
     })
     .join('\n');
   return `\n## ${labels.properties}\n\n| Name | Type |\n| --- | --- |\n${rows}\n`;
 }
 
-function renderErrors(labels) {
-  return `\n## ${labels.errors}\n\n${labels.errorsBody}\n`;
+function renderErrors(labels, throwsEntries) {
+  if (!throwsEntries || throwsEntries.length === 0) return '';
+  const body = throwsEntries.map((entry) => `- ${entry}`).join('\n');
+  return `\n## ${labels.errors}\n\n${body}\n`;
 }
 
 function renderSource(relPath, labels) {
@@ -236,17 +399,65 @@ function renderSource(relPath, labels) {
   return `\n## ${labels.source}\n\n- \`${relPath}\`\n`;
 }
 
+function renderWhenToUse(labels, exportKind, docsText) {
+  const text = docsText || labels.whenToUseByKind[exportKind] || labels.whenToUseByKind.unknown;
+  return `\n## ${labels.whenToUse}\n\n${text}\n`;
+}
+
+function renderExample(labels, exportName, exportKind, packageName) {
+  let code = `import { ${exportName} } from '${packageName}';\n\n`;
+  if (exportKind === 'function') {
+    code += `const result = ${exportName}(/* ...args */);\nconsole.log(result);`;
+  } else if (exportKind === 'class') {
+    code += `const instance = new ${exportName}(/* ...args */);\nconsole.log(instance);`;
+  } else if (exportKind === 'interface' || exportKind === 'type') {
+    code = `import type { ${exportName} } from '${packageName}';\n\nlet value!: ${exportName};\nconsole.log(value);`;
+  } else {
+    code += `console.log(${exportName});`;
+  }
+  return `\n## ${labels.example}\n\n\`\`\`ts\n${code}\n\`\`\`\n`;
+}
+
+function renderPitfalls(labels, exportKind) {
+  const lines = labels.pitfallsByKind[exportKind] ?? labels.pitfallsByKind.unknown;
+  return `\n## ${labels.pitfalls}\n\n${lines.join('\n')}\n`;
+}
+
+function renderRelated(labels, relatedExports) {
+  if (!relatedExports || relatedExports.length === 0) {
+    return `\n## ${labels.related}\n\n${labels.noRelated}\n`;
+  }
+  const items = relatedExports.map((item) => `- [${item.name}](../${item.slug}/)`).join('\n');
+  return `\n## ${labels.related}\n\n${items}\n`;
+}
+
+function pickRelatedExports(exports, currentExport, limit = 4) {
+  const others = exports.filter(
+    (item) => item.slug !== currentExport.slug && !item.isExperimental
+  );
+  const sameKind = others.filter((item) => item.kind === currentExport.kind).slice(0, limit);
+  if (sameKind.length >= limit) return sameKind;
+  const fallback = others
+    .filter((item) => !sameKind.some((candidate) => candidate.slug === item.slug))
+    .slice(0, limit - sameKind.length);
+  return [...sameKind, ...fallback];
+}
+
 function renderExportPage({
   localeLabels,
   exportName,
   exportKind,
+  packageName,
+  docsText,
+  throwsEntries,
+  relatedExports,
   signature,
   declaredType,
   sourcePath,
   isExperimental,
 }) {
   const title = exportName;
-  const description = `${exportKind} export`;
+  const description = renderExportDescription(localeLabels, exportKind);
 
   let body = '';
   const frontmatterExtra = isExperimental ? 'sidebar:\n  hidden: true' : '';
@@ -254,6 +465,8 @@ function renderExportPage({
   if (isExperimental) {
     body += `\n${localeLabels.experimentalNote}\n`;
   }
+  body += renderWhenToUse(localeLabels, exportKind, docsText);
+
   if (signature) {
     body += `\n## ${localeLabels.signature}\n\n\`\`\`ts\n${signature.signatureText}\n\`\`\`\n`;
     body += renderParamsTable(signature.params, localeLabels);
@@ -263,7 +476,10 @@ function renderExportPage({
     body += renderPropertiesTable(declaredType.properties, localeLabels);
   }
 
-  body += renderErrors(localeLabels);
+  body += renderExample(localeLabels, exportName, exportKind, packageName);
+  body += renderPitfalls(localeLabels, exportKind);
+  body += renderRelated(localeLabels, relatedExports);
+  body += renderErrors(localeLabels, throwsEntries);
   body += renderSource(sourcePath, localeLabels);
 
   return (
@@ -279,7 +495,7 @@ function renderPackageIndex({
   experimentalExports,
 }) {
   const title = `${localeLabels.indexTitle}: ${packageName}`;
-  const description = `Exports of ${packageName}`;
+  const description = localeLabels.packageDescription(packageName);
 
   const publicItems = publicExports
     .map((e) => `- [${e.name}](./${e.slug}/)`)
@@ -315,6 +531,58 @@ async function readJson(filePath) {
   return JSON.parse(raw);
 }
 
+function getExportTargetPath(targetConfig) {
+  if (typeof targetConfig === 'string') return targetConfig;
+  if (!targetConfig || typeof targetConfig !== 'object') return null;
+  if (typeof targetConfig.import === 'string') return targetConfig.import;
+  if (typeof targetConfig.default === 'string') return targetConfig.default;
+  return null;
+}
+
+function mapDistPathToSourcePath(targetPath) {
+  if (typeof targetPath !== 'string') return null;
+  if (!targetPath.startsWith('./dist/')) return null;
+  if (!targetPath.endsWith('.js') && !targetPath.endsWith('.mjs') && !targetPath.endsWith('.cjs')) {
+    return null;
+  }
+  const relative = targetPath.slice('./dist/'.length).replace(/\.(m|c)?js$/, '.ts');
+  return `./src/${relative}`;
+}
+
+async function discoverEntryFiles(dirPath, packageName, pkgJson) {
+  const entries = [
+    {
+      filePath: path.join(dirPath, 'src', 'index.ts'),
+      importPath: packageName,
+    },
+  ];
+
+  const exportMap = pkgJson.exports;
+  if (!exportMap || typeof exportMap !== 'object') return entries;
+
+  for (const [subpath, targetConfig] of Object.entries(exportMap)) {
+    if (subpath === '.' || subpath === './package.json') continue;
+    if (subpath.includes('*')) continue;
+    if (!subpath.startsWith('./')) continue;
+
+    const targetPath = getExportTargetPath(targetConfig);
+    const sourceRelativePath = mapDistPathToSourcePath(targetPath);
+    if (!sourceRelativePath) continue;
+
+    const sourceFilePath = path.join(dirPath, sourceRelativePath.slice(2));
+    if (!(await fileExists(sourceFilePath))) continue;
+
+    const subpathName = subpath.slice(2);
+    entries.push({
+      filePath: sourceFilePath,
+      importPath: `${packageName}/${subpathName}`,
+    });
+  }
+
+  const dedup = new Map(entries.map((entry) => [entry.filePath, entry]));
+  return Array.from(dedup.values());
+}
+
 async function discoverPackages() {
   const entries = await fs.readdir(packagesRoot, { withFileTypes: true });
   const result = [];
@@ -326,12 +594,14 @@ async function discoverPackages() {
     if (!(await fileExists(pkgJsonPath))) continue;
     if (!(await fileExists(srcIndexPath))) continue;
     const pkgJson = await readJson(pkgJsonPath);
+    const packageName = pkgJson.name ?? dirent.name;
+    const entryFiles = await discoverEntryFiles(dirPath, packageName, pkgJson);
     const experimentalEntryPath = path.join(dirPath, 'src', 'experimental.ts');
     result.push({
       dirName: dirent.name,
-      packageName: pkgJson.name ?? dirent.name,
+      packageName,
       version: pkgJson.version ?? null,
-      entryFile: srcIndexPath,
+      entryFiles,
       experimentalEntryFile: (await fileExists(experimentalEntryPath))
         ? experimentalEntryPath
         : null,
@@ -342,35 +612,52 @@ async function discoverPackages() {
 
 async function generate() {
   const packages = await discoverPackages();
+  const packageDirNames = packages.map((pkg) => pkg.dirName);
 
   for (const pkg of packages) {
-    const { program, checker } = createProgram(pkg.entryFile);
-    const sourceFile = program.getSourceFile(pkg.entryFile);
-    if (!sourceFile) continue;
+    const publicExportMap = new Map();
+    for (const entry of pkg.entryFiles) {
+      const { program, checker } = createProgram(entry.filePath);
+      const sourceFile = program.getSourceFile(entry.filePath);
+      if (!sourceFile) continue;
 
-    const publicExports = getModuleExports(checker, sourceFile)
-      .map((symbol) => {
-        const name = symbol.getName();
-        const targetSymbol = resolveExportSymbol(checker, symbol);
-        const kind = getExportKind(targetSymbol);
-        const signature = getSignature(checker, targetSymbol);
-        const declaredType = signature
-          ? null
-          : getDeclaredType(checker, targetSymbol);
-        const sourcePath = getSymbolDeclPath(targetSymbol);
-        const slug = kebabCase(name);
-        return {
-          name,
-          kind,
-          signature,
-          declaredType,
-          sourcePath,
-          slug,
-          isExperimental: false,
-        };
-      })
-      .filter((e) => e.slug.length > 0)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      const exportsForEntry = getModuleExports(checker, sourceFile)
+        .map((symbol) => {
+          const name = symbol.getName();
+          const targetSymbol = resolveExportSymbol(checker, symbol);
+          const kind = getExportKind(targetSymbol);
+          const docsText = getSymbolDocs(checker, targetSymbol);
+          const throwsEntries = getThrowsEntries(targetSymbol);
+          const signature = getSignature(checker, targetSymbol);
+          const declaredType = signature
+            ? null
+            : getDeclaredType(checker, targetSymbol);
+          const sourcePath = getSymbolDeclPath(targetSymbol);
+          const slug = kebabCase(name);
+          return {
+            name,
+            kind,
+            docsText,
+            throwsEntries,
+            signature,
+            declaredType,
+            sourcePath,
+            slug,
+            isExperimental: false,
+            importPath: entry.importPath,
+          };
+        })
+        .filter((e) => e.slug.length > 0);
+
+      for (const exp of exportsForEntry) {
+        if (publicExportMap.has(exp.slug)) continue;
+        publicExportMap.set(exp.slug, exp);
+      }
+    }
+
+    const publicExports = Array.from(publicExportMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
 
     let experimentalExports = [];
     if (pkg.experimentalEntryFile) {
@@ -384,6 +671,8 @@ async function generate() {
             const name = symbol.getName();
             const targetSymbol = resolveExportSymbol(expProgram.checker, symbol);
             const kind = getExportKind(targetSymbol);
+            const docsText = getSymbolDocs(expProgram.checker, targetSymbol);
+            const throwsEntries = getThrowsEntries(targetSymbol);
             const signature = getSignature(expProgram.checker, targetSymbol);
             const declaredType = signature
               ? null
@@ -393,11 +682,14 @@ async function generate() {
             return {
               name,
               kind,
+              docsText,
+              throwsEntries,
               signature,
               declaredType,
               sourcePath,
               slug,
               isExperimental: true,
+              importPath: `${pkg.packageName}/experimental`,
             };
           })
           .filter((e) => e.slug.length > 0)
@@ -406,6 +698,7 @@ async function generate() {
     }
 
     const exports = [...publicExports, ...experimentalExports];
+    const exportSlugs = exports.map((exp) => exp.slug);
 
     for (const locale of LOCALES) {
       const localeRoot = locale.contentDir
@@ -413,6 +706,7 @@ async function generate() {
         : docsRoot;
       const pkgDir = path.join(localeRoot, 'reference', pkg.dirName);
       await ensureDir(pkgDir);
+      await cleanupStaleExportDirs(pkgDir, exportSlugs);
       await fs.writeFile(
         path.join(pkgDir, 'index.mdx'),
         renderPackageIndex({
@@ -427,10 +721,15 @@ async function generate() {
       for (const exp of exports) {
         const expDir = path.join(pkgDir, exp.slug);
         await ensureDir(expDir);
+        const relatedExports = pickRelatedExports(publicExports, exp);
         const mdx = renderExportPage({
           localeLabels: locale.labels,
           exportName: exp.name,
           exportKind: exp.kind,
+          packageName: exp.importPath ?? pkg.packageName,
+          docsText: exp.docsText,
+          throwsEntries: exp.throwsEntries,
+          relatedExports,
           signature: exp.signature,
           declaredType: exp.declaredType,
           sourcePath: exp.sourcePath,
@@ -447,6 +746,7 @@ async function generate() {
       : docsRoot;
     const referenceDir = path.join(localeRoot, 'reference');
     await ensureDir(referenceDir);
+    await cleanupStalePackageDirs(referenceDir, packageDirNames);
     await fs.writeFile(
       path.join(referenceDir, 'versions.mdx'),
       renderVersionsPage({

@@ -1,0 +1,60 @@
+---
+title: "withBehaviors"
+description: "组合多个 behavior 并返回增强视图。"
+---
+
+
+## 何时使用
+
+- 你需要把 `persist/schedule/throttle/debounce/effect/devtools` 组合在同一视图上。
+- 你希望用一致方式访问 `extensions` 与 `destroy` 生命周期。
+
+## 签名
+
+```ts
+<T>(input: IoView<T>, behaviors: IoBehavior<T>[]) => IoView<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| input | `IoView<T>` |
+| behaviors | `IoBehavior<T>[]` |
+
+## 返回
+
+`IoView<T>`
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+import { withBehaviors } from '@iostore/store/behavior';
+import { debounce, effect, persist } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  persist({ key: 'count' }),
+  debounce(120),
+  effect((value) => {
+    console.log('count', value);
+  }),
+]);
+```
+
+## 常见误用
+
+- 行为顺序随意放置，导致语义与预期不一致。
+- 组合了含资源行为却不调用 `view.destroy()` 做统一清理。
+
+## 相关 API
+
+- [IoBehavior](../io-behavior/)
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [effect](../effect/)
+
+## 源码
+
+- `packages/io/src/lib/extensions/with-behaviors.ts`

@@ -1,8 +1,14 @@
 import { bench, describe } from 'vitest';
-import { createDraft, finishDraft } from '../utils/cow.js';
-import { cloneValue, __testing } from '../utils/snapshot.js';
+import { createDraft, finishDraft } from '../utils/immutable/cow.js';
+import { cloneValue } from '../utils/immutable/immutable.js';
 
-import { io } from '../core/io.js';
+import { io } from '../core/api/io.js';
+
+const BENCH_OPTIONS = {
+  time: 2_000,
+  warmupTime: 500,
+  warmupIterations: 10,
+} as const;
 
 type Fixture = {
   level1: {
@@ -54,18 +60,17 @@ describe('clone performance', () => {
       mutateDeep(draft, i);
       before = draft;
     }
-  });
+  }, BENCH_OPTIONS);
 
   bench('new: COW draft (structural sharing)', () => {
     const before0 = cloneValue(buildFixture());
-    __testing.resetDeepCloneCount();
     let before = before0;
     for (let i = 0; i < 200; i += 1) {
       const draft = createDraft(before);
       mutateDeep(draft, i);
       before = finishDraft(draft);
     }
-  });
+  }, BENCH_OPTIONS);
 });
 
 describe('snapshot perf (tree reuse)', () => {
@@ -86,5 +91,5 @@ describe('snapshot perf (tree reuse)', () => {
       throw new Error('expected unchanged branch to reuse');
     if (s1.user.profile !== s2.user.profile)
       throw new Error('expected unchanged leaf to reuse');
-  });
+  }, BENCH_OPTIONS);
 });

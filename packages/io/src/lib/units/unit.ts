@@ -1,17 +1,18 @@
-import { notifyUpdate, notifyValue } from '../utils/batch.js';
-import { emitError } from '../utils/debug.js';
-import { getInternal, registerInternal } from '../utils/internal-access.js';
-import { INTERNAL } from '../utils/internal-symbol.js';
-import { trackRead } from '../utils/signals.js';
-import { cloneValue, readValue } from '../utils/snapshot.js';
+import { notifyUpdate, notifyValue } from '../utils/reactive/batch.js';
+import { emitError } from '../utils/debug/debug.js';
+import { getInternal, registerInternal } from '../utils/internal/internal-access.js';
+import { INTERNAL } from '../utils/internal/internal-access.js';
+import { trackRead } from '../utils/reactive/signals.js';
+import { cloneValue } from '../utils/immutable/immutable.js';
 import type {
   IoErrorHandler,
   IoPatch,
   IoUnit,
   IoUnsubscribe,
+  IoUpdateAnnotation,
   IoUpdate,
-} from '../utils/types.js';
-import { createUpdate } from '../utils/updates.js';
+} from '../utils/types/types.js';
+import { createUpdate } from '../utils/patches/updates.js';
 
 type UnitState<T> = {
   initial: T;
@@ -25,7 +26,7 @@ type UnitState<T> = {
   errorListeners: Set<IoErrorHandler>;
 };
 
-type SetOptions = {
+type SetOptions = IoUpdateAnnotation & {
   emitValue?: boolean;
   emitUpdate?: boolean;
 };
@@ -40,7 +41,7 @@ type UnitInternal<T> = {
 function readCachedValue<T>(state: UnitState<T>): T {
   if (state.hasCachedRead && state.cachedReadRevision === state.revision)
     return state.cachedRead as T;
-  const v = readValue(state.value);
+  const v = cloneValue(state.value);
   state.cachedRead = v;
   state.cachedReadRevision = state.revision;
   state.hasCachedRead = true;
@@ -96,7 +97,10 @@ function applyUnitSet<T>(
       prev,
       next: after,
     };
-    const update = createUpdate(baseRevision, state.revision, [patch]);
+    const update = createUpdate(baseRevision, state.revision, [patch], {
+      action: options?.action ?? 'set',
+      meta: options?.meta,
+    });
     emitUpdate(state as UnitState<unknown>, update);
   }
 
@@ -121,7 +125,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
   };
 
   const set = (next: T | ((prev: T) => T)): void => {
-    setValue(next);
+    setValue(next, { action: 'set' });
   };
 
   const snapshot = (): T => readCachedValue(state);
@@ -142,7 +146,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
 
   const reset = (): void => {
     try {
-      setValue(cloneValue(state.initial));
+      setValue(cloneValue(state.initial), { action: 'reset' });
     } catch (error) {
       emitError(unit, error, [], 'reset');
       throw error;
@@ -169,7 +173,7 @@ export function createUnit<T>(initial: T): IoUnit<T> {
     },
   });
 
-  registerInternal(unit as unknown as object, internal);
+  registerInternal(unit as object, internal);
 
   return unit;
 }

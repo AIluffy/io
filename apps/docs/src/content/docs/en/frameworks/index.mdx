@@ -1,0 +1,58 @@
+---
+title: Framework Integration Overview
+description: Pick the right IO adapter for your runtime and apply clear client/SSR integration boundaries.
+sidebar:
+  order: 0
+---
+
+This section helps you answer three questions quickly:
+
+- Which adapter package matches my stack?
+- What differs between client-framework integration and SSR integration?
+- What is the shortest reading path to get production-ready?
+
+## Quick Selection Matrix
+
+| Scenario | Recommended Page | Key APIs |
+| --- | --- | --- |
+| Framework-free / Node / tooling | [Vanilla Usage](/en/frameworks/vanilla/) | `io` `get` `set` `subscribe` `snapshot` |
+| React app | [React](/en/frameworks/react/) | `useIO` `useIOSelector` |
+| Lynx / ReactLynx | [Lynx](/en/frameworks/lynx/) | `useIO` `useIOSelector` |
+| Vue 3 | [Vue](/en/frameworks/vue/) | `useIO` `ioRef` |
+| Svelte | [Svelte](/en/frameworks/svelte/) | `toReadable` `toWritable` |
+| Solid | [Solid](/en/frameworks/solid/) | `useIO` (Accessor) |
+| Next.js (App Router) | [Next.js](/en/frameworks/next/) | request scope + hydration reconstruction |
+| Nuxt 3 | [Nuxt](/en/frameworks/nuxt/) | `useAsyncData` + client reconstruction |
+| SvelteKit | [SvelteKit](/en/frameworks/sveltekit/) | plain `load` payload + client reconstruction |
+
+## Client Frameworks vs SSR Frameworks
+
+Client frameworks (React/Vue/Svelte/Solid/Lynx) focus on subscription granularity and render efficiency:
+
+- Prefer path-level subscriptions over broad root subscriptions.
+- Add equality guards for object selectors.
+- Control update bursts with `batch` or `schedule`.
+
+SSR frameworks (Next/Nuxt/SvelteKit) focus on runtime boundaries:
+
+- Stores must be request-scoped, never process-global singletons.
+- Hydration boundaries carry plain serializable data only.
+- Reconstruct stores on the client before interactive behaviors.
+
+## Recommended Reading Path
+
+1. Start with [Vanilla Usage](/en/frameworks/vanilla/) for core semantics.
+2. Read your framework-specific page for minimal integration.
+3. If SSR is involved, read Next/Nuxt/SvelteKit for boundary patterns.
+4. Finish with [Composition](/en/cookbook/composition/) and [Subscriptions](/en/cookbook/subscriptions/) for optimization.
+
+## Common Integration Mistakes
+
+- Subscribing broad root state in many leaf components.
+- Reusing global stores across SSR requests.
+- Mismatched initial-state shape across server/client hydration boundaries.
+
+## Next Steps
+
+- Pattern-level practices: [State Patterns](/en/cookbook/overview/).
+- Runtime model details: [Core Principles](/en/fundamentals/architecture/).

@@ -1,0 +1,24 @@
+---
+title: "IoSolidQueryResult"
+description: "类型 API 参考。"
+---
+
+## 签名
+
+```ts
+IoSolidQueryResult<TData, TError = Error>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoQueryState<TData, TError>>` |
+| data | `Accessor<TData \| undefined>` |
+| error | `Accessor<TError \| null>` |
+| fetch | `() => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

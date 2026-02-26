@@ -1,0 +1,111 @@
+---
+title: Debounce
+description: Emit after a quiet window so intermediate changes do not trigger every notification.
+sidebar:
+  order: 6
+---
+
+Debounce emits only after updates settle, which is ideal when only final intent matters.
+
+## What It Is
+
+- Core behavior: collapse bursts into one trailing notification.
+- Value: fewer requests/logs/renders from transient states.
+- Semantics: intermediate writes can occur, but emissions wait for quiet time.
+
+## When to Use
+
+- Search input, filters, autosave.
+- You care about final value, not every keystroke.
+- Downstream side effects are expensive.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(200)]);
+
+view.subscribe((value) => {
+  console.log('debounced:', value);
+});
+```
+
+## Live Example
+
+Type continuously to compare immediate input value with debounced output value.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(400)]);
+
+function DebounceLiveDemo() {
+  const instant = useIO(view);
+  const [debouncedValue, setDebouncedValue] = useState('');
+  const [notifyCount, setNotifyCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifyCount((n) => n + 1);
+      setDebouncedValue(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <section className="io-live">
+      <input
+        className="io-live__input"
+        value={instant}
+        onChange={(event) => view.set(event.currentTarget.value)}
+        placeholder="Type quickly..."
+      />
+      <div>Immediate value: {instant || '(empty)'}</div>
+      <div>Debounced value: {debouncedValue || '(empty)'}</div>
+      <div>Debounced notifications: {notifyCount}</div>
+    </section>
+  );
+}
+
+export default DebounceLiveDemo;
+```
+
+Watch for this: intermediate input states are skipped, and output updates after the quiet window.
+
+## Key Options
+
+```ts
+debounce(200, {
+  leading: false,
+  trailing: true,
+});
+```
+
+- `leading`: emit once at burst start (default `false`).
+- `trailing`: emit latest value after burst (default `true`).
+
+## Common Mistakes
+
+- Using Debounce when fixed-rate updates are required.
+- Setting `trailing: false` and missing final values.
+- Using very long windows and making feedback feel delayed.
+
+## Practical Guidance
+
+- Start with 200-400ms for search-like interactions.
+- Enable `leading` if you need initial feedback plus final settle.
+- In request pipelines, debounce first, then trigger effect.
+
+## Next Steps
+
+- Use [Throttle](/en/cookbook/throttle/) for fixed-rate delivery.
+- Combine with [Effect](/en/cookbook/effect/) for request/log side effects.

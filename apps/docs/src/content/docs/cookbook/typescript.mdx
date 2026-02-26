@@ -1,0 +1,69 @@
+---
+title: TypeScript
+description: 使用 IO 的类型推断与路径工具，提升状态建模与 API 约束质量。
+sidebar:
+  order: 4
+---
+
+IO 默认提供强类型推断；在跨层 API 场景下可结合导出类型进一步收紧边界。
+
+## 是什么
+
+- 推断来源：`io()` 返回值自动携带完整结构信息。
+- 常用类型：`IoUnit`、`IoNode`、`IoScope`、`IoUpdate`、`IoPatch`。
+- 路径工具：`IoPathOf<T>`、`IoPathValue<T, P>`、`UnwrapIo<T>`。
+
+## 何时使用
+
+- 你希望避免手写重复类型声明。
+- 你要为跨层调用定义稳定路径与值类型。
+- 你要在工具函数中约束可访问路径。
+
+## 核心用法
+
+### 1) 依赖推断（默认）
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0, user: { name: 'Ada' } });
+
+store.count.get();
+store.user.name.set('Lin');
+```
+
+### 2) 路径类型工具
+
+```ts
+import type { IoPathOf, IoPathValue } from '@iostore/store';
+
+type Store = { user: { name: string }; count: number };
+
+type Path = IoPathOf<Store>; // ['user', 'name'] | ['count'] ...
+type NameValue = IoPathValue<Store, ['user', 'name']>; // string
+```
+
+## 常用类型速览
+
+- `IoUnit<T>`：叶子 Unit。
+- `IoNode<T>`：树节点。
+- `IoScope<T>`：对象 Scope。
+- `IoUpdate` / `IoPatch`：更新日志对象。
+- `UnwrapIo<T>`：从 `io()` 结果中提取普通数据结构。
+
+## 常见误区
+
+- 在局部逻辑中过早显式标注类型，反而削弱推断。
+- 把路径写成宽泛 `string[]`，失去编译期校验。
+- 在跨层 API 中直接暴露内部复杂节点类型。
+
+## 实践建议
+
+- 默认优先使用 `io()` 推断结果。
+- 仅在跨层边界（SDK、公共函数）显式声明类型。
+- 路径相关工具优先使用 `IoPathOf` / `IoPathValue`。
+
+## 下一步
+
+- 了解 [派生值](/cookbook/derived/) 的类型推断。
+- 查看 [测试](/cookbook/testing/) 中的断言示例。

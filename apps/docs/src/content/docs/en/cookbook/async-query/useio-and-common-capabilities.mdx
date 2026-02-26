@@ -1,0 +1,103 @@
+---
+title: useIO and Common Capability Composition
+description: Combine useIO, derived views, behaviors, and batching with Query workflows.
+sidebar:
+  order: 4
+---
+
+## What It Is
+
+`useQuery` manages remote request lifecycle, while `useIO` manages local reactive UI state. Together, they let you separate remote truth from local interaction state and compose with shared capabilities like `derived`, `withBehaviors`, `batch`, and DevTools.
+
+## When to Use
+
+- A page has both remote data and local filter/pagination/draft state.
+- You need persisted local params (for example keyword/page) to drive query keys.
+- You need to reduce render jitter under high-frequency input.
+
+## Core API
+
+- [useIO](/en/api-reference/io-react/use-io/)
+- [useQuery](/en/api-reference/io-react/use-query/)
+- [derived](/en/api-reference/io/derived/)
+- [withBehaviors](/en/api-reference/io/with-behaviors/)
+- [batch](/en/api-reference/io/batch/)
+
+## Minimal Example
+
+```tsx
+import { useIO, useQuery } from '@iostore/react';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { persist, schedule, withBehaviors } from '@iostore/store/behavior';
+
+const filterStore = withBehaviors(
+  io({
+    keyword: '',
+    page: 1,
+  }),
+  [
+    persist({ key: 'docs-async-query-filters' }),
+    schedule('microtask'),
+  ],
+);
+
+const queryKeyView = derived(filterStore, (s) => ['todos', s.keyword, s.page] as const);
+
+export function TodoPage() {
+  const filters = useIO(filterStore);
+  const queryKey = useIO(queryKeyView);
+
+  const todosQuery = useQuery({
+    key: queryKey,
+    queryFn: ({ signal }) =>
+      fetch(`/api/todos?keyword=${filters.keyword}&page=${filters.page}`, { signal }).then((r) => r.json()),
+  });
+
+  return (
+    <div>
+      <input
+        value={filters.keyword}
+        onChange={(event) => filterStore.keyword.set(event.currentTarget.value)}
+      />
+      <button onClick={() => filterStore.page.set((n) => n + 1)}>Next</button>
+      <div>{todosQuery.isFetching ? 'loading' : 'idle'}</div>
+    </div>
+  );
+}
+```
+
+## Reading client.query() directly with useIO
+
+Yes. `useIO` can read the object returned by `client.query(...)` directly, because that object is an IO node with snapshot and subscription capabilities.
+
+```tsx
+const query = client.query({
+  key: ['todo', id],
+  queryFn: ({ signal }) => fetchTodo(id, signal),
+});
+
+const state = useIO(query);
+```
+
+Two important notes:
+
+- `useIO(query)` only reads/subscribes. It does not auto-trigger fetching.
+- For page-level query flows, prefer `useQuery(...)` so fetch/refetch/status are handled together.
+
+## Common Pitfalls
+
+- Duplicating query data into local IO as a second source of truth.
+- Driving query params from local state but not encoding all params in the key.
+- Skipping `batch()` in burst updates and producing noisy intermediate renders.
+
+## Practical Guidance
+
+- Keep remote truth in Query and local UI intent in IO.
+- Start with `schedule('microtask')` for input-heavy flows.
+- Use [DevTools](/en/cookbook/devtools/) to inspect query/local timeline interactions.
+- Combine with [Persist](/en/cookbook/persist/) for local param durability and [Batching](/en/cookbook/batching/) for grouped local updates.
+
+## Next Steps
+
+- Continue with [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)

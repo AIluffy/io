@@ -1,18 +1,32 @@
-import type { IoUpdate, IoUnsubscribe } from '../../../utils/types.js';
-
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import type { TreeDepsSlice } from '../../types.js';
+import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
   TreeInternal,
   TreeNode,
   TreeScopeState,
-} from '../../io-tree-types.js';
+} from '../../tree/io-tree-types.js';
 import { createScopeCommit } from './commit.js';
 import { createScopeMutations } from './mutate.js';
+import { createNodeStateBase } from '../create-node-base.js';
+import { appendPath } from '../../tree/path-utils.js';
+import {
+  createNodeKindPlugin,
+  createNodeFromKindPlugin,
+} from '../node-kind-plugin.js';
+
+type ScopeNodeDeps = TreeDepsSlice<
+  | 'emitError'
+  | 'trackRead'
+  | 'snapshots'
+  | 'subscriptions'
+  | 'registry'
+  | 'internals'
+  | 'lifecycle'
+>;
 
 type CreateScopeNodeOptions = {
-  deps: NodeFactoryDeps;
+  deps: ScopeNodeDeps;
   ctx: TreeContext;
   path: NodePath;
   initial: Record<string, unknown>;
@@ -24,116 +38,96 @@ type CreateScopeNodeOptions = {
   resolvePatchValue: (value: unknown) => unknown;
 };
 
-export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
-  const {
-    deps,
-    ctx,
-    path,
-    initial,
-    createTreeNode,
-    resolvePatchValue,
-  } = options;
+type ScopeOperations = {
+  applySet: (
+    key: PropertyKey,
+    next: unknown,
+    options?: { emitValue?: boolean },
+  ) => void;
+};
 
-  const state: TreeScopeState = {
-    children: new Map(),
-    node: undefined as unknown as TreeNode,
-    revision: 0,
-    isCommitting: false,
-    valueEpoch: 0,
-    snapshotCache: { value: undefined, version: -1, hasValue: false },
-    dirtyKeys: new Set(),
-    dirtyStructure: false,
-    valueListeners: new Set(),
-    updateListeners: new Set(),
+const scopePlugin = createNodeKindPlugin<
+  Record<string, unknown>,
+  TreeScopeState,
+  Record<string, unknown>,
+  ScopeOperations,
+  ScopeNodeDeps
+>({
+  kind: 'scope',
+  createState: ({ ctx, path, initialNode }) => ({
+    children: new Map<PropertyKey, TreeNode>(),
+    dirtyKeys: new Set<PropertyKey>(),
     childValueUnsubs: new Map(),
     childUpdateUnsubs: new Map(),
-    ctx,
-    path,
-  };
-
-  const scope: Record<PropertyKey, unknown> = {};
-  state.node = scope as unknown as TreeNode;
-  ctx.seen.set(initial as unknown as object, scope as unknown as TreeNode);
-
-  const initialAny = initial as unknown as Record<PropertyKey, unknown>;
-  // Reflect.ownKeys keeps symbol/non-enumerable branches in the tree model.
-  for (const key of Reflect.ownKeys(initialAny)) {
-    const child = createTreeNode(ctx, [...path, key], initialAny[key]);
-    state.children.set(key, child);
-  }
-
-  for (const [key, child] of state.children.entries())
-    deps.attachChildToScope(state, key, child);
-
-  const snapshot = (): Record<string, unknown> =>
-    deps.getScopeSnapshot(state);
-  const get = (): Record<string, unknown> => {
-    deps.trackRead(
-      scope as unknown as {
-        subscribe: (fn: (value: unknown) => void) => IoUnsubscribe;
-      },
-    );
-    return snapshot();
-  };
-
-  const subscribe = (
-    fn: (v: Record<string, unknown>) => void,
-  ): IoUnsubscribe => {
-    state.valueListeners.add(fn);
-    return () => {
-      state.valueListeners.delete(fn);
+    ...createNodeStateBase<Record<string, unknown>, Record<string, unknown>>(
+      ctx,
+      path,
+      initialNode,
+    ),
+  }),
+  createNode: () => {
+    const scope: Record<PropertyKey, unknown> = {};
+    return {
+      target: scope as object,
+      node: scope as TreeNode,
     };
-  };
+  },
+  initialize: ({ deps, ctx, path, initial, state, createTreeNode }) => {
+    const initialAny = initial as Record<PropertyKey, unknown>;
+    for (const key of Reflect.ownKeys(initialAny)) {
+      const child = createTreeNode(ctx, appendPath(path, key), initialAny[key]);
+      state.children.set(key, child);
+    }
 
-  const subscribeUpdate = (fn: (u: IoUpdate) => void): IoUnsubscribe => {
-    state.updateListeners.add(fn);
-    return () => {
-      state.updateListeners.delete(fn);
+    state.children.forEach((child, key) => {
+      deps.lifecycle.attachChildToScope(state, key, child);
+    });
+  },
+  createSnapshot: ({ deps, state }) => (): Record<string, unknown> =>
+    deps.snapshots.getScopeSnapshot(state),
+  createOperations: ({ deps, ctx, path, state, getNode, createTreeNode }) =>
+    createScopeMutations({
+      deps,
+      ctx,
+      path,
+      state,
+      createTreeNode,
+      getNode,
+    }),
+  createCommit: ({ deps, ctx, path, state, createTreeNode, resolvePatchValue, snapshot, getNode }) =>
+    createScopeCommit({
+      deps,
+      ctx,
+      path,
+      state,
+      createTreeNode,
+      resolvePatchValue,
+      snapshot,
+      getNode,
+    }),
+  createInternal: ({ state, target, operations }) => {
+    const scope = target as Record<PropertyKey, unknown>;
+    state.children.forEach((child, key) => {
+      scope[key] = child;
+    });
+
+    const internal: TreeInternal = {
+      kind: 'scope',
+      getChild: (key: PropertyKey) => state.children.get(key),
+      applySet: operations.applySet,
+      getState: () => state,
     };
-  };
 
-  const { applySet } = createScopeMutations({
-    deps,
-    ctx,
-    path,
-    state,
-    createTreeNode,
-    getNode: () => scope as unknown as TreeNode,
-  });
-
-  const commit = createScopeCommit({
-    deps,
-    ctx,
-    path,
-    state,
-    createTreeNode,
-    resolvePatchValue,
-    snapshot,
-    getNode: () => scope as unknown as TreeNode,
-  });
-
-  for (const [key, child] of state.children.entries()) scope[key] = child;
-
-  const internal: TreeInternal = {
-    kind: 'scope',
-    getChild: (key: PropertyKey) => state.children.get(key),
-    applySet,
-    getState: () => state,
-  };
-
-  Object.defineProperties(scope, {
+    return internal;
+  },
+  defineProperties: ({ commit }) => ({
     commit: { value: commit },
-    get: { value: get },
-    snapshot: { value: snapshot },
-    subscribe: { value: subscribe },
-    subscribeUpdate: { value: subscribeUpdate },
-    [deps.INTERNAL]: {
-      value: internal,
-    },
-  });
+  }),
+  finalize: ({ deps, path, node }) => {
+    deps.registry.setPathNode(path, node);
+  },
+});
 
-  deps.registerInternal(scope as unknown as object, internal);
-
-  deps.setPathNode(ctx, path, scope as unknown as TreeNode);
-  return scope as unknown as TreeNode;
+export function createScopeNode(options: CreateScopeNodeOptions): TreeNode {
+  return createNodeFromKindPlugin(options, scopePlugin);
 }

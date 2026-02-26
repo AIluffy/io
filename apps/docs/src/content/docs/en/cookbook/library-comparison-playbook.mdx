@@ -1,0 +1,53 @@
+---
+title: Comparison Playbook (Go-to-Market)
+description: Decision and messaging template for IO vs Redux/Zustand/Jotai.
+sidebar:
+  order: 7
+  hidden: true
+pagefind: false
+---
+
+This page is for external positioning and internal architecture reviews. The goal is not “which is best”, but “which fits current constraints”.
+
+## One-Page Conclusion
+
+- If you need deep state + replay/undo + cross-framework consistency, IO is usually the better fit.
+- If you need strict action/reducer governance, Redux still fits.
+- If you are React-only and optimizing for minimal setup, Zustand/Jotai may start faster.
+
+## Decision Matrix (GTM)
+
+| Dimension | IO | Redux | Zustand | Jotai |
+| --- | --- | --- | --- | --- |
+| Deep update ergonomics | path-level writes | reducer/action | set + patterns | atom composition |
+| Update traceability | first-class patch/update | action logs | middleware-dependent | tool-dependent |
+| Undo/replay readiness | native-friendly | needs extra layer | custom | custom |
+| Cross-framework reuse | React/Vue/Svelte/Solid/Lynx | mostly React ecosystem | mostly React | mostly React |
+| Migration cost | medium | high | low | medium |
+
+## Messaging Template
+
+### 30-second pitch
+
+“IO combines deep-state ergonomics, fine-grained subscriptions, and structured update logs in one model, so teams do not have to trade off between speed and observability.”
+
+### 2-minute pitch
+
+1. Clarify whether the pain is deep-state maintainability or missing replay/audit capability.
+2. IO gives path-level Unit granularity without forcing large reducer/atom decomposition.
+3. patch/update artifacts plug naturally into timeline debugging, undo/replay, and incident forensics.
+4. One model can be reused across frameworks, reducing migration friction.
+
+## Risks and Boundaries
+
+- Teams must align on “paths as state units”.
+- Large migration should be guarded by codemod + lint.
+- Release governance (regression matrix + severity flow) should be in place.
+
+## Related Docs
+
+- [State Library Comparison](/en/migration/why-io/)
+- [Migrate from Redux](/en/migration/from-redux/)
+- [Migrate from Zustand](/en/migration/from-zustand/)
+- [Migrate from Jotai](/en/migration/from-jotai/)
+- [10-Minute Decision Sheet](/en/cookbook/production-case-template/)

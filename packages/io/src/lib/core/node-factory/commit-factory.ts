@@ -1,0 +1,109 @@
+import type { IoUpdate } from '../../utils/types/types.js';
+import type { TreeCommand } from '../commands/command.js';
+import type { CommitCommandDeps } from '../commands/commit-command.js';
+import type { ExecuteOptions } from '../commands/executor.js';
+import type { CommitFactoryTreeDeps } from '../types.js';
+import type { NodePath } from '../tree/path-trie.js';
+import type { TreeContext, TreeNode } from '../tree/io-tree-types.js';
+
+import { CommitCommand } from '../commands/commit-command.js';
+import { createDraft, finishDraft } from '../../utils/immutable/cow.js';
+import { createUpdate } from '../../utils/patches/updates.js';
+import { createSharedCommitDeps } from './shared-commit-deps.js';
+import type { SharedCommitDeps } from './shared-commit-deps.js';
+
+type CommitExecutor<TState> = {
+  runCommand: (
+    command: TreeCommand<TState>,
+    options?: ExecuteOptions,
+  ) => IoUpdate | undefined;
+};
+
+type CommitExecutorFactory<TState> = (
+  deps: {
+    createUpdate: typeof createUpdate;
+    emitArrayValue: CommitFactoryTreeDeps['subscriptions']['emitArrayValue'];
+    emitArrayUpdate: CommitFactoryTreeDeps['subscriptions']['emitArrayUpdate'];
+    emitScopeValue: CommitFactoryTreeDeps['subscriptions']['emitScopeValue'];
+    emitScopeUpdate: CommitFactoryTreeDeps['subscriptions']['emitScopeUpdate'];
+    emitError: CommitFactoryTreeDeps['emitError'];
+  },
+  state: TState,
+  getPath: () => NodePath,
+  getNode: () => TreeNode,
+) => CommitExecutor<TState>;
+
+type CreateCommitFactoryOptions<TState, TData> = {
+  deps: CommitFactoryTreeDeps;
+  ctx: TreeContext;
+  path: NodePath;
+  state: TState;
+  createTreeNode: (
+    ctx: TreeContext,
+    path: NodePath,
+    initial: unknown,
+  ) => TreeNode;
+  resolvePatchValue: (value: unknown) => unknown;
+  snapshot: () => TData;
+  getNode: () => TreeNode;
+  executorFactory: CommitExecutorFactory<TState>;
+  applyDiff: (
+    state: TState,
+    before: TData,
+    next: TData,
+    deps: SharedCommitDeps,
+  ) => ReturnType<CommitCommandDeps<TData>['applyDiff']>;
+  validateNext?: CommitCommandDeps<TData>['validateNext'];
+};
+
+export function createCommitFactory<TState, TData>(
+  options: CreateCommitFactoryOptions<TState, TData>,
+): (fn: (draft: TData) => void) => void {
+  const {
+    deps,
+    ctx,
+    path,
+    state,
+    createTreeNode,
+    resolvePatchValue,
+    snapshot,
+    getNode,
+    executorFactory,
+    applyDiff,
+    validateNext,
+  } = options;
+
+  const executor = executorFactory(
+    {
+      createUpdate,
+      emitArrayValue: deps.subscriptions.emitArrayValue,
+      emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+      emitScopeValue: deps.subscriptions.emitScopeValue,
+      emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+      emitError: deps.emitError,
+    },
+    state,
+    () => ((state as { path?: NodePath }).path ?? path),
+    getNode,
+  );
+  const commitDeps = createSharedCommitDeps(
+    deps,
+    ctx,
+    createTreeNode,
+    resolvePatchValue,
+  );
+
+  return (fn: (draft: TData) => void): void => {
+    executor.runCommand(
+      new CommitCommand<TState, TData>(fn, {
+        snapshot,
+        createDraft,
+        finishDraft,
+        validateNext,
+        applyDiff: (currentState, before, next) =>
+          applyDiff(currentState as TState, before, next, commitDeps),
+      }),
+      { structural: false },
+    );
+  };
+}

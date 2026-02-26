@@ -1,0 +1,82 @@
+---
+title: 派生值
+description: 用 derived 构建可组合、可追踪、只读的计算结果。
+sidebar:
+  order: 1
+---
+
+`derived` 用于把一个或多个状态映射为“只读结果”。依赖变更时，派生值会自动更新。
+
+## 是什么
+
+- 本质：基于依赖计算的新 Unit。
+- 约束：只读，不能 `set`。
+- 价值：把计算逻辑从组件中抽离，复用且可测试。
+
+## 何时使用
+
+- 需要复用同一段计算逻辑（例如金额汇总、状态标签）。
+- 需要把多个路径 Unit 组合成一个视图模型。
+- 需要“依赖变化即触发”的稳定订阅点。
+
+## 核心 API
+
+### 1) 显式依赖（推荐）
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const count = io(0);
+const doubled = derived([count], (value) => value * 2);
+```
+
+### 2) 树选择器
+
+```ts
+const store = io({ user: { name: 'Ada' }, count: 0 });
+const summary = derived(store, (s) => `${s.user.name} · ${s.count}`);
+```
+
+### 3) 自动追踪
+
+```ts
+const store = io({ count: 0, rate: 2 });
+const total = derived(() => store.count.get() * store.rate.get());
+```
+
+## 最小示例
+
+```ts
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+
+const store = io({ price: 100, quantity: 2 });
+const amount = derived([store.price, store.quantity], (p, q) => p * q);
+
+console.log(amount.get()); // 200
+
+const stop = amount.subscribe((v) => {
+  console.log('amount', v);
+});
+
+store.quantity.set(3); // amount -> 300
+stop();
+```
+
+## 常见误区
+
+- 把 `derived` 当可写状态：它是只读结果，不负责写入。
+- selector 每次返回新对象却不做比较：会增加无效更新。
+- 依赖链过长不拆分：调试和定位成本会上升。
+
+## 实践建议
+
+- 默认优先“显式依赖”，依赖边界最清晰。
+- 复杂计算按业务分层，拆成多个小派生值再组合。
+- 需要触发副作用时，订阅派生值而不是把副作用塞进计算函数。
+
+## 下一步
+
+- 学习 [订阅](/cookbook/subscriptions/) 的值流与更新流。
+- 配合 [批处理](/cookbook/batching/) 降低连锁通知。

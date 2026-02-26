@@ -1,0 +1,60 @@
+---
+title: Pagination, Prefetch, and Cancellation
+description: Build scalable long-list behavior with stable keys and controlled prefetching.
+sidebar:
+  order: 5
+---
+
+## What It Is
+
+Pagination workloads need stable page keys, selective prefetch, and cancellation of outdated in-flight requests.
+
+## When to Use
+
+- Data is loaded by page/cursor.
+- You want next-page prefetch to smooth UX.
+- You need to avoid stale overwrite during fast switches.
+
+## Core API
+
+- [io-query-key](/en/api-reference/io-query/io-query-key/)
+- [io-query-filter](/en/api-reference/io-query/io-query-filter/)
+- [io-query-client](/en/api-reference/io-query/io-query-client/)
+
+## Minimal Example
+
+```ts
+const current = client.query({
+  key: ['users', { page, pageSize }],
+  queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
+});
+
+if (current.getData()?.hasMore) {
+  const next = page + 1;
+  await client
+    .query({
+      key: ['users', { page: next, pageSize }],
+      queryFn: ({ signal }) =>
+        fetch(`/api/users?page=${next}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
+    })
+    .prefetch();
+}
+
+current.cancel();
+```
+
+## Common Pitfalls
+
+- Missing page/cursor params in key.
+- Prefetching on every scroll event without guard.
+- Appending rows without id-based dedupe.
+
+## Practical Guidance
+
+- Prefetch only when `hasMore` is true.
+- Treat cancellation as control flow, not business failure.
+- Standardize pagination response shape across endpoints.
+
+## Next Steps
+
+- Continue with [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/)

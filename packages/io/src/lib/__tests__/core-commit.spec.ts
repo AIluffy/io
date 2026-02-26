@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { isPlainObject } from '../utils/plain-object.js';
+import { isPlainObject } from '../utils/immutable/plain-object.js';
 import {
   createDirtyIndexState,
   markDirtyIndex,
-} from '../core/dirty-indices.js';
-import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/commit.js';
+} from '../core/mutation/dirty-indices.js';
+import { applyArrayCommitDiff, applyScopeCommitDiff } from '../core/mutation/commit.js';
+import type { ValueEpoch } from '../utils/types/branded.js';
+import { initialEpoch } from '../utils/types/branded.js';
 
 type Path = PropertyKey[];
 
 type FakeScopeState = {
   children: Map<PropertyKey, FakeNode>;
   path: readonly PropertyKey[];
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyKeys: Set<PropertyKey>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -20,7 +22,7 @@ type FakeScopeState = {
 type FakeArrayState = {
   children: FakeNode[];
   path: readonly PropertyKey[];
-  valueEpoch: number;
+  valueEpoch: ValueEpoch;
   dirtyIndices: ReturnType<typeof createDirtyIndexState>;
   dirtyStructure: boolean;
   isCommitting: boolean;
@@ -49,7 +51,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeArrayState = {
         children,
         path,
-        valueEpoch: 0,
+        valueEpoch: initialEpoch(),
         dirtyIndices: createDirtyIndexState(children.length),
         dirtyStructure: false,
         isCommitting: false,
@@ -73,7 +75,7 @@ function createGraph(rootValue: unknown): {
       const state: FakeScopeState = {
         children,
         path,
-        valueEpoch: 0,
+        valueEpoch: initialEpoch(),
         dirtyKeys: new Set(),
         dirtyStructure: false,
         isCommitting: false,
@@ -205,7 +207,7 @@ describe('core/commit', () => {
     const result = applyScopeCommitDiff(
       root.state,
       before,
-      next as unknown as Record<PropertyKey, unknown>,
+      next as Record<PropertyKey, unknown>,
       deps,
     );
 
@@ -215,12 +217,14 @@ describe('core/commit', () => {
     ]);
   });
 
-  it('rebuilds array children when length changes', () => {
+  it('applies minimal splice when array length changes', () => {
     const before = [1, 2];
     const next = [1, 2, 3];
     const graph = createGraph(before);
     const root = graph.root as { state: FakeArrayState };
     const deps = createDeps(graph.pathNodes);
+    const beforeFirst = root.state.children[0];
+    const beforeSecond = root.state.children[1];
 
     const result = applyArrayCommitDiff(root.state, before, next, deps);
 
@@ -229,13 +233,15 @@ describe('core/commit', () => {
       {
         op: 'splice',
         path: [],
-        start: 0,
-        deleteCount: 2,
-        deleted: [1, 2],
-        items: [1, 2, 3],
+        start: 2,
+        deleteCount: 0,
+        deleted: [],
+        items: [3],
       },
     ]);
     expect(root.state.children).toHaveLength(3);
+    expect(root.state.children[0]).toBe(beforeFirst);
+    expect(root.state.children[1]).toBe(beforeSecond);
     expect(root.state.dirtyStructure).toBe(true);
   });
 
@@ -295,6 +301,42 @@ describe('core/commit', () => {
       { op: 'set', path: [0, 'profile', 'age'], prev: 1, next: 2 },
       { op: 'set', path: [0, 'nested', 0, 0], prev: 1, next: 2 },
     ]);
+  });
+
+  it('keeps deep patch paths stable when commit diff reuses a path stack', () => {
+    const before = {
+      left: { child: { value: 1 } },
+      right: { child: { value: 2 } },
+    };
+    const next = {
+      left: { child: { value: 10 } },
+      right: { child: { value: 20 } },
+    };
+    const graph = createGraph(before);
+    const root = graph.root as { state: FakeScopeState };
+    const deps = createDeps(graph.pathNodes);
+
+    const result = applyScopeCommitDiff(root.state, before, next, deps);
+
+    expect(result.changed).toBe(true);
+    expect(result.patches).toEqual([
+      { op: 'set', path: ['left', 'child', 'value'], prev: 1, next: 10 },
+      { op: 'set', path: ['right', 'child', 'value'], prev: 2, next: 20 },
+    ]);
+
+    const leftPatch = result.patches.find(
+      (patch) => patch.op === 'set' && patch.path[0] === 'left',
+    );
+    const rightPatch = result.patches.find(
+      (patch) => patch.op === 'set' && patch.path[0] === 'right',
+    );
+    if (!leftPatch || !rightPatch) {
+      throw new Error('expected both left and right patches');
+    }
+    expect(leftPatch.path).not.toBe(rightPatch.path);
+
+    (leftPatch.path as PropertyKey[]).push('mutated');
+    expect(rightPatch.path).toEqual(['right', 'child', 'value']);
   });
 
   it('handles symbol keys by surfacing invalid array-segment replacement', () => {

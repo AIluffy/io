@@ -1,0 +1,50 @@
+---
+title: SvelteKit Adapter
+description: Combine load prefetch and client-side query reconstruction in SvelteKit.
+sidebar:
+  order: 14
+---
+
+## What It Is
+
+SvelteKit integration follows: `load` returns plain data, client reconstructs query cache, then continues with refreshable query flow.
+
+## When to Use
+
+- You need SSR-first render with query semantics in SvelteKit.
+- You need one cache strategy from load to interactive state.
+
+## Core API
+
+- [SvelteKit framework guide](/en/frameworks/sveltekit/)
+- [create-query-store](/en/api-reference/io-svelte/create-query-store/)
+- [to-query-store](/en/api-reference/io-svelte/to-query-store/)
+
+## Minimal Example
+
+```ts
+// +page.server.ts
+export const load = async ({ fetch }) => {
+  const initialUsers = await fetch('/api/users').then((r) => r.json());
+  return { initialUsers };
+};
+
+// client
+client.setQueryData(['users'], data.initialUsers);
+```
+
+## Common Pitfalls
+
+- Returning runtime instances from load instead of plain data.
+- Seeding cache without a registered queryFn for future refetch.
+- Ignoring cancellation on route transitions.
+
+## Practical Guidance
+
+- Keep load payload and query key model aligned.
+- Register fetchable query after seeding.
+- Centralize list prefetch/cancel behavior for route modules.
+
+## Next Steps
+
+- Return to [Async Query](./) for full-map review.

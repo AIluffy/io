@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyUpdate } from '../utils/updates.js';
-import { deepFreeze } from '../utils/snapshot.js';
+import { applyUpdate, undoUpdate } from '../utils/patches/updates.js';
+import { deepFreeze } from '../utils/immutable/immutable.js';
 import { relocate } from '../extensions/relocate.js';
-import { io } from '../core/io.js';
-import { derived } from '../core/derived.js';
-import { link } from '../utils/link.js';
-import type { IoUpdate } from '../utils/types.js';
+import { io } from '../core/api/io.js';
+import { ioTree } from '../core/api/io-tree.js';
+import { derived } from '../core/api/derived.js';
+import { batch } from '../utils/reactive/batch.js';
+import { link } from '../utils/internal/link.js';
+import type { IoUpdate } from '../utils/types/types.js';
 
 function nextTick(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
@@ -30,6 +32,34 @@ describe('edge cases: relocate', () => {
     expect(view.get()).toEqual([{ n: 1 }]);
     expect(view.set).toBeUndefined();
   });
+});
+
+describe('edge cases: ioTree node factory', () => {
+  it('rejects shared object references under arrays', () => {
+    const shared = { n: 1 };
+    expect(() => ioTree({ items: [shared, shared] })).toThrow(
+      /shared object references are not allowed/,
+    );
+  });
+
+  it('rejects non-plain objects in deep mode', () => {
+    expect(() => ioTree({ at: new Date() })).toThrow(
+      /deep mode only supports plain objects and arrays/,
+    );
+  });
+
+  it('rejects forged link wrappers that do not target io nodes', () => {
+    const fakeLink: Record<PropertyKey, unknown> = {};
+    Object.defineProperty(fakeLink, Symbol.for('@org/io/link'), {
+      value: {},
+      enumerable: false,
+    });
+
+    expect(() => ioTree({ bad: fakeLink })).toThrow(
+      /link target is not an IO node/,
+    );
+  });
+
 });
 
 describe('edge cases: applyUpdate', () => {
@@ -81,6 +111,8 @@ describe('edge cases: applyUpdate', () => {
         id: 'u3',
         baseRevision: 0,
         revision: 1,
+        action: 'counter/manual',
+        meta: { source: 'spec' },
         patches: [{ op: 'set', path: [], prev: 1, next: 2 }],
       },
       { emitUpdate: true },
@@ -89,6 +121,8 @@ describe('edge cases: applyUpdate', () => {
     expect(store.get()).toBe(2);
     expect(updates).toHaveLength(1);
     expect(updates[0].patches[0]).toMatchObject({ op: 'set', path: [] });
+    expect(updates[0].action).toBe('counter/manual');
+    expect(updates[0].meta).toEqual({ source: 'spec' });
   });
 
   it('rejects root set patches for non-unit targets', () => {
@@ -128,6 +162,192 @@ describe('edge cases: applyUpdate', () => {
 
     expect(arr.get()).toEqual([3, 1, 2]);
   });
+
+  it('rejects sort permutations with invalid length during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6b',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 2] }],
+      }),
+    ).toThrow(/invalid sort order length/);
+  });
+
+  it('rejects sort permutations with non-integer indices during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6c',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 1.5, 2] }],
+      }),
+    ).toThrow(/invalid sort order index/);
+  });
+
+  it('rejects sort permutations with out-of-range indices during replay', () => {
+    const arr = io([3, 1, 2]);
+
+    expect(() =>
+      applyUpdate(arr, {
+        id: 'u6d',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: [], order: [0, 1, 3] }],
+      }),
+    ).toThrow(/invalid sort order index/);
+  });
+
+  it('rejects set patches when parent is not a container', () => {
+    const store = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u7',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['a', 'b'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/set target is not a container/);
+  });
+
+  it('rejects splice and sort patches for non-array targets', () => {
+    const store = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u8',
+        baseRevision: 0,
+        revision: 1,
+        patches: [
+          {
+            op: 'splice',
+            path: ['a'],
+            start: 0,
+            deleteCount: 0,
+            deleted: [],
+            items: [2],
+          },
+        ],
+      }),
+    ).toThrow(/splice target is not array/);
+
+    expect(() =>
+      applyUpdate(store, {
+        id: 'u9',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'sort', path: ['a'], order: [0] }],
+      }),
+    ).toThrow(/sort target is not array/);
+  });
+
+  it('inverts splice updates with preserved start index', () => {
+    const inverted = undoUpdate({
+      id: 'u10',
+      baseRevision: 0,
+      revision: 1,
+      action: 'items/replace',
+      patches: [
+        {
+          op: 'splice',
+          path: ['items'],
+          start: 2,
+          deleteCount: 1,
+          deleted: [3],
+          items: [4, 5],
+        },
+      ],
+    });
+
+    expect(inverted.patches).toEqual([
+      {
+        op: 'splice',
+        path: ['items'],
+        start: 2,
+        deleteCount: 2,
+        deleted: [4, 5],
+        items: [3],
+      },
+    ]);
+    expect(inverted.action).toBe('undo');
+    expect(inverted.meta).toMatchObject({
+      sourceUpdateId: 'u10',
+      sourceAction: 'items/replace',
+    });
+  });
+
+  it('rejects invalid scope/array path segments while resolving parent nodes', () => {
+    const scopeStore = io({ a: 1 });
+    const arrayStore = io([1, 2, 3]);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u11',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [0, 'a'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid scope path segment/);
+
+    expect(() =>
+      applyUpdate(arrayStore, {
+        id: 'u12',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [Symbol('k'), 0], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid array path segment/);
+  });
+
+  it('rejects updates when traversal enters non-node or leaf parent paths', () => {
+    const scopeStore = io({ a: 1 });
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u13',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['missing', 'x', 'y'], prev: 0, next: 1 }],
+      }),
+    ).toThrow(/path traversed into non-node/);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u14',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['a', 'x', 'y'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/path traversed into leaf node/);
+  });
+
+  it('rejects invalid scope and array keys on parent containers', () => {
+    const scopeStore = io({ a: 1 });
+    const arrayStore = io([1, 2, 3]);
+
+    expect(() =>
+      applyUpdate(scopeStore, {
+        id: 'u15',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: [0], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid scope key/);
+
+    expect(() =>
+      applyUpdate(arrayStore, {
+        id: 'u16',
+        baseRevision: 0,
+        revision: 1,
+        patches: [{ op: 'set', path: ['x'], prev: 1, next: 2 }],
+      }),
+    ).toThrow(/invalid array index/);
+  });
 });
 
 describe('edge cases: deepFreeze', () => {
@@ -147,7 +367,7 @@ describe('edge cases: deepFreeze', () => {
   });
 
   it('handles repeated freezes on circular graphs', async () => {
-    const obj: any = { n: 1 };
+    const obj: { n: number; self?: unknown } = { n: 1 };
     obj.self = obj;
     deepFreeze(obj);
     await nextTick();
@@ -341,8 +561,111 @@ describe('edge cases: array proxy mutation behavior', () => {
 describe('edge cases: derived deps contract', () => {
   it('rejects deps without subscribe()', () => {
     const dep = { get: () => 1 };
-    expect(() => derived([dep as any], (v) => Number(v) + 1)).toThrow(
+    expect(
+      () =>
+        derived(
+          [
+            dep as unknown as {
+              get: () => number;
+              subscribe: (fn: (...args: unknown[]) => void) => () => void;
+            },
+          ],
+          (v) => Number(v) + 1,
+        ),
+    ).toThrow(
       /must implement subscribe/,
     );
+  });
+});
+
+describe('edge cases: deep nesting / large arrays / cyclic references', () => {
+  it('handles commits deeper than 10 levels', () => {
+    type DeepNode = { value: number; child?: DeepNode };
+    const root: DeepNode = { value: 0 };
+    let current = root;
+    for (let i = 1; i < 14; i += 1) {
+      current.child = { value: i };
+      current = current.child;
+    }
+
+    const store = io(root);
+    store.commit((draft) => {
+      let leaf = draft;
+      while (leaf.child) leaf = leaf.child;
+      leaf.value = 999;
+    });
+
+    let leaf = store.snapshot();
+    while (leaf.child) leaf = leaf.child;
+    expect(leaf.value).toBe(999);
+  });
+
+  it('supports snapshots and sparse updates on arrays larger than 10k', () => {
+    const list = io(Array.from({ length: 12_000 }, (_, i) => i));
+    list[11_999].set(42);
+    const snapshot = list.snapshot();
+    expect(snapshot).toHaveLength(12_000);
+    expect(snapshot[11_999]).toBe(42);
+  });
+
+  it('supports circular references in scope snapshots', () => {
+    const cyclic: { label: string; self?: unknown; nested: { count: number } } =
+      { label: 'root', nested: { count: 0 } };
+    cyclic.self = cyclic;
+
+    const store = io(cyclic);
+    store.nested.count.set(7);
+    const snapshot = store.snapshot() as {
+      label: string;
+      self: unknown;
+      nested: { count: number };
+    };
+
+    expect(snapshot.label).toBe('root');
+    expect(snapshot.nested.count).toBe(7);
+    expect(snapshot.self).toBe(snapshot);
+  });
+});
+
+describe('edge cases: interleaved commits in one batch', () => {
+  it('merges interleaved commit updates per node inside a single batch', () => {
+    const left = io({ count: 0 });
+    const right = io({ count: 0 });
+    const leftUpdates: IoUpdate[] = [];
+    const rightUpdates: IoUpdate[] = [];
+    left.subscribeUpdate((u) => leftUpdates.push(u));
+    right.subscribeUpdate((u) => rightUpdates.push(u));
+
+    batch(() => {
+      left.commit((draft) => {
+        draft.count = 1;
+      });
+      right.commit((draft) => {
+        draft.count = 10;
+      });
+      left.commit((draft) => {
+        draft.count = 2;
+      });
+      right.commit((draft) => {
+        draft.count = 11;
+      });
+    });
+
+    expect(left.get().count).toBe(2);
+    expect(right.get().count).toBe(11);
+    expect(leftUpdates).toHaveLength(1);
+    expect(rightUpdates).toHaveLength(1);
+    expect(leftUpdates[0].patches[leftUpdates[0].patches.length - 1]).toMatchObject({
+      op: 'set',
+      path: ['count'],
+      next: 2,
+    });
+    expect(
+      rightUpdates[0].patches[rightUpdates[0].patches.length - 1],
+    ).toMatchObject({
+      op: 'set',
+      path: ['count'],
+      next: 11,
+    });
   });
 });

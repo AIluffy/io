@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { io } from '../core/io.js';
+import { io } from '../core/api/io.js';
 
 describe('io: primitive', () => {
   it('handles string', () => {
@@ -61,10 +61,16 @@ describe('io: array', () => {
 
   it('deep-processes nested arrays and objects', () => {
     const a = io([{ a: [{ b: 1 }] }, [{ c: 2 }]] as unknown[]);
-    expect((a[0] as any).a[0].b.get()).toBe(1);
-    expect((a[1] as any)[0].c.get()).toBe(2);
-    (a[0] as any).a[0].b.set(10);
-    (a[1] as any)[0].c.set(20);
+    const first = a[0] as unknown as {
+      a: [{ b: { get: () => number; set: (next: number) => void } }];
+    };
+    const second = a[1] as unknown as [
+      { c: { get: () => number; set: (next: number) => void } },
+    ];
+    expect(first.a[0].b.get()).toBe(1);
+    expect(second[0].c.get()).toBe(2);
+    first.a[0].b.set(10);
+    second[0].c.set(20);
     expect(a.snapshot()).toMatchSnapshot();
   });
 
@@ -110,34 +116,42 @@ describe('io: object', () => {
   });
 
   it('handles circular references', () => {
-    const input: any = { x: 1 };
+    const input: { x: number; self?: unknown } = { x: 1 };
     input.self = input;
-    const o: any = io(input);
+    const o = io(input) as unknown as {
+      self: unknown;
+      subscribeUpdate: (fn: (u: unknown) => void) => void;
+      snapshot: () => { self: unknown };
+    };
     expect(o.self).toBe(o);
     const updates: unknown[] = [];
     o.subscribeUpdate((u: unknown) => updates.push(u));
     expect(() => o.snapshot()).not.toThrow();
-    const snap: any = o.snapshot();
+    const snap = o.snapshot();
     expect(snap.self).toBe(snap);
     expect(updates).toHaveLength(0);
   });
 
   it('includes non-enumerable properties', () => {
-    const input: any = {};
+    const input: Record<PropertyKey, unknown> = {};
     Object.defineProperty(input, 'hidden', {
       value: { n: 1 },
       enumerable: false,
       configurable: true,
     });
-    const o: any = io(input);
+    const o = io(input) as unknown as {
+      hidden: { n: { get: () => number } };
+    };
     expect(Reflect.ownKeys(o)).toContain('hidden');
     expect(o.hidden.n.get()).toBe(1);
   });
 
   it('includes symbol keys', () => {
     const k = Symbol('k');
-    const input: any = { [k]: { n: 1 } };
-    const o: any = io(input);
+    const input: Record<PropertyKey, unknown> = { [k]: { n: 1 } };
+    const o = io(input) as unknown as {
+      [key: symbol]: { n: { get: () => number } };
+    };
     expect(Reflect.ownKeys(o)).toContain(k);
     expect(o[k].n.get()).toBe(1);
   });
@@ -145,16 +159,22 @@ describe('io: object', () => {
 
 describe('io: shallow', () => {
   it('shallow-processes objects', () => {
-    const o: any = io({ a: { b: 1 }, n: 1 }, { shallow: true });
+    const o = io({ a: { b: 1 }, n: 1 }, { shallow: true }) as unknown as {
+      a: { get: () => { b: number }; set: (next: { b: number } | ((prev: { b: number }) => { b: number })) => void };
+      snapshot: () => { a: { b: number }; n: number };
+    };
     expect(typeof o.a.get).toBe('function');
     expect(o.a.get()).toEqual({ b: 1 });
     expect(o.snapshot()).toEqual({ a: { b: 1 }, n: 1 });
-    o.a.set((prev: any) => ({ ...prev, b: 2 }));
+    o.a.set((prev: { b: number }) => ({ ...prev, b: 2 }));
     expect(o.snapshot()).toEqual({ a: { b: 2 }, n: 1 });
   });
 
   it('shallow-processes arrays', () => {
-    const a: any = io([{ n: 1 }, { n: 2 }], { shallow: true });
+    const a = io([{ n: 1 }, { n: 2 }], { shallow: true }) as unknown as Array<{
+      get: () => { n: number };
+      set: (next: { n: number }) => void;
+    }> & { snapshot: () => Array<{ n: number }> };
     expect(typeof a[0].get).toBe('function');
     expect(a[0].get()).toEqual({ n: 1 });
     expect(a[1].get()).toEqual({ n: 2 });
@@ -169,18 +189,21 @@ describe('io: shallow', () => {
 
   it('shallow mode accepts non-plain objects', () => {
     const d = new Date(0);
-    const u: any = io(d, { shallow: true });
+    const u = io(d, { shallow: true }) as unknown as { snapshot: () => Date };
     expect(u.snapshot()).toBeInstanceOf(Date);
   });
 
   it('shallow mode includes non-enumerable properties', () => {
-    const input: any = {};
+    const input: Record<PropertyKey, unknown> = {};
     Object.defineProperty(input, 'hidden', {
       value: { n: 1 },
       enumerable: false,
       configurable: true,
     });
-    const o: any = io(input, { shallow: true });
+    const o = io(input, { shallow: true }) as unknown as {
+      hidden: { get: () => { n: number } };
+      snapshot: () => Record<PropertyKey, unknown>;
+    };
     expect(Reflect.ownKeys(o)).toContain('hidden');
     expect(o.hidden.get()).toEqual({ n: 1 });
     expect(Reflect.ownKeys(o.snapshot())).toContain('hidden');
@@ -188,24 +211,32 @@ describe('io: shallow', () => {
 
   it('shallow mode includes symbol keys', () => {
     const k = Symbol('k');
-    const input: any = { [k]: { n: 1 } };
-    const o: any = io(input, { shallow: true });
+    const input: Record<PropertyKey, unknown> = { [k]: { n: 1 } };
+    const o = io(input, { shallow: true }) as unknown as {
+      [key: symbol]: { get: () => { n: number } };
+      snapshot: () => Record<PropertyKey, unknown>;
+    };
     expect(Reflect.ownKeys(o)).toContain(k);
     expect(o[k].get()).toEqual({ n: 1 });
     expect(Reflect.ownKeys(o.snapshot())).toContain(k);
   });
 
   it('shallow commit rejects unknown keys', () => {
-    const o: any = io({ a: 1 }, { shallow: true });
+    const o = io({ a: 1 }, { shallow: true }) as unknown as {
+      commit: (fn: (draft: Record<string, unknown>) => void) => void;
+    };
     expect(() => {
-      o.commit((draft: any) => {
+      o.commit((draft: Record<string, unknown>) => {
         draft.b = 2;
       });
     }).toThrow(/unknown key/);
   });
 
   it('shallow array commit applies draft changes', () => {
-    const a: any = io([1, 2, 3], { shallow: true });
+    const a = io([1, 2, 3], { shallow: true }) as unknown as {
+      commit: (fn: (draft: number[]) => void) => void;
+      snapshot: () => number[];
+    };
     a.commit((draft: number[]) => {
       draft[1] = 10;
       draft.push(4);

@@ -1,0 +1,58 @@
+---
+title: Vanilla：Query Client 与生命周期
+description: 用无框架方式掌握 query client、预取、刷新、取消与失效。
+sidebar:
+  order: 2
+---
+
+## 是什么
+
+在无框架场景中，`createQueryClient` 是 Query 的核心入口。它负责缓存、状态机、重试与请求协调。
+
+## 何时使用
+
+- 你要在 Node、工具脚本或自定义 runtime 中使用 Query。
+- 你要先理解 Query 公共语义，再迁移到具体框架。
+
+## 核心 API
+
+- [createQueryClient](/api-reference/io-query/create-query-client/)
+- [createQuery](/api-reference/io-query/create-query/)
+- [io-query-client](/api-reference/io-query/io-query-client/)
+
+## 最小示例
+
+```ts
+import { createQueryClient } from '@iostore/store/query';
+
+const client = createQueryClient({
+  defaultStaleTime: 5_000,
+  defaultRetry: 1,
+});
+
+const userQuery = client.query({
+  key: ['user', 1],
+  queryFn: ({ signal }) => fetch('/api/users/1', { signal }).then((r) => r.json()),
+});
+
+await userQuery.prefetch();
+await userQuery.refetch();
+userQuery.cancel();
+client.invalidateQueries({ key: ['user', 1] });
+```
+
+## 常见误区
+
+- 不透传 `signal`，导致取消只改状态不取消网络请求。
+- 用不稳定对象做 key，造成缓存槽位漂移。
+- 全局复用一个 client 到 SSR 多请求，导致数据串写。
+
+## 实践建议
+
+- 先定义稳定 key 规范，再接入业务请求。
+- 把 `invalidateQueries` 当作写后一致性的默认动作。
+- 在进入框架前先验证“预取/取消/失效”三条链路。
+
+## 下一步
+
+- 继续：[Query Key、缓存与刷新](./query-keys-cache-and-refetch/)

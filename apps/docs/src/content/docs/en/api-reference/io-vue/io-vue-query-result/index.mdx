@@ -1,0 +1,23 @@
+---
+title: "IoVueQueryResult"
+description: "Type API reference."
+---
+
+## Signature
+
+```ts
+IoVueQueryResult<TData, TError = Error>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoQueryState<TData, TError>>` |
+| data | `ShallowRef<TData \| undefined>` |
+| fetch | `() => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

@@ -1,0 +1,39 @@
+---
+title: "DEFAULT_GC_TIME"
+description: "Value export reference."
+---
+
+
+## When to Use
+
+Use this exported value as a shared constant or runtime capability.
+
+## Signature
+
+```ts
+any
+```
+
+## Minimal Example
+
+```ts
+import { DEFAULT_GC_TIME } from '@iostore/store/query';
+
+console.log(DEFAULT_GC_TIME);
+```
+
+## Common Pitfalls
+
+- Treat exported values as read-only unless docs explicitly say otherwise.
+- Avoid mutating shared references across modules.
+
+## Related APIs
+
+- [DEFAULT_RETRY_ATTEMPTS](../default-retry-attempts/)
+- [DEFAULT_STALE_TIME](../default-stale-time/)
+- [isServerEnv](../is-server-env/)
+- [applyUpdate](../apply-update/)
+
+## Source
+
+- `packages/io/src/lib/query/utils.ts`

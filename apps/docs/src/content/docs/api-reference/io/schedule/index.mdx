@@ -1,0 +1,50 @@
+---
+title: "schedule"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+<T>(kind?: IoSchedule) => IoBehavior<T>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| kind | `IoSchedule` |
+
+## 返回
+
+`IoBehavior<T>`
+
+## 最小示例
+
+```ts
+import { schedule } from '@iostore/store/behavior';
+
+const result = schedule(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
+
+## 源码
+
+- `packages/io/src/lib/extensions/cookbook/schedule.ts`

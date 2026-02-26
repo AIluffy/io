@@ -1,4 +1,4 @@
-import type { IoDerived, IoUnit } from '../utils/types.js';
+import type { IoDerived, IoUnit } from '../utils/types/types.js';
 import type { IoBehavior, IoView } from './types.js';
 
 type WithBehaviorsNode<T> = object & {
@@ -32,29 +32,26 @@ function adaptIo<T>(node: IoLike<T>): IoView<T> {
   const hasGet = typeof (node as { get?: unknown }).get === 'function';
   const hasSnapshot =
     typeof (node as { snapshot?: unknown }).snapshot === 'function';
+  const subscribeImpl = (node as { subscribe: (fn: (v: T) => void) => () => void })
+    .subscribe;
+  const setImpl = isWritable(node)
+    ? (
+        node as { set: (value: T | ((prev: T) => T)) => void }
+      ).set
+    : undefined;
   const get = () => {
     if (hasGet) return (node as { get: () => T }).get();
     if (hasSnapshot) return (node as { snapshot: () => T }).snapshot();
     throw new Error('withBehaviors: node is not readable');
   };
-  const subscribe = (fn: (v: T) => void) => {
-    if (typeof (node as { subscribe?: unknown }).subscribe !== 'function')
-      throw new Error('withBehaviors: node is not subscribable');
-    return (node as { subscribe: (f: (v: T) => void) => () => void }).subscribe(
-      fn,
-    );
-  };
+  const subscribe = (fn: (v: T) => void) => subscribeImpl(fn);
   const set = (next: T | ((prev: T) => T)) => {
-    if (!isWritable(node)) throw new Error('withBehaviors: node is read-only');
-    const setter = (
-      node as { set?: (value: T | ((prev: T) => T)) => void }
-    ).set;
-    if (!setter) throw new Error('withBehaviors: node is read-only');
-    setter(next);
+    if (!setImpl) throw new Error('withBehaviors: node is read-only');
+    setImpl(next);
   };
   return {
     get,
-    set: isWritable(node) ? set : undefined,
+    set: setImpl ? set : undefined,
     subscribe,
     snapshot: hasSnapshot
       ? () => (node as { snapshot: () => T }).snapshot()
@@ -68,53 +65,105 @@ function createViewProxy<T, N extends object>(
 ): N & IoView<T> {
   const overrides = new Map<string | symbol, unknown>([
     ['get', view.get],
-    ['set', view.set],
     ['subscribe', view.subscribe],
-    ['snapshot', view.snapshot],
-    ['extensions', view.extensions],
-    ['destroy', view.destroy],
   ]);
+  if (view.set !== undefined) overrides.set('set', view.set);
+  if (view.snapshot !== undefined) overrides.set('snapshot', view.snapshot);
+  if (view.extensions !== undefined) overrides.set('extensions', view.extensions);
+  if (view.destroy !== undefined) overrides.set('destroy', view.destroy);
 
   return new Proxy(view as IoView<T> & object, {
-    get(_target, prop, receiver) {
+    get(target, prop, receiver) {
       if (overrides.has(prop)) return overrides.get(prop);
       if (Reflect.has(node as object, prop))
         return Reflect.get(node as object, prop, receiver);
-      return Reflect.get(view as object, prop, receiver);
+      return Reflect.get(target, prop, receiver);
     },
-    has(_target, prop) {
+    has(target, prop) {
       if (overrides.has(prop)) return overrides.get(prop) !== undefined;
-      return Reflect.has(node as object, prop) || Reflect.has(view as object, prop);
+      return Reflect.has(node as object, prop) || Reflect.has(target, prop);
     },
-    ownKeys(_target) {
+    ownKeys(target) {
       const keys = new Set<string | symbol>([
-        ...Reflect.ownKeys(view as object),
+        ...Reflect.ownKeys(target),
         ...Reflect.ownKeys(node as object),
       ]);
-      for (const [key, value] of overrides.entries()) {
-        if (value !== undefined) keys.add(key);
-      }
+      for (const key of overrides.keys()) keys.add(key);
       return Array.from(keys);
     },
-    getOwnPropertyDescriptor(_target, prop) {
-      const targetDesc = Object.getOwnPropertyDescriptor(view as object, prop);
-      if (targetDesc && targetDesc.configurable === false) return targetDesc;
-
+    getOwnPropertyDescriptor(target, prop) {
       if (overrides.has(prop)) {
-        const value = overrides.get(prop);
-        if (value === undefined) return undefined;
         return {
           configurable: true,
           enumerable: false,
           writable: false,
-          value,
+          value: overrides.get(prop),
         };
       }
-      const nodeDesc = Object.getOwnPropertyDescriptor(node as object, prop);
-      if (nodeDesc) return nodeDesc;
-      return targetDesc;
+      return (
+        Object.getOwnPropertyDescriptor(node as object, prop) ??
+        Object.getOwnPropertyDescriptor(target, prop)
+      );
     },
   }) as N & IoView<T>;
+}
+
+function normalizeView<T>(baseView: IoView<T>, enhanced: IoView<T>): IoView<T> {
+  const normalized = Object.create(
+    Object.getPrototypeOf(enhanced),
+  ) as IoView<T>;
+  Object.defineProperties(
+    normalized,
+    Object.getOwnPropertyDescriptors(enhanced),
+  );
+
+  const getImpl =
+    typeof enhanced.get === 'function' ? enhanced.get.bind(enhanced) : baseView.get;
+  Object.defineProperty(normalized, 'get', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: getImpl,
+  });
+
+  const subscribeImpl =
+    typeof enhanced.subscribe === 'function'
+      ? enhanced.subscribe.bind(enhanced)
+      : baseView.subscribe.bind(baseView);
+  Object.defineProperty(normalized, 'subscribe', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: subscribeImpl,
+  });
+
+  const setImpl =
+    typeof enhanced.set === 'function'
+      ? enhanced.set.bind(enhanced)
+      : typeof baseView.set === 'function'
+        ? baseView.set.bind(baseView)
+        : undefined;
+  if (setImpl) {
+    Object.defineProperty(normalized, 'set', {
+      configurable: true,
+      enumerable: false,
+      writable: false,
+      value: setImpl,
+    });
+  }
+
+  const snapshotImpl =
+    typeof enhanced.snapshot === 'function'
+      ? enhanced.snapshot.bind(enhanced)
+      : () => getImpl();
+  Object.defineProperty(normalized, 'snapshot', {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: snapshotImpl,
+  });
+
+  return normalized;
 }
 
 export function withBehaviors<T>(
@@ -131,5 +180,6 @@ export function withBehaviors(
 ): object {
   const baseView = isView(input) ? input : adaptIo(input as IoLike<unknown>);
   const enhanced = behaviors.reduce((acc, behavior) => behavior(acc), baseView);
-  return createViewProxy(enhanced, input);
+  const normalized = normalizeView(baseView, enhanced);
+  return createViewProxy(normalized, input);
 }

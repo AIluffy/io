@@ -1,0 +1,138 @@
+---
+title: Solid
+description: Use useIO with Solid's fine-grained reactive accessor model.
+sidebar:
+  order: 6
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+`@iostore/solid` exposes `useIO` as an `Accessor`, fitting Solid's reactive read pattern naturally.
+
+## When to Use
+
+- Path-level subscriptions in Solid components.
+- Derived-state consumption with minimal recomputation.
+- Stable performance under frequent updates.
+
+## Install
+
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
+```bash
+npm i @iostore/store @iostore/solid
+```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/solid
+```
+
+  </TabItem>
+</Tabs>
+
+## Minimal Integration
+
+```tsx
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/solid';
+
+const count = io(0);
+
+export function Counter() {
+  const value = useIO(count);
+  return <button onClick={() => count.set((v) => v + 1)}>{value()}</button>;
+}
+```
+
+## Common Patterns
+
+### 1) Derived Values
+
+```tsx
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { useIO } from '@iostore/solid';
+
+const store = io({ count: 0 });
+const doubled = derived([store.count], (value) => value * 2);
+
+export function Summary() {
+  const value = useIO(doubled);
+  return <span>{value()}</span>;
+}
+```
+
+### 2) Scheduling
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## API Quick Reference
+
+| Scenario | API | Notes |
+| --- | --- | --- |
+| Read unit/derived | `useIO(unitOrDerived, options?)` | Returns an Accessor, call as `value()`. |
+| Notification scheduling | `options.schedule` | `sync`, `microtask`, `animationFrame`. |
+| Path writes | `unit.set(next | updater)` | Safe update path from UI events. |
+| Burst writes | `batch(fn)` | Lowers recomputation in update bursts. |
+| Derived composition | `derived(deps, compute)` | Moves compute logic out of components. |
+
+## Wrong vs Recommended
+
+~~~tsx
+// Wrong: rendering accessor directly
+const value = useIO(store.count);
+// <span>{value}</span>
+
+// Recommended: call the accessor
+const value2 = useIO(store.count);
+// <span>{value2()}</span>
+~~~
+
+~~~tsx
+// Wrong: heavy derived logic inline in component
+// const heavy = () => expensive(store.list.get());
+
+// Recommended: move to derived
+const summary = derived([store.count], (c) => c * 2);
+~~~
+
+## Common Issues
+
+- Forgetting to call accessor functions (`value()`).
+- Over-broad subscriptions causing avoidable recomputation.
+- High-frequency writes without notification control.
+
+## Practical Guidance
+
+- Prefer leaf/path subscriptions.
+- Keep computed logic in `derived`, not inline component logic.
+- Pair with [Batching](/en/cookbook/batching/) for smoother update bursts.
+
+## Next Steps
+
+- Review [TypeScript](/en/cookbook/typescript/) usage patterns.
+- Combine with [Persist](/en/cookbook/persist/) for local persistence.

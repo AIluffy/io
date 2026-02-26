@@ -19,6 +19,9 @@
       "path": "./packages/io-react"
     },
     {
+      "path": "./packages/io-lynx"
+    },
+    {
       "path": "./packages/io-vue"
     },
     {

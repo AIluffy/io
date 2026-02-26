@@ -1,0 +1,111 @@
+---
+title: Debounce
+description: 在连续变更结束后再通知，避免中间态频繁触发。
+sidebar:
+  order: 6
+---
+
+Debounce 会在“静默窗口”结束后才下发通知，适合只关心最终结果的场景。
+
+## 是什么
+
+- 本质：把一串连续变化合并为一次最终通知。
+- 价值：减少请求、减少日志噪音、降低渲染抖动。
+- 语义：中间值可写入，但通常不立即通知。
+
+## 何时使用
+
+- 搜索输入、筛选条件、表单自动保存。
+- 只关心“用户停下来后的最终值”。
+- 副作用成本高，不希望每次输入都触发。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(200)]);
+
+view.subscribe((value) => {
+  console.log('debounced:', value);
+});
+```
+
+## Live 示例
+
+你可以连续输入文本，比较即时值与防抖后的最终值。
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { debounce, withBehaviors } from '@iostore/store/behavior';
+
+const keyword = io('');
+const view = withBehaviors(keyword, [debounce(400)]);
+
+function DebounceLiveDemo() {
+  const instant = useIO(view);
+  const [debouncedValue, setDebouncedValue] = useState('');
+  const [notifyCount, setNotifyCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifyCount((n) => n + 1);
+      setDebouncedValue(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <section className="io-live">
+      <input
+        className="io-live__input"
+        value={instant}
+        onChange={(event) => view.set(event.currentTarget.value)}
+        placeholder="快速输入关键词..."
+      />
+      <div>即时值：{instant || '（空）'}</div>
+      <div>防抖后值：{debouncedValue || '（空）'}</div>
+      <div>防抖通知次数：{notifyCount}</div>
+    </section>
+  );
+}
+
+export default DebounceLiveDemo;
+```
+
+观察点：输入过程中的中间值不会立即下发，只有停顿后才会更新防抖结果。
+
+## 关键选项
+
+```ts
+debounce(200, {
+  leading: false,
+  trailing: true,
+});
+```
+
+- `leading`：窗口开始时是否触发一次（默认 `false`）。
+- `trailing`：窗口结束时是否触发最后一次值（默认 `true`）。
+
+## 常见误区
+
+- 需要稳定频率时使用 Debounce：这类场景应选 Throttle。
+- `trailing: false` 导致最终值不下发。
+- 窗口过长导致界面反馈迟滞。
+
+## 实践建议
+
+- 搜索类场景可从 200-400ms 起步。
+- 若需“先反馈一次再收敛结果”，可开启 `leading`。
+- 与 [Effect](/cookbook/effect/) 配合时，优先 Debounce 再触发请求。
+
+## 下一步
+
+- 对“固定频率输出”场景使用 [Throttle](/cookbook/throttle/)。
+- 结合 [Effect](/cookbook/effect/) 执行请求或日志副作用。

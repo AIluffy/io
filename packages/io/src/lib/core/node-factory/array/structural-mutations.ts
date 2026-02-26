@@ -1,7 +1,23 @@
-import type { IoPatch } from '../../../utils/types.js';
-
-import type { CreateArrayMutationsOptions } from './mutate-types.js';
-import { clearDirtyIndices, resetDirtyIndices } from '../../dirty-indices.js';
+import {
+  type ArrayChildrenContext,
+  type ArrayLifecycleContext,
+  type ArrayPatchContext,
+  type ArrayReadContext,
+  type ArrayStructureContext,
+  PopCommand,
+  PushCommand,
+  SetCommand,
+  SortCommand,
+  SpliceCommand,
+} from '../../commands/array-commands.js';
+import { createArrayExecutor } from '../../commands/executor.js';
+import { createSnapshotCache } from '../../snapshot/snapshot-cache.js';
+import { cloneValue } from '../../../utils/immutable/immutable.js';
+import { createUpdate } from '../../../utils/patches/updates.js';
+import { appendPath } from '../../tree/path-utils.js';
+import type { NodePath } from '../../tree/path-trie.js';
+import type { TreeNode } from '../../tree/io-tree-types.js';
+import type { CreateArrayMutationsOptions } from './array-ops.js';
 
 function validateSortPermutation(order: number[], length: number): void {
   if (order.length !== length)
@@ -37,7 +53,6 @@ export function createArrayStructuralMutations(
   const {
     deps,
     ctx,
-    path,
     state,
     createTreeNode,
     resolvePatchValue,
@@ -50,148 +65,138 @@ export function createArrayStructuralMutations(
     start: number,
     deleteCount: number,
     items: unknown[],
-  ) => {
+  ): { normalizedStart: number; dc: number; removedValues: unknown[] } => {
+    const length = state.children.length;
     const normalizedStart =
-      start < 0 ? Math.max(0, state.children.length + start) : start;
+      start < 0 ? Math.max(0, length + start) : Math.min(start, length);
     const dc = Math.max(
       0,
-      Math.min(deleteCount, state.children.length - normalizedStart),
+      Math.min(deleteCount, length - normalizedStart),
     );
 
     const removed = state.children.splice(normalizedStart, dc);
-    const removedValues = removed.map((c) =>
-      deps.getNodeValue(c, new WeakMap()),
-    );
+    const readCache = createSnapshotCache();
+    const removedValues = new Array<unknown>(removed.length);
+    for (let i = 0; i < removed.length; i += 1) {
+      removedValues[i] = deps.snapshots.getNodeValue(removed[i], readCache);
+    }
     for (let i = 0; i < removed.length; i += 1) {
       const child = removed[i];
-      deps.detachChildFromArray(state, child);
-      deps.unregisterSubtree(ctx, [...path, normalizedStart + i], child);
+      deps.lifecycle.detachChildFromArray(state, child);
+      deps.registry.unregisterSubtree(
+        appendPath(state.path, normalizedStart + i),
+        child,
+      );
     }
 
     const created = items.map((v, i) =>
-      createTreeNode(ctx, [...path, normalizedStart + i], v),
+      createTreeNode(ctx, appendPath(state.path, normalizedStart + i), v),
     );
-    for (const child of created) deps.attachChildToArray(state, child);
+    for (const child of created) deps.lifecycle.attachChildToArray(state, child);
     state.children.splice(normalizedStart, 0, ...created);
     rebuildMapping();
 
     return { normalizedStart, dc, removedValues };
   };
 
+  const childrenContext: ArrayChildrenContext = {
+    getPath: () => state.path,
+    createTreeNode: (absPath: NodePath, initial: unknown) =>
+      createTreeNode(ctx, absPath, initial),
+  };
+  const lifecycleContext: ArrayLifecycleContext = {
+    attachChildToArray: deps.lifecycle.attachChildToArray,
+    detachChildFromArray: deps.lifecycle.detachChildFromArray,
+    unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
+      deps.registry.unregisterSubtree(absPath, node),
+  };
+  const readContext: ArrayReadContext = {
+    getNodeValue: deps.snapshots.getNodeValue,
+    snapshot,
+  };
+  const patchContext: ArrayPatchContext = {
+    cloneValue,
+    resolvePatchValue,
+  };
+  const structureContext: ArrayStructureContext = {
+    rebuildMapping,
+    performSplice,
+    validateSortPermutation,
+  };
+  const executor = createArrayExecutor(
+    {
+      createUpdate,
+      emitArrayValue: deps.subscriptions.emitArrayValue,
+      emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+      emitScopeValue: deps.subscriptions.emitScopeValue,
+      emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+      emitError: deps.emitError,
+    },
+    state,
+    () => state.path,
+    getNode,
+  );
+
   const applySplice = (
     start: number,
     deleteCount: number,
     items: unknown[],
     options?: { emitValue?: boolean },
-  ) => {
-    try {
-      state.revision += 1;
-      performSplice(start, deleteCount, items);
-      state.dirtyStructure = true;
-      resetDirtyIndices(state.dirtyIndices, state.children.length);
-      state.valueEpoch += 1;
-      if (options?.emitValue !== false) deps.emitArrayValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'splice');
-      throw error;
-    }
+  ): void => {
+    executor.runCommand(
+      new SpliceCommand(
+        structureContext,
+        patchContext,
+        start,
+        deleteCount,
+        items,
+        { emitPatch: false },
+      ),
+      {
+        emitUpdate: false,
+        emitValue: options?.emitValue,
+        structural: false,
+      },
+    );
   };
 
   const applySortOrder = (
     order: number[],
     options?: { emitValue?: boolean },
-  ) => {
-    try {
-      validateSortPermutation(order, state.children.length);
-      const old = state.children.slice();
-      state.children = order.map((oldIndex) => old[oldIndex]);
-      state.childIndicesDirty = true;
-      rebuildMapping();
-      state.revision += 1;
-      state.dirtyStructure = true;
-      clearDirtyIndices(state.dirtyIndices);
-      state.valueEpoch += 1;
-      if (options?.emitValue !== false) deps.emitArrayValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'sort');
-      throw error;
-    }
+  ): void => {
+    executor.runCommand(
+      new SortCommand(readContext, structureContext, { order }),
+      {
+        emitUpdate: false,
+        emitValue: options?.emitValue,
+        structural: false,
+      },
+    );
   };
 
   const push = (...items: unknown[]): void => {
-    try {
-      if (items.length === 0) return;
-      const baseRevision = state.revision;
-      state.revision += 1;
-      state.dirtyStructure = true;
-      resetDirtyIndices(
-        state.dirtyIndices,
-        state.children.length + items.length,
-      );
-
-      const start = state.children.length;
-      const created = items.map((v, i) =>
-        createTreeNode(ctx, [...path, start + i], v),
-      );
-      for (const child of created) deps.attachChildToArray(state, child);
-      state.children.push(...created);
-      rebuildMapping();
-
-      const patch: IoPatch = {
-        op: 'splice',
-        path: [],
-        start,
-        deleteCount: 0,
-        deleted: [],
-        items: items.map((v) => resolvePatchValue(v)),
-      };
-      deps.emitArrayUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, [patch]),
-      );
-      state.valueEpoch += 1;
-      deps.emitArrayValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'push');
-      throw error;
-    }
+    executor.runCommand(
+      new PushCommand(
+        childrenContext,
+        lifecycleContext,
+        patchContext,
+        structureContext,
+        items,
+      ),
+      { structural: false },
+    );
   };
 
   const pop = (): unknown => {
-    try {
-      if (state.children.length === 0) return undefined;
-      const baseRevision = state.revision;
-      state.revision += 1;
-      state.dirtyStructure = true;
-      resetDirtyIndices(state.dirtyIndices, state.children.length - 1);
-
-      const start = state.children.length - 1;
-      const removed = state.children.pop();
-      if (!removed) return undefined;
-      const removedValue = deps.getNodeValue(removed, new WeakMap());
-      deps.detachChildFromArray(state, removed);
-      deps.unregisterSubtree(ctx, [...path, start], removed);
-      rebuildMapping();
-
-      const patch: IoPatch = {
-        op: 'splice',
-        path: [],
-        start,
-        deleteCount: 1,
-        deleted: [deps.cloneValue(removedValue)],
-        items: [],
-      };
-      deps.emitArrayUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, [patch]),
-      );
-      state.valueEpoch += 1;
-      deps.emitArrayValue(state);
-      return removedValue;
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'pop');
-      throw error;
-    }
+    const command = new PopCommand(
+      childrenContext,
+      lifecycleContext,
+      readContext,
+      patchContext,
+      structureContext,
+    );
+    executor.runCommand(command, { structural: false });
+    return command.result;
   };
 
   const splice = (
@@ -199,108 +204,30 @@ export function createArrayStructuralMutations(
     deleteCount: number,
     ...items: unknown[]
   ): void => {
-    try {
-      const baseRevision = state.revision;
-      state.revision += 1;
-      state.dirtyStructure = true;
-
-      const { normalizedStart, dc, removedValues } = performSplice(
+    executor.runCommand(
+      new SpliceCommand(
+        structureContext,
+        patchContext,
         start,
         deleteCount,
         items,
-      );
-      resetDirtyIndices(state.dirtyIndices, state.children.length);
-      const patch: IoPatch = {
-        op: 'splice',
-        path: [],
-        start: normalizedStart,
-        deleteCount: dc,
-        deleted: removedValues.map((v) => deps.cloneValue(v)),
-        items: items.map((v) => resolvePatchValue(v)),
-      };
-      deps.emitArrayUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, [patch]),
-      );
-      state.valueEpoch += 1;
-      deps.emitArrayValue(state);
-      rebuildMapping();
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'splice');
-      throw error;
-    }
+      ),
+      { structural: false },
+    );
   };
 
   const set = (next: unknown[]): void => {
-    try {
-      const baseRevision = state.revision;
-      const prevValue = snapshot();
-
-      state.revision += 1;
-      state.dirtyStructure = true;
-
-      performSplice(0, state.children.length, next);
-      resetDirtyIndices(state.dirtyIndices, state.children.length);
-      rebuildMapping();
-      state.valueEpoch += 1;
-
-      const patch: IoPatch = {
-        op: 'set',
-        path: [],
-        prev: deps.cloneValue(prevValue),
-        next: deps.cloneValue(next.map((v) => resolvePatchValue(v))),
-      };
-      deps.emitArrayUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, [patch]),
-      );
-      deps.emitArrayValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'set');
-      throw error;
-    }
+    executor.runCommand(
+      new SetCommand(readContext, patchContext, structureContext, next),
+      { structural: false },
+    );
   };
 
   const sort = (compareFn?: (a: unknown, b: unknown) => number): void => {
-    try {
-      if (state.children.length <= 1) return;
-      const baseRevision = state.revision;
-      state.revision += 1;
-      state.dirtyStructure = true;
-      clearDirtyIndices(state.dirtyIndices);
-
-      const decorated = state.children.map((child, index) => ({
-        child,
-        index,
-        value: deps.getNodeValue(child, new WeakMap()),
-      }));
-      decorated.sort((a, b) => {
-        const av = a.value;
-        const bv = b.value;
-        if (compareFn) return compareFn(av, bv);
-        if (typeof av === 'number' && typeof bv === 'number') return av - bv;
-        const as = String(av);
-        const bs = String(bv);
-        if (as === bs) return 0;
-        return as > bs ? 1 : -1;
-      });
-      const order = decorated.map((d) => d.index);
-      state.children = decorated.map((d) => d.child);
-      state.childIndicesDirty = true;
-      rebuildMapping();
-
-      deps.emitArrayUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, [
-          { op: 'sort', path: [], order },
-        ]),
-      );
-      state.valueEpoch += 1;
-      deps.emitArrayValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'sort');
-      throw error;
-    }
+    executor.runCommand(
+      new SortCommand(readContext, structureContext, { compareFn }),
+      { structural: false },
+    );
   };
 
   return {

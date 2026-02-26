@@ -1,0 +1,58 @@
+---
+title: "Vanilla: Query Client and Lifecycle"
+description: Learn prefetch, refetch, cancel, and invalidation without framework abstractions.
+sidebar:
+  order: 2
+---
+
+## What It Is
+
+`createQueryClient` is the runtime core for query state, caching, retries, and request orchestration.
+
+## When to Use
+
+- You need Query in Node scripts or framework-free runtime.
+- You want to master base semantics before adapter-specific usage.
+
+## Core API
+
+- [createQueryClient](/en/api-reference/io-query/create-query-client/)
+- [createQuery](/en/api-reference/io-query/create-query/)
+- [io-query-client](/en/api-reference/io-query/io-query-client/)
+
+## Minimal Example
+
+```ts
+import { createQueryClient } from '@iostore/store/query';
+
+const client = createQueryClient({
+  defaultStaleTime: 5_000,
+  defaultRetry: 1,
+});
+
+const userQuery = client.query({
+  key: ['user', 1],
+  queryFn: ({ signal }) => fetch('/api/users/1', { signal }).then((r) => r.json()),
+});
+
+await userQuery.prefetch();
+await userQuery.refetch();
+userQuery.cancel();
+client.invalidateQueries({ key: ['user', 1] });
+```
+
+## Common Pitfalls
+
+- Ignoring `signal` in `queryFn`, so cancel does not stop network work.
+- Building unstable keys and causing cache slot drift.
+- Reusing one client across SSR requests.
+
+## Practical Guidance
+
+- Define key conventions before wiring business requests.
+- Use invalidation as the default write-after-read consistency path.
+- Validate prefetch/cancel/invalidate flow in isolation first.
+
+## Next Steps
+
+- Continue with [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)

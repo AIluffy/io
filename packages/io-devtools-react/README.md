@@ -13,6 +13,7 @@ IO DevTools 的 React 组件包。
 import { createIoDevtools } from '@iostore/devtools';
 import { io } from '@iostore/store';
 import { IoDevtoolsPanel } from '@iostore/devtools-react';
+import '@iostore/devtools-react/styles.css';
 
 const count = io(0);
 const devtools = createIoDevtools(count, { name: 'counter' });

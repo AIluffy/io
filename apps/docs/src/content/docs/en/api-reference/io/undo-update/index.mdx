@@ -1,0 +1,50 @@
+---
+title: "undoUpdate"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+(update: IoUpdate) => IoUpdate
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| update | `IoUpdate` |
+
+## Returns
+
+`IoUpdate`
+
+## Minimal Example
+
+```ts
+import { undoUpdate } from '@iostore/store/patches';
+
+const result = undoUpdate(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
+
+## Source
+
+- `packages/io/src/lib/utils/patches/updates.ts`

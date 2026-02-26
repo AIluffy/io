@@ -1,5 +1,7 @@
-import { applyUpdate, getLinkInfo, onError, undoUpdate } from '@iostore/store';
-import type { IoPatch, IoUpdate } from '@iostore/store';
+import { onError } from '@iostore/store/debug';
+import { getLinkInfo } from '@iostore/store/extensions';
+import { applyUpdate, undoUpdate } from '@iostore/store/patches';
+import type { IoPatch, IoUpdate } from '@iostore/store/patches';
 import { diffSnapshots } from './diff-snapshots.js';
 import { createReduxBridgeConnector } from './devtools/bridge.js';
 import { createHistoryController } from './devtools/history.js';
@@ -251,7 +253,10 @@ export function createIoDevtools(
 
   const clear = () => {
     const from = historyController.getCursor();
+    const snapshot = target.snapshot();
     historyController.clearHistory();
+    historyController.setInitialSnapshot(snapshot);
+    historyController.setLastSnapshot(snapshot);
     emit({
       type: 'timeTravel',
       kind: 'clear',

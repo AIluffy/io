@@ -1,0 +1,51 @@
+---
+title: "IoQueryState"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryState<TData, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| status | `IoDataStatus` |
+| fetchStatus | `IoFetchStatus` |
+| data | `TData \| undefined` |
+| error | `TError \| null` |
+| dataUpdatedAt | `number` |
+| errorUpdatedAt | `number` |
+| failureCount | `number` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryState } from '@iostore/store/query';
+
+let value!: IoQueryState;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoQueryClient](../io-query-client/)
+- [IoQueryOptions](../io-query-options/)
+- [IoQueryFilter](../io-query-filter/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

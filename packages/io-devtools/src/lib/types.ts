@@ -1,4 +1,5 @@
-import type { IoLinkInfo, IoMutationOp, IoPatch, IoUpdate } from '@iostore/store';
+import type { IoLinkInfo } from '@iostore/store/extensions';
+import type { IoMutationOp, IoPatch, IoUpdate } from '@iostore/store/patches';
 
 export type Unsubscribe = () => void;
 

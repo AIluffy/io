@@ -1,0 +1,103 @@
+---
+title: useIO 与通用能力联动
+description: 在 Query 场景中结合 useIO、derived、行为扩展与批处理构建稳定页面状态。
+sidebar:
+  order: 4
+---
+
+## 是什么
+
+`useQuery` 负责远端数据生命周期，`useIO` 负责本地响应式状态读取。两者结合后，可以把“请求状态”和“本地交互状态”拆分管理，再通过通用能力（`derived`、`withBehaviors`、`batch`、DevTools）协同。
+
+## 何时使用
+
+- 页面同时有远端数据与本地筛选/分页/草稿状态。
+- 你需要持久化本地参数（如 keyword、page）并驱动 Query key。
+- 你需要降低高频输入导致的渲染抖动。
+
+## 核心 API
+
+- [useIO](/api-reference/io-react/use-io/)
+- [useQuery](/api-reference/io-react/use-query/)
+- [derived](/api-reference/io/derived/)
+- [withBehaviors](/api-reference/io/with-behaviors/)
+- [batch](/api-reference/io/batch/)
+
+## 最小示例
+
+```tsx
+import { useIO, useQuery } from '@iostore/react';
+import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';
+import { persist, schedule, withBehaviors } from '@iostore/store/behavior';
+
+const filterStore = withBehaviors(
+  io({
+    keyword: '',
+    page: 1,
+  }),
+  [
+    persist({ key: 'docs-async-query-filters' }),
+    schedule('microtask'),
+  ],
+);
+
+const queryKeyView = derived(filterStore, (s) => ['todos', s.keyword, s.page] as const);
+
+export function TodoPage() {
+  const filters = useIO(filterStore);
+  const queryKey = useIO(queryKeyView);
+
+  const todosQuery = useQuery({
+    key: queryKey,
+    queryFn: ({ signal }) =>
+      fetch(`/api/todos?keyword=${filters.keyword}&page=${filters.page}`, { signal }).then((r) => r.json()),
+  });
+
+  return (
+    <div>
+      <input
+        value={filters.keyword}
+        onChange={(event) => filterStore.keyword.set(event.currentTarget.value)}
+      />
+      <button onClick={() => filterStore.page.set((n) => n + 1)}>Next</button>
+      <div>{todosQuery.isFetching ? 'loading' : 'idle'}</div>
+    </div>
+  );
+}
+```
+
+## 直接读取 client.query 返回对象
+
+可以。`useIO` 能直接读取 `client.query(...)` 返回的对象，因为它本身就是可订阅、可快照读取的 IO 节点。
+
+```tsx
+const query = client.query({
+  key: ['todo', id],
+  queryFn: ({ signal }) => fetchTodo(id, signal),
+});
+
+const state = useIO(query);
+```
+
+但要注意两点：
+
+- `useIO(query)` 只负责读取和订阅，不会自动帮你触发请求。
+- 页面场景通常优先用 `useQuery(...)`，它会把拉取、重拉、状态标记一起处理好。
+
+## 常见误区
+
+- 把 Query data 全量复制到本地 IO，再双向维护两份真值源。
+- key 依赖本地状态，却没有把依赖参数完整放进 key。
+- 高并发更新时不使用 `batch()`，导致中间态频繁渲染。
+
+## 实践建议
+
+- 远端数据以 Query 为主，本地 UI 参数以 IO 为主，明确边界。
+- 对输入密集场景，把 `schedule('microtask')` 作为默认起点。
+- 结合 [DevTools](/cookbook/devtools/) 观察 query + local state 的联动时间线。
+- 与 [Persist](/cookbook/persist/) 组合保存筛选参数，与 [Batching](/cookbook/batching/) 组合合并本地更新。
+
+## 下一步
+
+- 继续：[Query Key、缓存与刷新](./query-keys-cache-and-refetch/)

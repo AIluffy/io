@@ -1,0 +1,33 @@
+{
+  "defaults": {
+    "maxRegressPct": 15,
+    "minSelectiveSavingsRatio": 0.15
+  },
+  "environments": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "nodeMajor": 22,
+      "metrics": {
+        "selectiveRawBytes": 40354,
+        "selectiveGzipBytes": 11612,
+        "selectiveBrotliBytes": 10569,
+        "fullRawBytes": 52002,
+        "fullGzipBytes": 15210,
+        "fullBrotliBytes": 13740,
+        "derivedEntryRawBytes": 7927,
+        "derivedEntryGzipBytes": 2739,
+        "derivedEntryBrotliBytes": 2482,
+        "patchesEntryRawBytes": 2755,
+        "patchesEntryGzipBytes": 1058,
+        "patchesEntryBrotliBytes": 954,
+        "debugEntryRawBytes": 438,
+        "debugEntryGzipBytes": 285,
+        "debugEntryBrotliBytes": 250,
+        "extensionsEntryRawBytes": 1499,
+        "extensionsEntryGzipBytes": 581,
+        "extensionsEntryBrotliBytes": 511
+      }
+    }
+  ]
+}

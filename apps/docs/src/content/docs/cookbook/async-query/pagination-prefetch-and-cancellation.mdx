@@ -1,0 +1,60 @@
+---
+title: 分页、预取与取消
+description: 在长列表中平衡体验与流量，避免并发覆盖和重复项。
+sidebar:
+  order: 5
+---
+
+## 是什么
+
+分页场景通常组合三件事：稳定分页 key、下一页预取、在途请求取消。
+
+## 何时使用
+
+- 列表按 page/cursor 分段加载。
+- 你希望滚动前预取下一页减少等待。
+- 你需要在切页时避免旧请求覆盖新结果。
+
+## 核心 API
+
+- [io-query-key](/api-reference/io-query/io-query-key/)
+- [io-query-filter](/api-reference/io-query/io-query-filter/)
+- [io-query-client](/api-reference/io-query/io-query-client/)
+
+## 最小示例
+
+```ts
+const current = client.query({
+  key: ['users', { page, pageSize }],
+  queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
+});
+
+if (current.getData()?.hasMore) {
+  const next = page + 1;
+  await client
+    .query({
+      key: ['users', { page: next, pageSize }],
+      queryFn: ({ signal }) =>
+        fetch(`/api/users?page=${next}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
+    })
+    .prefetch();
+}
+
+current.cancel();
+```
+
+## 常见误区
+
+- 分页参数没进 key，导致串页。
+- 每次滚动都盲目预取，造成流量放大。
+- append 不按主键去重，出现重复行。
+
+## 实践建议
+
+- 只在 `hasMore` 为真时预取。
+- 把取消请求视为正常控制流，不当作业务错误。
+- 分页响应统一包含 `hasMore` 与稳定主键。
+
+## 下一步
+
+- 继续：[SSR 缓存注入策略](./ssr-cache-seeding-strategy/)

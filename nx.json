@@ -61,7 +61,7 @@
       "commitMessage": "chore(release): publish {version}"
     },
     "releaseTag": {
-      "pattern": "release/{version}"
+      "pattern": "v{version}"
     },
     "version": {
       "preVersionCommand": "npx nx run-many -t build"

@@ -24,6 +24,7 @@ export default [
             'vite',
             'tslib',
             'jiti',
+            'esbuild',
           ],
         },
       ],

@@ -1,8 +1,12 @@
 ---
 title: "Primitive"
-description: "type export"
+description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
@@ -10,19 +14,27 @@ description: "type export"
 Primitive
 ```
 
-## 属性
+## 最小示例
 
-| Name | Type |
-| --- | --- |
-| toString | `(() => string) \| (() => string) \| ((radix?: number) => string) \| ((radix?: number) => string) \| (() => string)` |
-| valueOf | `(() => string) \| (() => number) \| (() => bigint) \| (() => boolean) \| (() => symbol)` |
-| toLocaleString | `(() => string) \| { (locales?: string \| string[], options?: Intl.NumberFormatOptions): string; (locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions): string; } \| ((locales?: Intl.LocalesArgument, options?: BigIntToLocaleStringOptions) => string)` |
+```ts
+import type { Primitive } from '@iostore/store';
 
-## 错误
+let value!: Primitive;
+console.log(value);
+```
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## 源码
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

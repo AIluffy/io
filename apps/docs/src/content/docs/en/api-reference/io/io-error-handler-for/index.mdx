@@ -1,0 +1,40 @@
+---
+title: "IoErrorHandlerFor"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoErrorHandlerFor<T, MaxDepth>
+```
+
+## Minimal Example
+
+```ts
+import type { IoErrorHandlerFor } from '@iostore/store/debug';
+
+let value!: IoErrorHandlerFor;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
+- [IoDerived](../io-derived/)
+- [IoErrorHandler](../io-error-handler/)
+
+## Source
+
+- `packages/io/src/lib/utils/types/types.ts`

@@ -1,8 +1,12 @@
 ---
 title: "IoPathValue"
-description: "type export"
+description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
@@ -10,11 +14,27 @@ description: "type export"
 IoPathValue<T, P, MaxDepth, Mode>
 ```
 
-## 错误
+## 最小示例
 
-- 本库未定义标准化错误码。
-- 变更失败可通过 `onError(listener)` 上报（operation、path、value）。
+```ts
+import type { IoPathValue } from '@iostore/store';
+
+let value!: IoPathValue;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## 源码
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

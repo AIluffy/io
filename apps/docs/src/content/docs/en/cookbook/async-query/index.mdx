@@ -1,0 +1,61 @@
+---
+title: Async Query
+description: End-to-end Query guide from Vanilla basics to framework adapters.
+sidebar:
+  order: 1
+---
+
+## What It Is
+
+This section focuses on `@iostore/store/query` and its adapters, covering lifecycle control, caching strategy, optimistic mutation flow, and SSR seeding.
+
+## When to Use
+
+- You need one model for requests, retries, cancellation, and invalidation.
+- You want to reuse query semantics across multiple frameworks.
+- You need aligned CSR and SSR cache behavior.
+
+## Learning Path
+
+1. Start in the [Playground](./playground/) to build intuition with a live query flow.
+2. Continue with [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/).
+3. Add [useIO and Common Capability Composition](./useio-and-common-capabilities/) to connect local UI state and Query flow.
+4. Build core capabilities: keys, cache, mutation, pagination, SSR.
+5. Apply the same strategy to framework adapters.
+
+## Capability Map
+
+| Capability | Chapter |
+| --- | --- |
+| Interactive drill and failure recovery | [Playground](./playground/) |
+| Client creation and request lifecycle | [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/) |
+| useIO + common capability composition | [useIO and Common Capability Composition](./useio-and-common-capabilities/) |
+| Key design, cache hit, refetch | [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/) |
+| Mutation, optimistic update, rollback, invalidation | [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/) |
+| Pagination, prefetch, cancellation | [Pagination, Prefetch, and Cancellation](./pagination-prefetch-and-cancellation/) |
+| SSR prefetch and cache seed | [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/) |
+| Framework integration | [React Adapter](./react-adapter/) to [SvelteKit Adapter](./sveltekit-adapter/) |
+
+## Recommended Reading Order
+
+1. [Playground](./playground/)
+2. [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/)
+3. [useIO and Common Capability Composition](./useio-and-common-capabilities/)
+4. [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)
+5. [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/)
+6. [Pagination, Prefetch, and Cancellation](./pagination-prefetch-and-cancellation/)
+7. [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/)
+8. [React Adapter](./react-adapter/)
+9. [Vue Adapter](./vue-adapter/)
+10. [Svelte Adapter](./svelte-adapter/)
+11. [Solid Adapter](./solid-adapter/)
+12. [Lynx Adapter](./lynx-adapter/)
+13. [Next.js Adapter](./next-adapter/)
+14. [Nuxt Adapter](./nuxt-adapter/)
+15. [SvelteKit Adapter](./sveltekit-adapter/)
+
+## Next Steps
+
+- Start here: [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/)
+- Try the interactive demo: [Playground](./playground/)
+- API index: [io-query API](/en/api-reference/io-query/)

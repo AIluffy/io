@@ -1,9 +1,9 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { derived } from '../core/derived.js';
-import { io } from '../core/io.js';
-import { computed, state } from '../utils/signals.js';
-import type { IoDerived, IoPathOf, IoPathValue, Path } from '../utils/types.js';
+import { derived } from '../core/api/derived.js';
+import { io } from '../core/api/io.js';
+import { computed, state } from '../utils/reactive/signals.js';
+import type { IoDerived, IoPathOf, IoPathValue, Path } from '../utils/types/types.js';
 
 describe('derived: type overloads', () => {
   it('infers deps-based derived types', () => {

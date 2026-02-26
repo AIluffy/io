@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cloneValue, deepFreeze } from '../utils/snapshot.js';
+import { cloneValue, deepFreeze } from '../utils/immutable/immutable.js';
 
 describe('snapshot: deepFreeze', () => {
   it('freezes symbol and non-enumerable branches', () => {
@@ -33,7 +33,7 @@ describe('snapshot: deepFreeze', () => {
 });
 
 describe('snapshot: cloneValue', () => {
-  it('throws when structuredClone is unavailable', () => {
+  it('uses plain-object fast path when structuredClone is unavailable', () => {
     const originalDesc = Object.getOwnPropertyDescriptor(
       globalThis,
       'structuredClone',
@@ -58,7 +58,26 @@ describe('snapshot: cloneValue', () => {
         });
       }
 
-      expect(() => cloneValue({ a: 1 })).toThrow(/structuredClone/);
+      const sym = Symbol('k');
+      const input: Record<PropertyKey, unknown> = {};
+      Object.defineProperty(input, 'hidden', {
+        value: { n: 1 },
+        enumerable: false,
+        configurable: true,
+      });
+      input[sym] = { n: 2 };
+
+      const cloned = cloneValue(input);
+      expect(Reflect.ownKeys(cloned)).toEqual(expect.arrayContaining(['hidden', sym]));
+      expect((cloned as Record<PropertyKey, unknown>)[sym]).toEqual({ n: 2 });
+      expect(Object.isFrozen(cloned)).toBe(true);
+
+      const cycle: Record<string, unknown> = { n: 1 };
+      cycle.self = cycle;
+      const cycleCloned = cloneValue(cycle) as Record<string, unknown>;
+      expect(cycleCloned.self).toBe(cycleCloned);
+
+      expect(() => cloneValue(new Date(0))).toThrow(/structuredClone/);
     } finally {
       if (!originalDesc || originalDesc.writable) {
         (globalThis as Record<string, unknown>).structuredClone = original;

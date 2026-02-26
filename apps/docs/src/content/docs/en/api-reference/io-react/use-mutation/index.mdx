@@ -1,0 +1,29 @@
+---
+title: "useMutation"
+description: "Function API reference."
+---
+
+## Signature
+
+```ts
+<TData, TVariables, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => UseMutationResult<TData, TVariables, TError>
+```
+
+## Minimal Example
+
+```ts
+import { useMutation } from '@iostore/react';
+
+const mutation = useMutation({
+  mutationFn: async (id: number) => ({ id }),
+});
+```
+
+## Related APIs
+
+- [useQuery](../use-query/)
+- [useSuspenseQuery](../use-suspense-query/)
+
+## Source
+
+- `packages/io-react/src/lib/use-query.ts`

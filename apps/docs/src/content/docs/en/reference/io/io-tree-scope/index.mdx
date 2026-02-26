@@ -1,8 +1,12 @@
 ---
 title: "IoTreeScope"
-description: "type export"
+description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
@@ -10,21 +14,27 @@ description: "type export"
 IoTreeScope<T, MaxDepth>
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| get | `() => UnwrapIo<T>` |
-| commit | `(fn: (draft: UnwrapIo<T>) => void) => void` |
-| snapshot | `() => UnwrapIo<T>` |
-| subscribe | `(fn: (v: UnwrapIo<T>) => void) => IoUnsubscribe` |
-| subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
+```ts
+import type { IoTreeScope } from '@iostore/store';
 
-## Errors
+let value!: IoTreeScope;
+console.log(value);
+```
 
-- This library does not define standardized error codes.
-- Mutations can report failures through `onError(listener)` (operation, path, value).
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 
-- `packages/io/src/lib/utils/types.ts`
+- `packages/io/src/lib/utils/types/types.ts`

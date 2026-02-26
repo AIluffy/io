@@ -1,14 +1,22 @@
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import { ScopeMutateCommand } from '../../commands/scope-commands.js';
+import { createScopeExecutor } from '../../commands/executor.js';
+import { isUnit } from '../../../units/unit.js';
+import { createUpdate } from '../../../utils/patches/updates.js';
+import { appendPath } from '../../tree/path-utils.js';
+import type { TreeDepsSlice } from '../../types.js';
+import type { NodePath } from '../../tree/path-trie.js';
 import type {
   TreeContext,
   TreeNode,
   TreeScopeState,
-  UnitInternal,
-} from '../../io-tree-types.js';
+} from '../../tree/io-tree-types.js';
+
+type ScopeMutationDeps = TreeDepsSlice<
+  'emitError' | 'subscriptions' | 'internals' | 'lifecycle' | 'registry'
+>;
 
 type CreateScopeMutationsOptions = {
-  deps: NodeFactoryDeps;
+  deps: ScopeMutationDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;
@@ -26,57 +34,59 @@ export function createScopeMutations(
   applySet: (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ) => void;
 } {
-  const { deps, ctx, path, state, createTreeNode, getNode } = options;
+  const { deps, ctx, state, createTreeNode, getNode } = options;
+  const commandDeps = {
+    getPath: () => state.path,
+    isUnit,
+    requireInternalOfKind: deps.internals.requireInternalOfKind,
+    detachChildFromScope: deps.lifecycle.detachChildFromScope,
+    unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
+      deps.registry.unregisterSubtree(absPath, node),
+    createTreeNode: (absPath: NodePath, initial: unknown) =>
+      createTreeNode(ctx, absPath, initial),
+    attachChildToScope: deps.lifecycle.attachChildToScope,
+    markDirty: deps.subscriptions.markDirty,
+  };
+
+  const executors = new Map<PropertyKey, ReturnType<typeof createScopeExecutor>>();
+  const resolveExecutor = (
+    key: PropertyKey,
+  ): ReturnType<typeof createScopeExecutor> => {
+    const existing = executors.get(key);
+    if (existing) return existing;
+
+    const created = createScopeExecutor(
+      {
+        createUpdate,
+        emitArrayValue: deps.subscriptions.emitArrayValue,
+        emitArrayUpdate: deps.subscriptions.emitArrayUpdate,
+        emitScopeValue: deps.subscriptions.emitScopeValue,
+        emitScopeUpdate: deps.subscriptions.emitScopeUpdate,
+        emitError: deps.emitError,
+      },
+      state,
+      () => appendPath(state.path, key),
+      getNode,
+    );
+    executors.set(key, created);
+    return created;
+  };
 
   const applySet = (
     key: PropertyKey,
     next: unknown,
-    options?: { emitUpdate?: boolean; emitValue?: boolean },
+    options?: { emitValue?: boolean },
   ): void => {
-    try {
-      const existing = state.children.get(key);
-      if (!existing)
-        throw new Error(`ioTree scope: missing key ${String(key)}`);
-
-      if (deps.isUnit(existing)) {
-        const internal = deps.requireInternalOfKind(
-          existing,
-          'unit',
-          'ioTree scope: invalid unit internal',
-        ) as UnitInternal;
-        const before = internal.getValue();
-        const emitValue = options?.emitValue !== false;
-        internal.setValue(next, {
-          emitUpdate: false,
-          emitValue,
-        });
-        const after = internal.getValue();
-        if (!Object.is(before, after)) {
-          state.revision += 1;
-          if (!emitValue) {
-            state.valueEpoch += 1;
-            deps.markDirty(state, key);
-          }
-        }
-        return;
-      }
-
-      deps.detachChildFromScope(state, key);
-      deps.unregisterSubtree(ctx, [...path, key], existing);
-      const replaced = createTreeNode(ctx, [...path, key], next);
-      state.children.set(key, replaced);
-      deps.attachChildToScope(state, key, replaced);
-      state.revision += 1;
-      state.dirtyKeys.add(key);
-      state.valueEpoch += 1;
-      if (options?.emitValue !== false) deps.emitScopeValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, [...path, key], 'set');
-      throw error;
-    }
+    resolveExecutor(key).runCommand(
+      new ScopeMutateCommand(commandDeps, key, next, options),
+      {
+        emitValue: options?.emitValue,
+        structural: false,
+      },
+    );
   };
 
   return { applySet };

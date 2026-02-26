@@ -10,6 +10,7 @@ function formatPath(path: IoPath): string {
 }
 
 function summarizeEntry(entry: IoHistoryEntry): string {
+  if (entry.update.action) return entry.update.action;
   const first = entry.patchDiffs[0];
   if (!first) return 'IO_UPDATE';
   if (first.op === 'set') return `IO_SET ${formatPath(first.path)}`;

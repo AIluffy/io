@@ -1,0 +1,57 @@
+---
+title: "IoQueryOptions"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoQueryOptions<TData = unknown, TError = Error>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| queryFn | `(context: { signal: AbortSignal }) => Promise<TData>` |
+| staleTime | `number` |
+| gcTime | `number` |
+| retry | `number` |
+| retryDelay | `(attempt: number) => number` |
+| autoFetch | `boolean` |
+| placeholderData | `TData \| (() => TData)` |
+| onSuccess | `(data: TData) => void` |
+| onError | `(error: TError) => void` |
+| onSettled | `(data: TData \| undefined, error: TError \| null) => void` |
+
+## 最小示例
+
+```ts
+import type { IoQueryOptions } from '@iostore/store/query';
+
+let value!: IoQueryOptions;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+- `key` 必须可稳定序列化，不能包含 `function`、`symbol` 或循环引用。
+- `queryFn` 应透传 `signal` 到网络层，才能在取消时真正中断请求。
+
+## 相关 API
+
+- [createQuery](../create-query/)
+- [IoQueryClient](../io-query-client/)
+- [IoQueryClientOptions](../io-query-client-options/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

@@ -1,0 +1,73 @@
+---
+title: "createHistory"
+description: "Create an undo/redo history controller for an IO node."
+---
+
+
+## When to Use
+
+- You want undo/redo support on a store.
+- You want grouped undo (`undoGroup`) for contiguous operations.
+- You need explicit boundaries via `checkpoint`.
+- You want to filter which updates are recordable.
+
+## Signature
+
+```ts
+(target: unknown, options?: IoHistoryOptions) => IoHistory
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| target | `unknown` |
+| options | `IoHistoryOptions` |
+
+## Returns
+
+`IoHistory`
+
+## Minimal Example
+
+```ts
+import { createHistory } from '@iostore/store/patches';
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const history = createHistory(store, {
+  groupBy: (update) => update.action,
+  filter: 'exclude-undo-redo',
+});
+
+store.count.set(1);
+store.count.set(2);
+history.checkpoint();
+store.count.set(3);
+
+history.undoGroup(); // back to 2
+history.undoGroup(); // back to 0
+```
+
+## Key Options
+
+- `limit`: max history size (oldest entries are trimmed first).
+- `emitUpdate`: whether replayed updates should be emitted.
+- `groupBy`: groups contiguous updates with the same key.
+- `filter`: controls what gets recorded; default is `exclude-undo-redo`.
+
+## Common Pitfalls
+
+- Recording high-frequency transient updates and polluting history quality.
+- Forgetting `checkpoint` when two same-key operations must be separated.
+
+## Related APIs
+
+- [applyUpdate](../apply-update/)
+- [IoHistory](../io-history/)
+- [IoHistoryOptions](../io-history-options/)
+- [undoUpdate](../undo-update/)
+
+## Source
+
+- `packages/io/src/lib/utils/patches/history.ts`

@@ -1,0 +1,77 @@
+---
+title: Migrate from Valtio
+description: Move from proxy-first mutations to path-based Units and explicit updates.
+sidebar:
+  order: 3
+---
+
+This page is for teams moving from proxy mutation style to explicit, traceable write paths.
+
+## When to Prioritize This Migration
+
+- You need stronger traceability and replay workflows.
+- Deep updates need explicit subscription boundaries.
+- You want one model reusable across frameworks.
+
+## Concept Mapping
+
+| Valtio | IO Equivalent | Notes |
+| --- | --- | --- |
+| `proxy({...})` | `io({...})` | Both model tree-shaped state. |
+| `useSnapshot(state)` | `useIO(pathUnit)` | Subscribe by path, not entire snapshots. |
+| direct mutation | `set` / `commit` | Writes become explicit and traceable. |
+| snapshot read | `snapshot()` | Use for boundary serialization/export. |
+
+## Migration Steps
+
+### 1) Replace state creation
+
+```ts
+import { io } from '@iostore/store';
+
+export const store = io({ count: 0, user: { name: 'Ada' } });
+```
+
+### 2) Replace component reads
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Profile() {
+  const count = useIO(store.count);
+  const name = useIO(store.user.name);
+  return <div>{name}: {count}</div>;
+}
+```
+
+### 3) Replace writes
+
+```ts
+store.count.set((v) => v + 1);
+store.user.name.set('Grace');
+```
+
+For grouped writes:
+
+```ts
+store.commit((draft) => {
+  draft.count += 1;
+  draft.user.name = 'Lin';
+});
+```
+
+## Common Pitfalls
+
+- Treating IO nodes like mutable proxy objects.
+- Reading broad root state in components.
+- Skipping `snapshot()` at serialization/export boundaries.
+
+## Validation Checklist
+
+- Writes only use `set` / `commit`.
+- Most component reads are path-level.
+- Boundary output is based on frozen snapshots.
+
+## Next Steps
+
+- Review [Scope](/en/fundamentals/scope/) and [Snapshots](/en/fundamentals/snapshots/).

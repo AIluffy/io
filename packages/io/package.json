@@ -1,12 +1,47 @@
 {
   "name": "@iostore/store",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
+  "homepage": "https://github.com/AIluffy/oin#readme",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
+    "./query": {
+      "types": "./dist/query.d.ts",
+      "import": "./dist/query.js",
+      "default": "./dist/query.js"
+    },
+    "./debug": {
+      "types": "./dist/debug.d.ts",
+      "import": "./dist/debug.js",
+      "default": "./dist/debug.js"
+    },
+    "./derived": {
+      "types": "./dist/derived.d.ts",
+      "import": "./dist/derived.js",
+      "default": "./dist/derived.js"
+    },
+    "./extensions": {
+      "types": "./dist/extensions.d.ts",
+      "import": "./dist/extensions.js",
+      "default": "./dist/extensions.js"
+    },
+    "./patches": {
+      "types": "./dist/patches.d.ts",
+      "import": "./dist/patches.js",
+      "default": "./dist/patches.js"
+    },
     "./behavior": {
       "types": "./dist/behavior.d.ts",
       "import": "./dist/behavior.js",
@@ -21,6 +56,7 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "!**/*.d.ts.map",
     "!**/*.tsbuildinfo"
   ],
   "publishConfig": {
@@ -37,6 +73,51 @@
           "command": "vitest bench --config vite.config.ts",
           "cwd": "packages/io"
         }
+      },
+      "bench-gc": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node --expose-gc scripts/snapshot-gc-report.mjs",
+          "cwd": "packages/io"
+        }
+      },
+      "perf-budget": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node --expose-gc scripts/check-perf-budget.mjs",
+          "cwd": "packages/io"
+        }
+      },
+      "bundle-size": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "command": "node scripts/check-bundle-size.mjs",
+          "cwd": "packages/io"
+        }
+      },
+      "build": {
+        "dependsOn": [
+          "^build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "packages/io",
+          "command": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\" && tsc --build tsconfig.lib.json"
+        },
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ],
+        "syncGenerators": [
+          "@nx/js:typescript-sync"
+        ]
       }
     }
   }

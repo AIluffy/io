@@ -1,0 +1,59 @@
+---
+title: "effect"
+description: "Behavior API: declare side effects in behavior pipeline."
+---
+
+## When to Use
+
+- You want side effects to live inside behavior composition.
+- You need deterministic cleanup on rerun and destroy.
+
+## Signature
+
+```ts
+<T>(
+  fn: (value: T, previous: T | undefined) => void | (() => void),
+  options?: EffectBehaviorOptions,
+) => IoBehavior<T>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| fn | `(value: T, previous: T \| undefined) => void \| (() => void)` |
+| options | `EffectBehaviorOptions` |
+
+## Returns
+
+`IoBehavior<T>`
+
+## Minimal Example
+
+```ts
+import { io } from '@iostore/store';
+import { effect, throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [
+  throttle(50),
+  effect((value) => {
+    console.log(value);
+  }),
+]);
+```
+
+## Common Pitfalls
+
+- Writing back to the same state inside `effect`, causing accidental feedback loops.
+- Forgetting cleanup and leaking timers/listeners after destroy.
+
+## Related APIs
+
+- [throttle](../throttle/)
+- [debounce](../debounce/)
+- [withBehaviors](../with-behaviors/)
+
+## Source
+
+- `packages/io/src/lib/extensions/cookbook/effect.ts`

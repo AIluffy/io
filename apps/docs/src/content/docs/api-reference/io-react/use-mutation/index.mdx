@@ -1,0 +1,29 @@
+---
+title: "useMutation"
+description: "函数 API 参考。"
+---
+
+## 签名
+
+```ts
+<TData, TVariables, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => UseMutationResult<TData, TVariables, TError>
+```
+
+## 最小示例
+
+```ts
+import { useMutation } from '@iostore/react';
+
+const mutation = useMutation({
+  mutationFn: async (id: number) => ({ id }),
+});
+```
+
+## 相关 API
+
+- [useQuery](../use-query/)
+- [useSuspenseQuery](../use-suspense-query/)
+
+## 源码
+
+- `packages/io-react/src/lib/use-query.ts`

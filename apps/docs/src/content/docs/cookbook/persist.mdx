@@ -1,0 +1,178 @@
+---
+title: Persist
+description: 将状态持久化到存储，并支持版本迁移、部分持久化与跨标签同步。
+sidebar:
+  order: 2
+---
+
+Persist 会在状态写入后，把最新值同步到存储（默认 `localStorage`）。
+
+## 是什么
+
+- 本质：把状态值序列化并写入存储。
+- 价值：刷新可恢复、跨会话保留、可选跨标签同步。
+- 支持：自定义存储、版本策略、部分字段持久化。
+
+## 何时使用
+
+- 页面刷新后仍需要保留用户状态。
+- 需要把关键字段（如 token、偏好项）长期保存。
+- 你希望跨标签页保持同一份状态视图。
+
+## 核心 API
+
+```ts
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [persist({ key: 'count' })]);
+```
+
+## Live 示例
+
+你可以尝试点击增加与清空存储，观察内存值与持久化值的同步变化。
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { useIO } from '@iostore/react';
+import { io } from '@iostore/store';
+import { persist, withBehaviors } from '@iostore/store/behavior';
+
+const PERSIST_KEY = 'docs-live-persist-counter-zh';
+const store = io(0);
+const view = withBehaviors(store, [persist({ key: PERSIST_KEY })]);
+
+function PersistLiveDemo() {
+  const value = useIO(view);
+  const [storedRaw, setStoredRaw] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    setStoredRaw(localStorage.getItem(PERSIST_KEY));
+  }, [value]);
+
+  return (
+    <section className="io-live">
+      <div>当前计数：{ready ? value : 0}</div>
+      <div>localStorage 原始值：{ready ? (storedRaw ?? 'null') : 'null'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={() => view.set((n) => n + 1)}>
+          +1
+        </button>
+        <button type="button" className="io-live__button" onClick={() => view.set(0)}>
+          重置为 0
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            localStorage.removeItem(PERSIST_KEY);
+            setStoredRaw(localStorage.getItem(PERSIST_KEY));
+          }}
+        >
+          清空存储
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default PersistLiveDemo;
+```
+
+观察点：通过 `view.set()` 更新后，持久化条目会自动更新；手动清空后可立即看到存储侧状态。
+
+## 关键能力
+
+### 自定义存储
+
+```ts
+const memory = new Map<string, string>();
+
+const view = withBehaviors(count, [
+  persist({
+    key: 'count',
+    storage: {
+      getItem: (key) => memory.get(key) ?? null,
+      setItem: (key, value) => memory.set(key, value),
+    },
+  }),
+]);
+```
+
+`storage.getItem/setItem` 支持同步或异步返回值（`Promise`）。
+
+### 版本策略（新版本优先）
+
+```ts
+persist({
+  key: 'count',
+  version: 2,
+});
+```
+
+当存储版本与当前 `version` 不一致时，Persist 会忽略旧数据并按新版本回写。
+
+### 部分字段持久化
+
+```ts
+persist({
+  key: 'profile',
+  partialize: (value) => ({ token: (value as { token: string }).token }),
+  merge: (persisted, current) => ({
+    ...(current as Record<string, unknown>),
+    ...(persisted as Record<string, unknown>),
+  }),
+});
+```
+
+### 节流写入
+
+```ts
+persist({
+  key: 'count',
+  throttleMs: 100,
+});
+```
+
+### 跨标签页同步
+
+```ts
+persist({
+  key: 'count',
+  syncTabs: true,
+});
+```
+
+### 自定义序列化
+
+```ts
+persist({
+  key: 'count',
+  serialize: (value) => JSON.stringify(value),
+  deserialize: (raw) => JSON.parse(raw),
+});
+```
+
+## 常见误区
+
+- 把 Persist 当作数据库事务：它只保证状态到存储的同步，不替代业务一致性策略。
+- 对关键路径设置过大 `throttleMs`：可能导致页面关闭前尚未落盘。
+- `partialize` 与 `merge` 不匹配：会导致恢复结构不完整。
+
+## 实践建议
+
+- 对用户关键数据使用较小节流窗口，提升数据安全性。
+- 版本升级时配合 `version` 明确数据兼容策略。
+- 与 [Schedule](/cookbook/schedule/) 组合时，优先保证数据正确，再优化通知节奏。
+
+## 下一步
+
+- 结合 [Schedule](/cookbook/schedule/) 合并通知。
+- 查看 [行为扩展概览](/cookbook/overview/)。

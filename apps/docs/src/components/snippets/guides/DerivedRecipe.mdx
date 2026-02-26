@@ -3,7 +3,8 @@ import { commonStoreTs } from './common-store';
 
 export const code = `${commonStoreTs.replace(
   "import { io } from '@iostore/store';",
-  "import { io, derived } from '@iostore/store';"
+  "import { io } from '@iostore/store';
+import { derived } from '@iostore/store/derived';"
 )}
 
 const doubled = derived([store.count], (v) => v * 2);

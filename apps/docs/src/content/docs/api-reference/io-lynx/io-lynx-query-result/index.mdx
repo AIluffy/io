@@ -1,0 +1,34 @@
+---
+title: "IoLynxQueryResult"
+description: "类型 API 参考。"
+---
+
+## 签名
+
+```ts
+IoLynxQueryResult<TData, TError = Error>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| status | `IoDataStatus` |
+| fetchStatus | `IoFetchStatus` |
+| data | `TData \| undefined` |
+| error | `TError \| null` |
+| dataUpdatedAt | `number` |
+| errorUpdatedAt | `number` |
+| failureCount | `number` |
+| isPending | `boolean` |
+| isSuccess | `boolean` |
+| isError | `boolean` |
+| isFetching | `boolean` |
+| isLoading | `boolean` |
+| isRefetching | `boolean` |
+| fetch | `() => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

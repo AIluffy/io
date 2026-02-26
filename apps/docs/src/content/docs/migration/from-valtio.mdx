@@ -1,0 +1,77 @@
+---
+title: 从 Valtio 迁移
+description: 将 proxy 可变对象写法迁移到路径化 Unit 与快照模型。
+sidebar:
+  order: 3
+---
+
+本页适合从“代理对象直接修改”迁移到“路径可观测 + 显式更新”的团队。
+
+## 何时优先迁移
+
+- 需要更稳定的更新日志与问题回放能力。
+- 深层更新多，想显式控制订阅边界。
+- 需要跨框架复用同一状态模型。
+
+## 概念映射
+
+| Valtio | IO 对应 | 说明 |
+| --- | --- | --- |
+| `proxy({...})` | `io({...})` | 都支持树结构状态。 |
+| `useSnapshot(state)` | `useIO(pathUnit)` | 读路径而不是整棵快照。 |
+| 直接 mutation | `set` / `commit` | 写入来源更可追踪。 |
+| snapshot 读取 | `snapshot()` | 作为边界数据输出。 |
+
+## 迁移步骤
+
+### 1) 迁移状态创建
+
+```ts
+import { io } from '@iostore/store';
+
+export const store = io({ count: 0, user: { name: 'Ada' } });
+```
+
+### 2) 迁移组件读取
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Profile() {
+  const count = useIO(store.count);
+  const name = useIO(store.user.name);
+  return <div>{name}: {count}</div>;
+}
+```
+
+### 3) 迁移写入路径
+
+```ts
+store.count.set((v) => v + 1);
+store.user.name.set('Grace');
+```
+
+多字段写入：
+
+```ts
+store.commit((draft) => {
+  draft.count += 1;
+  draft.user.name = 'Lin';
+});
+```
+
+## 常见问题
+
+- 把 IO 当成 proxy 直接对象改写（例如 `store.user.name = 'x'`）。
+- 组件读取根节点快照，导致无关渲染。
+- 忘记在边界使用 `snapshot()` 导出冻结数据。
+
+## 验收清单
+
+- 写入已统一走 `set`/`commit`。
+- 组件订阅主要集中在路径 Unit。
+- 边界输出（日志、SSR、持久化）统一基于 `snapshot()`。
+
+## 下一步
+
+- 阅读 [Scope](/fundamentals/scope/) 与 [快照](/fundamentals/snapshots/)。

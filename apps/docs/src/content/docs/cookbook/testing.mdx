@@ -1,0 +1,88 @@
+---
+title: 测试
+description: 用快照、更新日志与回放验证 IO 行为的正确性。
+sidebar:
+  order: 5
+---
+
+测试 IO 时，建议把验证分成三层：结果值、更新过程、历史回放。
+
+## 是什么
+
+- `snapshot()`：验证最终状态值。
+- `subscribeUpdate()`：验证 patch 结构与更新路径。
+- `replay()`：验证更新日志可重放性。
+
+## 何时使用
+
+- 你要验证业务逻辑的最终状态是否正确。
+- 你要断言更新日志（操作类型、路径、值）是否符合预期。
+- 你要确保更新流可回放用于审计或调试。
+
+## 核心断言模式
+
+### 1) 结果断言（优先）
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { io } from '@iostore/store';
+
+describe('counter', () => {
+  it('increments', () => {
+    const store = io({ count: 0 });
+    store.count.set((v) => v + 1);
+    expect(store.count.snapshot()).toBe(1);
+  });
+});
+```
+
+### 2) Patch 断言
+
+```ts
+import { io } from '@iostore/store';
+
+const store = io({ count: 0 });
+const updates: unknown[] = [];
+const stop = store.subscribeUpdate((u) => updates.push(u));
+
+store.count.set(1);
+stop();
+
+expect(updates[0].patches[0].op).toBe('set');
+```
+
+### 3) 回放断言
+
+```ts
+import { io } from '@iostore/store';
+import { replay } from '@iostore/store/patches';
+
+const base = io({ count: 0 });
+const updates: unknown[] = [];
+const stop = base.subscribeUpdate((u) => updates.push(u));
+
+base.count.set(1);
+base.count.set(2);
+stop();
+
+const replayStore = io({ count: 0 });
+replay(replayStore, updates);
+expect(replayStore.count.snapshot()).toBe(2);
+```
+
+## 常见误区
+
+- 只断言 `set()` 是否被调用，不断言最终值。
+- 直接比较整段更新对象，导致测试脆弱。
+- 忘记退订，影响后续用例隔离。
+
+## 实践建议
+
+- 先写“结果断言”，再补“过程断言”。
+- patch 断言聚焦关键字段（`op`、`path`、核心值）。
+- 对关键链路增加回放测试，保证可追溯性。
+
+## 下一步
+
+- 阅读 [更新日志](/fundamentals/update-log/)。
+- 学习 [批处理](/cookbook/batching/) 的合并行为。

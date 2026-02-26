@@ -1,6 +1,16 @@
 {
   "name": "@iostore/react",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIluffy/oin.git",
+    "directory": "packages/io-react"
+  },
+  "bugs": {
+    "url": "https://github.com/AIluffy/oin/issues"
+  },
+  "homepage": "https://github.com/AIluffy/oin#readme",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -15,6 +25,7 @@
   },
   "files": [
     "dist",
+    "!**/*.d.ts.map",
     "!**/*.tsbuildinfo"
   ],
   "publishConfig": {
@@ -35,6 +46,29 @@
   "nx": {
     "tags": [
       "scope:io-react"
-    ]
+    ],
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "packages/io-react",
+          "command": "node --input-type=module -e \"import { rmSync } from \\\"node:fs\\\"; rmSync(\\\"dist\\\", { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\" && tsc --build tsconfig.lib.json"
+        },
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ],
+        "syncGenerators": [
+          "@nx/js:typescript-sync"
+        ]
+      }
+    }
   }
 }

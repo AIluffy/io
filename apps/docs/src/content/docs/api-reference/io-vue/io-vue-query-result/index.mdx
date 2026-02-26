@@ -1,0 +1,23 @@
+---
+title: "IoVueQueryResult"
+description: "类型 API 参考。"
+---
+
+## 签名
+
+```ts
+IoVueQueryResult<TData, TError = Error>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoQueryState<TData, TError>>` |
+| data | `ShallowRef<TData \| undefined>` |
+| fetch | `() => Promise<TData>` |
+| refetch | `() => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoQuery<TData, TError>` |

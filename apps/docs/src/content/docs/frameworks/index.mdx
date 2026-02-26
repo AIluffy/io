@@ -1,0 +1,58 @@
+---
+title: 框架集成总览
+description: 根据运行环境选择 IO 框架适配层，并掌握客户端与 SSR 的接入边界。
+sidebar:
+  order: 0
+---
+
+本章节用于回答三个问题：
+
+- 我现在的技术栈应该用哪个适配包？
+- 客户端框架与 SSR 框架的接入边界分别是什么？
+- 迁移时先读哪些页面，成本最低？
+
+## 选型速览
+
+| 场景 | 推荐页面 | 关键 API |
+| --- | --- | --- |
+| 无框架 / Node / 工具脚本 | [原生使用](/frameworks/vanilla/) | `io` `get` `set` `subscribe` `snapshot` |
+| React 应用 | [React](/frameworks/react/) | `useIO` `useIOSelector` |
+| Lynx / ReactLynx | [Lynx](/frameworks/lynx/) | `useIO` `useIOSelector` |
+| Vue 3 | [Vue](/frameworks/vue/) | `useIO` `ioRef` |
+| Svelte | [Svelte](/frameworks/svelte/) | `toReadable` `toWritable` |
+| Solid | [Solid](/frameworks/solid/) | `useIO`（Accessor） |
+| Next.js（App Router） | [Next.js](/frameworks/next/) | 每请求创建 + Hydration 重建 |
+| Nuxt 3 | [Nuxt](/frameworks/nuxt/) | `useAsyncData` + 客户端重建 |
+| SvelteKit | [SvelteKit](/frameworks/sveltekit/) | `load` 返回 plain 数据 + 客户端重建 |
+
+## 客户端框架与 SSR 框架的区别
+
+客户端框架（React/Vue/Svelte/Solid/Lynx）重点在订阅粒度与渲染效率：
+
+- 优先路径订阅，减少无关重渲染。
+- 对 selector 返回对象时提供比较函数。
+- 高频写入配合 `batch` 或 `schedule` 控制通知节奏。
+
+SSR 框架（Next/Nuxt/SvelteKit）重点在运行时边界：
+
+- Store 必须按请求创建，不能模块级单例。
+- 序列化边界只传 plain object，不传运行时实例。
+- 客户端基于初始数据重建 store，再做交互与行为扩展。
+
+## 推荐阅读路径
+
+1. 先读 [原生使用](/frameworks/vanilla/) 理解核心读写与订阅语义。
+2. 再读你当前框架对应页面，完成最小接入。
+3. 如果涉及 SSR，再读 Next/Nuxt/SvelteKit 对应章节。
+4. 最后回到 [组合](/cookbook/composition/) 与 [订阅](/cookbook/subscriptions/) 做性能优化。
+
+## 常见接入错误
+
+- 把根节点直接传给大量叶子组件，导致订阅过粗。
+- SSR 中复用全局 store，出现多请求串状态。
+- Hydration 前后初始数据结构不一致，引发告警或闪烁。
+
+## 下一步
+
+- 需要实践模式：查看 [状态模式](/cookbook/overview/)。
+- 需要理解底层模型：查看 [核心原理](/fundamentals/architecture/)。

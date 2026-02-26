@@ -1,0 +1,128 @@
+---
+title: Throttle
+description: Deliver notifications at a fixed cadence to reduce pressure from high-frequency updates.
+sidebar:
+  order: 5
+---
+
+Throttle limits notification frequency for noisy, high-frequency update streams.
+
+## What It Is
+
+- Core behavior: caps notification count per time window.
+- Value: steadier rendering under heavy input.
+- Semantics: writes still happen; notifications are windowed.
+
+## When to Use
+
+- Drag/scroll/slider style continuous interaction.
+- You care about stable cadence rather than every intermediate value.
+- Side effects or rendering are costly and need rate limits.
+
+## Core API
+
+```ts
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const count = io(0);
+const view = withBehaviors(count, [throttle(50)]);
+
+view.subscribe((value) => {
+  console.log('throttled:', value);
+});
+```
+
+## Live Example
+
+Trigger rapid writes and compare total write count vs throttled notifications.
+
+```tsx live props={{ "client:load": true }}
+import { useEffect, useState } from 'react';
+import { io } from '@iostore/store';
+import { throttle, withBehaviors } from '@iostore/store/behavior';
+
+const store = io(0);
+const view = withBehaviors(store, [throttle(250)]);
+
+function ThrottleLiveDemo() {
+  const [writes, setWrites] = useState(0);
+  const [notifies, setNotifies] = useState(0);
+  const [lastNotified, setLastNotified] = useState<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = view.subscribe((value) => {
+      setNotifies((n) => n + 1);
+      setLastNotified(value);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const burst = () => {
+    for (let i = 0; i < 20; i += 1) {
+      setWrites((n) => n + 1);
+      store.set((n) => n + 1);
+    }
+  };
+
+  return (
+    <section className="io-live">
+      <div>Write calls: {writes}</div>
+      <div>Throttled notifications: {notifies}</div>
+      <div>Last notified value: {lastNotified ?? 'none yet'}</div>
+      <div className="io-live__row">
+        <button type="button" className="io-live__button" onClick={burst}>
+          20 rapid writes
+        </button>
+        <button
+          type="button"
+          className="io-live__button"
+          onClick={() => {
+            setWrites(0);
+            setNotifies(0);
+            setLastNotified(null);
+            store.set(0);
+          }}
+        >
+          Reset
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default ThrottleLiveDemo;
+```
+
+Watch for this: write volume stays high, but notification frequency is capped by the throttle window.
+
+## Key Options
+
+```ts
+throttle(100, {
+  leading: true,
+  trailing: true,
+});
+```
+
+- `leading`: emit immediately at window start (default `true`).
+- `trailing`: emit latest value at window end (default `true`).
+
+## Common Mistakes
+
+- Disabling `trailing` and missing final values.
+- Setting windows too large and making UI feel laggy.
+- Using Throttle where final-value-only behavior is required.
+
+## Practical Guidance
+
+- Use `leading + trailing` for interactive flows.
+- Start with 50-150ms and tune by UX feedback.
+- In pipelines with side effects, throttle first, then run effect.
+
+## Next Steps
+
+- Use [Debounce](/en/cookbook/debounce/) when only final input matters.
+- Combine with [Effect](/en/cookbook/effect/) for side-effect pipelines.

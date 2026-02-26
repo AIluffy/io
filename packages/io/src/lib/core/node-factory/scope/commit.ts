@@ -1,17 +1,17 @@
-import { isLink } from '../../../utils/link.js';
-import type { NodeFactoryDeps } from '../types.js';
-import type { NodePath } from '../../path-trie.js';
+import type { CommitFactoryTreeDeps } from '../../types.js';
+import type { NodePath } from '../../tree/path-trie.js';
 import type {
-  TreeArrayInternal,
   TreeContext,
   TreeNode,
-  TreeScopeInternal,
   TreeScopeState,
-  UnitInternal,
-} from '../../io-tree-types.js';
+} from '../../tree/io-tree-types.js';
+
+import { createScopeExecutor } from '../../commands/executor.js';
+import { applyScopeCommitDiff } from '../../mutation/commit.js';
+import { createCommitFactory } from '../commit-factory.js';
 
 type CreateScopeCommitOptions = {
-  deps: NodeFactoryDeps;
+  deps: CommitFactoryTreeDeps;
   ctx: TreeContext;
   path: NodePath;
   state: TreeScopeState;
@@ -28,98 +28,21 @@ type CreateScopeCommitOptions = {
 export function createScopeCommit(
   options: CreateScopeCommitOptions,
 ): (fn: (draft: Record<string, unknown>) => void) => void {
-  const {
-    deps,
-    ctx,
-    path,
-    state,
-    createTreeNode,
-    resolvePatchValue,
-    snapshot,
-    getNode,
-  } = options;
-
-  return (fn: (draft: Record<string, unknown>) => void): void => {
-    state.isCommitting = true;
-    try {
-      const before = snapshot();
-      const draft = deps.createDraft(before);
-      fn(draft);
-      const next = deps.finishDraft(draft);
-
-      const nextAny = next as unknown as Record<PropertyKey, unknown>;
-      for (const key of Reflect.ownKeys(nextAny)) {
+  return createCommitFactory<TreeScopeState, Record<string, unknown>>({
+    ...options,
+    executorFactory: createScopeExecutor,
+    validateNext: (before, next) => {
+      for (const key of Reflect.ownKeys(next as Record<PropertyKey, unknown>)) {
         if (!Reflect.has(before as object, key))
           throw new Error(`ioTree scope: unknown key ${String(key)}`);
       }
-
-      const baseRevision = state.revision;
-      const { changed, patches } = deps.applyScopeCommitDiff(
+    },
+    applyDiff: (state, before, next, commitDeps) =>
+      applyScopeCommitDiff(
         state,
         before,
-        nextAny,
-        {
-          isPlainObject: deps.isPlainObject,
-          isUnit: deps.isUnit,
-          isLink,
-          getInternalKind: (node: TreeNode) => deps.getInternal(node)?.kind,
-          getScopeState: (node: TreeNode) =>
-            (
-              deps.requireInternalOfKind(
-                node,
-                'scope',
-                'ioTree commit: invalid scope internal',
-              ) as TreeScopeInternal
-            ).getState(),
-          getArrayState: (node: TreeNode) =>
-            (
-              deps.requireInternalOfKind(
-                node,
-                'array',
-                'ioTree commit: invalid array internal',
-              ) as TreeArrayInternal
-            ).getState(),
-          setUnitValue: (node: TreeNode, value: unknown) => {
-            const internal = deps.requireInternalOfKind(
-              node,
-              'unit',
-              'ioTree commit: invalid unit internal',
-            ) as UnitInternal;
-            internal.setValue(value, { emitUpdate: false, emitValue: true });
-          },
-          getNodeValue: (node: TreeNode) =>
-            deps.getNodeValue(node, new WeakMap()),
-          resolvePatchValue,
-          createTreeNode: (absPath: NodePath, value: unknown) =>
-            createTreeNode(ctx, absPath, value),
-          detachChildFromScope: deps.detachChildFromScope,
-          attachChildToScope: deps.attachChildToScope,
-          detachChildFromArray: deps.detachChildFromArray,
-          attachChildToArray: deps.attachChildToArray,
-          unregisterSubtree: (absPath: NodePath, node: TreeNode) =>
-            deps.unregisterSubtree(ctx, absPath, node),
-          registerSubtree: (absPath: NodePath, node: TreeNode) =>
-            deps.registerSubtree(ctx, absPath, node),
-          getPathNode: (absPath: NodePath) => deps.getPathNode(ctx, absPath),
-          emitScopeValue: deps.emitScopeValue,
-          emitArrayValue: deps.emitArrayValue,
-          markDirty: deps.markDirty,
-          cloneValue: deps.cloneValue,
-        },
-      );
-
-      if (!changed) return;
-      state.revision += 1;
-      deps.emitScopeUpdate(
-        state,
-        deps.createUpdate(baseRevision, state.revision, patches),
-      );
-      deps.emitScopeValue(state);
-    } catch (error) {
-      deps.emitError(getNode(), error, path, 'commit');
-      throw error;
-    } finally {
-      state.isCommitting = false;
-    }
-  };
+        next as Record<PropertyKey, unknown>,
+        commitDeps,
+      ),
+  });
 }

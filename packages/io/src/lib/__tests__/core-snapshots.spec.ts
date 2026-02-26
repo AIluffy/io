@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createDirtyIndexState } from '../core/dirty-indices.js';
-import { createArraySnapshotReader } from '../core/snapshot-array.js';
+import { createDirtyIndexState } from '../core/mutation/dirty-indices.js';
+import { createSnapshotCache } from '../core/snapshot/snapshot-cache.js';
+import { createArraySnapshotReader } from '../core/snapshot/snapshot-array.js';
 import {
   createNodeValueReader,
   createScopeSnapshotReader,
-} from '../core/snapshot-scope.js';
-import { createTreeContext } from '../core/tree-context.js';
+} from '../core/snapshot/snapshot-scope.js';
+import { createTreeContext } from '../core/tree/tree-context.js';
 
 describe('core/snapshot readers', () => {
   it('returns previous scope snapshot when state is clean', () => {
@@ -91,12 +92,37 @@ describe('core/snapshot readers', () => {
     expect(invalidDirtyState.dirtyIndices.items).toEqual([]);
   });
 
+  it('rebuilds full array snapshot when previous length mismatches', () => {
+    const reader = createArraySnapshotReader({
+      getNodeValue: (node) => node,
+    });
+    const prev = Object.freeze([1]) as unknown[];
+    const state = {
+      node: {},
+      children: [1, 2],
+      dirtyStructure: false,
+      dirtyIndices: createDirtyIndexState(2),
+      valueEpoch: 2,
+      snapshotCache: {
+        value: prev,
+        version: 1,
+        hasValue: true,
+      },
+    };
+    state.dirtyIndices.items.push(1);
+    state.dirtyIndices.marks[1] = state.dirtyIndices.version;
+
+    const next = reader(state as never);
+    expect(next).toEqual([1, 2]);
+    expect(next).not.toBe(prev);
+  });
+
   it('prefers snapshot() for unknown internals and falls back otherwise', () => {
     const nodeReader = createNodeValueReader({
       getScopeSnapshot: () => ({ v: 1 }),
       getArraySnapshot: () => [1],
     });
-    const cache = new WeakMap<object, unknown>();
+    const cache = createSnapshotCache();
     const withSnapshot = {
       snapshot: () => ({ ok: true }),
     };

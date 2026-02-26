@@ -1,0 +1,55 @@
+---
+title: "IoHistoryOptions"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoHistoryOptions
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| limit | `number` |
+| emitUpdate | `boolean` |
+| filter | `'all' \| 'exclude-undo-redo' \| ((update: IoUpdate) => boolean)` |
+| groupBy | `(update: IoUpdate) => PropertyKey \| undefined` |
+
+## 最小示例
+
+```ts
+import type { IoHistoryOptions } from '@iostore/store/patches';
+
+let value!: IoHistoryOptions;
+console.log(value);
+```
+
+## 字段说明
+
+- `limit`：历史最大长度，默认 `Infinity`。
+- `emitUpdate`：回放（undo/redo）时是否继续发 update，默认 `true`。
+- `filter`：历史过滤策略，默认 `exclude-undo-redo`。
+- `groupBy`：分组键生成器，返回相同键的连续更新会归入同组。
+
+## 常见误用
+
+- `groupBy` 直接返回对象引用，导致分组不稳定。
+- `filter` 写得过严，导致历史几乎为空，`undo` 看起来“失效”。
+
+## 相关 API
+
+- [createHistory](../create-history/)
+- [IoHistory](../io-history/)
+- [IoUpdate](../io-update/)
+
+## 源码
+
+- `packages/io/src/lib/utils/types/types.ts`

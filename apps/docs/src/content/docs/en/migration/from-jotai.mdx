@@ -1,0 +1,74 @@
+---
+title: Migrate from Jotai
+description: Map atom workflows to IO Units, derived values, and path-based composition.
+sidebar:
+  order: 4
+---
+
+This page is for teams with large atom graphs who want to keep fine-grained subscriptions while reducing atom-management overhead.
+
+## When to Prioritize This Migration
+
+- Atom count keeps growing and boundaries are harder to manage.
+- You want atom-level reads with structure-first modeling.
+- You need cross-framework runtime reuse.
+
+## Concept Mapping
+
+| Jotai | IO Equivalent | Notes |
+| --- | --- | --- |
+| `atom(value)` | `io(value)` | Primitive atoms map directly. |
+| `atom((get) => ...)` | `derived([...], compute)` | Derived semantics remain the same. |
+| writable atom | action function + `set` / `commit` | Separate read/write responsibilities. |
+| `useAtom` | `useIO` | Read and write can be split explicitly. |
+
+## Migration Steps
+
+### 1) Replace primitive atoms
+
+```ts
+import { io } from '@iostore/store';
+
+export const count = io(0);
+```
+
+### 2) Replace derived atoms
+
+```ts
+import { derived } from '@iostore/store/derived';
+
+export const double = derived([count], (v) => v * 2);
+```
+
+### 3) Replace writable logic
+
+```ts
+export const inc = () => count.set((v) => v + 1);
+```
+
+### 4) Replace React usage
+
+```tsx
+import { useIO } from '@iostore/react';
+
+function Counter() {
+  const value = useIO(count);
+  return <button onClick={inc}>{value}</button>;
+}
+```
+
+## Common Pitfalls
+
+- Keeping old atom-dispatch architecture after migration.
+- Leaving write/derive logic inline in components.
+- Not centralizing derived computations with `derived`.
+
+## Validation Checklist
+
+- Core atoms are now Units or path Units.
+- Writable derived behavior moved to action functions.
+- Derived calculations are centralized and reusable.
+
+## Next Steps
+
+- Read [Unit](/en/fundamentals/unit/) and [Derived Values](/en/cookbook/derived/).

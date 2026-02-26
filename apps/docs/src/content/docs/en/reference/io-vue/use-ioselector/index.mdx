@@ -1,0 +1,52 @@
+---
+title: "useIOSelector"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TSource, TSelected>(source: IoSource<TSource>, selector: (value: TSource) => TSelected, options?: IoSelectorOptions<TSelected>) => ShallowRef<TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<TSource>` |
+| selector | `(value: TSource) => TSelected` |
+| options | `IoSelectorOptions<TSelected>` |
+
+## Returns
+
+`ShallowRef<TSelected>`
+
+## Minimal Example
+
+```ts
+import { useIOSelector } from '@iostore/vue';
+
+const result = useIOSelector(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useIO](../use-io/)
+- [useQuery](../use-query/)
+- [IoVueQueryResult](../io-vue-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/adapters.ts`
