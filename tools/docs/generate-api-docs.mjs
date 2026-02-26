@@ -357,13 +357,19 @@ function renderFrontmatter({ title, description, extra }) {
   )}\ndescription: ${JSON.stringify(safeDescription)}${extraBlock}\n---\n`;
 }
 
+function escapeMarkdownTableCell(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|');
+}
+
 function renderParamsTable(params, labels) {
   if (!params || params.length === 0)
     return `\n## ${labels.parameters}\n\n${labels.none}\n`;
   const rows = params
     .map((p) => {
-      const safeName = String(p.name).replace(/\|/g, '\\|');
-      const safeType = String(p.type).replace(/\|/g, '\\|');
+      const safeName = escapeMarkdownTableCell(p.name);
+      const safeType = escapeMarkdownTableCell(p.type);
       return `| ${safeName} | \`${safeType}\` |`;
     })
     .join('\n');
@@ -374,8 +380,8 @@ function renderPropertiesTable(properties, labels) {
   if (!properties || properties.length === 0) return '';
   const rows = properties
     .map((p) => {
-      const safeName = String(p.name).replace(/\|/g, '\\|');
-      const safeType = String(p.type).replace(/\|/g, '\\|');
+      const safeName = escapeMarkdownTableCell(p.name);
+      const safeType = escapeMarkdownTableCell(p.type);
       return `| ${safeName} | \`${safeType}\` |`;
     })
     .join('\n');
