@@ -1,0 +1,33 @@
+---
+title: "IoFetchStatus"
+description: "Fetch-axis status union for query state."
+---
+
+## When to Use
+
+Use this type to model whether a query request is currently in flight.
+
+## Signature
+
+```ts
+type IoFetchStatus = 'idle' | 'fetching';
+```
+
+## Minimal Example
+
+```ts
+const isFetching = state.fetchStatus === 'fetching';
+```
+
+## Common Pitfalls
+
+- Reading only `fetchStatus` and ignoring `status` can blur first-load vs refetch semantics.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoQueryState](../io-query-state/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

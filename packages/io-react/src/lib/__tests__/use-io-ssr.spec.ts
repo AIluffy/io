@@ -33,7 +33,7 @@ describe('@iostore/react SSR', () => {
         snapshot: () => 7,
         subscribe,
       };
-      const { useIO, useIOSelector } = await import('../use-io.js');
+      const { useIO, useIOSelector } = await import('../../index.js');
       const value = useIO(source);
       const selected = useIOSelector(source, (v) => v + 1);
 

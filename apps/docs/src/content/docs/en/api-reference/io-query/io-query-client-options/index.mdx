@@ -16,12 +16,12 @@ IoQueryClientOptions
 
 ## Properties
 
-| Name | Type |
-| --- | --- |
-| defaultStaleTime | `number` |
-| defaultGcTime | `number` |
-| defaultRetry | `number` |
-| defaultRetryDelay | `(attempt: number) => number` |
+| Name | Type | Required | Default |
+| --- | --- | --- | --- |
+| defaultStaleTime | `number` | No | `0` |
+| defaultGcTime | `number` | No | `300000` |
+| defaultRetry | `number` | No | `0` |
+| defaultRetryDelay | `(attempt: number) => number` | No | exponential backoff (`1000` to `30000`) |
 
 ## Minimal Example
 

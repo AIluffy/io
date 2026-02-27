@@ -1,13 +1,66 @@
 ---
 title: "createQuery"
-description: "Function API reference."
+description: "Create a standalone query state machine."
 ---
+
+## When to Use
+
+Use `createQuery` when you need a framework-agnostic query instance with explicit lifecycle control.
+In app code, prefer `client.query(...)` for cache reuse and deduplication by key.
 
 ## Signature
 
 ```ts
-<TData = unknown, TError = Error>(options: IoQueryOptions<TData, TError>) => IoQuery<TData, TError>
+function createQuery<TData = unknown, TError = Error>(
+  options: IoQueryOptions<TData, TError>,
+): IoQuery<TData, TError>;
 ```
+
+## Parameters
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `options` | `IoQueryOptions<TData, TError>` | Yes | — | Query key, fetch function, timings, retry policy, and callbacks. |
+
+## Returns
+
+`IoQuery<TData, TError>`
+
+A reactive query object with imperative controls: `fetch`, `fetchQuietly`, `refetch`, `prefetch`, `invalidate`, `cancel`, `setData`, `read`, and `getData`.
+
+## Minimal Example
+
+```ts
+import { createQuery } from '@iostore/store/query';
+
+const userQuery = createQuery({
+  key: ['user', 1],
+  queryFn: async ({ signal }) => {
+    const res = await fetch('/api/users/1', { signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json() as Promise<{ id: number; name: string }>;
+  },
+  staleTime: 10_000,
+  retry: 2,
+});
+
+await userQuery.fetch();
+await userQuery.refetch();
+console.log(userQuery.getData());
+```
+
+## Common Pitfalls
+
+- Not forwarding `signal` to your HTTP client, which makes `cancel()` unable to abort the real request.
+- Creating unstable keys with changing object identity in render loops.
+- Using `createQuery` directly in component code when `client.query(...)` already handles dedupe + cache lifecycle.
+
+## Related APIs
+
+- [IoQuery](../io-query/)
+- [IoQueryOptions](../io-query-options/)
+- [createQueryClient](../create-query-client/)
+- [deriveQueryFlags](../derive-query-flags/)
 
 ## Source
 

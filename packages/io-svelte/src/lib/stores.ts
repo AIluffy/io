@@ -8,7 +8,7 @@ import type {
 import type { Readable, Writable } from 'svelte/store';
 
 import { createScheduledDispatcher } from '@iostore/store';
-import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
+import { getDefaultClient } from '@iostore/store/query';
 
 type IoSource<T> = {
   snapshot(): T;
@@ -42,8 +42,7 @@ export type IoQueryStore<TData, TError = Error> =
 function forceRefetch<TData, TError>(
   query: IoQuery<TData, TError>,
 ): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
+  return query.refetch();
 }
 
 export function toReadable<T>(
@@ -140,9 +139,7 @@ export function toQueryStore<TData, TError = Error>(
       });
 
       if (enabled && subscriberCount === 1) {
-        void query.fetch().catch((error: unknown) => {
-          reportBackgroundError('svelte.toQueryStore(fetch)', error);
-        });
+        query.fetchQuietly();
       }
 
       return () => {

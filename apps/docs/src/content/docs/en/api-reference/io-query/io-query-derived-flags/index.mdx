@@ -1,0 +1,40 @@
+---
+title: "IoQueryDerivedFlags"
+description: "Derived boolean flags for query state rendering."
+---
+
+## When to Use
+
+Use these flags for concise query UI conditions.
+
+## Signature
+
+```ts
+type IoQueryDerivedFlags = {
+  readonly isPending: boolean;
+  readonly isSuccess: boolean;
+  readonly isError: boolean;
+  readonly isFetching: boolean;
+  readonly isLoading: boolean;
+  readonly isRefetching: boolean;
+};
+```
+
+## Minimal Example
+
+```ts
+const { isLoading, isError, isRefetching } = query.flags;
+```
+
+## Common Pitfalls
+
+- Interpreting `isFetching` as initial loading; use `isLoading` for first-load semantics.
+
+## Related APIs
+
+- [IoQuery](../io-query/)
+- [deriveQueryFlags](../derive-query-flags/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

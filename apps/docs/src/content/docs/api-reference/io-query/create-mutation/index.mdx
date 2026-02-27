@@ -1,13 +1,63 @@
 ---
 title: "createMutation"
-description: "函数 API 参考。"
+description: "创建独立 Mutation 状态机。"
 ---
+
+## 何时使用
+
+当你需要处理写操作（提交、重试、取消、回调）并暴露响应式 mutation 状态时使用 `createMutation`。
 
 ## 签名
 
 ```ts
-<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>
+function createMutation<
+  TData = unknown,
+  TVariables = void,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): IoMutation<TData, TVariables, TError>;
 ```
+
+## 参数
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `options` | `IoMutationOptions<TData, TVariables, TError, TContext>` | Yes | — | 配置 mutationFn、重试策略与生命周期回调。 |
+
+## 返回
+
+`IoMutation<TData, TVariables, TError>`
+
+## 最小示例
+
+```ts
+const mutation = createMutation({
+  mutationFn: (title: string) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    }).then((r) => r.json()),
+  retry: 1,
+});
+
+const created = await mutation.mutateAsync('Ship docs update');
+console.log(created);
+```
+
+## 常见误用
+
+- 乐观更新时不返回可回滚上下文，失败后无法恢复。
+- 把取消误判为业务失败。
+- UI 不消费 `mutation.flags`，导致状态反馈不完整。
+
+## 相关 API
+
+- [IoMutation](../io-mutation/)
+- [IoMutationOptions](../io-mutation-options/)
+- [deriveMutationFlags](../derive-mutation-flags/)
 
 ## 源码
 

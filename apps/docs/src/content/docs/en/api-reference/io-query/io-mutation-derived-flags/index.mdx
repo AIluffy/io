@@ -1,0 +1,40 @@
+---
+title: "IoMutationDerivedFlags"
+description: "Derived boolean flags for mutation UI state."
+---
+
+## When to Use
+
+Use this type for mutation status booleans consumed by UI.
+
+## Signature
+
+```ts
+type IoMutationDerivedFlags = {
+  readonly isIdle: boolean;
+  readonly isPending: boolean;
+  readonly isSuccess: boolean;
+  readonly isError: boolean;
+};
+```
+
+## Minimal Example
+
+```ts
+if (mutation.flags.isPending) {
+  showSpinner();
+}
+```
+
+## Common Pitfalls
+
+- Treating flags as independent; they are mutually exclusive per status.
+
+## Related APIs
+
+- [IoMutation](../io-mutation/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

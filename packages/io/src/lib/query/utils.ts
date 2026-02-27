@@ -89,6 +89,7 @@ function serialize(value: unknown, seen: WeakSet<object>): string {
     }
 
     const record = value as Record<string | symbol, unknown>;
+    // Deterministic hashing requires stable key ordering across runtimes.
     const keys = Object.keys(record).sort();
     if (Object.getOwnPropertySymbols(record).length > 0) {
       throw createInvalidKeyTypeError('symbol');
@@ -121,9 +122,10 @@ export function keyMatches(
   queryKey: IoQueryKey,
   filterKey: IoQueryKey,
   exact = false,
+  queryKeyHash?: string,
 ): boolean {
   if (exact) {
-    return hashKey(queryKey) === hashKey(filterKey);
+    return (queryKeyHash ?? hashKey(queryKey)) === hashKey(filterKey);
   }
 
   if (filterKey.length > queryKey.length) {

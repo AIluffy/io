@@ -1,0 +1,60 @@
+---
+title: "IoMutationOptions"
+description: "Configuration object for createMutation."
+---
+
+## When to Use
+
+Pass this object to `createMutation` or `client.mutation`.
+
+## Signature
+
+```ts
+type IoMutationOptions<TData, TVariables, TError, TContext> = {
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  retry?: number;
+  retryDelay?: (attempt: number) => number;
+  onMutate?: (variables: TVariables) => TContext | Promise<TContext>;
+  onSuccess?: (data: TData, variables: TVariables, context: TContext) => void;
+  onError?: (error: TError, variables: TVariables, context: TContext) => void;
+  onSettled?: (data: TData | undefined, error: TError | null, variables: TVariables, context: TContext) => void;
+};
+```
+
+## Properties
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `mutationFn` | `(variables: TVariables) => Promise<TData>` | Yes | — | Mutation executor. |
+| `retry` | `number` | No | `0` | Retry attempts. |
+| `retryDelay` | `(attempt: number) => number` | No | `min(1000 * 2^attempt, 30000)` | Delay between retries. |
+| `onMutate` | `(variables) => TContext \| Promise<TContext>` | No | `undefined` | Runs before execute, can return optimistic context. |
+| `onSuccess` | `(data, variables, context) => void` | No | `undefined` | Success callback. |
+| `onError` | `(error, variables, context) => void` | No | `undefined` | Error callback. |
+| `onSettled` | `(data, error, variables, context) => void` | No | `undefined` | Settled callback. |
+
+## Minimal Example
+
+```ts
+const mutation = createMutation({
+  mutationFn: (input: { title: string }) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }).then((r) => r.json()),
+  retry: 1,
+});
+```
+
+## Common Pitfalls
+
+- Omitting rollback context in optimistic flows.
+
+## Related APIs
+
+- [createMutation](../create-mutation/)
+- [IoMutation](../io-mutation/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

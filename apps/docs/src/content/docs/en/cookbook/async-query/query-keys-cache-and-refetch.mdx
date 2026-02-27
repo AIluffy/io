@@ -2,7 +2,7 @@
 title: Query Keys, Cache, and Refetch
 description: Design deterministic keys and explicit refresh rules.
 sidebar:
-  order: 3
+  order: 6
 ---
 
 ## What It Is
@@ -42,7 +42,7 @@ await list.refetch();
 
 ## Practical Guidance
 
-- Use a consistent `resource + params` key shape.
+- Use a consistent `entity/key-prefix + params` key shape.
 - Keep param naming and ordering deterministic.
 - Tune `staleTime` based on data volatility.
 

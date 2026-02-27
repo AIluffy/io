@@ -2,7 +2,7 @@ import type {
   UseMutationResult,
   UseQueryResult,
   UseSuspenseQueryResult,
-} from '../use-query.js';
+} from '../../index.js';
 import type { ReactTestRenderer } from 'react-test-renderer';
 
 import { createQueryClient } from '@iostore/store/query';
@@ -10,7 +10,7 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useMutation, useQuery, useSuspenseQuery } from '../use-query.js';
+import { useMutation, useQuery, useSuspenseQuery } from '../../index.js';
 
 const createRenderer = (element: unknown): ReactTestRenderer =>
   TestRenderer.create(element as never);

@@ -6,17 +6,7 @@ export {
   resetDefaultClient,
 } from './client.js';
 export {
-  DEFAULT_GC_TIME,
-  DEFAULT_RETRY_ATTEMPTS,
-  DEFAULT_STALE_TIME,
-  createAbortError,
-  defaultRetryDelay,
   hashKey,
-  isAbortError,
-  keyMatches,
-  reportBackgroundError,
-  shouldRetry,
-  sleep,
 } from './utils.js';
 export type {
   IoDataStatus,

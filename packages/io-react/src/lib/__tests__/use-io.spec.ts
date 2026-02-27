@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 import { schedule, withBehaviors } from '@iostore/store/behavior';
 
-import { useIO, useIOSelector } from '../use-io.js';
+import { useIO, useIOSelector } from '../../index.js';
 
 const createRenderer = (element: unknown): TestRenderer.ReactTestRenderer =>
   TestRenderer.create(element as never);

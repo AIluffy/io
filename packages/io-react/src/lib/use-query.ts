@@ -15,7 +15,6 @@ import {
   deriveMutationFlags,
   deriveQueryFlags,
   getDefaultClient,
-  reportBackgroundError,
 } from '@iostore/store/query';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -24,8 +23,7 @@ import { useIO } from './use-io.js';
 function forceRefetch<TData, TError>(
   query: IoQuery<TData, TError>,
 ): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
+  return query.refetch();
 }
 
 export type UseQueryOptions<TData, TError = Error> =
@@ -83,9 +81,7 @@ export function useQuery<TData, TError = Error>(
     if (!enabled || queryOptions.autoFetch === true) {
       return;
     }
-    void query.fetch().catch((error: unknown) => {
-      reportBackgroundError('react.useQuery(fetch)', error);
-    });
+    query.fetchQuietly();
   }, [enabled, query, queryOptions.autoFetch]);
 
   useEffect(

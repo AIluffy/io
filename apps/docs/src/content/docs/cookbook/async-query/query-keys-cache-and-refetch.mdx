@@ -2,7 +2,7 @@
 title: Query Key、缓存与刷新
 description: 建立稳定 key 与缓存命中规则，控制自动/手动刷新边界。
 sidebar:
-  order: 3
+  order: 6
 ---
 
 ## 是什么
@@ -42,7 +42,7 @@ await list.refetch();
 
 ## 实践建议
 
-- 统一使用“资源名 + 参数对象”的 key 结构。
+- 统一使用“实体前缀（entity/key prefix）+ 参数对象”的 key 结构。
 - 参数对象字段顺序与命名保持稳定。
 - 为高频页面设置合理 `staleTime`，减少无意义重复请求。
 

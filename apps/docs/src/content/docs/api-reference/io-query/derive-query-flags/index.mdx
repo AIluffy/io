@@ -1,0 +1,39 @@
+---
+title: "deriveQueryFlags"
+description: "根据 IoQueryState 计算派生布尔标记。"
+---
+
+## 何时使用
+
+当你只有原始 `IoQueryState`，但需要和 `query.flags` 相同的派生标记时使用。
+
+## 签名
+
+```ts
+function deriveQueryFlags<TData, TError>(
+  state: IoQueryState<TData, TError>,
+): IoQueryDerivedFlags;
+```
+
+## 最小示例
+
+```ts
+const flags = deriveQueryFlags(query.snapshot());
+if (flags.isRefetching) {
+  console.log('后台刷新中');
+}
+```
+
+## 常见误用
+
+- 把 `isLoading`（首次加载）和 `isRefetching`（后台刷新）混为一谈。
+
+## 相关 API
+
+- [IoQueryState](../io-query-state/)
+- [IoQueryDerivedFlags](../io-query-derived-flags/)
+- [IoQuery](../io-query/)
+
+## 源码
+
+- `packages/io/src/lib/query/query.ts`

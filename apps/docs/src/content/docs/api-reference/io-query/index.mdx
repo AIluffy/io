@@ -3,16 +3,35 @@ title: "API 参考: @iostore/store/query"
 description: "@iostore/store/query 的导出 API 列表。"
 ---
 
+## 函数
+
 - [createQueryClient](./create-query-client/)
 - [createQuery](./create-query/)
 - [createMutation](./create-mutation/)
 - [getDefaultClient](./get-default-client/)
 - [resetDefaultClient](./reset-default-client/)
+- [deriveQueryFlags](./derive-query-flags/)
+- [deriveMutationFlags](./derive-mutation-flags/)
+- [hashKey](./hash-key/)
+
+## 类型
+
+- [IoDataStatus](./io-data-status/)
+- [IoFetchStatus](./io-fetch-status/)
+- [IoQuery](./io-query/)
+- [IoQueryState](./io-query-state/)
+- [IoQueryDerivedFlags](./io-query-derived-flags/)
+- [IoQueryOptions](./io-query-options/)
+- [IoQueryKey](./io-query-key/)
+- [IoQueryFilter](./io-query-filter/)
+- [IoQueryCacheEvent](./io-query-cache-event/)
 - [IoQueryClient](./io-query-client/)
 - [IoQueryClientOptions](./io-query-client-options/)
-- [IoQueryFilter](./io-query-filter/)
-- [IoQueryKey](./io-query-key/)
-- [IoQueryOptions](./io-query-options/)
-- [IoQueryState](./io-query-state/)
+- [IoMutation](./io-mutation/)
+- [IoMutationState](./io-mutation-state/)
+- [IoMutationStatus](./io-mutation-status/)
+- [IoMutationDerivedFlags](./io-mutation-derived-flags/)
+- [IoMutationOptions](./io-mutation-options/)
+- [IoUnsubscribe](./io-unsubscribe/)
 
-> `createResource` 与 `IoResource*` 已移除，参见旧页面中的迁移说明。
+> `createResource` 与 `IoResource*` 已移除，不再属于公开 Query API。

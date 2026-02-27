@@ -1,0 +1,40 @@
+---
+title: "IoQueryDerivedFlags"
+description: "用于渲染 Query 状态的布尔派生标记类型。"
+---
+
+## 何时使用
+
+用于简化 Query UI 条件判断。
+
+## 签名
+
+```ts
+type IoQueryDerivedFlags = {
+  readonly isPending: boolean;
+  readonly isSuccess: boolean;
+  readonly isError: boolean;
+  readonly isFetching: boolean;
+  readonly isLoading: boolean;
+  readonly isRefetching: boolean;
+};
+```
+
+## 最小示例
+
+```ts
+const { isLoading, isError, isRefetching } = query.flags;
+```
+
+## 常见误用
+
+- 把 `isFetching` 当作首次加载；首次加载应看 `isLoading`。
+
+## 相关 API
+
+- [IoQuery](../io-query/)
+- [deriveQueryFlags](../derive-query-flags/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

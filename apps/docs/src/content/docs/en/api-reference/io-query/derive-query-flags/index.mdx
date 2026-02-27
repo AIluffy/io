@@ -1,0 +1,39 @@
+---
+title: "deriveQueryFlags"
+description: "Compute query derived boolean flags from IoQueryState."
+---
+
+## When to Use
+
+Use this helper when you want flag values from a raw `IoQueryState` object.
+
+## Signature
+
+```ts
+function deriveQueryFlags<TData, TError>(
+  state: IoQueryState<TData, TError>,
+): IoQueryDerivedFlags;
+```
+
+## Minimal Example
+
+```ts
+const flags = deriveQueryFlags(query.snapshot());
+if (flags.isRefetching) {
+  console.log('background refresh in progress');
+}
+```
+
+## Common Pitfalls
+
+- Confusing `isLoading` (first load) with `isRefetching` (background refresh).
+
+## Related APIs
+
+- [IoQueryState](../io-query-state/)
+- [IoQueryDerivedFlags](../io-query-derived-flags/)
+- [IoQuery](../io-query/)
+
+## Source
+
+- `packages/io/src/lib/query/query.ts`

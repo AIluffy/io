@@ -1,0 +1,39 @@
+---
+title: "deriveMutationFlags"
+description: "Compute mutation derived boolean flags from IoMutationState."
+---
+
+## When to Use
+
+Use this helper when you consume `IoMutationState` directly and need convenience flags.
+
+## Signature
+
+```ts
+function deriveMutationFlags<TData, TError>(
+  state: IoMutationState<TData, TError>,
+): IoMutationDerivedFlags;
+```
+
+## Minimal Example
+
+```ts
+const flags = deriveMutationFlags(mutation.snapshot());
+if (flags.isPending) {
+  console.log('submitting...');
+}
+```
+
+## Common Pitfalls
+
+- Reading flags from stale snapshots rather than current mutation state.
+
+## Related APIs
+
+- [IoMutationState](../io-mutation-state/)
+- [IoMutationDerivedFlags](../io-mutation-derived-flags/)
+- [IoMutation](../io-mutation/)
+
+## Source
+
+- `packages/io/src/lib/query/mutation.ts`

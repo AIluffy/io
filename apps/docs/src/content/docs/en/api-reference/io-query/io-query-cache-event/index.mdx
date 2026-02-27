@@ -1,0 +1,38 @@
+---
+title: "IoQueryCacheEvent"
+description: "Event payload emitted by IoQueryClient.subscribe."
+---
+
+## When to Use
+
+Use this type when observing query cache lifecycle events.
+
+## Signature
+
+```ts
+type IoQueryCacheEvent = {
+  type: 'query-added' | 'query-updated' | 'query-removed';
+  query: IoQuery<unknown, unknown>;
+};
+```
+
+## Minimal Example
+
+```ts
+const unsub = client.subscribe((event) => {
+  console.log(event.type, event.query.keyHash);
+});
+```
+
+## Common Pitfalls
+
+- Doing expensive work on every `query-updated` event without filtering.
+
+## Related APIs
+
+- [IoQueryClient](../io-query-client/)
+- [IoQuery](../io-query/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

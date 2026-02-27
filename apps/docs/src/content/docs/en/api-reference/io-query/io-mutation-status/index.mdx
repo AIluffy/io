@@ -1,0 +1,35 @@
+---
+title: "IoMutationStatus"
+description: "Status union for mutation lifecycle."
+---
+
+## When to Use
+
+Use this type to model mutation lifecycle stages.
+
+## Signature
+
+```ts
+type IoMutationStatus = 'idle' | 'pending' | 'success' | 'error';
+```
+
+## Minimal Example
+
+```ts
+if (mutation.snapshot().status === 'pending') {
+  showSpinner();
+}
+```
+
+## Common Pitfalls
+
+- Treating `success` as persistent truth after a new mutation starts.
+
+## Related APIs
+
+- [IoMutationState](../io-mutation-state/)
+- [IoMutationDerivedFlags](../io-mutation-derived-flags/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

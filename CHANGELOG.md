@@ -1,3 +1,15 @@
+## Unreleased
+
+### 💥 Breaking Changes
+
+- **query:** 收窄 `@iostore/store/query` 公开导出并移除 `@iostore/store/query/internal` 子路径，不再对包外暴露 `reportBackgroundError` 等内部符号。
+
+### 🚀 Features
+
+- **query:** `IoQuery` 新增 `refetch()` 和 `getData()`。
+- **query:** `IoQuery` 新增 `fetchQuietly()`，统一副作用场景的静默抓取语义。
+- **query:** 提取 `retry-executor`、`fetch-controller`、`gc-scheduler`，重构 query 执行路径并保留原有状态机语义。
+
 ## 0.0.2 (2026-02-25)
 
 ### 🚀 Features

@@ -2,7 +2,7 @@
 title: Vanilla：Query Client 与生命周期
 description: 用无框架方式掌握 query client、预取、刷新、取消与失效。
 sidebar:
-  order: 2
+  order: 4
 ---
 
 ## 是什么
@@ -40,6 +40,11 @@ await userQuery.refetch();
 userQuery.cancel();
 client.invalidateQueries({ key: ['user', 1] });
 ```
+
+## fetch 与 refetch 的区别
+
+- `fetch()` 会遵守 `staleTime` 新鲜度语义：数据新鲜时可能直接返回缓存。
+- `refetch()` 会强制触发新请求，是显式刷新入口。
 
 ## 常见误区
 

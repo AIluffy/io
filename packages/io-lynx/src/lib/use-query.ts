@@ -9,7 +9,6 @@ import type {
 import {
   deriveQueryFlags,
   getDefaultClient,
-  reportBackgroundError,
 } from '@iostore/store/query';
 import { useEffect } from '@lynx-js/react';
 
@@ -36,8 +35,7 @@ export type IoLynxQueryResult<TData, TError = Error> =
 function forceRefetch<TData, TError>(
   query: IoQuery<TData, TError>,
 ): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
+  return query.refetch();
 }
 
 export function useQuery<TData, TError = Error>(
@@ -60,9 +58,7 @@ export function useQuery<TData, TError = Error>(
     if (!enabled || queryOptions.autoFetch === true) {
       return;
     }
-    void query.fetch().catch((error: unknown) => {
-      reportBackgroundError('lynx.useQuery(fetch)', error);
-    });
+    query.fetchQuietly();
   }, [enabled, query, queryOptions.autoFetch]);
 
   useEffect(

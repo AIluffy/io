@@ -2,7 +2,7 @@
 title: "Vanilla: Query Client and Lifecycle"
 description: Learn prefetch, refetch, cancel, and invalidation without framework abstractions.
 sidebar:
-  order: 2
+  order: 4
 ---
 
 ## What It Is
@@ -40,6 +40,12 @@ await userQuery.refetch();
 userQuery.cancel();
 client.invalidateQueries({ key: ['user', 1] });
 ```
+
+
+## Fetch vs Refetch
+
+- `fetch()` respects freshness (`staleTime`): it may return cached data without a network call.
+- `refetch()` always forces a new request and is the explicit refresh API.
 
 ## Common Pitfalls
 

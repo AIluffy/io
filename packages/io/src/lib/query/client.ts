@@ -40,13 +40,23 @@ type QueryOptionsInput<TData, TError> = IoQueryOptions<TData, TError> & {
   canFetch?: boolean;
 };
 
-function matchesFilter(query: AnyQuery, filter?: IoQueryFilter): boolean {
+function matchesFilter(
+  query: AnyQuery,
+  filter?: IoQueryFilter,
+  filterKeyHash?: string,
+): boolean {
   if (!filter) {
     return true;
   }
 
-  if (filter.key && !keyMatches(query.key, filter.key, filter.exact ?? false)) {
-    return false;
+  if (filter.key) {
+    if (filter.exact ?? false) {
+      if (query.keyHash !== (filterKeyHash ?? hashKey(filter.key))) {
+        return false;
+      }
+    } else if (!keyMatches(query.key, filter.key, false, query.keyHash)) {
+      return false;
+    }
   }
 
   if (filter.predicate && !filter.predicate(query)) {
@@ -116,8 +126,18 @@ export function createQueryClient(
     });
   };
 
-  const getQueries = (filter?: IoQueryFilter): AnyQuery[] =>
-    Array.from(queries.values()).filter((query) => matchesFilter(query, filter));
+  const getQueries = (filter?: IoQueryFilter): AnyQuery[] => {
+    if (!filter) {
+      return Array.from(queries.values());
+    }
+
+    const filterKeyHash =
+      filter.key && (filter.exact ?? false) ? hashKey(filter.key) : undefined;
+
+    return Array.from(queries.values()).filter((query) => {
+      return matchesFilter(query, filter, filterKeyHash);
+    });
+  };
 
   const resolveQueryOptions = <TData, TError>(
     queryOptions: QueryOptionsInput<TData, TError>,
@@ -139,12 +159,18 @@ export function createQueryClient(
 
     if (existing) {
       const internal = getQueryInternal(existing);
-      internal?.updateOptions(
+      if (!internal) {
+        throw new Error(
+          `createQueryClient: internal query API is unavailable for key ${keyHash}`,
+        );
+      }
+
+      internal.updateOptions(
         resolveQueryOptions(queryOptions, () => {
           removeByHash(keyHash, false);
         }),
       );
-      internal?.touch();
+      internal.touch();
       return existing;
     }
 
@@ -215,7 +241,7 @@ export function createQueryClient(
       key,
       queryFn: async () => {
         throw new Error(
-          `setQueryData: queryFn is not available for key ${hashKey(key)}`,
+          `setQueryData: seeded query has no queryFn for key ${hashKey(key)}. Call client.query(...) first to attach a queryFn.`,
         );
       },
       autoFetch: false,

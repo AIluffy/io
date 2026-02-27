@@ -10,13 +10,11 @@ import type {
 } from './types.js';
 import {
   DEFAULT_RETRY_ATTEMPTS,
-  createAbortError,
   defaultRetryDelay,
   isAbortError,
   reportBackgroundError,
-  shouldRetry,
-  sleep,
 } from './utils.js';
+import { executeWithRetry } from './retry-executor.js';
 
 type MutationUnitBox<TData, TError> = {
   value: IoUnit<IoMutationState<TData, TError>>;
@@ -61,6 +59,14 @@ export function createMutation<
   let inFlightPromise: Promise<TData> | null = null;
   let runId = 0;
 
+  const runMutationCallback = (scope: string, fn: () => void): void => {
+    try {
+      fn();
+    } catch (error) {
+      reportBackgroundError(scope, error);
+    }
+  };
+
   const mutateAsync = async (variables: TVariables): Promise<TData> => {
     runId += 1;
     const currentRunId = runId;
@@ -87,65 +93,67 @@ export function createMutation<
       });
     });
 
-    const promise = (async () => {
-      let failureCount = 0;
-
-      while (true) {
-        try {
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          const data = await options.mutationFn(variables);
-
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          batch(() => {
-            unit.set({
-              status: 'success',
-              data,
-              error: null,
-              variables,
-              submittedAt: Date.now(),
-            });
+    const promise = executeWithRetry<TData>({
+      run: () => options.mutationFn(variables),
+      retry: options.retry ?? DEFAULT_RETRY_ATTEMPTS,
+      retryDelay: options.retryDelay ?? defaultRetryDelay,
+      signal,
+      isCancelled: () => currentRunId !== runId,
+    })
+      .then((data) => {
+        batch(() => {
+          unit.set({
+            status: 'success',
+            data,
+            error: null,
+            variables,
+            submittedAt: Date.now(),
           });
+        });
 
-          options.onSuccess?.(data, variables, context);
-          options.onSettled?.(data, null, variables, context);
-          return data;
-        } catch (error) {
-          if (isAbortError(error) || signal.aborted || currentRunId !== runId) {
-            batch(() => {
-              unit.set(previousState);
-            });
-            throw createAbortError();
-          }
-
-          failureCount += 1;
-          const retry = options.retry ?? DEFAULT_RETRY_ATTEMPTS;
-          if (!shouldRetry(failureCount, retry, error)) {
-            batch(() => {
-              unit.set({
-                status: 'error',
-                data: previousState.data,
-                error: error as TError,
-                variables,
-                submittedAt: Date.now(),
-              });
-            });
-
-            options.onError?.(error as TError, variables, context);
-            options.onSettled?.(undefined, error as TError, variables, context);
-            throw error;
-          }
-
-          const retryDelay = options.retryDelay ?? defaultRetryDelay;
-          await sleep(retryDelay(failureCount - 1), signal);
+        if (options.onSuccess) {
+          runMutationCallback('mutation.onSuccess', () => {
+            options.onSuccess?.(data, variables, context);
+          });
         }
-      }
-    })();
+        if (options.onSettled) {
+          runMutationCallback('mutation.onSettled', () => {
+            options.onSettled?.(data, null, variables, context);
+          });
+        }
+        return data;
+      })
+      .catch((error: unknown) => {
+        if (isAbortError(error) || signal.aborted || currentRunId !== runId) {
+          batch(() => {
+            unit.set(previousState);
+          });
+          throw error;
+        }
+
+        batch(() => {
+          unit.set({
+            status: 'error',
+            data: previousState.data,
+            error: error as TError,
+            variables,
+            submittedAt: Date.now(),
+          });
+        });
+
+        if (options.onError) {
+          runMutationCallback('mutation.onError', () => {
+            options.onError?.(error as TError, variables, context);
+          });
+        }
+        if (options.onSettled) {
+          runMutationCallback('mutation.onSettled', () => {
+            options.onSettled?.(undefined, error as TError, variables, context);
+          });
+        }
+
+        throw error;
+      });
 
     inFlightPromise = promise;
 

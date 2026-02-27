@@ -1,0 +1,35 @@
+---
+title: "IoDataStatus"
+description: "Data-axis status union for query state."
+---
+
+## When to Use
+
+Use this type to describe the data lifecycle axis in query state.
+
+## Signature
+
+```ts
+type IoDataStatus = 'pending' | 'success' | 'error';
+```
+
+## Minimal Example
+
+```ts
+function isReady(status: IoDataStatus): boolean {
+  return status === 'success';
+}
+```
+
+## Common Pitfalls
+
+- Treating `pending` as equivalent to `fetching`; fetch progress is tracked by `IoFetchStatus`.
+
+## Related APIs
+
+- [IoFetchStatus](../io-fetch-status/)
+- [IoQueryState](../io-query-state/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

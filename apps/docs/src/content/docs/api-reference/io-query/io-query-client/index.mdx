@@ -1,55 +1,67 @@
 ---
 title: "IoQueryClient"
-description: "类型 API 参考。"
+description: "Query 缓存客户端公开接口类型。"
 ---
-
 
 ## 何时使用
 
-当你需要复用类型结构时使用此类型别名。
+当你需要通过统一接口创建 Query/Mutation、执行批量缓存操作、监听缓存事件时使用 `IoQueryClient`。
 
 ## 签名
 
 ```ts
-IoQueryClient
+type IoQueryClient = {
+  query<TData = unknown, TError = Error>(options: IoQueryOptions<TData, TError>): IoQuery<TData, TError>;
+  mutation<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(
+    options: IoMutationOptions<TData, TVariables, TError, TContext>,
+  ): IoMutation<TData, TVariables, TError>;
+  invalidateQueries(filter?: IoQueryFilter, refetch?: boolean): void;
+  cancelQueries(filter?: IoQueryFilter): void;
+  removeQueries(filter?: IoQueryFilter): void;
+  getQueryData<TData = unknown>(key: IoQueryKey): TData | undefined;
+  setQueryData<TData = unknown>(key: IoQueryKey, updater: TData | ((prev: TData | undefined) => TData)): void;
+  getQuery<TData = unknown, TError = Error>(key: IoQueryKey): IoQuery<TData, TError> | undefined;
+  getQueries(filter?: IoQueryFilter): IoQuery<unknown, unknown>[];
+  clear(): void;
+  subscribe(fn: (event: IoQueryCacheEvent) => void): IoUnsubscribe;
+};
 ```
 
 ## 属性
 
-| Name | Type |
-| --- | --- |
-| query | `<TData = unknown, TError = Error>(options: IoQueryOptions<TData, TError>) => IoQuery<TData, TError>` |
-| mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
-| getQueryData | `<TData>(key: IoQueryKey) => TData \| undefined` |
-| setQueryData | `<TData = unknown>(key: IoQueryKey, updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
-| getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQuery<TData, TError> \| undefined` |
-| getQueries | `(filter?: IoQueryFilter) => IoQuery<unknown, unknown>[]` |
-| invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
-| cancelQueries | `(filter?: IoQueryFilter) => void` |
-| removeQueries | `(filter?: IoQueryFilter) => void` |
-| subscribe | `(fn: (event: IoQueryCacheEvent) => void) => IoUnsubscribe` |
-| clear | `() => void` |
+| Member | Category | Description |
+| --- | --- | --- |
+| `query`、`mutation` | 工厂方法 | 创建或复用 Query / Mutation 实例。 |
+| `getQueryData`、`setQueryData`、`getQuery`、`getQueries` | 缓存访问 | 按 key / filter 读写缓存。 |
+| `invalidateQueries`、`cancelQueries`、`removeQueries`、`clear` | 批量控制 | 对命中查询集合执行批量操作。 |
+| `subscribe` | 事件监听 | 监听 `query-added` / `query-updated` / `query-removed`。 |
 
 ## 最小示例
 
 ```ts
-import type { IoQueryClient } from '@iostore/store/query';
+const client = createQueryClient();
 
-let value!: IoQueryClient;
-console.log(value);
+const todos = client.query({
+  key: ['todos'],
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+await todos.fetch();
+client.invalidateQueries({ key: ['todos'] });
 ```
 
 ## 常见误用
 
-- 避免在用户文档中展开过于复杂的类型细节。
-- 调整类型别名时注意下游兼容性。
+- 使用过于宽泛的 filter 执行 `removeQueries`，误删无关缓存。
+- 只用 `setQueryData` 写入 key，却从不注册对应 query 配置。
 
 ## 相关 API
 
-- [IoQueryClientOptions](../io-query-client-options/)
+- [createQueryClient](../create-query-client/)
 - [IoQueryFilter](../io-query-filter/)
-- [IoQueryOptions](../io-query-options/)
+- [IoQueryCacheEvent](../io-query-cache-event/)
 
 ## 源码
 
 - `packages/io/src/lib/query/types.ts`
+- `packages/io/src/lib/query/client.ts`

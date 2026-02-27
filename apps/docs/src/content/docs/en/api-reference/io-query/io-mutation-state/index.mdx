@@ -1,0 +1,42 @@
+---
+title: "IoMutationState"
+description: "Reactive state shape for a mutation instance."
+---
+
+## When to Use
+
+Use this type when consuming mutation snapshots directly.
+
+## Signature
+
+```ts
+type IoMutationState<TData = unknown, TError = Error> = {
+  readonly status: IoMutationStatus;
+  readonly data: TData | undefined;
+  readonly error: TError | null;
+  readonly variables: unknown | undefined;
+  readonly submittedAt: number;
+};
+```
+
+## Minimal Example
+
+```ts
+const state = mutation.snapshot();
+if (state.status === 'error') {
+  console.error(state.error);
+}
+```
+
+## Common Pitfalls
+
+- Assuming `variables` has a concrete type from this state type alone.
+
+## Related APIs
+
+- [IoMutation](../io-mutation/)
+- [IoMutationStatus](../io-mutation-status/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

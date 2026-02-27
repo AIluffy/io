@@ -13,24 +13,24 @@ const docsSite = process.env.DOCS_SITE_URL ?? 'https://docs.iostore.dev';
 const sidebarTopics = [
   {
     id: 'docs',
-    label: { 'zh-CN': '基础文档', en: 'Docs' },
+    label: { 'zh-CN': '核心文档', en: 'Core Docs' },
     link: '/start-here/quick-start/',
     items: [
       {
-        label: 'Start Here',
-        translations: { 'zh-CN': '快速上手' },
+        label: 'Getting Started',
+        translations: { 'zh-CN': '入门指南' },
         collapsed: false,
         autogenerate: { directory: 'start-here' },
       },
       {
-        label: 'Fundamentals',
-        translations: { 'zh-CN': '核心原理' },
+        label: 'Core Concepts',
+        translations: { 'zh-CN': '核心概念' },
         collapsed: false,
         autogenerate: { directory: 'fundamentals' },
       },
       {
-        label: 'Cookbook',
-        translations: { 'zh-CN': '实践配方' },
+        label: 'Practical Guides',
+        translations: { 'zh-CN': '实战指南' },
         collapsed: false,
         items: [
           {
@@ -69,14 +69,14 @@ const sidebarTopics = [
         ],
       },
       {
-        label: 'Frameworks',
+        label: 'Framework Integration',
         translations: { 'zh-CN': '框架集成' },
         collapsed: true,
         autogenerate: { directory: 'frameworks' },
       },
       {
-        label: 'Migration',
-        translations: { 'zh-CN': '迁移指南' },
+        label: 'Migration & Upgrade',
+        translations: { 'zh-CN': '迁移与升级' },
         collapsed: true,
         autogenerate: { directory: 'migration' },
       },
@@ -84,15 +84,16 @@ const sidebarTopics = [
   },
   {
     id: 'query',
-    label: { 'zh-CN': 'Query 文档', en: 'Query Docs' },
+    label: { 'zh-CN': 'Query 工程', en: 'Query Engineering' },
     link: '/cookbook/async-query/',
     items: [
       {
-        label: 'Query Foundations',
-        translations: { 'zh-CN': '查询基础' },
+        label: 'Query Architecture',
+        translations: { 'zh-CN': '查询架构' },
         collapsed: false,
         items: [
           { slug: 'cookbook/async-query' },
+          { slug: 'cookbook/async-query/tutorial-async-todo-list' },
           { slug: 'cookbook/async-query/playground' },
           { slug: 'cookbook/async-query/vanilla-query-client-and-lifecycle' },
           { slug: 'cookbook/async-query/useio-and-common-capabilities' },
@@ -105,8 +106,8 @@ const sidebarTopics = [
         ],
       },
       {
-        label: 'Framework Adapters',
-        translations: { 'zh-CN': '框架适配' },
+        label: 'Adapter Integrations',
+        translations: { 'zh-CN': '适配器集成' },
         collapsed: false,
         items: [
           { slug: 'cookbook/async-query/react-adapter' },
@@ -123,7 +124,7 @@ const sidebarTopics = [
   },
   {
     id: 'api',
-    label: { 'zh-CN': 'API', en: 'API' },
+    label: { 'zh-CN': '接口参考', en: 'API Reference' },
     link: '/api-reference/',
     items: [
       {

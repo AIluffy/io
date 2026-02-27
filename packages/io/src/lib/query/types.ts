@@ -49,8 +49,11 @@ export type IoQuery<TData = unknown, TError = Error> =
     readonly key: IoQueryKey;
     readonly keyHash: string;
     fetch(): Promise<TData>;
+    fetchQuietly(): void;
+    refetch(): Promise<TData>;
     prefetch(): Promise<void>;
     read(): TData;
+    getData(): TData | undefined;
     invalidate(refetch?: boolean): void;
     cancel(): void;
     setData(updater: TData | ((prev: TData | undefined) => TData)): void;

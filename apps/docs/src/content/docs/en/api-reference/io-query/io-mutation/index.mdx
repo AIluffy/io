@@ -1,0 +1,43 @@
+---
+title: "IoMutation"
+description: "Reactive mutation instance type."
+---
+
+## When to Use
+
+Use `IoMutation` to execute writes and observe mutation lifecycle state.
+
+## Signature
+
+```ts
+type IoMutation<TData = unknown, TVariables = void, TError = Error> =
+  IoUnit<IoMutationState<TData, TError>> & {
+    mutate(variables: TVariables): void;
+    mutateAsync(variables: TVariables): Promise<TData>;
+    reset(): void;
+    cancel(): void;
+    readonly flags: IoMutationDerivedFlags;
+  };
+```
+
+## Minimal Example
+
+```ts
+mutation.mutate({ title: 'todo' });
+const created = await mutation.mutateAsync({ title: 'todo-2' });
+console.log(created, mutation.flags.isSuccess);
+```
+
+## Common Pitfalls
+
+- Using `mutate` where a Promise chain is required; use `mutateAsync` there.
+
+## Related APIs
+
+- [createMutation](../create-mutation/)
+- [IoMutationOptions](../io-mutation-options/)
+- [IoMutationState](../io-mutation-state/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

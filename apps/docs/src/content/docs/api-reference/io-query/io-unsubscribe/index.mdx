@@ -1,0 +1,36 @@
+---
+title: "IoUnsubscribe"
+description: "订阅取消函数类型。"
+---
+
+## 何时使用
+
+用于表示各类 `subscribe(...)` 返回的取消订阅函数。
+
+## 签名
+
+```ts
+type IoUnsubscribe = () => void;
+```
+
+## 最小示例
+
+```ts
+const unsub: IoUnsubscribe = query.subscribe(() => {
+  console.log(query.snapshot());
+});
+unsub();
+```
+
+## 常见误用
+
+- 在长生命周期副作用中忘记调用取消订阅。
+
+## 相关 API
+
+- [IoQuery](../io-query/)
+- [IoQueryClient](../io-query-client/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

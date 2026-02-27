@@ -2,7 +2,7 @@
 title: 分页、预取与取消
 description: 在长列表中平衡体验与流量，避免并发覆盖和重复项。
 sidebar:
-  order: 5
+  order: 8
 ---
 
 ## 是什么
@@ -42,6 +42,11 @@ if (current.getData()?.hasMore) {
 
 current.cancel();
 ```
+
+## getData() 与 snapshot().data
+
+`current.getData()` 是 `current.snapshot().data` 的快捷写法。  
+两者都读取当前缓存数据，按可读性选择即可。
 
 ## 常见误区
 

@@ -20,6 +20,7 @@ description: "Function API reference."
 - `options.client` is optional.
 - If omitted, useQuery uses [getDefaultClient](/en/api-reference/io-query/get-default-client/).
 - Pass a custom `client` only for request-scoped SSR, test isolation, or multiple cache domains.
+- Adapter-triggered lifecycle fetches use `query.fetchQuietly()` internally.
 
 ## Returns
 

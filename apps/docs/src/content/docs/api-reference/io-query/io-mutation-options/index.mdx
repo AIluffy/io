@@ -1,0 +1,60 @@
+---
+title: "IoMutationOptions"
+description: "createMutation 的配置对象类型。"
+---
+
+## 何时使用
+
+传给 `createMutation` 或 `client.mutation` 的配置对象。
+
+## 签名
+
+```ts
+type IoMutationOptions<TData, TVariables, TError, TContext> = {
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  retry?: number;
+  retryDelay?: (attempt: number) => number;
+  onMutate?: (variables: TVariables) => TContext | Promise<TContext>;
+  onSuccess?: (data: TData, variables: TVariables, context: TContext) => void;
+  onError?: (error: TError, variables: TVariables, context: TContext) => void;
+  onSettled?: (data: TData | undefined, error: TError | null, variables: TVariables, context: TContext) => void;
+};
+```
+
+## 属性
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `mutationFn` | `(variables: TVariables) => Promise<TData>` | Yes | — | 执行提交请求。 |
+| `retry` | `number` | No | `0` | 重试次数。 |
+| `retryDelay` | `(attempt: number) => number` | No | `min(1000 * 2^attempt, 30000)` | 每次重试间隔。 |
+| `onMutate` | `(variables) => TContext \| Promise<TContext>` | No | `undefined` | 执行前回调，可返回乐观上下文。 |
+| `onSuccess` | `(data, variables, context) => void` | No | `undefined` | 成功回调。 |
+| `onError` | `(error, variables, context) => void` | No | `undefined` | 失败回调。 |
+| `onSettled` | `(data, error, variables, context) => void` | No | `undefined` | 结束回调。 |
+
+## 最小示例
+
+```ts
+const mutation = createMutation({
+  mutationFn: (input: { title: string }) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }).then((r) => r.json()),
+  retry: 1,
+});
+```
+
+## 常见误用
+
+- 乐观更新流程中未保存可回滚上下文。
+
+## 相关 API
+
+- [createMutation](../create-mutation/)
+- [IoMutation](../io-mutation/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

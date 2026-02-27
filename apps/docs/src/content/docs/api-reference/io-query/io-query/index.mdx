@@ -1,0 +1,90 @@
+---
+title: "IoQuery"
+description: "createQuery/client.query 返回的响应式 Query 实例类型。"
+---
+
+## 何时使用
+
+当你既需要响应式读取（`get`、`snapshot`、`subscribe`），又需要命令式控制（`fetch`、`invalidate`、`cancel`）时使用 `IoQuery`。
+
+## 签名
+
+```ts
+type IoQuery<TData = unknown, TError = Error> =
+  IoUnit<IoQueryState<TData, TError>> & {
+    readonly key: IoQueryKey;
+    readonly keyHash: string;
+    fetch(): Promise<TData>;
+    fetchQuietly(): void;
+    refetch(): Promise<TData>;
+    prefetch(): Promise<void>;
+    read(): TData;
+    getData(): TData | undefined;
+    invalidate(refetch?: boolean): void;
+    cancel(): void;
+    setData(updater: TData | ((prev: TData | undefined) => TData)): void;
+    readonly isActive: boolean;
+    readonly observerCount: number;
+    readonly flags: IoQueryDerivedFlags;
+  };
+```
+
+## 属性
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `key` | `IoQueryKey` | 创建 Query 时使用的原始 key。 |
+| `keyHash` | `string` | 用于缓存索引的稳定 hash。 |
+| `isActive` | `boolean` | 是否存在订阅者。 |
+| `observerCount` | `number` | 当前订阅者数量。 |
+| `flags` | `IoQueryDerivedFlags` | 当前状态的布尔派生标记。 |
+
+## 方法
+
+| Method | Signature | Description |
+| --- | --- | --- |
+| `fetch` | `() => Promise<TData>` | 按 stale 语义抓取；数据新鲜时可直接返回缓存。 |
+| `fetchQuietly` | `() => void` | 副作用场景下的静默抓取（fire-and-forget）。 |
+| `refetch` | `() => Promise<TData>` | 强制发起新请求。 |
+| `prefetch` | `() => Promise<void>` | 后台预取，返回 `void`。 |
+| `read` | `() => TData` | Suspense 风格读取，可能抛 `Promise` / `Error`。 |
+| `getData` | `() => TData \| undefined` | 返回当前缓存数据快捷读取。 |
+| `invalidate` | `(refetch?: boolean) => void` | 标记过期并可选触发后台刷新。 |
+| `cancel` | `() => void` | 取消当前在途请求。 |
+| `setData` | `(updater) => void` | 手动写入缓存并置为成功态。 |
+| `get / snapshot / subscribe / reset` | 来自 `IoUnit` | 基础响应式读写与订阅能力。 |
+
+## 最小示例
+
+```ts
+const query = client.query({
+  key: ['todos'],
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+const unsub = query.subscribe(() => {
+  console.log(query.snapshot().status, query.flags.isFetching);
+});
+
+query.fetchQuietly();
+await query.refetch();
+unsub();
+```
+
+## 常见误用
+
+- 在命令式流程里调用 `read()`，却没有处理其抛出语义。
+- 误以为 `fetch()` 总会走网络；数据新鲜时会命中缓存。
+- 长生命周期订阅未及时取消。
+
+## 相关 API
+
+- [IoQueryState](../io-query-state/)
+- [IoQueryDerivedFlags](../io-query-derived-flags/)
+- [createQuery](../create-query/)
+- [IoQueryClient](../io-query-client/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`
+- `packages/io/src/lib/query/query.ts`

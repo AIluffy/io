@@ -16,6 +16,10 @@ description: "Function API reference."
 | query | `IoQuery<TData, TError>` |
 | options | `IoQueryStoreOptions` |
 
+## Notes
+
+- On first subscription, lifecycle fetches use `query.fetchQuietly()` internally.
+
 ## Returns
 
 `IoQueryStore<TData, TError>`

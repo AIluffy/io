@@ -1,0 +1,43 @@
+---
+title: "IoMutation"
+description: "响应式 Mutation 实例类型。"
+---
+
+## 何时使用
+
+当你要执行写操作并观察 mutation 生命周期状态时使用 `IoMutation`。
+
+## 签名
+
+```ts
+type IoMutation<TData = unknown, TVariables = void, TError = Error> =
+  IoUnit<IoMutationState<TData, TError>> & {
+    mutate(variables: TVariables): void;
+    mutateAsync(variables: TVariables): Promise<TData>;
+    reset(): void;
+    cancel(): void;
+    readonly flags: IoMutationDerivedFlags;
+  };
+```
+
+## 最小示例
+
+```ts
+mutation.mutate({ title: 'todo' });
+const created = await mutation.mutateAsync({ title: 'todo-2' });
+console.log(created, mutation.flags.isSuccess);
+```
+
+## 常见误用
+
+- 需要 Promise 链路却使用 `mutate`，此时应使用 `mutateAsync`。
+
+## 相关 API
+
+- [createMutation](../create-mutation/)
+- [IoMutationOptions](../io-mutation-options/)
+- [IoMutationState](../io-mutation-state/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

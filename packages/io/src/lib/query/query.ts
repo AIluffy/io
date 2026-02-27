@@ -2,6 +2,8 @@ import { io } from '../core/api/io.js';
 import { batch } from '../utils/reactive/batch.js';
 import type { IoUnit } from '../utils/types/types.js';
 
+import { createFetchController } from './fetch-controller.js';
+import { createGcScheduler } from './gc-scheduler.js';
 import type {
   IoQuery,
   IoQueryDerivedFlags,
@@ -12,13 +14,9 @@ import {
   DEFAULT_GC_TIME,
   DEFAULT_RETRY_ATTEMPTS,
   DEFAULT_STALE_TIME,
-  createAbortError,
   defaultRetryDelay,
   hashKey,
-  isAbortError,
   reportBackgroundError,
-  shouldRetry,
-  sleep,
 } from './utils.js';
 
 const QUERY_INTERNAL = Symbol.for('@iostore/store/query/internal');
@@ -101,6 +99,18 @@ function normalizeOptions<TData, TError>(
   };
 }
 
+function patchState<TData, TError>(
+  unit: IoUnit<IoQueryState<TData, TError>>,
+  patch: Partial<IoQueryState<TData, TError>>,
+): void {
+  batch(() => {
+    unit.set({
+      ...unit.snapshot(),
+      ...patch,
+    });
+  });
+}
+
 export function deriveQueryFlags<TData, TError>(
   state: IoQueryState<TData, TError>,
 ): IoQueryDerivedFlags {
@@ -131,31 +141,28 @@ export function createQuery<TData = unknown, TError = Error>(
   const internalOptions = options as InternalQueryOptions<TData, TError>;
   const keyHash = hashKey(options.key);
   const initialState = createInitialState(options);
-  const holder = io(
+  const stateContainer = io(
     { value: initialState },
     { shallow: true },
   ) as unknown as QueryUnitBox<TData, TError>;
-  const unit = holder.value;
+  const unit = stateContainer.value;
 
   let resolvedOptions = normalizeOptions(internalOptions);
-  let inFlightPromise: Promise<TData> | null = null;
-  let abortController: AbortController | null = null;
-  let gcTimer: ReturnType<typeof setTimeout> | null = null;
   let observerCount = 0;
   let invalidated = false;
-  let runId = 0;
+  const queryRef: { current?: QueryWithInternal<TData, TError> } = {};
+  let hasInFlight = (): boolean => false;
 
-  const clearGcTimer = (): void => {
-    if (!gcTimer) {
-      return;
-    }
-    clearTimeout(gcTimer);
-    gcTimer = null;
-  };
-
-  const touch = (): void => {
-    clearGcTimer();
-  };
+  const gcScheduler = createGcScheduler({
+    getGcTime: () => resolvedOptions.gcTime,
+    hasObservers: () => observerCount > 0,
+    hasInFlight: () => hasInFlight(),
+    onCollect: () => {
+      if (queryRef.current) {
+        resolvedOptions.onGarbageCollect?.(queryRef.current);
+      }
+    },
+  });
 
   const isStale = (state: IoQueryState<TData, TError>): boolean => {
     if (invalidated) {
@@ -170,21 +177,40 @@ export function createQuery<TData = unknown, TError = Error>(
     return Date.now() - state.dataUpdatedAt >= resolvedOptions.staleTime;
   };
 
+  const fetchController = createFetchController<TData, TError>({
+    keyHash,
+    unit,
+    touch: gcScheduler.touch,
+    scheduleGc: gcScheduler.schedule,
+    clearInvalidated: () => {
+      invalidated = false;
+    },
+    isStale,
+    getOptions: () => resolvedOptions,
+  });
+  hasInFlight = fetchController.hasInFlight;
+
+  const runFetchQuietly = (scope: string, force = false): void => {
+    void fetchController.execute(force).catch((error: unknown) => {
+      reportBackgroundError(scope, error);
+    });
+  };
+
   const query: QueryWithInternal<TData, TError> = {
     get: () => {
-      touch();
+      gcScheduler.touch();
       return unit.get();
     },
     set: (next) => {
-      touch();
+      gcScheduler.touch();
       unit.set(next);
     },
     snapshot: () => {
-      touch();
+      gcScheduler.touch();
       return unit.snapshot();
     },
     subscribe: (fn) => {
-      touch();
+      gcScheduler.touch();
       observerCount += 1;
       const unsub = unit.subscribe(fn);
       let unsubscribed = false;
@@ -195,79 +221,78 @@ export function createQuery<TData = unknown, TError = Error>(
         unsubscribed = true;
         unsub();
         observerCount = Math.max(0, observerCount - 1);
-        scheduleGc();
+        gcScheduler.schedule();
       };
     },
     subscribeUpdate: (fn) => {
-      touch();
+      gcScheduler.touch();
       return unit.subscribeUpdate(fn);
     },
     reset: () => {
       invalidated = false;
-      cancelInFlight();
+      fetchController.cancel();
       batch(() => {
         unit.reset();
       });
-      scheduleGc();
+      gcScheduler.schedule();
     },
     key: options.key,
     keyHash,
-    fetch: () => executeFetch(false),
+    fetch: () => fetchController.execute(false),
+    fetchQuietly: () => {
+      runFetchQuietly('query.fetchQuietly()', false);
+    },
+    refetch: () => fetchController.execute(true),
     prefetch: () =>
-      executeFetch(false)
+      fetchController.execute(false)
         .then(() => undefined)
         .catch((error: unknown) => {
           reportBackgroundError('query.prefetch()', error);
         }),
     read: () => {
-      touch();
+      gcScheduler.touch();
       const state = unit.get();
       if (state.status === 'error' && state.error !== null) {
         throw state.error;
       }
       if (state.status === 'pending') {
-        const pending = inFlightPromise ?? executeFetch(false);
+        const pending =
+          fetchController.getInFlightPromise() ?? fetchController.execute(false);
         throw pending;
       }
       return state.data as TData;
     },
     invalidate: (refetch = true) => {
       invalidated = true;
-      batch(() => {
-        const current = unit.snapshot();
-        unit.set({
-          ...current,
-          dataUpdatedAt: 0,
-        });
+      patchState(unit, {
+        dataUpdatedAt: 0,
       });
+
       if (refetch && resolvedOptions.canFetch) {
-        void executeFetch(true).catch((error: unknown) => {
-          reportBackgroundError('query.invalidate()', error);
-        });
+        runFetchQuietly('query.invalidate()', true);
       }
     },
     cancel: () => {
-      cancelInFlight();
+      fetchController.cancel();
     },
     setData: (updater) => {
       invalidated = false;
-      touch();
-      batch(() => {
-        const current = unit.snapshot();
-        const nextData =
-          typeof updater === 'function'
-            ? (updater as (prev: TData | undefined) => TData)(current.data)
-            : updater;
-        unit.set({
-          ...current,
-          status: 'success',
-          data: nextData,
-          error: null,
-          dataUpdatedAt: Date.now(),
-          failureCount: 0,
-        });
+      gcScheduler.touch();
+      const current = unit.snapshot();
+      const nextData =
+        typeof updater === 'function'
+          ? (updater as (prev: TData | undefined) => TData)(current.data)
+          : updater;
+
+      patchState(unit, {
+        status: 'success',
+        data: nextData,
+        error: null,
+        dataUpdatedAt: Date.now(),
+        failureCount: 0,
       });
     },
+    getData: () => unit.snapshot().data,
     get isActive() {
       return observerCount > 0;
     },
@@ -278,190 +303,17 @@ export function createQuery<TData = unknown, TError = Error>(
       return deriveQueryFlags(unit.get());
     },
   };
-
-  const scheduleGc = (): void => {
-    clearGcTimer();
-    if (observerCount > 0 || inFlightPromise) {
-      return;
-    }
-    if (!Number.isFinite(resolvedOptions.gcTime) || resolvedOptions.gcTime < 0) {
-      return;
-    }
-
-    gcTimer = setTimeout(() => {
-      gcTimer = null;
-      if (observerCount > 0 || inFlightPromise) {
-        return;
-      }
-      resolvedOptions.onGarbageCollect?.(query);
-    }, resolvedOptions.gcTime);
-
-    if (gcTimer && typeof (gcTimer as { unref?: () => void }).unref === 'function') {
-      (gcTimer as { unref: () => void }).unref();
-    }
-  };
-
-  const cancelInFlight = (): void => {
-    if (!inFlightPromise && !abortController) {
-      return;
-    }
-
-    runId += 1;
-    abortController?.abort();
-    abortController = null;
-    inFlightPromise = null;
-
-    batch(() => {
-      const current = unit.snapshot();
-      if (current.fetchStatus === 'idle') {
-        return;
-      }
-      unit.set({
-        ...current,
-        fetchStatus: 'idle',
-      });
-    });
-
-    scheduleGc();
-  };
-
-  const executeFetch = (force = false): Promise<TData> => {
-    touch();
-
-    if (!resolvedOptions.canFetch) {
-      return Promise.reject(
-        new Error(`query.fetch: queryFn is not available for key ${keyHash}`),
-      );
-    }
-
-    const state = unit.snapshot();
-    if (!force && state.status === 'success' && !isStale(state)) {
-      return Promise.resolve(state.data as TData);
-    }
-
-    if (inFlightPromise) {
-      return inFlightPromise;
-    }
-
-    runId += 1;
-    const currentRunId = runId;
-    abortController = new AbortController();
-    const { signal } = abortController;
-
-    batch(() => {
-      const current = unit.snapshot();
-      const nextStatus =
-        current.status === 'success'
-          ? 'success'
-          : current.data === undefined
-            ? 'pending'
-            : 'success';
-      unit.set({
-        ...current,
-        status: nextStatus,
-        fetchStatus: 'fetching',
-        error: null,
-        failureCount: 0,
-      });
-    });
-
-    const promise = (async () => {
-      let failureCount = 0;
-
-      while (true) {
-        try {
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          const data = await resolvedOptions.queryFn({ signal });
-
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          invalidated = false;
-          batch(() => {
-            const current = unit.snapshot();
-            unit.set({
-              ...current,
-              status: 'success',
-              fetchStatus: 'idle',
-              data,
-              error: null,
-              dataUpdatedAt: Date.now(),
-              failureCount: 0,
-            });
-          });
-
-          resolvedOptions.onSuccess?.(data);
-          resolvedOptions.onSettled?.(data, null);
-          return data;
-        } catch (error) {
-          if (isAbortError(error) || signal.aborted || currentRunId !== runId) {
-            batch(() => {
-              if (currentRunId !== runId) {
-                return;
-              }
-              const current = unit.snapshot();
-              if (current.fetchStatus === 'idle') {
-                return;
-              }
-              unit.set({
-                ...current,
-                fetchStatus: 'idle',
-              });
-            });
-            throw createAbortError();
-          }
-
-          failureCount += 1;
-          if (!shouldRetry(failureCount, resolvedOptions.retry, error)) {
-            batch(() => {
-              const current = unit.snapshot();
-              unit.set({
-                ...current,
-                status: 'error',
-                fetchStatus: 'idle',
-                error: error as TError,
-                errorUpdatedAt: Date.now(),
-                failureCount,
-              });
-            });
-
-            resolvedOptions.onError?.(error as TError);
-            resolvedOptions.onSettled?.(undefined, error as TError);
-            throw error;
-          }
-
-          await sleep(resolvedOptions.retryDelay(failureCount - 1), signal);
-        }
-      }
-    })();
-
-    inFlightPromise = promise;
-    void promise
-      .finally(() => {
-        if (inFlightPromise === promise) {
-          inFlightPromise = null;
-        }
-        if (abortController?.signal === signal) {
-          abortController = null;
-        }
-        if (currentRunId === runId) {
-          scheduleGc();
-        }
-      })
-      .catch(() => undefined);
-
-    return promise;
-  };
+  queryRef.current = query;
 
   const internalApi: QueryInternalApi<TData, TError> = {
     updateOptions: (next) => {
-      if (hashKey(next.key) !== keyHash) {
-        throw new Error('createQuery: key mismatch while updating options');
+      const nextKeyHash = hashKey(next.key);
+      if (nextKeyHash !== keyHash) {
+        throw new Error(
+          `createQuery: key mismatch while updating options. Expected "${keyHash}", got "${nextKeyHash}".`,
+        );
       }
+
       resolvedOptions = normalizeOptions(next);
       if (
         resolvedOptions.canFetch &&
@@ -469,13 +321,11 @@ export function createQuery<TData = unknown, TError = Error>(
         unit.snapshot().status === 'pending' &&
         unit.snapshot().fetchStatus === 'idle'
       ) {
-        void executeFetch(false).catch((error: unknown) => {
-          reportBackgroundError('query.updateOptions(autoFetch)', error);
-        });
+        runFetchQuietly('query.updateOptions(autoFetch)', false);
       }
-      scheduleGc();
+      gcScheduler.schedule();
     },
-    touch,
+    touch: gcScheduler.touch,
   };
 
   Object.defineProperty(query, QUERY_INTERNAL, {
@@ -483,11 +333,9 @@ export function createQuery<TData = unknown, TError = Error>(
   });
 
   if (resolvedOptions.autoFetch && resolvedOptions.canFetch) {
-    void executeFetch(false).catch((error: unknown) => {
-      reportBackgroundError('query.create(autoFetch)', error);
-    });
+    runFetchQuietly('query.create(autoFetch)', false);
   } else {
-    scheduleGc();
+    gcScheduler.schedule();
   }
 
   return query;

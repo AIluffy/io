@@ -6,7 +6,7 @@ import type {
 } from '@iostore/store/query';
 import type { ShallowRef } from 'vue';
 
-import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
+import { getDefaultClient } from '@iostore/store/query';
 import { onScopeDispose } from 'vue';
 
 import { useIO, useIOSelector } from './adapters.js';
@@ -32,8 +32,7 @@ export type IoVueQueryResult<TData, TError = Error> = {
 function forceRefetch<TData, TError>(
   query: IoQuery<TData, TError>,
 ): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
+  return query.refetch();
 }
 
 export function useQuery<TData, TError = Error>(
@@ -54,9 +53,7 @@ export function useQuery<TData, TError = Error>(
   const data = useIOSelector(query, (value) => value.data);
 
   if (enabled && queryOptions.autoFetch !== true) {
-    void query.fetch().catch((error: unknown) => {
-      reportBackgroundError('vue.useQuery(fetch)', error);
-    });
+    query.fetchQuietly();
   }
 
   onScopeDispose(() => {

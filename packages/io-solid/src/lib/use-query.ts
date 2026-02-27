@@ -6,7 +6,7 @@ import type {
 } from '@iostore/store/query';
 import type { Accessor } from 'solid-js';
 
-import { getDefaultClient, reportBackgroundError } from '@iostore/store/query';
+import { getDefaultClient } from '@iostore/store/query';
 import { onCleanup } from 'solid-js';
 
 import { useIO, useIOSelector } from './adapters.js';
@@ -33,8 +33,7 @@ export type IoSolidQueryResult<TData, TError = Error> = {
 function forceRefetch<TData, TError>(
   query: IoQuery<TData, TError>,
 ): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
+  return query.refetch();
 }
 
 export function useQuery<TData, TError = Error>(
@@ -56,9 +55,7 @@ export function useQuery<TData, TError = Error>(
   const error = useIOSelector(query, (value) => value.error as TError | null);
 
   if (enabled && queryOptions.autoFetch !== true) {
-    void query.fetch().catch((cause: unknown) => {
-      reportBackgroundError('solid.useQuery(fetch)', cause);
-    });
+    query.fetchQuietly();
   }
 
   onCleanup(() => {

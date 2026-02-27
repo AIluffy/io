@@ -1,0 +1,36 @@
+---
+title: "IoUnsubscribe"
+description: "Function type used to dispose subscriptions."
+---
+
+## When to Use
+
+Use this type for values returned by `subscribe(...)` APIs.
+
+## Signature
+
+```ts
+type IoUnsubscribe = () => void;
+```
+
+## Minimal Example
+
+```ts
+const unsub: IoUnsubscribe = query.subscribe(() => {
+  console.log(query.snapshot());
+});
+unsub();
+```
+
+## Common Pitfalls
+
+- Forgetting to call unsubscribe in long-lived effects.
+
+## Related APIs
+
+- [IoQuery](../io-query/)
+- [IoQueryClient](../io-query-client/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

@@ -1,0 +1,177 @@
+---
+title: Async TodoList Tutorial
+description: A Tic-Tac-Toe-style step-by-step guide to build an async TodoList with Query and React.
+sidebar:
+  order: 2
+---
+import { AsyncTodoLiveCode } from '../../../../../components/AsyncTodoLiveCode';
+
+This tutorial follows the same step-by-step style as the Tic-Tac-Toe guide and builds an async TodoList with query, mutation, cancellation, and retries.
+
+You will learn:
+
+- How to design a stable Query Key for a TodoList.
+- How to build the read path with `useQuery` and forward `AbortSignal`.
+- How to keep write-after-read consistency with `useMutation` + `invalidateQueries`.
+- How to map loading / fetching / error / cancel states into UI behavior.
+
+## 1. Model Data and Async API
+
+Define a todo model, a stable key, and cancellable async functions first.
+
+```ts
+type Todo = {
+  id: string;
+  title: string;
+  done: boolean;
+};
+
+const TODOS_KEY = ['tutorial', 'async-todos'] as const;
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      const error = new Error('The operation was aborted.');
+      error.name = 'AbortError';
+      reject(error);
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function createTodoApi() {
+  let todos: Todo[] = [
+    { id: '1', title: 'Map query lifecycle', done: false },
+    { id: '2', title: 'Add retry strategy', done: true },
+  ];
+
+  return {
+    async list(signal: AbortSignal): Promise<Todo[]> {
+      await sleep(500, signal);
+      return todos.map((todo) => ({ ...todo }));
+    },
+    async add(title: string): Promise<Todo> {
+      const next: Todo = { id: String(Date.now()), title, done: false };
+      todos = [next, ...todos];
+      return next;
+    },
+  };
+}
+```
+
+## 2. Create Query Client and Read Flow
+
+Create a scoped client in the component, then wire `useQuery`.
+
+```tsx
+import { useMemo } from 'react';
+import { useQuery } from '@iostore/react';
+import { createQueryClient } from '@iostore/store/query';
+
+const api = createTodoApi();
+
+function TodoApp() {
+  const client = useMemo(
+    () =>
+      createQueryClient({
+        defaultStaleTime: 2_000,
+        defaultRetry: 1,
+      }),
+    [],
+  );
+
+  const todosQuery = useQuery<Todo[]>({
+    client,
+    key: TODOS_KEY,
+    queryFn: ({ signal }) => api.list(signal),
+    retry: 1,
+    cancelOnUnmount: true,
+  });
+
+  // ...
+}
+```
+
+## 3. Add Mutation and Invalidate on Success
+
+Keep reads and writes separate, then invalidate after successful writes.
+
+```tsx
+import { useMutation } from '@iostore/react';
+
+const addTodo = useMutation<Todo, string>({
+  mutationFn: (title) => api.add(title),
+  onSuccess: () => {
+    client.invalidateQueries({ key: TODOS_KEY });
+  },
+});
+```
+
+For toggle/remove flows, keep the same rule: `onSuccess -> invalidateQueries`.
+
+## 4. Wire UI: Refetch, Cancel, Retry
+
+Map query/mutation status directly to UI interactions.
+
+```tsx
+function TodoApp() {
+  // ...client / todosQuery / addTodo
+  const todos = todosQuery.data ?? [];
+
+  return (
+    <section>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const input = form.elements.namedItem('title') as HTMLInputElement | null;
+          const title = input?.value.trim() ?? '';
+          if (!title) return;
+          addTodo.mutate(title);
+          form.reset();
+        }}
+      >
+        <input name="title" placeholder="Type a task and press Enter" />
+        <button type="submit" disabled={addTodo.isPending}>
+          Add
+        </button>
+      </form>
+
+      <button type="button" onClick={() => void todosQuery.refetch()}>
+        Refresh
+      </button>
+      <button type="button" onClick={() => todosQuery.query.cancel()}>
+        Cancel in-flight request
+      </button>
+
+      {todosQuery.isLoading ? <p>Loading...</p> : null}
+      {todosQuery.error ? <p>Request failed: {String(todosQuery.error)}</p> : null}
+
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>{todo.title}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+```
+
+## 5. Practical Rules
+
+- Use `isLoading` for first paint and `isFetching` for background refresh.
+- Treat `query.cancel()` as control flow, not a business error.
+- Use `retry` for transient network issues, not business validation failures.
+- Keep query keys deterministic and serializable to avoid cache slot drift.
+
+## Live Example
+
+<AsyncTodoLiveCode client:load locale="en" />
+
+## Next Steps
+
+- Continue with [Playground](./playground/)
+- Go deeper with [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)
+- Apply in framework code with [React Adapter](./react-adapter/)

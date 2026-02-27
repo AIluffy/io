@@ -2,7 +2,7 @@
 title: Pagination, Prefetch, and Cancellation
 description: Build scalable long-list behavior with stable keys and controlled prefetching.
 sidebar:
-  order: 5
+  order: 8
 ---
 
 ## What It Is
@@ -42,6 +42,12 @@ if (current.getData()?.hasMore) {
 
 current.cancel();
 ```
+
+
+## getData() vs snapshot().data
+
+`current.getData()` is a shortcut for `current.snapshot().data`.
+Use whichever reads better in your call site; both reflect current cached data.
 
 ## Common Pitfalls
 

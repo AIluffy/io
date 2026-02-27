@@ -1,0 +1,34 @@
+---
+title: "hashKey"
+description: "Deterministically hash IoQueryKey values."
+---
+
+## When to Use
+
+Use `hashKey` for debugging query cache identity and deterministic key comparisons.
+
+## Signature
+
+```ts
+function hashKey(key: IoQueryKey): string;
+```
+
+## Minimal Example
+
+```ts
+const hash = hashKey(['users', { page: 1 }]);
+console.log(hash);
+```
+
+## Common Pitfalls
+
+- Passing non-serializable values (function/symbol/circular refs) throws.
+
+## Related APIs
+
+- [IoQueryKey](../io-query-key/)
+- [IoQueryClient](../io-query-client/)
+
+## Source
+
+- `packages/io/src/lib/query/utils.ts`
