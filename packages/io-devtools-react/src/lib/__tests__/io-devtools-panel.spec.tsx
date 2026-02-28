@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { io } from '@iostore/store';
 import { applyUpdate } from '@iostore/store/patches';
 import { createIoDevtools } from '@iostore/devtools';
-import { IoDevtoolsPanel } from '../io-devtools-panel.js';
+import { IoDevtoolsPanel } from '../../index.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;

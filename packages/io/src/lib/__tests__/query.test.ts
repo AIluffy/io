@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { onError } from '../utils/debug/debug.js';
 import {
   createQueryClient,
   getFocusManager,
@@ -242,6 +243,75 @@ describe('@iostore/query observer runtime', () => {
 
     expect(observer.snapshot().data).toBeGreaterThanOrEqual(2);
 
+    observer.dispose();
+  });
+
+  it('annotates query updates with action/meta during fetch lifecycle', async () => {
+    const client = createQueryClient();
+    const query = client.defineQuery<number>({
+      key: ['action-meta'],
+      queryFn: async () => 1,
+    });
+
+    const updates: Array<{ action?: string; meta?: unknown }> = [];
+    const unsub = query.subscribeUpdate((update) => {
+      updates.push({
+        action: update.action,
+        meta: update.meta,
+      });
+    });
+
+    await expect(query.fetch(true)).resolves.toBe(1);
+
+    unsub();
+
+    const start = updates.find((update) => update.action === 'query.fetch.start');
+    const success = updates.find((update) => update.action === 'query.fetch.success');
+
+    expect(start).toBeDefined();
+    expect(success).toBeDefined();
+    expect(start?.meta).toMatchObject({
+      force: true,
+      keyHash: query.keyHash,
+    });
+    expect(success?.meta).toMatchObject({
+      keyHash: query.keyHash,
+    });
+  });
+
+  it('routes observer background errors to IO onError listeners', async () => {
+    const client = createQueryClient();
+    const observer = client.observeQuery<number>({
+      query: {
+        key: ['observer-background-error'],
+        queryFn: async () => {
+          throw new Error('observer-background-error');
+        },
+        retry: 0,
+      },
+      enabled: false,
+    });
+
+    const events: Array<{ error: unknown; operation: string }> = [];
+    const unsub = onError(observer, (error, _path, operation) => {
+      events.push({
+        error,
+        operation,
+      });
+    });
+
+    observer.setOptions({
+      enabled: true,
+    });
+    await vi.waitFor(() => {
+      expect(events).toHaveLength(1);
+    });
+    expect(events[0].error).toMatchObject({
+      message: 'observer-background-error',
+    });
+    expect(events[0].operation).toBe('applyUpdate');
+
+    unsub();
     observer.dispose();
   });
 });

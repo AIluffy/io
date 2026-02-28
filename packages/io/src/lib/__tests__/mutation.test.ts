@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMutation } from '../query/mutation.js';
+import { onError } from '../utils/debug/debug.js';
 
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -151,5 +152,58 @@ describe('@iostore/query createMutation', () => {
     await expect(errorMutation.mutateAsync(1)).rejects.toBe(sourceError);
     expect(errorMutation.snapshot().status).toBe('error');
     expect(errorMutation.snapshot().error).toMatchObject({ message: 'source-error' });
+  });
+
+  it('annotates mutation updates with action/meta', async () => {
+    const mutation = createMutation<number, number>({
+      mutationFn: async (value) => value + 1,
+    });
+
+    const updates: Array<{ action?: string; meta?: unknown }> = [];
+    const unsub = mutation.subscribeUpdate((update) => {
+      updates.push({
+        action: update.action,
+        meta: update.meta,
+      });
+    });
+
+    await expect(mutation.mutateAsync(2)).resolves.toBe(3);
+    unsub();
+
+    const start = updates.find((update) => update.action === 'mutation.execute.start');
+    const success = updates.find((update) => update.action === 'mutation.execute.success');
+
+    expect(start).toBeDefined();
+    expect(success).toBeDefined();
+    expect(start?.meta).toMatchObject({ runId: 1 });
+    expect(success?.meta).toMatchObject({ runId: 1 });
+  });
+
+  it('routes mutate() background errors to IO onError listeners', async () => {
+    const mutation = createMutation<number, number>({
+      mutationFn: async () => {
+        throw new Error('mutation-background-error');
+      },
+      retry: 0,
+    });
+
+    const events: Array<{ error: unknown; operation: string }> = [];
+    const unsub = onError(mutation, (error, _path, operation) => {
+      events.push({
+        error,
+        operation,
+      });
+    });
+
+    mutation.mutate(1);
+    await vi.waitFor(() => {
+      expect(events).toHaveLength(1);
+    });
+    expect(events[0].error).toMatchObject({
+      message: 'mutation-background-error',
+    });
+    expect(events[0].operation).toBe('applyUpdate');
+
+    unsub();
   });
 });

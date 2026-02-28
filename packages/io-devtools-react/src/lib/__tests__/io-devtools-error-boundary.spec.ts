@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IoDevtoolsErrorBoundary } from '../io-devtools-error-boundary.js';
+import { IoDevtoolsErrorBoundary } from '../../index.js';
 
 describe('@iostore/devtools-react: IoDevtoolsErrorBoundary', () => {
   it('derives state from error', () => {

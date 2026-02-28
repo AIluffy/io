@@ -1,4 +1,5 @@
 import { io } from '../core/api/io.js';
+import { getInternal, registerInternal } from '../utils/internal/internal-access.js';
 import type { IoUnit } from '../utils/types/types.js';
 
 import { getFocusManager } from './focus-manager.js';
@@ -11,6 +12,7 @@ import type {
   IoQueryObserverResult,
   IoQueryState,
 } from './types.js';
+import { setUnitState } from './unit-state.js';
 import {
   isAbortError,
   reportBackgroundError,
@@ -44,11 +46,11 @@ function resolvePlaceholderData<TData>(
   return value;
 }
 
-function runCallback(scope: string, fn: () => void): void {
+function runCallback(scope: string, fn: () => void, target?: unknown): void {
   try {
     fn();
   } catch (error) {
-    reportBackgroundError(scope, error);
+    reportBackgroundError(scope, error, target);
   }
 }
 
@@ -193,12 +195,12 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
       if (resolvedOptions.onSuccess && next.data !== undefined) {
         runCallback('queryObserver.onSuccess', () => {
           resolvedOptions.onSuccess?.(next.data as TSelected);
-        });
+        }, unit);
       }
       if (resolvedOptions.onSettled) {
         runCallback('queryObserver.onSettled', () => {
           resolvedOptions.onSettled?.(next.data, null);
-        });
+        }, unit);
       }
       return;
     }
@@ -207,12 +209,12 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
       if (resolvedOptions.onError) {
         runCallback('queryObserver.onError', () => {
           resolvedOptions.onError?.(next.error as TError);
-        });
+        }, unit);
       }
       if (resolvedOptions.onSettled) {
         runCallback('queryObserver.onSettled', () => {
           resolvedOptions.onSettled?.(undefined, next.error as TError);
-        });
+        }, unit);
       }
     }
   };
@@ -220,7 +222,12 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
   const sync = (): void => {
     const next = buildResult();
     maybeNotifyCallbacks(next);
-    unit.set(next);
+    setUnitState(unit, next, {
+      action: 'query.observer.sync',
+      meta: {
+        keyHash: record.keyHash,
+      },
+    });
   };
 
   const safeFetch = (force: boolean, scope: string): void => {
@@ -228,7 +235,7 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
       if (isAbortError(error)) {
         return;
       }
-      reportBackgroundError(scope, error);
+      reportBackgroundError(scope, error, unit);
     });
   };
 
@@ -299,7 +306,12 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
     subscribe: (fn) => unit.subscribe(fn),
     subscribeUpdate: (fn) => unit.subscribeUpdate(fn),
     reset: () => {
-      unit.set(buildResult());
+      setUnitState(unit, buildResult(), {
+        action: 'query.observer.reset',
+        meta: {
+          keyHash: record.keyHash,
+        },
+      });
     },
     key: record.key,
     keyHash: record.keyHash,
@@ -369,6 +381,11 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
       }
     },
   };
+
+  const internal = getInternal(unit);
+  if (internal) {
+    registerInternal(observer as object, internal);
+  }
 
   return observer;
 }

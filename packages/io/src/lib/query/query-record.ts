@@ -1,10 +1,11 @@
 import { io } from '../core/api/io.js';
 import { batch } from '../utils/reactive/batch.js';
-import type { IoUnit, IoUpdate } from '../utils/types/types.js';
+import type { IoUnit, IoUpdate, IoUpdateAnnotation } from '../utils/types/types.js';
 
 import { createGcScheduler } from './gc-scheduler.js';
 import { createInitialQueryState, deriveQueryFlags } from './query.js';
 import { executeWithRetry } from './retry-executor.js';
+import { readUnitState, setUnitState } from './unit-state.js';
 import type {
   IoQueryDefinition,
   IoQueryDerivedFlags,
@@ -60,12 +61,17 @@ export type QueryRecord<TData, TError> = {
 function patchState<TData, TError>(
   unit: IoUnit<IoQueryState<TData, TError>>,
   patch: Partial<IoQueryState<TData, TError>>,
+  annotation?: IoUpdateAnnotation,
 ): void {
   batch(() => {
-    unit.set({
-      ...unit.snapshot(),
-      ...patch,
-    });
+    setUnitState(
+      unit,
+      (current) => ({
+        ...current,
+        ...patch,
+      }),
+      annotation,
+    );
   });
 }
 
@@ -109,7 +115,7 @@ export function createQueryRecord<TData, TError>(options: {
     gcScheduler.touch();
   };
 
-  const isStale = (state = unit.snapshot()): boolean => {
+  const isStale = (state = readUnitState(unit)): boolean => {
     if (state.isInvalidated) {
       return true;
     }
@@ -132,10 +138,15 @@ export function createQueryRecord<TData, TError>(options: {
     abortController = null;
     inFlightPromise = null;
 
-    const current = unit.snapshot();
+    const current = readUnitState(unit);
     if (current.fetchStatus !== 'idle') {
       patchState(unit, {
         fetchStatus: 'idle',
+      }, {
+        action: 'query.fetch.cancel',
+        meta: {
+          keyHash: definition.keyHash,
+        },
       });
     }
 
@@ -151,7 +162,7 @@ export function createQueryRecord<TData, TError>(options: {
       );
     }
 
-    const state = unit.snapshot();
+    const state = readUnitState(unit);
     if (!force && state.status === 'success' && !isStale(state)) {
       return Promise.resolve(state.data as TData);
     }
@@ -174,6 +185,12 @@ export function createQueryRecord<TData, TError>(options: {
       error: null,
       failureCount: 0,
       failureReason: null,
+    }, {
+      action: 'query.fetch.start',
+      meta: {
+        force,
+        keyHash: definition.keyHash,
+      },
     });
 
     let failureCount = 0;
@@ -190,6 +207,12 @@ export function createQueryRecord<TData, TError>(options: {
             patchState(unit, {
               failureCount: count,
               failureReason: error as TError,
+            }, {
+              action: 'query.fetch.retry',
+              meta: {
+                failureCount: count,
+                keyHash: definition.keyHash,
+              },
             });
           },
         });
@@ -204,6 +227,11 @@ export function createQueryRecord<TData, TError>(options: {
           failureReason: null,
           isInvalidated: false,
           isPlaceholderData: false,
+        }, {
+          action: 'query.fetch.success',
+          meta: {
+            keyHash: definition.keyHash,
+          },
         });
 
         return data;
@@ -214,10 +242,15 @@ export function createQueryRecord<TData, TError>(options: {
           signal.aborted
         ) {
           if (currentGeneration === fetchGeneration) {
-            const current = unit.snapshot();
+            const current = readUnitState(unit);
             if (current.fetchStatus !== 'idle') {
               patchState(unit, {
                 fetchStatus: 'idle',
+              }, {
+                action: 'query.fetch.abort',
+                meta: {
+                  keyHash: definition.keyHash,
+                },
               });
             }
           }
@@ -231,6 +264,11 @@ export function createQueryRecord<TData, TError>(options: {
           errorUpdatedAt: Date.now(),
           failureCount,
           failureReason: error as TError,
+        }, {
+          action: 'query.fetch.error',
+          meta: {
+            keyHash: definition.keyHash,
+          },
         });
 
         throw error;
@@ -260,11 +298,11 @@ export function createQueryRecord<TData, TError>(options: {
     fetch(false)
       .then(() => undefined)
       .catch((error: unknown) => {
-        reportBackgroundError('query.prefetchQuery()', error);
+        reportBackgroundError('query.prefetchQuery()', error, unit);
       });
 
   const ensureData = (): Promise<TData> => {
-    const current = unit.snapshot();
+    const current = readUnitState(unit);
     if (current.status === 'success' && !isStale(current)) {
       return Promise.resolve(current.data as TData);
     }
@@ -274,11 +312,17 @@ export function createQueryRecord<TData, TError>(options: {
   const invalidate = (refetch = true): void => {
     patchState(unit, {
       isInvalidated: true,
+    }, {
+      action: 'query.invalidate',
+      meta: {
+        keyHash: definition.keyHash,
+        refetch,
+      },
     });
 
     if (refetch) {
       void fetch(true).catch((error: unknown) => {
-        reportBackgroundError('query.invalidate()', error);
+        reportBackgroundError('query.invalidate()', error, unit);
       });
     }
   };
@@ -287,7 +331,7 @@ export function createQueryRecord<TData, TError>(options: {
     updater: TData | ((prev: TData | undefined) => TData),
   ): void => {
     touch();
-    const current = unit.snapshot();
+    const current = readUnitState(unit);
     const nextData =
       typeof updater === 'function'
         ? (updater as (prev: TData | undefined) => TData)(current.data)
@@ -302,13 +346,27 @@ export function createQueryRecord<TData, TError>(options: {
       failureReason: null,
       isInvalidated: false,
       isPlaceholderData: false,
+    }, {
+      action: 'query.setData',
+      meta: {
+        keyHash: definition.keyHash,
+      },
     });
   };
 
   const reset = (): void => {
     cancel();
     batch(() => {
-      unit.set(createInitialQueryState<TData, TError>());
+      setUnitState(
+        unit,
+        createInitialQueryState<TData, TError>(),
+        {
+          action: 'query.reset',
+          meta: {
+            keyHash: definition.keyHash,
+          },
+        },
+      );
     });
     gcScheduler.schedule();
   };
@@ -318,6 +376,11 @@ export function createQueryRecord<TData, TError>(options: {
       ...state,
       fetchStatus: 'idle',
       isPlaceholderData: false,
+    }, {
+      action: 'query.hydrate',
+      meta: {
+        keyHash: definition.keyHash,
+      },
     });
   };
 
