@@ -1,3 +1,49 @@
+## 0.0.3 (2026-02-28)
+
+### 🚀 Features
+
+- update publish workflow to include registry URL and improve npm token handling ([f112379](https://github.com/AIluffy/oin/commit/f112379))
+- update CI workflow to use npm exec for Nx commands ([c79263c](https://github.com/AIluffy/oin/commit/c79263c))
+- add Vercel configuration for deployment ([3b5a252](https://github.com/AIluffy/oin/commit/3b5a252))
+- update lint:affected script to specify base and head for improved accuracy ([d080559](https://github.com/AIluffy/oin/commit/d080559))
+- 为 IoUpdate 添加 action 和 meta 字段以支持更新注解 ([55cab3b](https://github.com/AIluffy/oin/commit/55cab3b))
+- 为所有框架适配器添加查询和资源支持 ([7dde592](https://github.com/AIluffy/oin/commit/7dde592))
+- **bench-docs:** 重构文档结构为标签页布局并添加核心指标概览 ([be6fd52](https://github.com/AIluffy/oin/commit/be6fd52))
+- **core:** 修复数组操作越界问题并优化路径管理 ([b17d798](https://github.com/AIluffy/oin/commit/b17d798))
+- **docs:** 为行为文档添加实时演示组件 ([6719f65](https://github.com/AIluffy/oin/commit/6719f65))
+- **history:** 支持分组撤销与自定义过滤策略 ([5940e4b](https://github.com/AIluffy/oin/commit/5940e4b))
+- **io:** 为查询和变更添加错误处理与注解更新 ([3f195cb](https://github.com/AIluffy/oin/commit/3f195cb))
+- **io-solid:** 新增 Solid 框架适配器与示例 ([d03c126](https://github.com/AIluffy/oin/commit/d03c126))
+- **io-solid/io-vue/io-svelte:** 添加 selector 钩子/工具以优化性能 ([4a66a61](https://github.com/AIluffy/oin/commit/4a66a61))
+- **lynx:** 添加 Lynx 适配层和示例 ([32de148](https://github.com/AIluffy/oin/commit/32de148))
+- **nx-cloud:** setup nx cloud workspace ([81b204d](https://github.com/AIluffy/oin/commit/81b204d))
+- **nx-cloud:** setup nx cloud workspace ([c925cf8](https://github.com/AIluffy/oin/commit/c925cf8))
+- **persist:** 支持异步存储、版本策略、部分字段持久化等功能 ([4f67345](https://github.com/AIluffy/oin/commit/4f67345))
+- **query:** 新增 refetch 和 fetchQuietly 方法，重构执行路径并收窄公开导出 ([b723c49](https://github.com/AIluffy/oin/commit/b723c49))
+- **react/lynx:** 添加 useIOSelector 钩子以支持选择性订阅 ([9bf5f05](https://github.com/AIluffy/oin/commit/9bf5f05))
+- **store:** 导出 createScheduledDispatcher 并重构 UI 适配器 ([b3c1274](https://github.com/AIluffy/oin/commit/b3c1274))
+- **store:** 添加子路径导出以支持更好的 tree shaking ([b8d6e44](https://github.com/AIluffy/oin/commit/b8d6e44))
+
+### 🩹 Fixes
+
+- 添加防御性检查防止已处置effect和无效路径删除 ([0fde922](https://github.com/AIluffy/oin/commit/0fde922))
+- **core:** 修复提交差异计算中的路径稳定性问题 ([3d34ed4](https://github.com/AIluffy/oin/commit/3d34ed4))
+
+### 🔥 Performance
+
+- 优化提交性能和内存使用 ([259c102](https://github.com/AIluffy/oin/commit/259c102))
+- 移除性能分析代码并优化不可变克隆和反应式系统 ([ab59b7a](https://github.com/AIluffy/oin/commit/ab59b7a))
+- 重构路径拼接以提升性能 ([987f4e1](https://github.com/AIluffy/oin/commit/987f4e1))
+- 优化订阅和路径处理性能，减少内存分配 ([e5711e2](https://github.com/AIluffy/oin/commit/e5711e2))
+- **array:** 优化数组长度变更时的差异计算和子节点复用 ([dc24ab0](https://github.com/AIluffy/oin/commit/dc24ab0))
+- **snapshot:** 使用即时计算替换惰性属性以提升性能 ([cf01f6d](https://github.com/AIluffy/oin/commit/cf01f6d))
+- **snapshot:** 优化数组快照性能并添加GC报告 ([555a9f8](https://github.com/AIluffy/oin/commit/555a9f8))
+
+### ❤️ Thank You
+
+- ailuffy @AIluffy
+- AIluffy @AIluffy
+
 ## Unreleased
 
 ### 💥 Breaking Changes
