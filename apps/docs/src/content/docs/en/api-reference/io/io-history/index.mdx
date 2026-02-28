@@ -39,23 +39,17 @@ let value!: IoHistory;
 console.log(value);
 ```
 
-## Behavior Notes
-
-- `undo/redo`: move one recorded update at a time.
-- `undoGroup/redoGroup`: move by grouped updates (based on `groupBy`).
-- `checkpoint`: forces the next recorded update into a new group.
-- `cursor`: current pointer (`-1` means before first history entry).
-
 ## Common Pitfalls
 
-- Expecting `undoGroup` batching without configuring `groupBy`.
-- Reusing a history instance after calling `destroy`.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [createHistory](../create-history/)
-- [IoHistoryOptions](../io-history-options/)
-- [undoUpdate](../undo-update/)
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 

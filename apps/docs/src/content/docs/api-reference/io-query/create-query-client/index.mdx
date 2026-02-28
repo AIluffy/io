@@ -11,14 +11,14 @@ description: "函数 API 参考。"
 ## 签名
 
 ```ts
-(clientOptions?: IoQueryClientOptions) => IoQueryClient
+(options?: IoQueryClientOptions) => IoQueryClient
 ```
 
 ## 参数
 
 | Name | Type |
 | --- | --- |
-| clientOptions | `IoQueryClientOptions` |
+| options | `IoQueryClientOptions` |
 
 ## 返回
 
@@ -40,8 +40,10 @@ console.log(result);
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [createMutation](../create-mutation/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## 源码
 

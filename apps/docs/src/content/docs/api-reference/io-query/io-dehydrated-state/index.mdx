@@ -1,0 +1,46 @@
+---
+title: "IoDehydratedState"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoDehydratedState
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| queries | `IoDehydratedQuery[]` |
+
+## 最小示例
+
+```ts
+import type { IoDehydratedState } from '@iostore/store/query';
+
+let value!: IoDehydratedState;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+- [IoFetchStatus](../io-fetch-status/)
+
+## 源码
+
+- `packages/io/src/lib/query/types.ts`

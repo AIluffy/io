@@ -1,39 +1,42 @@
-export { createQuery, deriveQueryFlags } from './query.js';
+export { deriveQueryFlags } from './query.js';
 export { createMutation, deriveMutationFlags } from './mutation.js';
 export {
   createQueryClient,
   getDefaultClient,
+  isDehydratedQuery,
   resetDefaultClient,
+  safeRefetch,
 } from './client.js';
-export {
-  DEFAULT_GC_TIME,
-  DEFAULT_RETRY_ATTEMPTS,
-  DEFAULT_STALE_TIME,
-  createAbortError,
-  defaultRetryDelay,
-  hashKey,
-  isAbortError,
-  keyMatches,
-  reportBackgroundError,
-  shouldRetry,
-  sleep,
-} from './utils.js';
+export { hashKey } from './utils.js';
+export { getFocusManager } from './focus-manager.js';
+export { getOnlineManager } from './online-manager.js';
+
 export type {
   IoDataStatus,
+  IoDehydrateOptions,
+  IoDehydratedQuery,
+  IoDehydratedState,
   IoFetchStatus,
+  IoHydrateOptions,
   IoMutation,
   IoMutationDerivedFlags,
   IoMutationOptions,
   IoMutationState,
   IoMutationStatus,
-  IoQuery,
   IoQueryCacheEvent,
   IoQueryClient,
   IoQueryClientOptions,
+  IoQueryDefinition,
   IoQueryDerivedFlags,
   IoQueryFilter,
+  IoQueryHandle,
+  IoQueryInput,
   IoQueryKey,
-  IoQueryOptions,
+  IoQueryObserver,
+  IoQueryObserverCallbacks,
+  IoQueryObserverOptions,
+  IoQueryObserverResult,
   IoQueryState,
+  IoRefetchOnMount,
   IoUnsubscribe,
 } from './types.js';

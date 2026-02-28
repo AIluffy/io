@@ -1,0 +1,48 @@
+---
+title: "IoDehydratedQuery"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoDehydratedQuery
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| keyHash | `string` |
+| state | `IoQueryState<unknown, unknown>` |
+
+## Minimal Example
+
+```ts
+import type { IoDehydratedQuery } from '@iostore/store/query';
+
+let value!: IoDehydratedQuery;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+- [IoFetchStatus](../io-fetch-status/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

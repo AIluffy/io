@@ -1,4 +1,7 @@
 import type { IoQueryKey } from './types.js';
+import { emitError } from '../utils/debug/debug.js';
+import { getInternal } from '../utils/internal/internal-access.js';
+import type { IoMutationOp } from '../utils/types/types.js';
 
 export const DEFAULT_STALE_TIME = 0;
 export const DEFAULT_GC_TIME = 300_000;
@@ -89,6 +92,7 @@ function serialize(value: unknown, seen: WeakSet<object>): string {
     }
 
     const record = value as Record<string | symbol, unknown>;
+    // Deterministic hashing requires stable key ordering across runtimes.
     const keys = Object.keys(record).sort();
     if (Object.getOwnPropertySymbols(record).length > 0) {
       throw createInvalidKeyTypeError('symbol');
@@ -121,9 +125,10 @@ export function keyMatches(
   queryKey: IoQueryKey,
   filterKey: IoQueryKey,
   exact = false,
+  queryKeyHash?: string,
 ): boolean {
   if (exact) {
-    return hashKey(queryKey) === hashKey(filterKey);
+    return (queryKeyHash ?? hashKey(queryKey)) === hashKey(filterKey);
   }
 
   if (filterKey.length > queryKey.length) {
@@ -208,9 +213,47 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-export function reportBackgroundError(scope: string, error: unknown): void {
+type ErrorStore = {
+  errorListeners?: ReadonlySet<unknown>;
+  ctx?: {
+    errorListeners?: ReadonlySet<unknown>;
+  };
+};
+
+type InternalWithState = {
+  getState?: () => unknown;
+};
+
+function hasErrorListeners(target: unknown): boolean {
+  const internal = getInternal(target) as InternalWithState | undefined;
+  const state = internal?.getState?.();
+  if (!state || typeof state !== 'object') {
+    return false;
+  }
+
+  const store = state as ErrorStore;
+  const listeners = store.ctx?.errorListeners ?? store.errorListeners;
+  return Boolean(listeners && listeners.size > 0);
+}
+
+export function reportBackgroundError(
+  scope: string,
+  error: unknown,
+  target?: unknown,
+  operation: IoMutationOp = 'applyUpdate',
+): void {
   if (isAbortError(error)) {
     return;
+  }
+
+  const handledByIoErrorBus = Boolean(target) && hasErrorListeners(target);
+  if (handledByIoErrorBus) {
+    try {
+      emitError(target, error, [], operation);
+      return;
+    } catch {
+      // Fall back to console reporting below.
+    }
   }
 
   const runtimeProcess =

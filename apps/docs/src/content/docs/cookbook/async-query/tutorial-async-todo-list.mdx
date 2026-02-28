@@ -1,0 +1,618 @@
+---
+title: 异步 TodoList 教程
+description: 像井字棋教程一样，用 Query + React 分步骤构建异步 TodoList。
+sidebar:
+  order: 2
+---
+
+本教程会像井字棋教程那样，从状态建模开始，一步步完成带查询、提交、取消和重试的异步 TodoList。
+
+你将学到：
+
+- 如何为 TodoList 设计稳定的 Query Key。
+- 如何用 `useQuery` 管理读取链路，并正确透传 `AbortSignal`。
+- 如何用 `useMutation` + `invalidateQueries` 实现写后同步。
+- 如何在 UI 中区分 loading / fetching / error / cancel 等状态。
+
+## 1. 建模数据与异步 API
+
+先定义 Todo 类型、稳定 key，以及可取消的异步请求函数。
+
+```ts
+type Todo = {
+  id: string;
+  title: string;
+  done: boolean;
+};
+
+const TODOS_KEY = ['tutorial', 'async-todos'] as const;
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      const error = new Error('The operation was aborted.');
+      error.name = 'AbortError';
+      reject(error);
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function createTodoApi() {
+  let todos: Todo[] = [
+    { id: '1', title: '梳理 query 生命周期', done: false },
+    { id: '2', title: '补齐失败重试策略', done: true },
+  ];
+
+  return {
+    async list(signal: AbortSignal): Promise<Todo[]> {
+      await sleep(500, signal);
+      return todos.map((todo) => ({ ...todo }));
+    },
+    async add(title: string): Promise<Todo> {
+      const next: Todo = { id: String(Date.now()), title, done: false };
+      todos = [next, ...todos];
+      return next;
+    },
+  };
+}
+```
+
+## 2. 创建 Query Client 与读取链路
+
+在组件内创建独立 client，然后用 `useQuery` 建立读取链路。
+
+```tsx
+import { useMemo } from 'react';
+import { useQuery } from '@iostore/react';
+import { createQueryClient } from '@iostore/store/query';
+
+const api = createTodoApi();
+
+function TodoApp() {
+  const client = useMemo(
+    () =>
+      createQueryClient({
+        defaultStaleTime: 2_000,
+        defaultRetry: 1,
+      }),
+    [],
+  );
+
+  const todosQuery = useQuery<Todo[]>({
+    client,
+    key: TODOS_KEY,
+    queryFn: ({ signal }) => api.list(signal),
+    retry: 1,
+    cancelOnUnmount: true,
+  });
+
+  // ...
+}
+```
+
+## 3. 添加 Mutation 与失效刷新
+
+读写分离后，写操作成功时统一触发失效，保持数据一致。
+
+```tsx
+import { useMutation } from '@iostore/react';
+
+const addTodo = useMutation<Todo, string>({
+  mutationFn: (title) => api.add(title),
+  onSuccess: () => {
+    client.invalidateQueries({ key: TODOS_KEY });
+  },
+});
+```
+
+如果还有 toggle / remove，也建议沿用同一规则：`onSuccess -> invalidateQueries`。
+
+## 4. 连接 UI：刷新、取消、重试
+
+把 query 状态和 mutation 状态直接映射到 UI 交互。
+
+```tsx
+function TodoApp() {
+  // ...client / todosQuery / addTodo
+  const todos = todosQuery.data ?? [];
+
+  return (
+    <section>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const input = form.elements.namedItem('title') as HTMLInputElement | null;
+          const title = input?.value.trim() ?? '';
+          if (!title) return;
+          addTodo.mutate(title);
+          form.reset();
+        }}
+      >
+        <input name="title" placeholder="输入任务名称后回车" />
+        <button type="submit" disabled={addTodo.isPending}>
+          添加
+        </button>
+      </form>
+
+      <button type="button" onClick={() => void todosQuery.refetch()}>
+        刷新
+      </button>
+      <button type="button" onClick={() => todosQuery.query.cancel()}>
+        取消进行中的请求
+      </button>
+
+      {todosQuery.isLoading ? <p>加载中...</p> : null}
+      {todosQuery.error ? <p>请求失败：{String(todosQuery.error)}</p> : null}
+
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>{todo.title}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+```
+
+## 5. 实战规则
+
+- 首屏状态看 `isLoading`，后台刷新看 `isFetching`，避免把两者混为一谈。
+- `query.cancel()` 是控制流，不应当作业务失败提示给用户。
+- `retry` 用于网络抖动兜底，业务校验错误应在 mutation 层直接暴露。
+- 所有 query key 保持可序列化、稳定，避免缓存槽位漂移。
+
+## Live 示例
+
+```tsx live props={{ "client:load": true }}
+import type { FormEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery } from '@iostore/react';
+import { createQueryClient } from '@iostore/store/query';
+
+type Todo = {
+  id: string;
+  title: string;
+  done: boolean;
+};
+
+const TODOS_KEY = ['docs', 'async-query', 'tutorial-live'] as const;
+
+function createAbortError(): Error {
+  const error = new Error('The operation was aborted.');
+  error.name = 'AbortError';
+  return error;
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, ms);
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      cleanup();
+      reject(createAbortError());
+    };
+
+    const cleanup = () => {
+      signal?.removeEventListener('abort', onAbort);
+    };
+
+    if (signal) {
+      if (signal.aborted) {
+        clearTimeout(timer);
+        cleanup();
+        reject(createAbortError());
+        return;
+      }
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+  });
+}
+
+const palette = {
+  border: 'hsl(var(--border, 214.3 31.8% 91.4%))',
+  card: 'hsl(var(--card, 0 0% 100%))',
+  cardForeground: 'hsl(var(--card-foreground, 222.2 47.4% 11.2%))',
+  muted: 'hsl(var(--muted, 210 40% 96.1%))',
+  mutedForeground: 'hsl(var(--muted-foreground, 215.4 16.3% 46.9%))',
+  primary: 'hsl(var(--primary, 222.2 47.4% 11.2%))',
+  primaryForeground: 'hsl(var(--primary-foreground, 210 40% 98%))',
+  destructive: 'hsl(var(--destructive, 0 84.2% 60.2%))',
+  destructiveForeground: 'hsl(var(--destructive-foreground, 210 40% 98%))',
+  input: 'hsl(var(--input, 214.3 31.8% 91.4%))',
+  ring: 'hsl(var(--ring, 215 20.2% 65.1%))',
+};
+
+const cardStyle = {
+  border: `1px solid ${palette.border}`,
+  borderRadius: '12px',
+  background: palette.card,
+  color: palette.cardForeground,
+  padding: '16px',
+  display: 'grid',
+  gap: '12px',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)',
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+};
+
+const rowStyle = {
+  display: 'flex',
+  gap: '8px',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+};
+
+const titleStyle = {
+  fontSize: '18px',
+  fontWeight: 600,
+  lineHeight: '1.2',
+};
+
+const badgeStyle = {
+  border: `1px solid ${palette.border}`,
+  background: palette.muted,
+  color: palette.mutedForeground,
+  borderRadius: '999px',
+  padding: '2px 10px',
+  fontSize: '12px',
+  lineHeight: 1.8,
+  fontWeight: 500,
+};
+
+const labelStyle = {
+  color: palette.mutedForeground,
+  fontSize: '13px',
+  fontWeight: 500,
+};
+
+const selectStyle = {
+  marginLeft: '6px',
+  height: '32px',
+  border: `1px solid ${palette.input}`,
+  borderRadius: '8px',
+  background: palette.card,
+  color: palette.cardForeground,
+  padding: '0 8px',
+};
+
+const inputStyle = {
+  flex: '1 1 220px',
+  minWidth: '180px',
+  height: '38px',
+  padding: '0 12px',
+  border: `1px solid ${palette.input}`,
+  borderRadius: '8px',
+  background: palette.card,
+  color: palette.cardForeground,
+  outline: 'none',
+  boxShadow: `0 0 0 1px transparent`,
+};
+
+const listStyle = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'grid',
+  gap: '10px',
+};
+
+const itemStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '10px',
+  border: `1px solid ${palette.border}`,
+  borderRadius: '10px',
+  padding: '10px 12px',
+  background: palette.card,
+};
+
+function createButtonStyle(
+  variant: 'default' | 'outline' | 'secondary' | 'destructive',
+  disabled = false,
+) {
+  const base = {
+    height: '36px',
+    padding: '0 12px',
+    borderRadius: '8px',
+    border: `1px solid ${palette.border}`,
+    fontSize: '13px',
+    fontWeight: 500,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.55 : 1,
+    transition: 'all 0.15s ease',
+    whiteSpace: 'nowrap',
+  };
+
+  if (variant === 'default') {
+    return {
+      ...base,
+      border: `1px solid ${palette.primary}`,
+      background: palette.primary,
+      color: palette.primaryForeground,
+    };
+  }
+  if (variant === 'secondary') {
+    return {
+      ...base,
+      background: palette.muted,
+      color: palette.cardForeground,
+    };
+  }
+  if (variant === 'destructive') {
+    return {
+      ...base,
+      border: `1px solid ${palette.destructive}`,
+      background: palette.destructive,
+      color: palette.destructiveForeground,
+    };
+  }
+  return {
+    ...base,
+    background: palette.card,
+    color: palette.cardForeground,
+  };
+}
+
+export default function AsyncTodoTutorialLive() {
+  const [draft, setDraft] = useState('');
+  const [retryCount, setRetryCount] = useState(1);
+  const [queuedQueryFailures, setQueuedQueryFailures] = useState(0);
+  const [queuedMutationFailures, setQueuedMutationFailures] = useState(0);
+  const todosRef = useRef<Todo[]>([
+    { id: '1', title: '梳理 query 生命周期', done: false },
+    { id: '2', title: '补齐取消与重试', done: true },
+  ]);
+  const nextIdRef = useRef(3);
+  const queuedQueryFailuresRef = useRef(0);
+  const queuedMutationFailuresRef = useRef(0);
+
+  const client = useMemo(
+    () =>
+      createQueryClient({
+        defaultStaleTime: 2_000,
+        defaultRetry: 1,
+      }),
+    [],
+  );
+
+  const consumeFailure = (kind: 'query' | 'mutation'): boolean => {
+    if (kind === 'query' && queuedQueryFailuresRef.current > 0) {
+      queuedQueryFailuresRef.current -= 1;
+      setQueuedQueryFailures(queuedQueryFailuresRef.current);
+      return true;
+    }
+    if (kind === 'mutation' && queuedMutationFailuresRef.current > 0) {
+      queuedMutationFailuresRef.current -= 1;
+      setQueuedMutationFailures(queuedMutationFailuresRef.current);
+      return true;
+    }
+    return false;
+  };
+
+  const queueFailure = (kind: 'query' | 'mutation'): void => {
+    if (kind === 'query') {
+      queuedQueryFailuresRef.current += 1;
+      setQueuedQueryFailures(queuedQueryFailuresRef.current);
+      return;
+    }
+    queuedMutationFailuresRef.current += 1;
+    setQueuedMutationFailures(queuedMutationFailuresRef.current);
+  };
+
+  const todosQuery = useQuery<Todo[]>({
+    client,
+    key: TODOS_KEY,
+    queryFn: async ({ signal }) => {
+      await sleep(450, signal);
+      if (consumeFailure('query')) {
+        throw new Error('模拟查询失败');
+      }
+      return todosRef.current.map((todo) => ({ ...todo }));
+    },
+    retry: retryCount,
+    cancelOnUnmount: true,
+  });
+
+  const addTodo = useMutation<Todo, string>({
+    mutationFn: async (title) => {
+      await sleep(350);
+      if (consumeFailure('mutation')) {
+        throw new Error('模拟提交失败');
+      }
+      const next: Todo = {
+        id: String(nextIdRef.current),
+        title,
+        done: false,
+      };
+      nextIdRef.current += 1;
+      todosRef.current = [next, ...todosRef.current];
+      return next;
+    },
+    onSuccess: () => {
+      client.invalidateQueries({ key: TODOS_KEY });
+    },
+  });
+
+  const toggleTodo = useMutation<Todo, { id: string; done: boolean }>({
+    mutationFn: async ({ id, done }) => {
+      await sleep(280);
+      if (consumeFailure('mutation')) {
+        throw new Error('模拟提交失败');
+      }
+      todosRef.current = todosRef.current.map((todo) =>
+        todo.id === id ? { ...todo, done } : todo,
+      );
+      const found = todosRef.current.find((todo) => todo.id === id);
+      if (!found) throw new Error(`Todo ${id} 不存在`);
+      return found;
+    },
+    onSuccess: () => {
+      client.invalidateQueries({ key: TODOS_KEY });
+    },
+  });
+
+  const removeTodo = useMutation<void, string>({
+    mutationFn: async (id) => {
+      await sleep(260);
+      if (consumeFailure('mutation')) {
+        throw new Error('模拟提交失败');
+      }
+      todosRef.current = todosRef.current.filter((todo) => todo.id !== id);
+    },
+    onSuccess: () => {
+      client.invalidateQueries({ key: TODOS_KEY });
+    },
+  });
+
+  const todos = todosQuery.data ?? [];
+  const remainingCount = todos.filter((todo) => !todo.done).length;
+  const hasPendingMutation =
+    addTodo.isPending || toggleTodo.isPending || removeTodo.isPending;
+  const mergedError =
+    todosQuery.error ?? addTodo.error ?? toggleTodo.error ?? removeTodo.error;
+  const errorMessage = mergedError instanceof Error ? mergedError.message : null;
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const title = draft.trim();
+    if (!title) return;
+    addTodo.mutate(title);
+    setDraft('');
+  };
+
+  return (
+    <section style={cardStyle}>
+      <div style={rowStyle}>
+        <strong style={titleStyle}>异步 TodoList（完整案例）</strong>
+        <span style={badgeStyle}>剩余：{remainingCount}</span>
+      </div>
+
+      <div style={rowStyle}>
+        <label style={labelStyle}>
+          查询重试：
+          <select
+            value={String(retryCount)}
+            onChange={(event) => setRetryCount(Number(event.currentTarget.value))}
+            style={selectStyle}
+          >
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          style={createButtonStyle('outline')}
+          onClick={() => queueFailure('query')}
+        >
+          下一次查询失败
+        </button>
+        <button
+          type="button"
+          style={createButtonStyle('outline')}
+          onClick={() => queueFailure('mutation')}
+        >
+          下一次提交失败
+        </button>
+      </div>
+
+      <div style={rowStyle}>
+        <span style={labelStyle}>
+          待注入失败：查询 {queuedQueryFailures} / 提交 {queuedMutationFailures}
+        </span>
+      </div>
+
+      <form onSubmit={onSubmit} style={rowStyle}>
+        <input
+          style={inputStyle}
+          value={draft}
+          onChange={(event) => setDraft(event.currentTarget.value)}
+          placeholder="输入任务名称后回车"
+        />
+        <button
+          type="submit"
+          style={createButtonStyle('default', addTodo.isPending)}
+          disabled={addTodo.isPending}
+        >
+          添加
+        </button>
+        <button
+          type="button"
+          style={createButtonStyle('secondary')}
+          onClick={() => void todosQuery.refetch()}
+        >
+          刷新
+        </button>
+        <button
+          type="button"
+          style={createButtonStyle('outline')}
+          onClick={() => todosQuery.query.cancel()}
+        >
+          取消进行中的请求
+        </button>
+      </form>
+
+      <div style={rowStyle}>
+        <span style={badgeStyle}>查询：{todosQuery.isFetching ? '请求中' : '空闲'}</span>
+        <span style={badgeStyle}>提交：{hasPendingMutation ? '进行中' : '空闲'}</span>
+      </div>
+
+      {todosQuery.isLoading ? <p style={labelStyle}>加载中...</p> : null}
+      {errorMessage ? <p style={{ color: palette.destructive }}>错误：{errorMessage}</p> : null}
+
+      {!todosQuery.isLoading && todos.length === 0 ? (
+        <p style={labelStyle}>当前没有任务，先添加一条。</p>
+      ) : null}
+
+      <ul style={listStyle}>
+        {todos.map((todo) => (
+          <li key={todo.id} style={itemStyle}>
+            <span
+              style={{
+                textDecoration: todo.done ? 'line-through' : 'none',
+                color: todo.done ? palette.mutedForeground : palette.cardForeground,
+              }}
+            >
+              {todo.title}
+            </span>
+            <div style={rowStyle}>
+              <button
+                type="button"
+                style={createButtonStyle('secondary', toggleTodo.isPending)}
+                disabled={toggleTodo.isPending}
+                onClick={() => toggleTodo.mutate({ id: todo.id, done: !todo.done })}
+              >
+                {todo.done ? '标为未完成' : '标为完成'}
+              </button>
+              <button
+                type="button"
+                style={createButtonStyle('destructive', removeTodo.isPending)}
+                disabled={removeTodo.isPending}
+                onClick={() => removeTodo.mutate(todo.id)}
+              >
+                删除
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+```
+
+## 下一步
+
+- 继续：[Playground](./playground/)
+- 深入：[Query Key、缓存与刷新](./query-keys-cache-and-refetch/)
+- 框架落地：[React 适配](./react-adapter/)

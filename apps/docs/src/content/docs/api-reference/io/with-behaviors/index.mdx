@@ -1,13 +1,12 @@
 ---
 title: "withBehaviors"
-description: "组合多个 behavior 并返回增强视图。"
+description: "函数 API 参考。"
 ---
 
 
 ## 何时使用
 
-- 你需要把 `persist/schedule/throttle/debounce/effect/devtools` 组合在同一视图上。
-- 你希望用一致方式访问 `extensions` 与 `destroy` 生命周期。
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
@@ -29,31 +28,23 @@ description: "组合多个 behavior 并返回增强视图。"
 ## 最小示例
 
 ```ts
-import { io } from '@iostore/store';
 import { withBehaviors } from '@iostore/store/behavior';
-import { debounce, effect, persist } from '@iostore/store/behavior';
 
-const count = io(0);
-const view = withBehaviors(count, [
-  persist({ key: 'count' }),
-  debounce(120),
-  effect((value) => {
-    console.log('count', value);
-  }),
-]);
+const result = withBehaviors(/* ...args */);
+console.log(result);
 ```
 
 ## 常见误用
 
-- 行为顺序随意放置，导致语义与预期不一致。
-- 组合了含资源行为却不调用 `view.destroy()` 做统一清理。
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [IoBehavior](../io-behavior/)
-- [throttle](../throttle/)
-- [debounce](../debounce/)
-- [effect](../effect/)
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## 源码
 

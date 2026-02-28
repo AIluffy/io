@@ -2,7 +2,7 @@
 title: useIO 与通用能力联动
 description: 在 Query 场景中结合 useIO、derived、行为扩展与批处理构建稳定页面状态。
 sidebar:
-  order: 4
+  order: 5
 ---
 
 ## 是什么
@@ -69,10 +69,10 @@ export function TodoPage() {
 
 ## 直接读取 client.query 返回对象
 
-可以。`useIO` 能直接读取 `client.query(...)` 返回的对象，因为它本身就是可订阅、可快照读取的 IO 节点。
+可以。`useIO` 能直接读取 `client.defineQuery(...)` 返回的对象，因为它本身就是可订阅、可快照读取的 IO 节点。
 
 ```tsx
-const query = client.query({
+const query = client.defineQuery({
   key: ['todo', id],
   queryFn: ({ signal }) => fetchTodo(id, signal),
 });

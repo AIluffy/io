@@ -11,14 +11,14 @@ Use this function when you need this behavior from the package API.
 ## Signature
 
 ```ts
-(clientOptions?: IoQueryClientOptions) => IoQueryClient
+(options?: IoQueryClientOptions) => IoQueryClient
 ```
 
 ## Parameters
 
 | Name | Type |
 | --- | --- |
-| clientOptions | `IoQueryClientOptions` |
+| options | `IoQueryClientOptions` |
 
 ## Returns
 
@@ -40,8 +40,10 @@ console.log(result);
 
 ## Related APIs
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [createMutation](../create-mutation/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## Source
 

@@ -1,0 +1,51 @@
+---
+title: "IoQueryDefinition"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryDefinition<TData, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| queryFn | `(context: { signal: AbortSignal; }) => Promise<TData>` |
+| staleTime | `number` |
+| gcTime | `number` |
+| retry | `number` |
+| retryDelay | `(attempt: number) => number` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryDefinition } from '@iostore/store/query';
+
+let value!: IoQueryDefinition;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

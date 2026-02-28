@@ -52,6 +52,8 @@ function resetCapture(): void {
 async function flushAsync(): Promise<void> {
   await Promise.resolve();
   await new Promise<void>((resolve) => queueMicrotask(resolve));
+  await Promise.resolve();
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
 }
 
 function createDeferred<T>() {

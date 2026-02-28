@@ -1,5 +1,6 @@
 import { io } from '../core/api/io.js';
 import { batch } from '../utils/reactive/batch.js';
+import { getInternal, registerInternal } from '../utils/internal/internal-access.js';
 import type { IoUnit } from '../utils/types/types.js';
 
 import type {
@@ -10,13 +11,12 @@ import type {
 } from './types.js';
 import {
   DEFAULT_RETRY_ATTEMPTS,
-  createAbortError,
   defaultRetryDelay,
   isAbortError,
   reportBackgroundError,
-  shouldRetry,
-  sleep,
 } from './utils.js';
+import { executeWithRetry } from './retry-executor.js';
+import { readUnitState, setUnitState } from './unit-state.js';
 
 type MutationUnitBox<TData, TError> = {
   value: IoUnit<IoMutationState<TData, TError>>;
@@ -61,6 +61,14 @@ export function createMutation<
   let inFlightPromise: Promise<TData> | null = null;
   let runId = 0;
 
+  const runMutationCallback = (scope: string, fn: () => void): void => {
+    try {
+      fn();
+    } catch (error) {
+      reportBackgroundError(scope, error, unit);
+    }
+  };
+
   const mutateAsync = async (variables: TVariables): Promise<TData> => {
     runId += 1;
     const currentRunId = runId;
@@ -70,7 +78,7 @@ export function createMutation<
     const { signal } = controller;
     abortController = controller;
 
-    const previousState = unit.snapshot();
+    const previousState = readUnitState(unit);
 
     let context = undefined as TContext;
     if (options.onMutate) {
@@ -78,74 +86,112 @@ export function createMutation<
     }
 
     batch(() => {
-      unit.set({
-        status: 'pending',
-        data: previousState.data,
-        error: null,
-        variables,
-        submittedAt: Date.now(),
-      });
+      setUnitState(
+        unit,
+        {
+          status: 'pending',
+          data: previousState.data,
+          error: null,
+          variables,
+          submittedAt: Date.now(),
+        },
+        {
+          action: 'mutation.execute.start',
+          meta: {
+            runId: currentRunId,
+          },
+        },
+      );
     });
 
-    const promise = (async () => {
-      let failureCount = 0;
-
-      while (true) {
-        try {
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          const data = await options.mutationFn(variables);
-
-          if (signal.aborted || currentRunId !== runId) {
-            throw createAbortError();
-          }
-
-          batch(() => {
-            unit.set({
+    const promise = executeWithRetry<TData>({
+      run: () => options.mutationFn(variables, { signal }),
+      retry: options.retry ?? DEFAULT_RETRY_ATTEMPTS,
+      retryDelay: options.retryDelay ?? defaultRetryDelay,
+      signal,
+      isCancelled: () => currentRunId !== runId,
+    })
+      .then((data) => {
+        batch(() => {
+          setUnitState(
+            unit,
+            {
               status: 'success',
               data,
               error: null,
               variables,
               submittedAt: Date.now(),
-            });
+            },
+            {
+              action: 'mutation.execute.success',
+              meta: {
+                runId: currentRunId,
+              },
+            },
+          );
+        });
+
+        if (options.onSuccess) {
+          runMutationCallback('mutation.onSuccess', () => {
+            options.onSuccess?.(data, variables, context);
           });
-
-          options.onSuccess?.(data, variables, context);
-          options.onSettled?.(data, null, variables, context);
-          return data;
-        } catch (error) {
-          if (isAbortError(error) || signal.aborted || currentRunId !== runId) {
-            batch(() => {
-              unit.set(previousState);
-            });
-            throw createAbortError();
-          }
-
-          failureCount += 1;
-          const retry = options.retry ?? DEFAULT_RETRY_ATTEMPTS;
-          if (!shouldRetry(failureCount, retry, error)) {
-            batch(() => {
-              unit.set({
-                status: 'error',
-                data: previousState.data,
-                error: error as TError,
-                variables,
-                submittedAt: Date.now(),
-              });
-            });
-
-            options.onError?.(error as TError, variables, context);
-            options.onSettled?.(undefined, error as TError, variables, context);
-            throw error;
-          }
-
-          const retryDelay = options.retryDelay ?? defaultRetryDelay;
-          await sleep(retryDelay(failureCount - 1), signal);
         }
-      }
-    })();
+        if (options.onSettled) {
+          runMutationCallback('mutation.onSettled', () => {
+            options.onSettled?.(data, null, variables, context);
+          });
+        }
+        return data;
+      })
+      .catch((error: unknown) => {
+        if (isAbortError(error) || signal.aborted || currentRunId !== runId) {
+          batch(() => {
+            setUnitState(
+              unit,
+              previousState,
+              {
+                action: 'mutation.execute.rollback',
+                meta: {
+                  runId: currentRunId,
+                },
+              },
+            );
+          });
+          throw error;
+        }
+
+        batch(() => {
+          setUnitState(
+            unit,
+            {
+              status: 'error',
+              data: previousState.data,
+              error: error as TError,
+              variables,
+              submittedAt: Date.now(),
+            },
+            {
+              action: 'mutation.execute.error',
+              meta: {
+                runId: currentRunId,
+              },
+            },
+          );
+        });
+
+        if (options.onError) {
+          runMutationCallback('mutation.onError', () => {
+            options.onError?.(error as TError, variables, context);
+          });
+        }
+        if (options.onSettled) {
+          runMutationCallback('mutation.onSettled', () => {
+            options.onSettled?.(undefined, error as TError, variables, context);
+          });
+        }
+
+        throw error;
+      });
 
     inFlightPromise = promise;
 
@@ -170,12 +216,18 @@ export function createMutation<
     reset: () => {
       abortController?.abort();
       batch(() => {
-        unit.reset();
+        setUnitState(
+          unit,
+          createInitialState<TData, TError>(),
+          {
+            action: 'mutation.reset',
+          },
+        );
       });
     },
     mutate: (variables) => {
       void mutateAsync(variables).catch((error: unknown) => {
-        reportBackgroundError('mutation.mutate()', error);
+        reportBackgroundError('mutation.mutate()', error, unit);
       });
     },
     mutateAsync,
@@ -186,6 +238,11 @@ export function createMutation<
       return deriveMutationFlags(unit.get());
     },
   };
+
+  const internal = getInternal(unit);
+  if (internal) {
+    registerInternal(mutation as object, internal);
+  }
 
   return mutation;
 }

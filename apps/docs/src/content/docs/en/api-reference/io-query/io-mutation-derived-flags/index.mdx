@@ -1,0 +1,49 @@
+---
+title: "IoMutationDerivedFlags"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoMutationDerivedFlags
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| isIdle | `boolean` |
+| isPending | `boolean` |
+| isSuccess | `boolean` |
+| isError | `boolean` |
+
+## Minimal Example
+
+```ts
+import type { IoMutationDerivedFlags } from '@iostore/store/query';
+
+let value!: IoMutationDerivedFlags;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

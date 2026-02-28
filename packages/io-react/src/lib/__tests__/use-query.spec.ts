@@ -2,7 +2,7 @@ import type {
   UseMutationResult,
   UseQueryResult,
   UseSuspenseQueryResult,
-} from '../use-query.js';
+} from '../../index.js';
 import type { ReactTestRenderer } from 'react-test-renderer';
 
 import { createQueryClient } from '@iostore/store/query';
@@ -10,7 +10,7 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useMutation, useQuery, useSuspenseQuery } from '../use-query.js';
+import { useMutation, useQuery, useSuspenseQuery } from '../../index.js';
 
 const createRenderer = (element: unknown): ReactTestRenderer =>
   TestRenderer.create(element as never);
@@ -110,27 +110,20 @@ describe('@iostore/react: useQuery', () => {
     });
   });
 
-  it('does not trigger an extra fetch when autoFetch is already enabled', async () => {
+  it('supports query handle input', async () => {
     const client = createQueryClient();
-    const queryFn = vi.fn(async () => 5);
-    await client
-      .query({
-        key: ['react', 'auto-fetch'],
-        queryFn,
-        autoFetch: true,
-      })
-      .fetch();
+    const query = client.defineQuery({
+      key: ['handle', 'input'],
+      queryFn: async () => 5,
+    });
 
-    expect(queryFn).toHaveBeenCalledTimes(1);
-
+    let latest: UseQueryResult<number> | undefined;
     const App = () => {
-      useQuery({
+      latest = useQuery({
         client,
-        key: ['react', 'auto-fetch'],
-        queryFn,
-        autoFetch: true,
+        query,
       });
-      return React.createElement('span', null, 'ok');
+      return React.createElement('span', null, String(latest.data ?? 'loading'));
     };
 
     let renderer!: ReactTestRenderer;
@@ -139,7 +132,7 @@ describe('@iostore/react: useQuery', () => {
     });
     await flushAsync();
 
-    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(latest?.data).toBe(5);
 
     await act(async () => {
       renderer.unmount();

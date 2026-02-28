@@ -29,7 +29,7 @@ IoTreeArrayUnit<T, MaxDepth>
 | snapshot | `() => UnwrapIo<T>[]` |
 | subscribe | `(fn: (v: UnwrapIo<T>[]) => void) => IoUnsubscribe` |
 | subscribeUpdate | `(fn: (u: IoUpdate) => void) => IoUnsubscribe` |
-| __@iterator@1086 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
+| __@iterator@951 | `() => Iterator<IoTreeNode<T, MaxDepth>>` |
 
 ## Minimal Example
 
@@ -47,10 +47,10 @@ console.log(value);
 
 ## Related APIs
 
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
 - [IoArrayUnit](../io-array-unit/)
 - [IoBehavior](../io-behavior/)
-- [IoDerived](../io-derived/)
-- [IoErrorHandler](../io-error-handler/)
 
 ## Source
 

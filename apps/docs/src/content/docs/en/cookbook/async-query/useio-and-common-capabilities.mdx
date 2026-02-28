@@ -2,7 +2,7 @@
 title: useIO and Common Capability Composition
 description: Combine useIO, derived views, behaviors, and batching with Query workflows.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 ## What It Is
@@ -67,12 +67,12 @@ export function TodoPage() {
 }
 ```
 
-## Reading client.query() directly with useIO
+## Reading client.defineQuery() directly with useIO
 
-Yes. `useIO` can read the object returned by `client.query(...)` directly, because that object is an IO node with snapshot and subscription capabilities.
+Yes. `useIO` can read the object returned by `client.defineQuery(...)` directly, because that object is an IO node with snapshot and subscription capabilities.
 
 ```tsx
-const query = client.query({
+const query = client.defineQuery({
   key: ['todo', id],
   queryFn: ({ signal }) => fetchTodo(id, signal),
 });

@@ -2,7 +2,7 @@
 title: Next.js 适配
 description: 在 App Router 中实施 request-scope query client 与 hydration 注入。
 sidebar:
-  order: 12
+  order: 15
 ---
 
 ## 是什么
@@ -25,7 +25,7 @@ Next.js 适配重点不在 hooks 本身，而在 SSR 边界：按请求创建 cl
 ```tsx
 // server
 const client = createQueryClient();
-await client.query({
+await client.defineQuery({
   key: ['dashboard', userId],
   queryFn: ({ signal }) => fetchData(userId, signal),
 }).prefetch();

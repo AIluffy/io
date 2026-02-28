@@ -3,44 +3,52 @@ import type {
   IoMutationDerivedFlags,
   IoMutationOptions,
   IoMutationState,
-  IoQuery,
   IoQueryClient,
-  IoQueryDerivedFlags,
-  IoQueryOptions,
-  IoQueryState,
+  IoQueryDefinition,
+  IoQueryHandle,
+  IoQueryObserver,
+  IoQueryObserverOptions,
+  IoQueryObserverResult,
 } from '@iostore/store/query';
 
 import {
   createMutation,
   deriveMutationFlags,
-  deriveQueryFlags,
   getDefaultClient,
-  reportBackgroundError,
+  hashKey,
 } from '@iostore/store/query';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useIO } from './use-io.js';
 
-function forceRefetch<TData, TError>(
-  query: IoQuery<TData, TError>,
-): Promise<TData> {
-  query.invalidate(false);
-  return query.fetch();
-}
+type UseQueryDefinitionOptions<TData, TError, TSelected> =
+  IoQueryDefinition<TData, TError> &
+    Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> & {
+      client?: IoQueryClient;
+      cancelOnUnmount?: boolean;
+    };
 
-export type UseQueryOptions<TData, TError = Error> =
-  IoQueryOptions<TData, TError> & {
+type UseQueryHandleOptions<TData, TError, TSelected> =
+  Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> & {
+    query: IoQueryHandle<TData, TError>;
     client?: IoQueryClient;
-    enabled?: boolean;
     cancelOnUnmount?: boolean;
   };
 
-export type UseQueryResult<TData, TError = Error> =
-  IoQueryState<TData, TError> &
-    IoQueryDerivedFlags & {
-      refetch: () => Promise<TData>;
-      query: IoQuery<TData, TError>;
-    };
+export type UseQueryOptions<TData, TError = Error, TSelected = TData> =
+  | UseQueryDefinitionOptions<TData, TError, TSelected>
+  | UseQueryHandleOptions<TData, TError, TSelected>;
+
+export type UseQueryResult<TData, TError = Error, TSelected = TData> =
+  IoQueryObserverResult<TSelected, TError> & {
+    refetch: () => Promise<TData>;
+    fetch: () => Promise<TData>;
+    prefetch: () => Promise<void>;
+    invalidate: (refetch?: boolean) => void;
+    cancel: () => void;
+    query: IoQueryHandle<TData, TError>;
+    observer: IoQueryObserver<TSelected, TError>;
+  };
 
 export type UseMutationResult<
   TData,
@@ -55,53 +63,113 @@ export type UseMutationResult<
     mutation: IoMutation<TData, TVariables, TError>;
   };
 
-export type UseSuspenseQueryResult<TData, TError = Error> =
-  IoQueryState<TData, TError> &
-    IoQueryDerivedFlags & {
-      data: TData;
-      refetch: () => Promise<TData>;
-      query: IoQuery<TData, TError>;
-    };
+export type UseSuspenseQueryResult<
+  TData,
+  TError = Error,
+  TSelected = TData,
+> = IoQueryObserverResult<TSelected, TError> & {
+  data: TSelected;
+  refetch: () => Promise<TData>;
+  fetch: () => Promise<TData>;
+  prefetch: () => Promise<void>;
+  invalidate: (refetch?: boolean) => void;
+  cancel: () => void;
+  query: IoQueryHandle<TData, TError>;
+  observer: IoQueryObserver<TSelected, TError>;
+};
 
-export function useQuery<TData, TError = Error>(
-  options: UseQueryOptions<TData, TError>,
-): UseQueryResult<TData, TError> {
-  const {
-    client: providedClient,
-    enabled = true,
-    cancelOnUnmount = false,
-    ...queryOptions
-  } = options;
+function isHandleOptions<TData, TError, TSelected>(
+  options: UseQueryOptions<TData, TError, TSelected>,
+): options is UseQueryHandleOptions<TData, TError, TSelected> {
+  return 'query' in options;
+}
 
-  const client = providedClient ?? getDefaultClient();
-  const query = client.query<TData, TError>(
-    queryOptions as IoQueryOptions<TData, TError>,
-  );
-  const state = useIO(query);
+function resolveObserverOptions<TData, TError, TSelected>(
+  options: UseQueryOptions<TData, TError, TSelected>,
+  query: IoQueryHandle<TData, TError>,
+): IoQueryObserverOptions<TData, TError, TSelected> {
+  return {
+    query,
+    enabled: options.enabled,
+    placeholderData: options.placeholderData,
+    select: options.select,
+    refetchOnMount: options.refetchOnMount,
+    refetchOnWindowFocus: options.refetchOnWindowFocus,
+    refetchOnReconnect: options.refetchOnReconnect,
+    onSuccess: options.onSuccess,
+    onError: options.onError,
+    onSettled: options.onSettled,
+  };
+}
 
-  useEffect(() => {
-    if (!enabled || queryOptions.autoFetch === true) {
-      return;
+export function useQuery<TData, TError = Error, TSelected = TData>(
+  options: UseQueryOptions<TData, TError, TSelected>,
+): UseQueryResult<TData, TError, TSelected> {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  const client = options.client ?? getDefaultClient();
+  const keyHash = isHandleOptions(options)
+    ? options.query.keyHash
+    : hashKey(options.key);
+
+  const query = useMemo(() => {
+    if (isHandleOptions(optionsRef.current)) {
+      return optionsRef.current.query as IoQueryHandle<TData, TError>;
     }
-    void query.fetch().catch((error: unknown) => {
-      reportBackgroundError('react.useQuery(fetch)', error);
+
+    const current = optionsRef.current as UseQueryDefinitionOptions<
+      TData,
+      TError,
+      TSelected
+    >;
+
+    const existing = client.getQuery<TData, TError>(current.key);
+    if (existing) {
+      return existing;
+    }
+
+    return client.defineQuery<TData, TError>({
+      key: current.key,
+      queryFn: current.queryFn,
+      staleTime: current.staleTime,
+      gcTime: current.gcTime,
+      retry: current.retry,
+      retryDelay: current.retryDelay,
     });
-  }, [enabled, query, queryOptions.autoFetch]);
+  }, [client, keyHash]);
+
+  const observer = useMemo(() => {
+    return client.observeQuery<TData, TError, TSelected>(
+      resolveObserverOptions(optionsRef.current, query),
+    );
+  }, [client, query]);
 
   useEffect(
     () => () => {
-      if (cancelOnUnmount) {
-        query.cancel();
+      if (optionsRef.current.cancelOnUnmount) {
+        observer.cancel();
       }
+      observer.dispose();
     },
-    [cancelOnUnmount, query],
+    [observer],
   );
+
+  const state = useIO(observer);
 
   return {
     ...state,
-    ...deriveQueryFlags(state),
-    refetch: () => forceRefetch(query),
+    fetch: () => query.fetch(false),
+    refetch: () => query.fetch(true),
+    prefetch: () => query.prefetch(),
+    invalidate: (refetch = true) => {
+      query.invalidate(refetch);
+    },
+    cancel: () => {
+      query.cancel();
+    },
     query,
+    observer,
   };
 }
 
@@ -156,51 +224,21 @@ export function useMutation<
   };
 }
 
-export function useSuspenseQuery<TData, TError = Error>(
-  options: UseQueryOptions<TData, TError>,
-): UseSuspenseQueryResult<TData, TError> {
-  const {
-    client: providedClient,
-    enabled = true,
-    cancelOnUnmount = false,
-    ...queryOptions
-  } = options;
+export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
+  options: UseQueryOptions<TData, TError, TSelected>,
+): UseSuspenseQueryResult<TData, TError, TSelected> {
+  const result = useQuery<TData, TError, TSelected>(options);
 
-  const client = providedClient ?? getDefaultClient();
-  const query = client.query<TData, TError>(
-    queryOptions as IoQueryOptions<TData, TError>,
-  );
-  const state = useIO(query);
-
-  useEffect(
-    () => () => {
-      if (cancelOnUnmount) {
-        query.cancel();
-      }
-    },
-    [cancelOnUnmount, query],
-  );
-
-  if (!enabled) {
-    if (state.data === undefined) {
-      throw new Error('useSuspenseQuery: enabled=false requires existing data');
-    }
-    return {
-      ...state,
-      ...deriveQueryFlags(state),
-      data: state.data,
-      refetch: () => forceRefetch(query),
-      query,
-    };
+  if (result.status === 'error' && result.error !== null) {
+    throw result.error;
   }
 
-  const data = query.read();
+  if (result.status === 'pending') {
+    throw result.query.fetch(false);
+  }
 
   return {
-    ...state,
-    ...deriveQueryFlags(state),
-    data,
-    refetch: () => forceRefetch(query),
-    query,
+    ...result,
+    data: result.observer.read(),
   };
 }

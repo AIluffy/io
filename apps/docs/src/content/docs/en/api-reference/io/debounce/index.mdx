@@ -1,12 +1,12 @@
 ---
 title: "debounce"
-description: "Behavior API: emit after inactivity window."
+description: "Function API reference."
 ---
+
 
 ## When to Use
 
-- Search-like inputs where only the final value matters.
-- Merge burst updates and avoid redundant side effects.
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
@@ -28,24 +28,24 @@ description: "Behavior API: emit after inactivity window."
 ## Minimal Example
 
 ```ts
-import { io } from '@iostore/store';
-import { debounce, withBehaviors } from '@iostore/store/behavior';
+import { debounce } from '@iostore/store/behavior';
 
-const keyword = io('');
-const view = withBehaviors(keyword, [debounce(200)]);
+const result = debounce(/* ...args */);
+console.log(result);
 ```
 
 ## Common Pitfalls
 
-- Adding `debounce` but still triggering expensive work synchronously upstream.
-- Setting `waitMs` too high and making interactions feel laggy.
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
 
 ## Related APIs
 
-- [throttle](../throttle/)
-- [effect](../effect/)
-- [withBehaviors](../with-behaviors/)
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## Source
 
-- `packages/io/src/lib/extensions/cookbook/debounce.ts`
+- `packages/io/src/lib/extensions/behaviors/debounce.ts`

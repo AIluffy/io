@@ -1,0 +1,51 @@
+---
+title: "deriveQueryFlags"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError>(state: IoQueryState<TData, TError>, options?: { isStale?: boolean; isFetchedAfterMount?: boolean; }) => IoQueryDerivedFlags
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| state | `IoQueryState<TData, TError>` |
+| options | `{ isStale?: boolean; isFetchedAfterMount?: boolean; }` |
+
+## Returns
+
+`IoQueryDerivedFlags`
+
+## Minimal Example
+
+```ts
+import { deriveQueryFlags } from '@iostore/store/query';
+
+const result = deriveQueryFlags(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createMutation](../create-mutation/)
+- [createQueryClient](../create-query-client/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [getDefaultClient](../get-default-client/)
+
+## Source
+
+- `packages/io/src/lib/query/query.ts`

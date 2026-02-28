@@ -2,7 +2,7 @@
 title: Query Keys, Cache, and Refetch
 description: Design deterministic keys and explicit refresh rules.
 sidebar:
-  order: 3
+  order: 6
 ---
 
 ## What It Is
@@ -23,7 +23,7 @@ Query keys define cache buckets and invalidation scope. Stable keys are a prereq
 ## Minimal Example
 
 ```ts
-const list = client.query({
+const list = client.defineQuery({
   key: ['users', { page, pageSize, keyword }],
   queryFn: ({ signal }) =>
     fetch(`/api/users?page=${page}&pageSize=${pageSize}&keyword=${keyword}`, { signal }).then((r) => r.json()),
@@ -42,7 +42,7 @@ await list.refetch();
 
 ## Practical Guidance
 
-- Use a consistent `resource + params` key shape.
+- Use a consistent `entity/key-prefix + params` key shape.
 - Keep param naming and ordering deterministic.
 - Tune `staleTime` based on data volatility.
 

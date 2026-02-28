@@ -3,28 +3,47 @@ title: "useSuspenseQuery"
 description: "函数 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
 ## 签名
 
 ```ts
-<TData, TError = Error>(options: UseQueryOptions<TData, TError>) => UseSuspenseQueryResult<TData, TError>
+<TData, TError = Error, TSelected = TData>(options: UseQueryOptions<TData, TError, TSelected>) => UseSuspenseQueryResult<TData, TError, TSelected>
 ```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| options | `UseQueryOptions<TData, TError, TSelected>` |
+
+## 返回
+
+`UseSuspenseQueryResult<TData, TError, TSelected>`
 
 ## 最小示例
 
-```tsx
-import { Suspense } from 'react';
+```ts
 import { useSuspenseQuery } from '@iostore/react';
 
-function User() {
-  const result = useSuspenseQuery({ key: ['user', 1], queryFn: fetchUser });
-  return <div>{result.data.name}</div>;
-}
+const result = useSuspenseQuery(/* ...args */);
+console.log(result);
 ```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [useQuery](../use-query/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
 - [useMutation](../use-mutation/)
+- [useQuery](../use-query/)
 
 ## 源码
 

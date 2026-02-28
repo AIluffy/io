@@ -1,0 +1,54 @@
+---
+title: 'Query v0.1 Breaking Changes'
+description: '@iostore/store/query 在 v0.1 的破坏性变更清单与迁移重点。'
+sidebar:
+  order: 20
+---
+
+## 影响范围
+
+- `client.query(...)` 已移除。
+- `IoQueryOptions` 已拆分为 `IoQueryDefinition` 与 `IoQueryObserverOptions`。
+- `IoQuery` 类型已替换为 `IoQueryHandle` + `IoQueryObserver`。
+- `mutationFn` 新签名：`(variables, { signal }) => Promise<TData>`。
+
+## 新 API 对照
+
+| 旧 API | 新 API |
+| --- | --- |
+| `client.query(options)` | `client.defineQuery(definition)` |
+| `query.fetch()/prefetch()` | `queryHandle.fetch()/prefetch()` |
+| `useQuery({ key, queryFn, ... })` | `useQuery({ key, queryFn, ... })`（内部走 define/observe 模型） |
+| `IoQueryOptions` | `IoQueryDefinition` + `IoQueryObserverOptions` |
+
+## 状态模型变化
+
+`IoQueryState` 新增：
+
+- `failureReason`
+- `isInvalidated`
+- `isPlaceholderData`
+
+`IoFetchStatus` 新增 `paused`，并且派生 flags 增加：
+
+- `isStale`
+- `hasData`
+- `isFetched`
+- `isFetchedAfterMount`
+
+## 行为变化
+
+- 同 key + 不同 `queryFn` 会直接抛错（硬失败）。
+- `placeholderData` 只在 observer 侧可见，不会写入缓存 `dataUpdatedAt`。
+- `refetchOnMount` 默认值为 `'stale'`。
+
+## 升级检查清单
+
+1. 搜索并替换 `client.query(` -> `client.defineQuery(`。
+2. 检查所有 `mutationFn` 是否接收并透传 `signal`。
+3. 检查筛选器使用：`IoQueryFilter` 现在支持 `active/stale/fetching`。
+4. 如有 SSR 注水，改用 `dehydrate()/hydrate()`。
+
+## 相关文档
+
+- [Migration: client.query -> defineQuery/observeQuery](./query-v0-1-client-query-to-define-observe/)

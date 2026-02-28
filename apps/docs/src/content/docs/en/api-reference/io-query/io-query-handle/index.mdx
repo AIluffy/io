@@ -1,0 +1,61 @@
+---
+title: "IoQueryHandle"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryHandle<TData, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| keyHash | `string` |
+| fetch | `(force?: boolean) => Promise<TData>` |
+| prefetch | `() => Promise<void>` |
+| ensureData | `() => Promise<TData>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| reset | `() => void` |
+| setData | `(updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
+| getData | `() => TData \| undefined` |
+| getState | `() => IoQueryState<TData, TError>` |
+| getFlags | `() => IoQueryDerivedFlags` |
+| isActive | `boolean` |
+| observerCount | `number` |
+| subscribe | `(fn: (state: IoQueryState<TData, TError>) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (update: IoUpdate) => void) => IoUnsubscribe` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryHandle } from '@iostore/store/query';
+
+let value!: IoQueryHandle;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

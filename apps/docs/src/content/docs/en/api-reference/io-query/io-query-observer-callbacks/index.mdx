@@ -1,0 +1,48 @@
+---
+title: "IoQueryObserverCallbacks"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoQueryObserverCallbacks<TData, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| onSuccess | `(data: TData) => void` |
+| onError | `(error: TError) => void` |
+| onSettled | `(data: TData \| undefined, error: TError \| null) => void` |
+
+## Minimal Example
+
+```ts
+import type { IoQueryObserverCallbacks } from '@iostore/store/query';
+
+let value!: IoQueryObserverCallbacks;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`
