@@ -1,34 +1,39 @@
 ---
 title: "IoDataStatus"
-description: "Data-axis status union for query state."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type to describe the data lifecycle axis in query state.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoDataStatus = 'pending' | 'success' | 'error';
+IoDataStatus
 ```
 
 ## Minimal Example
 
 ```ts
-function isReady(status: IoDataStatus): boolean {
-  return status === 'success';
-}
+import type { IoDataStatus } from '@iostore/store/query';
+
+let value!: IoDataStatus;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Treating `pending` as equivalent to `fetching`; fetch progress is tracked by `IoFetchStatus`.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 - [IoFetchStatus](../io-fetch-status/)
-- [IoQueryState](../io-query-state/)
 
 ## Source
 

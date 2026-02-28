@@ -1,67 +1,66 @@
 ---
 title: "IoQueryClient"
-description: "Public query cache/client interface." 
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use `IoQueryClient` as the shared API boundary for query cache operations and batch controls.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoQueryClient = {
-  query<TData = unknown, TError = Error>(options: IoQueryOptions<TData, TError>): IoQuery<TData, TError>;
-  mutation<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(
-    options: IoMutationOptions<TData, TVariables, TError, TContext>,
-  ): IoMutation<TData, TVariables, TError>;
-  invalidateQueries(filter?: IoQueryFilter, refetch?: boolean): void;
-  cancelQueries(filter?: IoQueryFilter): void;
-  removeQueries(filter?: IoQueryFilter): void;
-  getQueryData<TData = unknown>(key: IoQueryKey): TData | undefined;
-  setQueryData<TData = unknown>(key: IoQueryKey, updater: TData | ((prev: TData | undefined) => TData)): void;
-  getQuery<TData = unknown, TError = Error>(key: IoQueryKey): IoQuery<TData, TError> | undefined;
-  getQueries(filter?: IoQueryFilter): IoQuery<unknown, unknown>[];
-  clear(): void;
-  subscribe(fn: (event: IoQueryCacheEvent) => void): IoUnsubscribe;
-};
+IoQueryClient
 ```
 
 ## Properties
 
-| Member | Category | Description |
-| --- | --- | --- |
-| `query`, `mutation` | Factory | Create/reuse query and mutation instances. |
-| `getQueryData`, `setQueryData`, `getQuery`, `getQueries` | Cache access | Read/write cache by key or filter. |
-| `invalidateQueries`, `cancelQueries`, `removeQueries`, `clear` | Batch control | Operate across matched query sets. |
-| `subscribe` | Events | Observe `query-added`, `query-updated`, `query-removed`. |
+| Name | Type |
+| --- | --- |
+| defineQuery | `<TData = unknown, TError = Error>(definition: IoQueryDefinition<TData, TError>) => IoQueryHandle<TData, TError>` |
+| observeQuery | `<TData = unknown, TError = Error, TSelected = TData>(options: IoQueryObserverOptions<TData, TError, TSelected>) => IoQueryObserver<TSelected, TError>` |
+| fetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
+| prefetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<void>` |
+| ensureQueryData | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
+| mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
+| invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
+| refetchQueries | `(filter?: IoQueryFilter) => Promise<void>` |
+| cancelQueries | `(filter?: IoQueryFilter) => void` |
+| resetQueries | `(filter?: IoQueryFilter) => void` |
+| removeQueries | `(filter?: IoQueryFilter) => void` |
+| getQueryData | `<TData = unknown>(key: IoQueryKey) => TData \| undefined` |
+| setQueryData | `<TData = unknown>(key: IoQueryKey, updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
+| setQueriesData | `<TData = unknown>(filter: IoQueryFilter, updater: (prev: TData \| undefined) => TData) => void` |
+| getQueryState | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
+| getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryHandle<TData, TError> \| undefined` |
+| getQueries | `(filter?: IoQueryFilter) => IoQueryHandle<unknown, unknown>[]` |
+| dehydrate | `(options?: IoDehydrateOptions) => IoDehydratedState` |
+| hydrate | `(state: IoDehydratedState, options?: IoHydrateOptions) => void` |
+| clear | `() => void` |
+| subscribe | `(fn: (event: IoQueryCacheEvent) => void) => IoUnsubscribe` |
 
 ## Minimal Example
 
 ```ts
-const client = createQueryClient();
+import type { IoQueryClient } from '@iostore/store/query';
 
-const todos = client.query({
-  key: ['todos'],
-  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
-});
-
-await todos.fetch();
-client.invalidateQueries({ key: ['todos'] });
+let value!: IoQueryClient;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Calling `setQueryData` for keys that should be managed by `queryFn` but never registering that query.
-- Using overly broad filters in `removeQueries` and wiping unrelated cache entries.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [createQueryClient](../create-query-client/)
-- [IoQueryFilter](../io-query-filter/)
-- [IoQueryCacheEvent](../io-query-cache-event/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 
 - `packages/io/src/lib/query/types.ts`
-- `packages/io/src/lib/query/client.ts`

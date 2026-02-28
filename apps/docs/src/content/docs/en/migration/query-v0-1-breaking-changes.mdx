@@ -1,0 +1,53 @@
+---
+title: 'Query v0.1 Breaking Changes'
+description: 'Breaking changes for @iostore/store/query in v0.1.'
+sidebar:
+  order: 20
+---
+
+## Scope
+
+- `client.query(...)` has been removed.
+- `IoQueryOptions` is split into `IoQueryDefinition` and `IoQueryObserverOptions`.
+- `IoQuery` is replaced by `IoQueryHandle` + `IoQueryObserver`.
+- `mutationFn` now uses `(variables, { signal }) => Promise<TData>`.
+
+## API Mapping
+
+| Old | New |
+| --- | --- |
+| `client.query(options)` | `client.defineQuery(definition)` |
+| `query.fetch()/prefetch()` | `queryHandle.fetch()/prefetch()` |
+| `IoQueryOptions` | `IoQueryDefinition` + `IoQueryObserverOptions` |
+
+## State Model Updates
+
+`IoQueryState` now includes:
+
+- `failureReason`
+- `isInvalidated`
+- `isPlaceholderData`
+
+`IoFetchStatus` now supports `paused`, and derived flags include:
+
+- `isStale`
+- `hasData`
+- `isFetched`
+- `isFetchedAfterMount`
+
+## Behavior Changes
+
+- Same key + different `queryFn` now throws immediately.
+- `placeholderData` is observer-only and does not mutate cache timestamps.
+- Default `refetchOnMount` is `'stale'`.
+
+## Upgrade Checklist
+
+1. Replace `client.query(` with `client.defineQuery(`.
+2. Update all `mutationFn` signatures to receive `{ signal }`.
+3. Use new filter fields (`active/stale/fetching`) when needed.
+4. Move SSR cache transfer to `dehydrate()/hydrate()`.
+
+## Related
+
+- [Migration: client.query -> defineQuery/observeQuery](./query-v0-1-client-query-to-define-observe/)

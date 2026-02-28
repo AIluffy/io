@@ -39,23 +39,17 @@ let value!: IoHistory;
 console.log(value);
 ```
 
-## 语义说明
-
-- `undo/redo`：按单条 update 前进或回退。
-- `undoGroup/redoGroup`：按 `groupBy` 聚合后的“组”前进或回退。
-- `checkpoint`：强制切分下一个记录组。
-- `cursor`：当前历史游标（`-1` 表示位于历史起点）。
-
 ## 常见误用
 
-- 在没有配置 `groupBy` 的情况下期待 `undoGroup` 能批量回退。
-- 在 `destroy` 后继续复用同一个 history 实例。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [createHistory](../create-history/)
-- [IoHistoryOptions](../io-history-options/)
-- [undoUpdate](../undo-update/)
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## 源码
 

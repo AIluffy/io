@@ -1,34 +1,39 @@
 ---
 title: "IoMutationStatus"
-description: "Status union for mutation lifecycle."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type to model mutation lifecycle stages.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoMutationStatus = 'idle' | 'pending' | 'success' | 'error';
+IoMutationStatus
 ```
 
 ## Minimal Example
 
 ```ts
-if (mutation.snapshot().status === 'pending') {
-  showSpinner();
-}
+import type { IoMutationStatus } from '@iostore/store/query';
+
+let value!: IoMutationStatus;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Treating `success` as persistent truth after a new mutation starts.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [IoMutationState](../io-mutation-state/)
-- [IoMutationDerivedFlags](../io-mutation-derived-flags/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

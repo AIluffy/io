@@ -1,35 +1,39 @@
 ---
 title: "IoUnsubscribe"
-description: "Function type used to dispose subscriptions."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type for values returned by `subscribe(...)` APIs.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoUnsubscribe = () => void;
+IoUnsubscribe
 ```
 
 ## Minimal Example
 
 ```ts
-const unsub: IoUnsubscribe = query.subscribe(() => {
-  console.log(query.snapshot());
-});
-unsub();
+import type { IoUnsubscribe } from '@iostore/store/query';
+
+let value!: IoUnsubscribe;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Forgetting to call unsubscribe in long-lived effects.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [IoQuery](../io-query/)
-- [IoQueryClient](../io-query-client/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

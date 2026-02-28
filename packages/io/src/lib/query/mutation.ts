@@ -94,7 +94,7 @@ export function createMutation<
     });
 
     const promise = executeWithRetry<TData>({
-      run: () => options.mutationFn(variables),
+      run: () => options.mutationFn(variables, { signal }),
       retry: options.retry ?? DEFAULT_RETRY_ATTEMPTS,
       retryDelay: options.retryDelay ?? defaultRetryDelay,
       signal,

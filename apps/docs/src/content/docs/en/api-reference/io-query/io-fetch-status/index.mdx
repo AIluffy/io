@@ -1,32 +1,39 @@
 ---
 title: "IoFetchStatus"
-description: "Fetch-axis status union for query state."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type to model whether a query request is currently in flight.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoFetchStatus = 'idle' | 'fetching';
+IoFetchStatus
 ```
 
 ## Minimal Example
 
 ```ts
-const isFetching = state.fetchStatus === 'fetching';
+import type { IoFetchStatus } from '@iostore/store/query';
+
+let value!: IoFetchStatus;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Reading only `fetchStatus` and ignoring `status` can blur first-load vs refetch semantics.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
 - [IoDataStatus](../io-data-status/)
-- [IoQueryState](../io-query-state/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

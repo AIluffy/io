@@ -3,32 +3,37 @@ title: "IoLynxQueryResult"
 description: "类型 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
 ## 签名
 
 ```ts
-IoLynxQueryResult<TData, TError = Error>
+IoLynxQueryResult<TData, TError, TSelected>
 ```
 
-## 属性
+## 最小示例
 
-| Name | Type |
-| --- | --- |
-| status | `IoDataStatus` |
-| fetchStatus | `IoFetchStatus` |
-| data | `TData \| undefined` |
-| error | `TError \| null` |
-| dataUpdatedAt | `number` |
-| errorUpdatedAt | `number` |
-| failureCount | `number` |
-| isPending | `boolean` |
-| isSuccess | `boolean` |
-| isError | `boolean` |
-| isFetching | `boolean` |
-| isLoading | `boolean` |
-| isRefetching | `boolean` |
-| fetch | `() => Promise<TData>` |
-| refetch | `() => Promise<TData>` |
-| prefetch | `() => Promise<void>` |
-| invalidate | `(refetch?: boolean) => void` |
-| cancel | `() => void` |
-| query | `IoQuery<TData, TError>` |
+```ts
+import type { IoLynxQueryResult } from '@iostore/lynx';
+
+let value!: IoLynxQueryResult;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+
+## 源码
+
+- `packages/io-lynx/src/lib/use-query.ts`

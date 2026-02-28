@@ -1,37 +1,46 @@
 ---
 title: "IoQueryCacheEvent"
-description: "IoQueryClient.subscribe 发出的缓存事件负载类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-当你需要监听 Query 缓存新增、更新、移除事件时使用。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoQueryCacheEvent = {
-  type: 'query-added' | 'query-updated' | 'query-removed';
-  query: IoQuery<unknown, unknown>;
-};
+IoQueryCacheEvent
 ```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| type | `"query-added" \| "query-updated" \| "query-removed"` |
+| query | `IoQueryHandle<unknown, unknown>` |
 
 ## 最小示例
 
 ```ts
-const unsub = client.subscribe((event) => {
-  console.log(event.type, event.query.keyHash);
-});
+import type { IoQueryCacheEvent } from '@iostore/store/query';
+
+let value!: IoQueryCacheEvent;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 不做过滤就对每次 `query-updated` 执行重逻辑。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQuery](../io-query/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

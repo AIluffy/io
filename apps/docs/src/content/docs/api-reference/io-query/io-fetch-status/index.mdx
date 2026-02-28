@@ -1,32 +1,39 @@
 ---
 title: "IoFetchStatus"
-description: "Query 状态中请求轴的状态联合类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-用于描述 Query 请求是否正在进行中。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoFetchStatus = 'idle' | 'fetching';
+IoFetchStatus
 ```
 
 ## 最小示例
 
 ```ts
-const isFetching = state.fetchStatus === 'fetching';
+import type { IoFetchStatus } from '@iostore/store/query';
+
+let value!: IoFetchStatus;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 只看 `fetchStatus` 不看 `status`，会混淆首次加载与后台刷新。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
 - [IoDataStatus](../io-data-status/)
-- [IoQueryState](../io-query-state/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

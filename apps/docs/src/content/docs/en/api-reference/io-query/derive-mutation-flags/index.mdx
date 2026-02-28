@@ -1,38 +1,49 @@
 ---
 title: "deriveMutationFlags"
-description: "Compute mutation derived boolean flags from IoMutationState."
+description: "Function API reference."
 ---
+
 
 ## When to Use
 
-Use this helper when you consume `IoMutationState` directly and need convenience flags.
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-function deriveMutationFlags<TData, TError>(
-  state: IoMutationState<TData, TError>,
-): IoMutationDerivedFlags;
+<TData, TError>(state: IoMutationState<TData, TError>) => IoMutationDerivedFlags
 ```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| state | `IoMutationState<TData, TError>` |
+
+## Returns
+
+`IoMutationDerivedFlags`
 
 ## Minimal Example
 
 ```ts
-const flags = deriveMutationFlags(mutation.snapshot());
-if (flags.isPending) {
-  console.log('submitting...');
-}
+import { deriveMutationFlags } from '@iostore/store/query';
+
+const result = deriveMutationFlags(/* ...args */);
+console.log(result);
 ```
 
 ## Common Pitfalls
 
-- Reading flags from stale snapshots rather than current mutation state.
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
 
 ## Related APIs
 
-- [IoMutationState](../io-mutation-state/)
-- [IoMutationDerivedFlags](../io-mutation-derived-flags/)
-- [IoMutation](../io-mutation/)
+- [createMutation](../create-mutation/)
+- [createQueryClient](../create-query-client/)
+- [deriveQueryFlags](../derive-query-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## Source
 

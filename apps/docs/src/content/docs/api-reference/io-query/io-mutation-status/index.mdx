@@ -1,34 +1,39 @@
 ---
 title: "IoMutationStatus"
-description: "Mutation 生命周期状态联合类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-用于表示 mutation 生命周期阶段。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoMutationStatus = 'idle' | 'pending' | 'success' | 'error';
+IoMutationStatus
 ```
 
 ## 最小示例
 
 ```ts
-if (mutation.snapshot().status === 'pending') {
-  showSpinner();
-}
+import type { IoMutationStatus } from '@iostore/store/query';
+
+let value!: IoMutationStatus;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 新一轮 mutation 开始后仍把旧 `success` 当作当前状态。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [IoMutationState](../io-mutation-state/)
-- [IoMutationDerivedFlags](../io-mutation-derived-flags/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

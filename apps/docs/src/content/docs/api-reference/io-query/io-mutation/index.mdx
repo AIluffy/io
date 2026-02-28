@@ -1,42 +1,39 @@
 ---
 title: "IoMutation"
-description: "响应式 Mutation 实例类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-当你要执行写操作并观察 mutation 生命周期状态时使用 `IoMutation`。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoMutation<TData = unknown, TVariables = void, TError = Error> =
-  IoUnit<IoMutationState<TData, TError>> & {
-    mutate(variables: TVariables): void;
-    mutateAsync(variables: TVariables): Promise<TData>;
-    reset(): void;
-    cancel(): void;
-    readonly flags: IoMutationDerivedFlags;
-  };
+IoMutation<TData, TVariables, TError>
 ```
 
 ## 最小示例
 
 ```ts
-mutation.mutate({ title: 'todo' });
-const created = await mutation.mutateAsync({ title: 'todo-2' });
-console.log(created, mutation.flags.isSuccess);
+import type { IoMutation } from '@iostore/store/query';
+
+let value!: IoMutation;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 需要 Promise 链路却使用 `mutate`，此时应使用 `mutateAsync`。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [createMutation](../create-mutation/)
-- [IoMutationOptions](../io-mutation-options/)
-- [IoMutationState](../io-mutation-state/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

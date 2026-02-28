@@ -3,22 +3,46 @@ title: "useQuery"
 description: "Function API reference."
 ---
 
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
 ## Signature
 
 ```ts
-<TData, TError = Error>(options: IoQueryOptions<TData, TError> & { client?: IoQueryClient; enabled?: boolean; cancelOnUnmount?: boolean }) => IoLynxQueryResult<TData, TError>
+<TData, TError = Error, TSelected = TData>(options: IoUseQueryOptions<TData, TError, TSelected>) => IoLynxQueryResult<TData, TError, TSelected>
 ```
 
-## Notes
+## Parameters
 
-- `options.client` is optional.
-- If omitted, useQuery uses [getDefaultClient](/en/api-reference/io-query/get-default-client/).
-- Pass a custom `client` only for request-scoped SSR, test isolation, or multiple cache domains.
-- Adapter-triggered lifecycle fetches use `query.fetchQuietly()` internally.
+| Name | Type |
+| --- | --- |
+| options | `IoUseQueryOptions<TData, TError, TSelected>` |
 
 ## Returns
 
-`IoLynxQueryResult<TData, TError>`
+`IoLynxQueryResult<TData, TError, TSelected>`
+
+## Minimal Example
+
+```ts
+import { useQuery } from '@iostore/lynx';
+
+const result = useQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [IoLynxQueryResult](../io-lynx-query-result/)
 
 ## Source
 

@@ -86,10 +86,15 @@ describe('@iostore/query createMutation', () => {
     expect(attempts).toBe(3);
   });
 
-  it('supports cancellation for an in-flight mutation', async () => {
+  it('supports cancellation for an in-flight mutation by aborting signal', async () => {
     const deferred = createDeferred<number>();
+    const seenSignals: AbortSignal[] = [];
+
     const mutation = createMutation<number, number>({
-      mutationFn: async () => deferred.promise,
+      mutationFn: async (_value, context) => {
+        seenSignals.push(context.signal);
+        return deferred.promise;
+      },
     });
 
     const pending = mutation.mutateAsync(1);
@@ -98,6 +103,8 @@ describe('@iostore/query createMutation', () => {
 
     await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
     expect(mutation.snapshot().status).toBe('idle');
+    expect(seenSignals).toHaveLength(1);
+    expect(seenSignals[0]?.aborted).toBe(true);
   });
 
   it('mutate() is fire-and-forget wrapper', async () => {

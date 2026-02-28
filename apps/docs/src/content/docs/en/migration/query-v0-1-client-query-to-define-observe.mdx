@@ -1,0 +1,70 @@
+---
+title: 'Migration: client.query -> defineQuery/observeQuery'
+description: 'Move from v0.0 query API to the v0.1 record + observer model.'
+sidebar:
+  order: 21
+---
+
+## Goal
+
+Split cache definition and observer behavior:
+
+- Cache-level: `defineQuery` (key/queryFn/stale/retry/gc)
+- Observer-level: `observeQuery` (enabled/select/placeholder/refetchOn*)
+
+## Basic Migration
+
+### Before
+
+```ts
+const user = client.query({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+await user.fetch();
+```
+
+### After
+
+```ts
+const userQuery = client.defineQuery({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+const userObserver = client.observeQuery({
+  query: userQuery,
+  enabled: true,
+  refetchOnMount: 'stale',
+});
+
+await userQuery.fetch();
+```
+
+## Batch Operations
+
+- Kept: `invalidateQueries`, `cancelQueries`, `removeQueries`
+- Added: `refetchQueries`, `resetQueries`, `setQueriesData`
+
+## SSR
+
+```ts
+const dehydrated = client.dehydrate();
+client.hydrate(dehydrated);
+```
+
+## React Minimal Pattern
+
+```ts
+const userQuery = client.defineQuery({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+const user = useQuery({
+  client,
+  query: userQuery,
+  select: (value) => value,
+});
+```

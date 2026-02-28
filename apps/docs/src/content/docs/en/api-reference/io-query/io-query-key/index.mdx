@@ -11,7 +11,7 @@ Use this type alias to model reusable type shapes.
 ## Signature
 
 ```ts
-readonly unknown[]
+IoQueryKey
 ```
 
 ## Minimal Example
@@ -27,13 +27,13 @@ console.log(value);
 
 - Avoid over-expanding complex aliases in user-facing docs.
 - Keep aliases stable to prevent downstream type breakage.
-- Keys must be stably serializable: no `function`, no `symbol`, and no circular references.
 
 ## Related APIs
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryFilter](../io-query-filter/)
-- [IoQueryOptions](../io-query-options/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

@@ -215,8 +215,6 @@ export default defineConfig({
             api: [
               '/api-reference/**',
               '/en/api-reference/**',
-              '/reference/**',
-              '/en/reference/**',
             ],
             docs: [
               '/',

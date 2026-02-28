@@ -1,16 +1,23 @@
 import { createMutation } from './mutation.js';
-import { createQuery, getQueryInternal } from './query.js';
+import { createQueryObserver } from './query-observer.js';
+import { createQueryCache } from './query-cache.js';
+import type { NormalizedQueryDefinition } from './query-record.js';
 import type {
+  IoDehydrateOptions,
+  IoDehydratedQuery,
+  IoDehydratedState,
+  IoHydrateOptions,
   IoMutation,
   IoMutationOptions,
-  IoQuery,
-  IoQueryCacheEvent,
   IoQueryClient,
   IoQueryClientOptions,
+  IoQueryDefinition,
   IoQueryFilter,
-  IoQueryKey,
-  IoQueryOptions,
-  IoUnsubscribe,
+  IoQueryHandle,
+  IoQueryInput,
+  IoQueryObserver,
+  IoQueryObserverOptions,
+  IoQueryState,
 } from './types.js';
 import {
   DEFAULT_GC_TIME,
@@ -18,55 +25,43 @@ import {
   DEFAULT_STALE_TIME,
   defaultRetryDelay,
   hashKey,
-  keyMatches,
+  reportBackgroundError,
 } from './utils.js';
-
-type AnyQuery = IoQuery<unknown, unknown>;
+import { dehydrateQueries, filterHydrationQueries } from './hydration.js';
 
 type QueryDefaults = {
   staleTime: number;
   gcTime: number;
   retry: number;
   retryDelay: (attempt: number) => number;
+  refetchOnMount: false | 'stale' | 'always';
+  refetchOnWindowFocus: boolean;
+  refetchOnReconnect: boolean;
 };
-
-type InternalQueryOptions<TData, TError> = IoQueryOptions<TData, TError> &
-  QueryDefaults & {
-    onGarbageCollect?: (query: IoQuery<TData, TError>) => void;
-    canFetch?: boolean;
-  };
-
-type QueryOptionsInput<TData, TError> = IoQueryOptions<TData, TError> & {
-  canFetch?: boolean;
-};
-
-function matchesFilter(
-  query: AnyQuery,
-  filter?: IoQueryFilter,
-  filterKeyHash?: string,
-): boolean {
-  if (!filter) {
-    return true;
-  }
-
-  if (filter.key) {
-    if (filter.exact ?? false) {
-      if (query.keyHash !== (filterKeyHash ?? hashKey(filter.key))) {
-        return false;
-      }
-    } else if (!keyMatches(query.key, filter.key, false, query.keyHash)) {
-      return false;
-    }
-  }
-
-  if (filter.predicate && !filter.predicate(query)) {
-    return false;
-  }
-
-  return true;
-}
 
 let defaultClient: IoQueryClient | undefined;
+
+function isHandle<TData, TError>(
+  value: IoQueryInput<TData, TError>,
+): value is IoQueryHandle<TData, TError> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'keyHash' in value &&
+    'fetch' in value &&
+    typeof (value as { fetch?: unknown }).fetch === 'function'
+  );
+}
+
+function createSeededQueryFn(keyHash: string): (context: {
+  signal: AbortSignal;
+}) => Promise<never> {
+  return async () => {
+    throw new Error(
+      `query.fetch: queryFn is not available for key ${keyHash}. Call defineQuery(...) first.`,
+    );
+  };
+}
 
 export function createQueryClient(
   options: IoQueryClientOptions = {},
@@ -76,117 +71,75 @@ export function createQueryClient(
     gcTime: options.defaultGcTime ?? DEFAULT_GC_TIME,
     retry: options.defaultRetry ?? DEFAULT_RETRY_ATTEMPTS,
     retryDelay: options.defaultRetryDelay ?? defaultRetryDelay,
+    refetchOnMount: options.defaultRefetchOnMount ?? 'stale',
+    refetchOnWindowFocus: options.defaultRefetchOnWindowFocus ?? false,
+    refetchOnReconnect: options.defaultRefetchOnReconnect ?? false,
   };
 
-  const queries = new Map<string, AnyQuery>();
-  const queryUpdateUnsubs = new Map<string, IoUnsubscribe>();
-  const listeners = new Set<(event: IoQueryCacheEvent) => void>();
+  const cache = createQueryCache();
 
-  const notify = (event: IoQueryCacheEvent): void => {
-    for (const listener of listeners) {
-      listener(event);
-    }
-  };
-
-  const removeByHash = (keyHash: string, reset = false): void => {
-    const query = queries.get(keyHash);
-    if (!query) {
-      return;
-    }
-
-    query.cancel();
-    if (reset) {
-      query.reset();
-    }
-
-    queryUpdateUnsubs.get(keyHash)?.();
-    queryUpdateUnsubs.delete(keyHash);
-
-    queries.delete(keyHash);
-    notify({
-      type: 'query-removed',
-      query,
-    });
-  };
-
-  const registerQuery = (query: AnyQuery): void => {
-    queries.set(query.keyHash, query);
-
-    const updateUnsub = query.subscribeUpdate(() => {
-      notify({
-        type: 'query-updated',
-        query,
-      });
-    });
-    queryUpdateUnsubs.set(query.keyHash, updateUnsub);
-
-    notify({
-      type: 'query-added',
-      query,
-    });
-  };
-
-  const getQueries = (filter?: IoQueryFilter): AnyQuery[] => {
-    if (!filter) {
-      return Array.from(queries.values());
-    }
-
-    const filterKeyHash =
-      filter.key && (filter.exact ?? false) ? hashKey(filter.key) : undefined;
-
-    return Array.from(queries.values()).filter((query) => {
-      return matchesFilter(query, filter, filterKeyHash);
-    });
-  };
-
-  const resolveQueryOptions = <TData, TError>(
-    queryOptions: QueryOptionsInput<TData, TError>,
-    onGarbageCollect: (query: IoQuery<TData, TError>) => void,
-  ): InternalQueryOptions<TData, TError> => ({
-    ...queryOptions,
-    staleTime: queryOptions.staleTime ?? defaults.staleTime,
-    gcTime: queryOptions.gcTime ?? defaults.gcTime,
-    retry: queryOptions.retry ?? defaults.retry,
-    retryDelay: queryOptions.retryDelay ?? defaults.retryDelay,
-    onGarbageCollect,
+  const normalizeDefinition = <TData, TError>(
+    definition: IoQueryDefinition<TData, TError>,
+    canFetch = true,
+  ): NormalizedQueryDefinition<TData, TError> => ({
+    key: definition.key,
+    keyHash: hashKey(definition.key),
+    queryFn: definition.queryFn,
+    staleTime: definition.staleTime ?? defaults.staleTime,
+    gcTime: definition.gcTime ?? defaults.gcTime,
+    retry: definition.retry ?? defaults.retry,
+    retryDelay: definition.retryDelay ?? defaults.retryDelay,
+    canFetch,
   });
 
-  const queryInternal = <TData = unknown, TError = Error>(
-    queryOptions: QueryOptionsInput<TData, TError>,
-  ): IoQuery<TData, TError> => {
-    const keyHash = hashKey(queryOptions.key);
-    const existing = queries.get(keyHash) as IoQuery<TData, TError> | undefined;
-
-    if (existing) {
-      const internal = getQueryInternal(existing);
-      if (!internal) {
-        throw new Error(
-          `createQueryClient: internal query API is unavailable for key ${keyHash}`,
-        );
-      }
-
-      internal.updateOptions(
-        resolveQueryOptions(queryOptions, () => {
-          removeByHash(keyHash, false);
-        }),
-      );
-      internal.touch();
-      return existing;
-    }
-
-    const created = createQuery(
-      resolveQueryOptions(queryOptions, () => {
-        removeByHash(keyHash, false);
-      }),
-    );
-
-    registerQuery(created as AnyQuery);
-    return created;
+  const defineQuery = <TData = unknown, TError = Error>(
+    definition: IoQueryDefinition<TData, TError>,
+  ): IoQueryHandle<TData, TError> => {
+    const normalized = normalizeDefinition(definition, true);
+    return cache.define(normalized);
   };
 
-  const query = <TData = unknown, TError = Error>(
-    queryOptions: IoQueryOptions<TData, TError>,
-  ): IoQuery<TData, TError> => queryInternal(queryOptions);
+  const resolveHandle = <TData = unknown, TError = Error>(
+    input: IoQueryInput<TData, TError>,
+  ): IoQueryHandle<TData, TError> => {
+    if (isHandle(input)) {
+      return input;
+    }
+    return defineQuery<TData, TError>(input);
+  };
+
+  const fetchQuery = <TData = unknown, TError = Error>(
+    input: IoQueryInput<TData, TError>,
+  ): Promise<TData> => resolveHandle(input).fetch(true);
+
+  const prefetchQuery = <TData = unknown, TError = Error>(
+    input: IoQueryInput<TData, TError>,
+  ): Promise<void> => resolveHandle(input).prefetch();
+
+  const ensureQueryData = <TData = unknown, TError = Error>(
+    input: IoQueryInput<TData, TError>,
+  ): Promise<TData> => resolveHandle(input).ensureData();
+
+  const observeQuery = <TData = unknown, TError = Error, TSelected = TData>(
+    observerOptions: IoQueryObserverOptions<TData, TError, TSelected>,
+  ): IoQueryObserver<TSelected, TError> => {
+    const handle = resolveHandle(observerOptions.query);
+    const record = cache.getRecord<TData, TError>(handle.key);
+
+    if (!record) {
+      throw new Error(
+        `observeQuery: query record is unavailable for key ${handle.keyHash}`,
+      );
+    }
+
+    return createQueryObserver<TData, TError, TSelected>({
+      record,
+      observerOptions,
+      defaultRefetchOnMount: defaults.refetchOnMount,
+      defaultRefetchOnWindowFocus: defaults.refetchOnWindowFocus,
+      defaultRefetchOnReconnect: defaults.refetchOnReconnect,
+    });
+  };
 
   const mutation = <
     TData = unknown,
@@ -197,84 +150,142 @@ export function createQueryClient(
     mutationOptions: IoMutationOptions<TData, TVariables, TError, TContext>,
   ): IoMutation<TData, TVariables, TError> => createMutation(mutationOptions);
 
-  const invalidateQueries = (
-    filter?: IoQueryFilter,
-    refetch = true,
-  ): void => {
-    for (const matchedQuery of getQueries(filter)) {
-      matchedQuery.invalidate(refetch);
-    }
-  };
-
-  const cancelQueries = (filter?: IoQueryFilter): void => {
-    for (const matchedQuery of getQueries(filter)) {
-      matchedQuery.cancel();
-    }
-  };
-
-  const removeQueries = (filter?: IoQueryFilter): void => {
-    for (const matchedQuery of getQueries(filter)) {
-      removeByHash(matchedQuery.keyHash, false);
-    }
-  };
-
   const getQuery = <TData = unknown, TError = Error>(
-    key: IoQueryKey,
-  ): IoQuery<TData, TError> | undefined =>
-    queries.get(hashKey(key)) as IoQuery<TData, TError> | undefined;
+    key: readonly unknown[],
+  ): IoQueryHandle<TData, TError> | undefined =>
+    cache.getHandle<TData, TError>(key);
 
-  const getQueryData = <TData = unknown>(key: IoQueryKey): TData | undefined =>
-    getQuery<TData>(key)?.snapshot().data;
+  const getQueries = (filter?: IoQueryFilter): IoQueryHandle<unknown, unknown>[] =>
+    cache.getAll(filter);
+
+  const getQueryData = <TData = unknown>(
+    key: readonly unknown[],
+  ): TData | undefined => getQuery<TData>(key)?.getData();
+
+  const getQueryState = <TData = unknown, TError = Error>(
+    key: readonly unknown[],
+  ): IoQueryState<TData, TError> | undefined => getQuery<TData, TError>(key)?.getState();
 
   const setQueryData = <TData = unknown>(
-    key: IoQueryKey,
+    key: readonly unknown[],
     updater: TData | ((prev: TData | undefined) => TData),
   ): void => {
     const existing = getQuery<TData>(key);
-
     if (existing) {
       existing.setData(updater);
       return;
     }
 
-    const created = queryInternal<TData>({
-      key,
-      queryFn: async () => {
-        throw new Error(
-          `setQueryData: seeded query has no queryFn for key ${hashKey(key)}. Call client.query(...) first to attach a queryFn.`,
-        );
-      },
-      autoFetch: false,
-      canFetch: false,
-    });
-    created.setData(updater);
+    const keyHash = hashKey(key);
+    const seeded = cache.define(
+      normalizeDefinition<TData, Error>(
+        {
+          key,
+          queryFn: createSeededQueryFn(keyHash),
+        },
+        false,
+      ),
+    );
+    seeded.setData(updater);
   };
 
-  const clear = (): void => {
-    for (const keyHash of Array.from(queries.keys())) {
-      removeByHash(keyHash, true);
+  const setQueriesData = <TData = unknown>(
+    filter: IoQueryFilter,
+    updater: (prev: TData | undefined) => TData,
+  ): void => {
+    for (const query of getQueries(filter)) {
+      query.setData((prev: unknown) => updater(prev as TData | undefined));
     }
   };
 
-  const subscribe = (fn: (event: IoQueryCacheEvent) => void): IoUnsubscribe => {
-    listeners.add(fn);
-    return () => {
-      listeners.delete(fn);
-    };
+  const invalidateQueries = (filter?: IoQueryFilter, refetch = true): void => {
+    for (const query of getQueries(filter)) {
+      query.invalidate(refetch);
+    }
+  };
+
+  const refetchQueries = async (filter?: IoQueryFilter): Promise<void> => {
+    await Promise.all(
+      getQueries(filter).map((query) => {
+        return query.fetch(true).then(() => undefined);
+      }),
+    );
+  };
+
+  const cancelQueries = (filter?: IoQueryFilter): void => {
+    for (const query of getQueries(filter)) {
+      query.cancel();
+    }
+  };
+
+  const resetQueries = (filter?: IoQueryFilter): void => {
+    for (const query of getQueries(filter)) {
+      query.reset();
+    }
+  };
+
+  const removeQueries = (filter?: IoQueryFilter): void => {
+    for (const query of getQueries(filter)) {
+      cache.removeByHash(query.keyHash, false);
+    }
+  };
+
+  const clear = (): void => {
+    cache.clear(true);
+  };
+
+  const dehydrate = (dehydrateOptions?: IoDehydrateOptions): IoDehydratedState => {
+    return dehydrateQueries(getQueries(), dehydrateOptions);
+  };
+
+  const hydrate = (
+    state: IoDehydratedState,
+    hydrateOptions?: IoHydrateOptions,
+  ): void => {
+    const filtered = filterHydrationQueries(state, hydrateOptions);
+
+    for (const query of filtered.queries) {
+      const existing = cache.getRecord<unknown, unknown>(query.key);
+      if (existing) {
+        existing.hydrate(query.state);
+        continue;
+      }
+
+      cache.seed(
+        normalizeDefinition<unknown, Error>(
+          {
+            key: query.key,
+            queryFn: createSeededQueryFn(query.keyHash),
+          },
+          false,
+        ),
+        query.state,
+      );
+    }
   };
 
   return {
-    query,
+    defineQuery,
+    observeQuery,
+    fetchQuery,
+    prefetchQuery,
+    ensureQueryData,
     mutation,
     invalidateQueries,
+    refetchQueries,
     cancelQueries,
+    resetQueries,
     removeQueries,
     getQueryData,
     setQueryData,
+    setQueriesData,
+    getQueryState,
     getQuery,
     getQueries,
+    dehydrate,
+    hydrate,
     clear,
-    subscribe,
+    subscribe: cache.subscribe,
   };
 }
 
@@ -288,4 +299,27 @@ export function getDefaultClient(): IoQueryClient {
 export function resetDefaultClient(): void {
   defaultClient?.clear();
   defaultClient = undefined;
+}
+
+export function isDehydratedQuery(
+  value: unknown,
+): value is IoDehydratedQuery {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  if (!('key' in value) || !('keyHash' in value) || !('state' in value)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function safeRefetch(
+  client: IoQueryClient,
+  filter?: IoQueryFilter,
+): void {
+  void client.refetchQueries(filter).catch((error: unknown) => {
+    reportBackgroundError('queryClient.safeRefetch()', error);
+  });
 }

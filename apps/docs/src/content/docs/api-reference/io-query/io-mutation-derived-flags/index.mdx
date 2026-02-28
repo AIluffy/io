@@ -1,39 +1,48 @@
 ---
 title: "IoMutationDerivedFlags"
-description: "Mutation UI 状态布尔派生标记类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-用于表达 Mutation 状态的布尔标记，便于 UI 条件渲染。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoMutationDerivedFlags = {
-  readonly isIdle: boolean;
-  readonly isPending: boolean;
-  readonly isSuccess: boolean;
-  readonly isError: boolean;
-};
+IoMutationDerivedFlags
 ```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| isIdle | `boolean` |
+| isPending | `boolean` |
+| isSuccess | `boolean` |
+| isError | `boolean` |
 
 ## 最小示例
 
 ```ts
-if (mutation.flags.isPending) {
-  showSpinner();
-}
+import type { IoMutationDerivedFlags } from '@iostore/store/query';
+
+let value!: IoMutationDerivedFlags;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 将各标记视为可同时为真；它们由单一状态派生。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [IoMutation](../io-mutation/)
-- [deriveMutationFlags](../derive-mutation-flags/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

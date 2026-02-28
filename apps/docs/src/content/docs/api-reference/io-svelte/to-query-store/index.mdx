@@ -3,22 +3,49 @@ title: "toQueryStore"
 description: "函数 API 参考。"
 ---
 
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
 ## 签名
 
 ```ts
-<TData, TError = Error>(query: IoQuery<TData, TError>, options?: IoQueryStoreOptions) => IoQueryStore<TData, TError>
+<TData, TError = Error, TSelected = TData>(observer: IoQueryObserver<TSelected, TError>, query: IoQueryHandle<TData, TError>, options?: IoQueryStoreOptions) => IoQueryStore<TData, TError, TSelected>
 ```
 
 ## 参数
 
 | Name | Type |
 | --- | --- |
-| query | `IoQuery<TData, TError>` |
+| observer | `IoQueryObserver<TSelected, TError>` |
+| query | `IoQueryHandle<TData, TError>` |
 | options | `IoQueryStoreOptions` |
 
 ## 返回
 
-`IoQueryStore<TData, TError>`
+`IoQueryStore<TData, TError, TSelected>`
+
+## 最小示例
+
+```ts
+import { toQueryStore } from '@iostore/svelte';
+
+const result = toQueryStore(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [createQueryStore](../create-query-store/)
+- [toReadable](../to-readable/)
+- [toReadableSelector](../to-readable-selector/)
+- [toWritable](../to-writable/)
 
 ## 源码
 

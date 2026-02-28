@@ -20,11 +20,14 @@ IoQueryState<TData, TError>
 | --- | --- |
 | status | `IoDataStatus` |
 | fetchStatus | `IoFetchStatus` |
-| data | `TData \| undefined` |
-| error | `TError \| null` |
+| data | `TData` |
+| error | `TError` |
 | dataUpdatedAt | `number` |
 | errorUpdatedAt | `number` |
 | failureCount | `number` |
+| failureReason | `TError` |
+| isInvalidated | `boolean` |
+| isPlaceholderData | `boolean` |
 
 ## 最小示例
 
@@ -42,9 +45,10 @@ console.log(value);
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryOptions](../io-query-options/)
-- [IoQueryFilter](../io-query-filter/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

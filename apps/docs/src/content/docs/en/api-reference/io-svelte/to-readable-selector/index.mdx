@@ -1,16 +1,51 @@
 ---
 title: "toReadableSelector"
 description: "Function API reference."
-sidebar:
-  hidden: true
-draft: true
 ---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
 <TSource, TSelected>(source: IoSource<TSource>, selector: (value: TSource) => TSelected, options?: IoSelectorOptions<TSelected>) => Readable<TSelected>
 ```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| source | `IoSource<TSource>` |
+| selector | `(value: TSource) => TSelected` |
+| options | `IoSelectorOptions<TSelected>` |
+
+## Returns
+
+`Readable<TSelected>`
+
+## Minimal Example
+
+```ts
+import { toReadableSelector } from '@iostore/svelte';
+
+const result = toReadableSelector(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createQueryStore](../create-query-store/)
+- [toQueryStore](../to-query-store/)
+- [toReadable](../to-readable/)
+- [toWritable](../to-writable/)
 
 ## Source
 

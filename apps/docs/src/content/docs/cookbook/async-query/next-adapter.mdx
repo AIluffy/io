@@ -25,7 +25,7 @@ Next.js 适配重点不在 hooks 本身，而在 SSR 边界：按请求创建 cl
 ```tsx
 // server
 const client = createQueryClient();
-await client.query({
+await client.defineQuery({
   key: ['dashboard', userId],
   queryFn: ({ signal }) => fetchData(userId, signal),
 }).prefetch();

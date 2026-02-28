@@ -1,12 +1,12 @@
 ---
 title: "throttle"
-description: "行为 API：限制订阅通知频率。"
+description: "函数 API 参考。"
 ---
+
 
 ## 何时使用
 
-- 高频更新，但只需要固定节奏下发通知。
-- 减少 UI 因连续写入造成的抖动。
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
@@ -28,24 +28,24 @@ description: "行为 API：限制订阅通知频率。"
 ## 最小示例
 
 ```ts
-import { io } from '@iostore/store';
-import { throttle, withBehaviors } from '@iostore/store/behavior';
+import { throttle } from '@iostore/store/behavior';
 
-const count = io(0);
-const view = withBehaviors(count, [throttle(50)]);
+const result = throttle(/* ...args */);
+console.log(result);
 ```
 
 ## 常见误用
 
-- 期望每次更新都触发回调，却使用了 `throttle` 导致中间值被采样丢弃。
-- 把节流窗口设得过短，几乎没有降低通知频率。
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [debounce](../debounce/)
-- [effect](../effect/)
-- [withBehaviors](../with-behaviors/)
+- [applyUpdate](../apply-update/)
+- [batch](../batch/)
+- [createHistory](../create-history/)
+- [createScheduledDispatcher](../create-scheduled-dispatcher/)
 
 ## 源码
 
-- `packages/io/src/lib/extensions/cookbook/throttle.ts`
+- `packages/io/src/lib/extensions/behaviors/throttle.ts`

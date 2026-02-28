@@ -1,30 +1,24 @@
 ---
 title: "createMutation"
-description: "创建独立 Mutation 状态机。"
+description: "函数 API 参考。"
 ---
+
 
 ## 何时使用
 
-当你需要处理写操作（提交、重试、取消、回调）并暴露响应式 mutation 状态时使用 `createMutation`。
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
 ```ts
-function createMutation<
-  TData = unknown,
-  TVariables = void,
-  TError = Error,
-  TContext = unknown,
->(
-  options: IoMutationOptions<TData, TVariables, TError, TContext>,
-): IoMutation<TData, TVariables, TError>;
+<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>
 ```
 
 ## 参数
 
-| Name | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `options` | `IoMutationOptions<TData, TVariables, TError, TContext>` | Yes | — | 配置 mutationFn、重试策略与生命周期回调。 |
+| Name | Type |
+| --- | --- |
+| options | `IoMutationOptions<TData, TVariables, TError, TContext>` |
 
 ## 返回
 
@@ -33,31 +27,23 @@ function createMutation<
 ## 最小示例
 
 ```ts
-const mutation = createMutation({
-  mutationFn: (title: string) =>
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title }),
-    }).then((r) => r.json()),
-  retry: 1,
-});
+import { createMutation } from '@iostore/store/query';
 
-const created = await mutation.mutateAsync('Ship docs update');
-console.log(created);
+const result = createMutation(/* ...args */);
+console.log(result);
 ```
 
 ## 常见误用
 
-- 乐观更新时不返回可回滚上下文，失败后无法恢复。
-- 把取消误判为业务失败。
-- UI 不消费 `mutation.flags`，导致状态反馈不完整。
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [IoMutation](../io-mutation/)
-- [IoMutationOptions](../io-mutation-options/)
+- [createQueryClient](../create-query-client/)
 - [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## 源码
 

@@ -11,7 +11,7 @@ description: "类型 API 参考。"
 ## 签名
 
 ```ts
-readonly unknown[]
+IoQueryKey
 ```
 
 ## 最小示例
@@ -27,13 +27,13 @@ console.log(value);
 
 - 避免在用户文档中展开过于复杂的类型细节。
 - 调整类型别名时注意下游兼容性。
-- key 必须可稳定序列化，不能包含 `function`、`symbol` 或循环引用。
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryFilter](../io-query-filter/)
-- [IoQueryOptions](../io-query-options/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

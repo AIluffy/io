@@ -20,7 +20,7 @@ IoHistoryOptions
 | --- | --- |
 | limit | `number` |
 | emitUpdate | `boolean` |
-| filter | `'all' \| 'exclude-undo-redo' \| ((update: IoUpdate) => boolean)` |
+| filter | `IoHistoryFilterStrategy` |
 | groupBy | `(update: IoUpdate) => PropertyKey \| undefined` |
 
 ## Minimal Example
@@ -32,23 +32,17 @@ let value!: IoHistoryOptions;
 console.log(value);
 ```
 
-## Field Notes
-
-- `limit`: maximum history length, default `Infinity`.
-- `emitUpdate`: emit replayed updates during undo/redo, default `true`.
-- `filter`: record strategy, default `exclude-undo-redo`.
-- `groupBy`: group-key function for contiguous updates.
-
 ## Common Pitfalls
 
-- Returning unstable object references in `groupBy`.
-- Over-filtering updates and ending up with an empty history.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [createHistory](../create-history/)
-- [IoHistory](../io-history/)
-- [IoUpdate](../io-update/)
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## Source
 

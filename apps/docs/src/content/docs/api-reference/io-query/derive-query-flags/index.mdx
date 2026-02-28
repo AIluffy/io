@@ -1,38 +1,50 @@
 ---
 title: "deriveQueryFlags"
-description: "根据 IoQueryState 计算派生布尔标记。"
+description: "函数 API 参考。"
 ---
+
 
 ## 何时使用
 
-当你只有原始 `IoQueryState`，但需要和 `query.flags` 相同的派生标记时使用。
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
 ```ts
-function deriveQueryFlags<TData, TError>(
-  state: IoQueryState<TData, TError>,
-): IoQueryDerivedFlags;
+<TData, TError>(state: IoQueryState<TData, TError>, options?: { isStale?: boolean; isFetchedAfterMount?: boolean; }) => IoQueryDerivedFlags
 ```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| state | `IoQueryState<TData, TError>` |
+| options | `{ isStale?: boolean; isFetchedAfterMount?: boolean; }` |
+
+## 返回
+
+`IoQueryDerivedFlags`
 
 ## 最小示例
 
 ```ts
-const flags = deriveQueryFlags(query.snapshot());
-if (flags.isRefetching) {
-  console.log('后台刷新中');
-}
+import { deriveQueryFlags } from '@iostore/store/query';
+
+const result = deriveQueryFlags(/* ...args */);
+console.log(result);
 ```
 
 ## 常见误用
 
-- 把 `isLoading`（首次加载）和 `isRefetching`（后台刷新）混为一谈。
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [IoQueryState](../io-query-state/)
-- [IoQueryDerivedFlags](../io-query-derived-flags/)
-- [IoQuery](../io-query/)
+- [createMutation](../create-mutation/)
+- [createQueryClient](../create-query-client/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## 源码
 

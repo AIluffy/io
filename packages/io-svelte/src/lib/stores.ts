@@ -1,9 +1,11 @@
 import type { IoSchedule, IoUnit } from '@iostore/store';
 import type {
-  IoQuery,
   IoQueryClient,
-  IoQueryOptions,
-  IoQueryState,
+  IoQueryDefinition,
+  IoQueryHandle,
+  IoQueryObserver,
+  IoQueryObserverOptions,
+  IoQueryObserverResult,
 } from '@iostore/store/query';
 import type { Readable, Writable } from 'svelte/store';
 
@@ -24,25 +26,61 @@ type IoSelectorOptions<TSelected> = IoSvelteOptions & {
 };
 
 type IoQueryStoreOptions = {
-  enabled?: boolean;
   cancelOnUnsubscribe?: boolean;
 };
 
-export type IoQueryStore<TData, TError = Error> =
-  Readable<IoQueryState<TData, TError>> & {
-    getState: () => IoQueryState<TData, TError>;
+type IoCreateQueryStoreDefinitionOptions<TData, TError, TSelected> =
+  IoQueryDefinition<TData, TError> &
+    Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> &
+    IoQueryStoreOptions & {
+      client?: IoQueryClient;
+    };
+
+type IoCreateQueryStoreHandleOptions<TData, TError, TSelected> =
+  Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> &
+    IoQueryStoreOptions & {
+      query: IoQueryHandle<TData, TError>;
+      client?: IoQueryClient;
+    };
+
+type IoCreateQueryStoreOptions<TData, TError = Error, TSelected = TData> =
+  | IoCreateQueryStoreDefinitionOptions<TData, TError, TSelected>
+  | IoCreateQueryStoreHandleOptions<TData, TError, TSelected>;
+
+export type IoQueryStore<TData, TError = Error, TSelected = TData> =
+  Readable<IoQueryObserverResult<TSelected, TError>> & {
+    getState: () => IoQueryObserverResult<TSelected, TError>;
     fetch: () => Promise<TData>;
     refetch: () => Promise<TData>;
     prefetch: () => Promise<void>;
     invalidate: (refetch?: boolean) => void;
     cancel: () => void;
-    query: IoQuery<TData, TError>;
+    query: IoQueryHandle<TData, TError>;
+    observer: IoQueryObserver<TSelected, TError>;
   };
 
-function forceRefetch<TData, TError>(
-  query: IoQuery<TData, TError>,
-): Promise<TData> {
-  return query.refetch();
+function isHandleOptions<TData, TError, TSelected>(
+  options: IoCreateQueryStoreOptions<TData, TError, TSelected>,
+): options is IoCreateQueryStoreHandleOptions<TData, TError, TSelected> {
+  return 'query' in options;
+}
+
+function resolveObserverOptions<TData, TError, TSelected>(
+  options: IoCreateQueryStoreOptions<TData, TError, TSelected>,
+  query: IoQueryHandle<TData, TError>,
+): IoQueryObserverOptions<TData, TError, TSelected> {
+  return {
+    query,
+    enabled: options.enabled,
+    placeholderData: options.placeholderData,
+    select: options.select,
+    refetchOnMount: options.refetchOnMount,
+    refetchOnWindowFocus: options.refetchOnWindowFocus,
+    refetchOnReconnect: options.refetchOnReconnect,
+    onSuccess: options.onSuccess,
+    onError: options.onError,
+    onSettled: options.onSettled,
+  };
 }
 
 export function toReadable<T>(
@@ -122,64 +160,64 @@ export function toReadableSelector<TSource, TSelected>(
   };
 }
 
-export function toQueryStore<TData, TError = Error>(
-  query: IoQuery<TData, TError>,
+export function toQueryStore<TData, TError = Error, TSelected = TData>(
+  observer: IoQueryObserver<TSelected, TError>,
+  query: IoQueryHandle<TData, TError>,
   options?: IoQueryStoreOptions,
-): IoQueryStore<TData, TError> {
+): IoQueryStore<TData, TError, TSelected> {
   let subscriberCount = 0;
-  const enabled = options?.enabled ?? true;
   const cancelOnUnsubscribe = options?.cancelOnUnsubscribe ?? false;
 
   return {
     subscribe(run) {
       subscriberCount += 1;
-      run(query.snapshot());
-      const unsubscribe = query.subscribe((state) => {
+      run(observer.snapshot());
+      const unsubscribe = observer.subscribe((state) => {
         run(state);
       });
-
-      if (enabled && subscriberCount === 1) {
-        query.fetchQuietly();
-      }
 
       return () => {
         subscriberCount = Math.max(0, subscriberCount - 1);
         unsubscribe();
+
         if (cancelOnUnsubscribe && subscriberCount === 0) {
           query.cancel();
         }
       };
     },
-    getState: () => query.snapshot(),
-    fetch: () => query.fetch(),
-    refetch: () => forceRefetch(query),
+    getState: () => observer.snapshot(),
+    fetch: () => query.fetch(false),
+    refetch: () => query.fetch(true),
     prefetch: () => query.prefetch(),
     invalidate: (refetch = true) => query.invalidate(refetch),
     cancel: () => query.cancel(),
     query,
+    observer,
   };
 }
 
-export function createQueryStore<TData, TError = Error>(
-  options: IoQueryOptions<TData, TError> &
-    IoQueryStoreOptions & { client?: IoQueryClient },
-): IoQueryStore<TData, TError> {
-  const {
-    enabled,
-    cancelOnUnsubscribe,
-    client: providedClient,
-    ...queryOptions
-  } = options;
+export function createQueryStore<TData, TError = Error, TSelected = TData>(
+  options: IoCreateQueryStoreOptions<TData, TError, TSelected>,
+): IoQueryStore<TData, TError, TSelected> {
+  const client = options.client ?? getDefaultClient();
 
-  const client = providedClient ?? getDefaultClient();
-  const query = client.query<TData, TError>(
-    queryOptions as IoQueryOptions<TData, TError>,
+  const query = isHandleOptions(options)
+    ? options.query
+    : client.getQuery<TData, TError>(options.key) ??
+      client.defineQuery<TData, TError>({
+        key: options.key,
+        queryFn: options.queryFn,
+        staleTime: options.staleTime,
+        gcTime: options.gcTime,
+        retry: options.retry,
+        retryDelay: options.retryDelay,
+      });
+
+  const observer = client.observeQuery<TData, TError, TSelected>(
+    resolveObserverOptions(options, query),
   );
-  const shouldFetchOnSubscribe =
-    (enabled ?? true) && queryOptions.autoFetch !== true;
 
-  return toQueryStore(query, {
-    enabled: shouldFetchOnSubscribe,
-    cancelOnUnsubscribe,
+  return toQueryStore(observer, query, {
+    cancelOnUnsubscribe: options.cancelOnUnsubscribe,
   });
 }

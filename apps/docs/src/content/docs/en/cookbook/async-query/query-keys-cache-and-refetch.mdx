@@ -23,7 +23,7 @@ Query keys define cache buckets and invalidation scope. Stable keys are a prereq
 ## Minimal Example
 
 ```ts
-const list = client.query({
+const list = client.defineQuery({
   key: ['users', { page, pageSize, keyword }],
   queryFn: ({ signal }) =>
     fetch(`/api/users?page=${page}&pageSize=${pageSize}&keyword=${keyword}`, { signal }).then((r) => r.json()),

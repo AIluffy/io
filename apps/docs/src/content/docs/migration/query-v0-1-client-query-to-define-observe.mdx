@@ -1,0 +1,74 @@
+---
+title: 'Migration: client.query -> defineQuery/observeQuery'
+description: '从 v0.0 的 query API 迁移到 v0.1 的 record + observer 模型。'
+sidebar:
+  order: 21
+---
+
+## 迁移目标
+
+把“定义缓存”和“订阅视图”分开：
+
+- 缓存级：`defineQuery`（key/queryFn/stale/retry/gc）
+- 观察者级：`observeQuery`（enabled/select/placeholder/refetchOn*）
+
+## 基础迁移
+
+### 之前
+
+```ts
+const user = client.query({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+await user.fetch();
+```
+
+### 之后
+
+```ts
+const userQuery = client.defineQuery({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+const userObserver = client.observeQuery({
+  query: userQuery,
+  enabled: true,
+  refetchOnMount: 'stale',
+});
+
+await userQuery.fetch();
+```
+
+## 批量操作迁移
+
+- `invalidateQueries`：保留
+- `cancelQueries`：保留
+- `removeQueries`：保留
+- 新增：`refetchQueries`、`resetQueries`、`setQueriesData`
+
+## SSR 迁移
+
+```ts
+const dehydrated = client.dehydrate();
+client.hydrate(dehydrated);
+```
+
+## React 侧最小迁移
+
+`useQuery` 调用方式保持接近，但建议显式传 `query` 句柄以消除定义歧义：
+
+```ts
+const userQuery = client.defineQuery({
+  key: ['user', id],
+  queryFn: ({ signal }) => fetchUser(id, signal),
+});
+
+const user = useQuery({
+  client,
+  query: userQuery,
+  select: (value) => value,
+});
+```

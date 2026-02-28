@@ -20,7 +20,7 @@ IoHistoryOptions
 | --- | --- |
 | limit | `number` |
 | emitUpdate | `boolean` |
-| filter | `'all' \| 'exclude-undo-redo' \| ((update: IoUpdate) => boolean)` |
+| filter | `IoHistoryFilterStrategy` |
 | groupBy | `(update: IoUpdate) => PropertyKey \| undefined` |
 
 ## 最小示例
@@ -32,23 +32,17 @@ let value!: IoHistoryOptions;
 console.log(value);
 ```
 
-## 字段说明
-
-- `limit`：历史最大长度，默认 `Infinity`。
-- `emitUpdate`：回放（undo/redo）时是否继续发 update，默认 `true`。
-- `filter`：历史过滤策略，默认 `exclude-undo-redo`。
-- `groupBy`：分组键生成器，返回相同键的连续更新会归入同组。
-
 ## 常见误用
 
-- `groupBy` 直接返回对象引用，导致分组不稳定。
-- `filter` 写得过严，导致历史几乎为空，`undo` 看起来“失效”。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [createHistory](../create-history/)
-- [IoHistory](../io-history/)
-- [IoUpdate](../io-update/)
+- [DebounceBehaviorOptions](../debounce-behavior-options/)
+- [EffectBehaviorOptions](../effect-behavior-options/)
+- [IoArrayUnit](../io-array-unit/)
+- [IoBehavior](../io-behavior/)
 
 ## 源码
 

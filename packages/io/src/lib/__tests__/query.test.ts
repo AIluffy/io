@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createQuery } from '../query/query.js';
-import { createAbortError } from '../query/utils.js';
-import { batch } from '../utils/reactive/batch.js';
+import {
+  createQueryClient,
+  getFocusManager,
+  getOnlineManager,
+} from '../query/index.js';
 
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -14,409 +16,232 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
-describe('@iostore/query createQuery', () => {
+describe('@iostore/query observer runtime', () => {
   it('transitions pending -> fetching -> success', async () => {
+    const client = createQueryClient();
     const deferred = createDeferred<number>();
-    const query = createQuery({
+
+    const query = client.defineQuery({
       key: ['users'],
       queryFn: async () => deferred.promise,
     });
 
+    const observer = client.observeQuery({
+      query,
+      enabled: false,
+    });
+
     const transitions: string[] = [];
-    const unsub = query.subscribe((state) => {
+    const unsub = observer.subscribe((state) => {
       transitions.push(`${state.status}:${state.fetchStatus}`);
     });
 
-    const pending = query.fetch();
-    expect(query.snapshot().fetchStatus).toBe('fetching');
+    const pending = observer.fetch();
+    expect(observer.snapshot().fetchStatus).toBe('fetching');
 
     deferred.resolve(7);
     await expect(pending).resolves.toBe(7);
 
-    expect(query.snapshot().status).toBe('success');
-    expect(query.snapshot().data).toBe(7);
+    expect(observer.snapshot().status).toBe('success');
+    expect(observer.snapshot().data).toBe(7);
     expect(transitions).toContain('pending:fetching');
     expect(transitions).toContain('success:idle');
 
     unsub();
+    observer.dispose();
   });
 
-  it('supports placeholderData before first fetch', () => {
-    const query = createQuery({
-      key: ['placeholder'],
-      queryFn: async () => 1,
-      placeholderData: () => 7,
-    });
+  it('supports observer-specific select and callbacks without polluting query definition', async () => {
+    const client = createQueryClient();
+    const successA = vi.fn();
+    const successB = vi.fn();
 
-    expect(query.snapshot().status).toBe('pending');
-    expect(query.snapshot().data).toBe(7);
-    expect(query.getData()).toBe(7);
-  });
-
-  it('transitions pending -> fetching -> error', async () => {
-    const failure = new Error('boom');
-    const query = createQuery({
-      key: ['error'],
-      queryFn: async () => {
-        throw failure;
-      },
-      retry: 0,
-    });
-
-    await expect(query.fetch()).rejects.toBe(failure);
-
-    const state = query.snapshot();
-    expect(state.status).toBe('error');
-    expect(state.fetchStatus).toBe('idle');
-    expect(state.error).toMatchObject({ message: 'boom' });
-    expect(state.failureCount).toBe(1);
-  });
-
-  it('marks refetching while preserving success status', async () => {
-    let run = 0;
-    const deferred = createDeferred<number>();
-    const query = createQuery({
-      key: ['refetch'],
-      queryFn: async () => {
-        run += 1;
-        if (run === 1) {
-          return 1;
-        }
-        return deferred.promise;
-      },
-    });
-
-    await query.fetch();
-
-    const pending = query.fetch();
-    expect(query.flags.isRefetching).toBe(true);
-    expect(query.snapshot().status).toBe('success');
-
-    deferred.resolve(2);
-    await expect(pending).resolves.toBe(2);
-    expect(query.snapshot().data).toBe(2);
-  });
-
-  it('refetch() forces a new request and getData() returns latest data', async () => {
-    let calls = 0;
-    const query = createQuery({
-      key: ['refetch-method'],
-      queryFn: async () => {
-        calls += 1;
-        return calls;
-      },
+    const query = client.defineQuery<number>({
+      key: ['observer', 'isolation'],
+      queryFn: async () => 3,
       staleTime: Number.POSITIVE_INFINITY,
     });
 
-    await expect(query.fetch()).resolves.toBe(1);
-    await expect(query.fetch()).resolves.toBe(1);
-    await expect(query.refetch()).resolves.toBe(2);
+    const observerA = client.observeQuery<number, Error, number>({
+      query,
+      onSuccess: successA,
+    });
+    const observerB = client.observeQuery<number, Error, string>({
+      query,
+      select: (value) => `value:${value ?? 0}`,
+      onSuccess: successB,
+    });
 
-    expect(calls).toBe(2);
-    expect(query.getData()).toBe(2);
+    await observerA.refetch();
+
+    expect(observerA.snapshot().data).toBe(3);
+    expect(observerB.snapshot().data).toBe('value:3');
+    expect(successA).toHaveBeenCalledWith(3);
+    expect(successB).toHaveBeenCalledWith('value:3');
+
+    observerA.dispose();
+    observerB.dispose();
   });
 
-  it('fetchQuietly() starts a request and keeps dedupe semantics', async () => {
-    const deferred = createDeferred<number>();
-    const queryFn = vi.fn(async () => deferred.promise);
-    const query = createQuery({
-      key: ['fetch-quietly', 'dedupe'],
-      queryFn,
-    });
+  it('throws hard error when same key is defined with different queryFn', () => {
+    const client = createQueryClient();
 
-    expect(query.fetchQuietly()).toBeUndefined();
-    expect(query.snapshot().fetchStatus).toBe('fetching');
-    expect(queryFn).toHaveBeenCalledTimes(1);
-
-    deferred.resolve(8);
-    await expect(query.fetch()).resolves.toBe(8);
-    expect(query.snapshot().status).toBe('success');
-    expect(query.snapshot().data).toBe(8);
-  });
-
-  it('fetchQuietly() handles abort without leaking rejection', async () => {
-    const query = createQuery({
-      key: ['fetch-quietly', 'abort'],
-      queryFn: ({ signal }) =>
-        new Promise<number>((_resolve, reject) => {
-          const onAbort = () => {
-            signal.removeEventListener('abort', onAbort);
-            reject(createAbortError());
-          };
-          signal.addEventListener('abort', onAbort, { once: true });
-        }),
-    });
-
-    expect(query.fetchQuietly()).toBeUndefined();
-    query.cancel();
-
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(query.snapshot().fetchStatus).toBe('idle');
-  });
-
-  it('fetchQuietly() keeps query error state without throwing to caller', async () => {
-    const query = createQuery({
-      key: ['fetch-quietly', 'error'],
-      queryFn: async () => {
-        throw new Error('quiet-fail');
-      },
-      retry: 0,
-    });
-
-    expect(() => query.fetchQuietly()).not.toThrow();
-    await expect(query.fetch()).rejects.toMatchObject({ message: 'quiet-fail' });
-
-    expect(query.snapshot().status).toBe('error');
-    expect(query.snapshot().error).toMatchObject({ message: 'quiet-fail' });
-  });
-
-  it('cancels in-flight fetch and restores idle fetchStatus', async () => {
-    const query = createQuery({
-      key: ['cancel'],
-      queryFn: ({ signal }) =>
-        new Promise<number>((_resolve, reject) => {
-          const onAbort = () => {
-            signal.removeEventListener('abort', onAbort);
-            reject(createAbortError());
-          };
-          signal.addEventListener('abort', onAbort, { once: true });
-        }),
-    });
-
-    const pending = query.fetch();
-    query.cancel();
-
-    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
-    expect(query.snapshot().fetchStatus).toBe('idle');
-  });
-
-  it('allows a new fetch after cancel even if previous run ignores abort signal', async () => {
-    const deferred = createDeferred<number>();
-    let calls = 0;
-    const query = createQuery({
-      key: ['cancel', 'ignore-signal'],
-      queryFn: async () => {
-        calls += 1;
-        if (calls === 1) {
-          return deferred.promise;
-        }
-        return 2;
-      },
-      retry: 0,
-    });
-
-    const first = query.fetch();
-    query.cancel();
-
-    expect(query.snapshot().fetchStatus).toBe('idle');
-
-    await expect(query.fetch()).resolves.toBe(2);
-    expect(query.snapshot().data).toBe(2);
-
-    deferred.resolve(1);
-    await expect(first).rejects.toMatchObject({ name: 'AbortError' });
-    expect(query.snapshot().data).toBe(2);
-  });
-
-  it('coalesces setData notifications inside batch()', () => {
-    const query = createQuery({
-      key: ['batch'],
-      queryFn: async () => 0,
-    });
-
-    let calls = 0;
-    const unsub = query.subscribe(() => {
-      calls += 1;
-    });
-
-    batch(() => {
-      query.setData(1);
-      query.setData(2);
-      query.setData(3);
-    });
-
-    expect(calls).toBe(1);
-    expect(query.snapshot().data).toBe(3);
-
-    unsub();
-  });
-
-  it('deduplicates concurrent fetch calls', async () => {
-    const deferred = createDeferred<number>();
-    const queryFn = vi.fn(async () => deferred.promise);
-    const query = createQuery({
-      key: ['dedupe'],
-      queryFn,
-    });
-
-    const first = query.fetch();
-    const second = query.fetch();
-
-    expect(first).toBe(second);
-    expect(queryFn).toHaveBeenCalledTimes(1);
-
-    deferred.resolve(9);
-    await expect(first).resolves.toBe(9);
-    await expect(second).resolves.toBe(9);
-  });
-
-  it('keeps one in-flight request when invalidate(true) races with fetch()', async () => {
-    const deferred = createDeferred<number>();
-    const queryFn = vi.fn(async () => deferred.promise);
-    const query = createQuery({
-      key: ['invalidate-race'],
-      queryFn,
-    });
-
-    const first = query.fetch();
-    query.invalidate(true);
-    const second = query.fetch();
-
-    expect(second).toBe(first);
-    expect(queryFn).toHaveBeenCalledTimes(1);
-
-    deferred.resolve(6);
-    await expect(first).resolves.toBe(6);
-  });
-
-  it('autoFetch triggers request on create when enabled', async () => {
-    const queryFn = vi.fn(async () => 11);
-    const query = createQuery({
-      key: ['auto-fetch'],
-      queryFn,
-      autoFetch: true,
-      staleTime: Number.POSITIVE_INFINITY,
-    });
-
-    await expect(query.fetch()).resolves.toBe(11);
-
-    expect(queryFn).toHaveBeenCalledTimes(1);
-    expect(query.snapshot().status).toBe('success');
-    expect(query.snapshot().data).toBe(11);
-  });
-
-  it('prefetch() swallows errors and resolves void', async () => {
-    const query = createQuery({
-      key: ['prefetch-error'],
-      queryFn: async () => {
-        throw new Error('prefetch-failed');
-      },
-      retry: 0,
-    });
-
-    await expect(query.prefetch()).resolves.toBeUndefined();
-    expect(query.snapshot().status).toBe('error');
-    expect(query.snapshot().error).toMatchObject({ message: 'prefetch-failed' });
-  });
-
-  it('isolates user callback errors from fetch result', async () => {
-    const successQuery = createQuery({
-      key: ['callbacks-success'],
-      queryFn: async () => 5,
-      onSuccess: () => {
-        throw new Error('onSuccess-callback');
-      },
-      onSettled: () => {
-        throw new Error('onSettled-callback');
-      },
-    });
-
-    await expect(successQuery.fetch()).resolves.toBe(5);
-    expect(successQuery.snapshot().status).toBe('success');
-
-    const sourceError = new Error('source-error');
-    const errorQuery = createQuery({
-      key: ['callbacks-error'],
-      queryFn: async () => {
-        throw sourceError;
-      },
-      retry: 0,
-      onError: () => {
-        throw new Error('onError-callback');
-      },
-      onSettled: () => {
-        throw new Error('onSettled-callback');
-      },
-    });
-
-    await expect(errorQuery.fetch()).rejects.toBe(sourceError);
-    expect(errorQuery.snapshot().status).toBe('error');
-    expect(errorQuery.snapshot().error).toMatchObject({ message: 'source-error' });
-  });
-
-  it('derives flags from two-axis state correctly', () => {
-    const query = createQuery({
-      key: ['flags'],
+    client.defineQuery({
+      key: ['conflict'],
       queryFn: async () => 1,
     });
 
-    query.set({
-      status: 'pending',
-      fetchStatus: 'fetching',
-      data: undefined,
-      error: null,
-      dataUpdatedAt: 0,
-      errorUpdatedAt: 0,
-      failureCount: 0,
-    });
-    expect(query.flags.isLoading).toBe(true);
-
-    query.set({
-      status: 'success',
-      fetchStatus: 'fetching',
-      data: 1,
-      error: null,
-      dataUpdatedAt: Date.now(),
-      errorUpdatedAt: 0,
-      failureCount: 0,
-    });
-    expect(query.flags.isRefetching).toBe(true);
-
-    query.set({
-      status: 'error',
-      fetchStatus: 'idle',
-      data: undefined,
-      error: new Error('x'),
-      dataUpdatedAt: 0,
-      errorUpdatedAt: Date.now(),
-      failureCount: 1,
-    });
-    expect(query.flags.isError).toBe(true);
+    expect(() => {
+      client.defineQuery({
+        key: ['conflict'],
+        queryFn: async () => 2,
+      });
+    }).toThrow('conflicting queryFn');
   });
 
-  it('read() supports suspense semantics', async () => {
+  it('keeps placeholderData observer-only', async () => {
+    const client = createQueryClient();
     const deferred = createDeferred<number>();
-    const query = createQuery({
-      key: ['suspense'],
+
+    const query = client.defineQuery({
+      key: ['placeholder', 'observer-only'],
       queryFn: async () => deferred.promise,
     });
 
-    const pending = query.fetch();
-
-    let thrown: unknown;
-    try {
-      query.read();
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(thrown).toBe(pending);
-
-    deferred.resolve(42);
-    await pending;
-    expect(query.read()).toBe(42);
-
-    const failure = new Error('suspense-error');
-    const failedQuery = createQuery({
-      key: ['suspense-error'],
-      queryFn: async () => {
-        throw failure;
-      },
-      retry: 0,
+    const observer = client.observeQuery({
+      query,
+      placeholderData: 99,
     });
 
-    await expect(failedQuery.fetch()).rejects.toBe(failure);
-    expect(() => failedQuery.read()).toThrow('suspense-error');
+    expect(observer.snapshot().data).toBe(99);
+    expect(observer.snapshot().isPlaceholderData).toBe(true);
+    expect(query.getState().data).toBeUndefined();
+    expect(query.getState().dataUpdatedAt).toBe(0);
+
+    deferred.resolve(5);
+    await expect(observer.fetch()).resolves.toBe(5);
+
+    expect(observer.snapshot().data).toBe(5);
+    expect(observer.snapshot().isPlaceholderData).toBe(false);
+    expect(query.getState().dataUpdatedAt).toBeGreaterThan(0);
+
+    observer.dispose();
+  });
+
+  it('tracks retry failureCount and failureReason during retries', async () => {
+    const client = createQueryClient();
+    let attempts = 0;
+    const observer = client.observeQuery<number>({
+      query: {
+        key: ['retry', 'observable'],
+        retry: 2,
+        retryDelay: () => 0,
+        queryFn: async () => {
+          attempts += 1;
+          if (attempts < 3) {
+            throw new Error(`retry-${attempts}`);
+          }
+          return 42;
+        },
+      },
+      enabled: false,
+    });
+
+    await expect(observer.fetch()).resolves.toBe(42);
+
+    const snapshot = observer.snapshot();
+    expect(attempts).toBe(3);
+    expect(snapshot.status).toBe('success');
+    expect(snapshot.failureCount).toBe(0);
+    expect(snapshot.failureReason).toBeNull();
+
+    observer.dispose();
+  });
+
+  it('hydrates and dehydrates query state', async () => {
+    const source = createQueryClient();
+    const sourceObserver = source.observeQuery<number>({
+      query: {
+        key: ['hydrate', 'counter'],
+        queryFn: async () => 8,
+      },
+    });
+
+    await sourceObserver.fetch();
+
+    const dehydrated = source.dehydrate();
+    expect(dehydrated.queries).toHaveLength(1);
+
+    const target = createQueryClient();
+    target.hydrate(dehydrated);
+
+    const targetState = target.getQueryState<number>(['hydrate', 'counter']);
+    expect(targetState?.status).toBe('success');
+    expect(targetState?.data).toBe(8);
+
+    sourceObserver.dispose();
+  });
+
+  it('removes inactive queries after gcTime', async () => {
+    vi.useFakeTimers();
+
+    const client = createQueryClient({
+      defaultGcTime: 50,
+    });
+
+    const observer = client.observeQuery<number>({
+      query: {
+        key: ['gc'],
+        queryFn: async () => 1,
+      },
+    });
+
+    await observer.fetch();
+    observer.dispose();
+
+    await vi.advanceTimersByTimeAsync(60);
+    expect(client.getQuery(['gc'])).toBeUndefined();
+
+    vi.useRealTimers();
+  });
+
+  it('supports refetch on window focus and reconnect', async () => {
+    const focusManager = getFocusManager();
+    const onlineManager = getOnlineManager();
+
+    const client = createQueryClient({
+      defaultRefetchOnMount: false,
+    });
+
+    let count = 0;
+    const observer = client.observeQuery<number>({
+      query: {
+        key: ['focus-online'],
+        queryFn: async () => {
+          count += 1;
+          return count;
+        },
+        staleTime: 0,
+      },
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    });
+
+    await observer.fetch();
+    expect(observer.snapshot().data).toBe(1);
+
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    onlineManager.setOnline(false);
+    onlineManager.setOnline(true);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(observer.snapshot().data).toBeGreaterThanOrEqual(2);
+
+    observer.dispose();
   });
 });

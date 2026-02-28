@@ -3,32 +3,37 @@ title: "IoLynxQueryResult"
 description: "Type API reference."
 ---
 
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
 ## Signature
 
 ```ts
-IoLynxQueryResult<TData, TError = Error>
+IoLynxQueryResult<TData, TError, TSelected>
 ```
 
-## Properties
+## Minimal Example
 
-| Name | Type |
-| --- | --- |
-| status | `IoDataStatus` |
-| fetchStatus | `IoFetchStatus` |
-| data | `TData \| undefined` |
-| error | `TError \| null` |
-| dataUpdatedAt | `number` |
-| errorUpdatedAt | `number` |
-| failureCount | `number` |
-| isPending | `boolean` |
-| isSuccess | `boolean` |
-| isError | `boolean` |
-| isFetching | `boolean` |
-| isLoading | `boolean` |
-| isRefetching | `boolean` |
-| fetch | `() => Promise<TData>` |
-| refetch | `() => Promise<TData>` |
-| prefetch | `() => Promise<void>` |
-| invalidate | `(refetch?: boolean) => void` |
-| cancel | `() => void` |
-| query | `IoQuery<TData, TError>` |
+```ts
+import type { IoLynxQueryResult } from '@iostore/lynx';
+
+let value!: IoLynxQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useQuery](../use-query/)
+
+## Source
+
+- `packages/io-lynx/src/lib/use-query.ts`

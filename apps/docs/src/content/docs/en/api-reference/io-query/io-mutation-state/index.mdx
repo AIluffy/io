@@ -1,41 +1,49 @@
 ---
 title: "IoMutationState"
-description: "Reactive state shape for a mutation instance."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type when consuming mutation snapshots directly.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoMutationState<TData = unknown, TError = Error> = {
-  readonly status: IoMutationStatus;
-  readonly data: TData | undefined;
-  readonly error: TError | null;
-  readonly variables: unknown | undefined;
-  readonly submittedAt: number;
-};
+IoMutationState<TData, TError>
 ```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| status | `IoMutationStatus` |
+| data | `TData` |
+| error | `TError` |
+| variables | `unknown` |
+| submittedAt | `number` |
 
 ## Minimal Example
 
 ```ts
-const state = mutation.snapshot();
-if (state.status === 'error') {
-  console.error(state.error);
-}
+import type { IoMutationState } from '@iostore/store/query';
+
+let value!: IoMutationState;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Assuming `variables` has a concrete type from this state type alone.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [IoMutation](../io-mutation/)
-- [IoMutationStatus](../io-mutation-status/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

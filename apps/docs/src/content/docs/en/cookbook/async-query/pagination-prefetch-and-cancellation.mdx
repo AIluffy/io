@@ -24,7 +24,7 @@ Pagination workloads need stable page keys, selective prefetch, and cancellation
 ## Minimal Example
 
 ```ts
-const current = client.query({
+const current = client.defineQuery({
   key: ['users', { page, pageSize }],
   queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
 });

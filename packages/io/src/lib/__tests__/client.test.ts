@@ -3,56 +3,54 @@ import { describe, expect, it, vi } from 'vitest';
 import { createQueryClient } from '../query/client.js';
 
 describe('@iostore/query createQueryClient', () => {
-  it('returns the same query instance for the same key hash', async () => {
+  it('returns same query handle for same key', () => {
     const client = createQueryClient();
-    const firstFn = vi.fn(async () => 1);
-    const secondFn = vi.fn(async () => 2);
+    const queryFn = vi.fn(async () => 1);
 
-    const first = client.query({
+    const first = client.defineQuery({
       key: ['shared'],
-      queryFn: firstFn,
+      queryFn,
       staleTime: 0,
     });
-    await first.fetch();
 
-    const second = client.query({
+    const second = client.defineQuery({
       key: ['shared'],
-      queryFn: secondFn,
+      queryFn,
       staleTime: 0,
     });
-    await second.fetch();
 
     expect(first).toBe(second);
-    expect(firstFn).toHaveBeenCalledTimes(1);
-    expect(secondFn).toHaveBeenCalledTimes(1);
   });
 
-  it('updates existing query options and supports autoFetch on option update', async () => {
+  it('fetchQuery/prefetchQuery/ensureQueryData work on definition input', async () => {
     const client = createQueryClient();
-    const firstFn = vi.fn(async () => 1);
-    const secondFn = vi.fn(async () => 2);
+    const queryFn = vi.fn(async () => 3);
 
-    const first = client.query({
-      key: ['options-update'],
-      queryFn: firstFn,
-      autoFetch: false,
-      staleTime: Number.POSITIVE_INFINITY,
-    });
-    const second = client.query({
-      key: ['options-update'],
-      queryFn: secondFn,
-      autoFetch: true,
-      staleTime: Number.POSITIVE_INFINITY,
-    });
+    await expect(
+      client.prefetchQuery({
+        key: ['prefetch'],
+        queryFn,
+        staleTime: Number.POSITIVE_INFINITY,
+      }),
+    ).resolves.toBeUndefined();
 
-    expect(first).toBe(second);
+    await expect(
+      client.fetchQuery({
+        key: ['prefetch'],
+        queryFn,
+        staleTime: Number.POSITIVE_INFINITY,
+      }),
+    ).resolves.toBe(3);
 
-    await expect(second.fetch()).resolves.toBe(2);
+    await expect(
+      client.ensureQueryData({
+        key: ['prefetch'],
+        queryFn,
+        staleTime: Number.POSITIVE_INFINITY,
+      }),
+    ).resolves.toBe(3);
 
-    expect(firstFn).toHaveBeenCalledTimes(0);
-    expect(secondFn).toHaveBeenCalledTimes(1);
-    expect(second.snapshot().status).toBe('success');
-    expect(second.snapshot().data).toBe(2);
+    expect(queryFn).toHaveBeenCalledTimes(2);
   });
 
   it('invalidateQueries applies prefix matching', async () => {
@@ -62,7 +60,7 @@ describe('@iostore/query createQueryClient', () => {
     let todoDetail = 0;
     let users = 0;
 
-    const todosQuery = client.query({
+    const todosQuery = client.defineQuery({
       key: ['todos'],
       queryFn: async () => {
         todoList += 1;
@@ -70,7 +68,7 @@ describe('@iostore/query createQueryClient', () => {
       },
       staleTime: 60_000,
     });
-    const todoQuery = client.query({
+    const todoQuery = client.defineQuery({
       key: ['todos', 1],
       queryFn: async () => {
         todoDetail += 1;
@@ -78,7 +76,7 @@ describe('@iostore/query createQueryClient', () => {
       },
       staleTime: 60_000,
     });
-    const usersQuery = client.query({
+    const usersQuery = client.defineQuery({
       key: ['users'],
       queryFn: async () => {
         users += 1;
@@ -87,17 +85,21 @@ describe('@iostore/query createQueryClient', () => {
       staleTime: 60_000,
     });
 
-    await Promise.all([todosQuery.fetch(), todoQuery.fetch(), usersQuery.fetch()]);
+    await Promise.all([
+      todosQuery.fetch(true),
+      todoQuery.fetch(true),
+      usersQuery.fetch(true),
+    ]);
 
-    const usersUpdatedAt = usersQuery.snapshot().dataUpdatedAt;
+    const usersUpdatedAt = usersQuery.getState().dataUpdatedAt;
     client.invalidateQueries({ key: ['todos'] }, false);
 
-    expect(todosQuery.snapshot().dataUpdatedAt).toBe(0);
-    expect(todoQuery.snapshot().dataUpdatedAt).toBe(0);
-    expect(usersQuery.snapshot().dataUpdatedAt).toBe(usersUpdatedAt);
+    expect(todosQuery.getState().isInvalidated).toBe(true);
+    expect(todoQuery.getState().isInvalidated).toBe(true);
+    expect(usersQuery.getState().dataUpdatedAt).toBe(usersUpdatedAt);
   });
 
-  it('setQueryData/getQueryData works for existing and missing queries', async () => {
+  it('setQueryData/getQueryData/getQueryState works for existing and seeded queries', async () => {
     const client = createQueryClient();
 
     client.setQueryData<number>(['count'], 1);
@@ -106,47 +108,26 @@ describe('@iostore/query createQueryClient', () => {
     client.setQueryData<number>(['count'], (prev) => (prev ?? 0) + 1);
     expect(client.getQueryData<number>(['count'])).toBe(2);
 
-    const countQuery = client.query<number>({
+    const countQuery = client.defineQuery<number>({
       key: ['count'],
       queryFn: async () => 10,
       staleTime: 0,
     });
-    await countQuery.fetch();
+    await countQuery.fetch(true);
 
     expect(client.getQueryData<number>(['count'])).toBe(10);
+    expect(client.getQueryState<number>(['count'])?.status).toBe('success');
   });
 
-  it('does not refetch seeded setQueryData queries during invalidateQueries', async () => {
+  it('setQueriesData updates matched queries', async () => {
     const client = createQueryClient();
 
-    client.setQueryData<number>(['seeded'], 1);
-    const seeded = client.getQuery<number>(['seeded']);
-    expect(seeded).toBeDefined();
-    if (!seeded) {
-      throw new Error('expected seeded query to be created');
-    }
-    expect(seeded?.snapshot().status).toBe('success');
-    expect(seeded?.snapshot().data).toBe(1);
+    client.setQueryData<number>(['items', 1], 1);
+    client.setQueryData<number>(['items', 2], 2);
+    client.setQueriesData<number>({ key: ['items'] }, (prev) => (prev ?? 0) + 10);
 
-    client.invalidateQueries({ key: ['seeded'] });
-    await Promise.resolve();
-
-    expect(seeded?.snapshot().status).toBe('success');
-    expect(seeded?.snapshot().error).toBeNull();
-    expect(seeded?.snapshot().data).toBe(1);
-    await expect(seeded.fetch()).rejects.toThrow(
-      'query.fetch: queryFn is not available for key',
-    );
-
-    const queryFn = vi.fn(async () => 2);
-    const hydrated = client.query<number>({
-      key: ['seeded'],
-      queryFn,
-      staleTime: 0,
-    });
-    await expect(hydrated.fetch()).resolves.toBe(2);
-    expect(queryFn).toHaveBeenCalledTimes(1);
-    expect(hydrated.snapshot().data).toBe(2);
+    expect(client.getQueryData<number>(['items', 1])).toBe(11);
+    expect(client.getQueryData<number>(['items', 2])).toBe(12);
   });
 
   it('emits cache events for add/update/remove', async () => {
@@ -156,13 +137,13 @@ describe('@iostore/query createQueryClient', () => {
       events.push(event.type);
     });
 
-    const query = client.query({
+    const query = client.defineQuery({
       key: ['events'],
       queryFn: async () => 'ok',
       staleTime: 0,
     });
 
-    await query.fetch();
+    await query.fetch(true);
     client.removeQueries({ key: ['events'], exact: true });
 
     expect(events).toContain('query-added');
@@ -172,26 +153,22 @@ describe('@iostore/query createQueryClient', () => {
     unsub();
   });
 
-  it('removes inactive queries after gcTime', async () => {
-    vi.useFakeTimers();
+  it('refetchQueries triggers force fetch on matched keys', async () => {
+    const client = createQueryClient();
+    let value = 0;
 
-    const client = createQueryClient({
-      defaultGcTime: 50,
+    client.defineQuery({
+      key: ['refetch'],
+      queryFn: async () => {
+        value += 1;
+        return value;
+      },
+      staleTime: Number.POSITIVE_INFINITY,
     });
 
-    const query = client.query({
-      key: ['gc'],
-      queryFn: async () => 1,
-    });
+    await client.refetchQueries({ key: ['refetch'] });
+    await client.refetchQueries({ key: ['refetch'] });
 
-    await query.fetch();
-    await Promise.resolve();
-
-    expect(client.getQuery(['gc'])).toBeDefined();
-
-    await vi.advanceTimersByTimeAsync(60);
-    expect(client.getQuery(['gc'])).toBeUndefined();
-
-    vi.useRealTimers();
+    expect(client.getQueryData<number>(['refetch'])).toBe(2);
   });
 });

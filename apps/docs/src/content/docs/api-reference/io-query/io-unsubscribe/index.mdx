@@ -1,35 +1,39 @@
 ---
 title: "IoUnsubscribe"
-description: "订阅取消函数类型。"
+description: "类型 API 参考。"
 ---
+
 
 ## 何时使用
 
-用于表示各类 `subscribe(...)` 返回的取消订阅函数。
+当你需要复用类型结构时使用此类型别名。
 
 ## 签名
 
 ```ts
-type IoUnsubscribe = () => void;
+IoUnsubscribe
 ```
 
 ## 最小示例
 
 ```ts
-const unsub: IoUnsubscribe = query.subscribe(() => {
-  console.log(query.snapshot());
-});
-unsub();
+import type { IoUnsubscribe } from '@iostore/store/query';
+
+let value!: IoUnsubscribe;
+console.log(value);
 ```
 
 ## 常见误用
 
-- 在长生命周期副作用中忘记调用取消订阅。
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
 
 ## 相关 API
 
-- [IoQuery](../io-query/)
-- [IoQueryClient](../io-query-client/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

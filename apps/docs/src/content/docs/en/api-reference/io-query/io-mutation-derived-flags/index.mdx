@@ -1,39 +1,48 @@
 ---
 title: "IoMutationDerivedFlags"
-description: "Derived boolean flags for mutation UI state."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use this type for mutation status booleans consumed by UI.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoMutationDerivedFlags = {
-  readonly isIdle: boolean;
-  readonly isPending: boolean;
-  readonly isSuccess: boolean;
-  readonly isError: boolean;
-};
+IoMutationDerivedFlags
 ```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| isIdle | `boolean` |
+| isPending | `boolean` |
+| isSuccess | `boolean` |
+| isError | `boolean` |
 
 ## Minimal Example
 
 ```ts
-if (mutation.flags.isPending) {
-  showSpinner();
-}
+import type { IoMutationDerivedFlags } from '@iostore/store/query';
+
+let value!: IoMutationDerivedFlags;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Treating flags as independent; they are mutually exclusive per status.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [IoMutation](../io-mutation/)
-- [deriveMutationFlags](../derive-mutation-flags/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

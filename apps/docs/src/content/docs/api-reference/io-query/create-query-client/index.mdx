@@ -1,89 +1,49 @@
 ---
 title: "createQueryClient"
-description: "创建 Query 缓存协调器。"
+description: "函数 API 参考。"
 ---
+
 
 ## 何时使用
 
-使用 `createQueryClient` 统一管理 Query 去重、缓存访问、批量失效/取消/移除、缓存事件与垃圾回收。
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
 ```ts
-function createQueryClient(options?: IoQueryClientOptions): IoQueryClient;
+(options?: IoQueryClientOptions) => IoQueryClient
 ```
 
-## 参数（IoQueryClientOptions）
+## 参数
 
-| Name | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `defaultStaleTime` | `number` | No | `0` | 默认新鲜窗口（毫秒）。 |
-| `defaultGcTime` | `number` | No | `300000` | 默认 GC 延迟（最后一个订阅取消后）。 |
-| `defaultRetry` | `number` | No | `0` | 默认重试次数。 |
-| `defaultRetryDelay` | `(attempt: number) => number` | No | `min(1000 * 2^attempt, 30000)` | 默认重试退避函数。 |
+| Name | Type |
+| --- | --- |
+| options | `IoQueryClientOptions` |
 
 ## 返回
 
 `IoQueryClient`
 
-## 示例：去重 + 批量操作 + 事件订阅
+## 最小示例
 
 ```ts
 import { createQueryClient } from '@iostore/store/query';
 
-const client = createQueryClient({ defaultStaleTime: 10_000, defaultRetry: 2 });
-const fetchUser = ({ signal }: { signal: AbortSignal }) =>
-  fetch('/api/users/1', { signal }).then((r) => r.json());
-
-const unlisten = client.subscribe((event) => {
-  console.log(event.type, event.query.keyHash);
-});
-
-const userQuery = client.query({
-  key: ['user', 1],
-  queryFn: fetchUser,
-});
-
-await userQuery.fetch();
-// 同 key => 复用同一个 Query 实例（dedupe）
-const again = client.query({ key: ['user', 1], queryFn: fetchUser });
-console.log(again === userQuery); // true
-
-// 批量操作
-client.invalidateQueries({ key: ['user'] });
-client.cancelQueries({ key: ['user'] });
-client.removeQueries({ key: ['user', 1], exact: true });
-
-unlisten();
-```
-
-## 示例：默认 Client
-
-```ts
-import { getDefaultClient, resetDefaultClient } from '@iostore/store/query';
-
-const client = getDefaultClient();
-const query = client.query({
-  key: ['profile'],
-  queryFn: ({ signal }) => fetch('/api/profile', { signal }).then((r) => r.json()),
-});
-
-await query.fetch();
-resetDefaultClient(); // 测试或 SSR 请求边界中常用
+const result = createQueryClient(/* ...args */);
+console.log(result);
 ```
 
 ## 常见误用
 
-- 在 SSR 多请求间共享同一个 client，造成用户数据串写。
-- 误以为默认会重试；`defaultRetry` 默认值是 `0`。
-- 测试场景未清理默认 client，导致 case 之间互相污染。
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [createMutation](../create-mutation/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
 - [getDefaultClient](../get-default-client/)
-- [resetDefaultClient](../reset-default-client/)
 
 ## 源码
 

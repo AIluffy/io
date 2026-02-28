@@ -153,6 +153,11 @@ const LOCALES = [
 
 const TYPE_FLAGS = ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
 const MAX_TYPE_TEXT_LENGTH = 320;
+const DOCS_DIR_OVERRIDES = {
+  '@iostore/store': {
+    query: { dirName: 'io-query', packageName: '@iostore/store/query' },
+  },
+};
 
 function kebabCase(input) {
   return input
@@ -186,13 +191,13 @@ async function cleanupStaleExportDirs(pkgDir, validSlugs) {
   }
 }
 
-async function cleanupStalePackageDirs(referenceDir, validPackageDirs) {
-  const entries = await fs.readdir(referenceDir, { withFileTypes: true });
+async function cleanupStalePackageDirs(apiReferenceDir, validPackageDirs) {
+  const entries = await fs.readdir(apiReferenceDir, { withFileTypes: true });
   const valid = new Set(validPackageDirs);
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     if (valid.has(entry.name)) continue;
-    await fs.rm(path.join(referenceDir, entry.name), { recursive: true, force: true });
+    await fs.rm(path.join(apiReferenceDir, entry.name), { recursive: true, force: true });
   }
 }
 
@@ -550,10 +555,13 @@ function mapDistPathToSourcePath(targetPath) {
 }
 
 async function discoverEntryFiles(dirPath, packageName, pkgJson) {
+  const defaultDocsDirName = path.basename(dirPath);
   const entries = [
     {
       filePath: path.join(dirPath, 'src', 'index.ts'),
       importPath: packageName,
+      docsDirName: defaultDocsDirName,
+      docsPackageName: packageName,
     },
   ];
 
@@ -573,9 +581,12 @@ async function discoverEntryFiles(dirPath, packageName, pkgJson) {
     if (!(await fileExists(sourceFilePath))) continue;
 
     const subpathName = subpath.slice(2);
+    const docsOverride = DOCS_DIR_OVERRIDES[packageName]?.[subpathName];
     entries.push({
       filePath: sourceFilePath,
       importPath: `${packageName}/${subpathName}`,
+      docsDirName: docsOverride?.dirName ?? defaultDocsDirName,
+      docsPackageName: docsOverride?.packageName ?? packageName,
     });
   }
 
@@ -612,11 +623,30 @@ async function discoverPackages() {
 
 async function generate() {
   const packages = await discoverPackages();
-  const packageDirNames = packages.map((pkg) => pkg.dirName);
+  const packageDirNames = Array.from(
+    new Set(
+      packages.flatMap((pkg) => pkg.entryFiles.map((entry) => entry.docsDirName))
+    )
+  ).sort();
 
   for (const pkg of packages) {
-    const publicExportMap = new Map();
+    const docBuckets = new Map();
+
+    function getBucket(docsDirName, docsPackageName) {
+      const existing = docBuckets.get(docsDirName);
+      if (existing) return existing;
+      const created = {
+        docsDirName,
+        docsPackageName,
+        publicExportMap: new Map(),
+        experimentalExports: [],
+      };
+      docBuckets.set(docsDirName, created);
+      return created;
+    }
+
     for (const entry of pkg.entryFiles) {
+      const bucket = getBucket(entry.docsDirName, entry.docsPackageName);
       const { program, checker } = createProgram(entry.filePath);
       const sourceFile = program.getSourceFile(entry.filePath);
       if (!sourceFile) continue;
@@ -650,23 +680,22 @@ async function generate() {
         .filter((e) => e.slug.length > 0);
 
       for (const exp of exportsForEntry) {
-        if (publicExportMap.has(exp.slug)) continue;
-        publicExportMap.set(exp.slug, exp);
+        if (bucket.publicExportMap.has(exp.slug)) continue;
+        bucket.publicExportMap.set(exp.slug, exp);
       }
     }
 
-    const publicExports = Array.from(publicExportMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-
-    let experimentalExports = [];
     if (pkg.experimentalEntryFile) {
+      const rootBucket = getBucket(pkg.dirName, pkg.packageName);
       const expProgram = createProgram(pkg.experimentalEntryFile);
       const expSourceFile = expProgram.program.getSourceFile(
         pkg.experimentalEntryFile
       );
       if (expSourceFile) {
-        experimentalExports = getModuleExports(expProgram.checker, expSourceFile)
+        rootBucket.experimentalExports = getModuleExports(
+          expProgram.checker,
+          expSourceFile
+        )
           .map((symbol) => {
             const name = symbol.getName();
             const targetSymbol = resolveExportSymbol(expProgram.checker, symbol);
@@ -697,45 +726,50 @@ async function generate() {
       }
     }
 
-    const exports = [...publicExports, ...experimentalExports];
-    const exportSlugs = exports.map((exp) => exp.slug);
-
-    for (const locale of LOCALES) {
-      const localeRoot = locale.contentDir
-        ? path.join(docsRoot, locale.contentDir)
-        : docsRoot;
-      const pkgDir = path.join(localeRoot, 'reference', pkg.dirName);
-      await ensureDir(pkgDir);
-      await cleanupStaleExportDirs(pkgDir, exportSlugs);
-      await fs.writeFile(
-        path.join(pkgDir, 'index.mdx'),
-        renderPackageIndex({
-          localeLabels: locale.labels,
-          packageName: pkg.packageName,
-          publicExports,
-          experimentalExports,
-        }),
-        'utf8'
+    for (const bucket of docBuckets.values()) {
+      const publicExports = Array.from(bucket.publicExportMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name)
       );
+      const exports = [...publicExports, ...bucket.experimentalExports];
+      const exportSlugs = exports.map((exp) => exp.slug);
 
-      for (const exp of exports) {
-        const expDir = path.join(pkgDir, exp.slug);
-        await ensureDir(expDir);
-        const relatedExports = pickRelatedExports(publicExports, exp);
-        const mdx = renderExportPage({
-          localeLabels: locale.labels,
-          exportName: exp.name,
-          exportKind: exp.kind,
-          packageName: exp.importPath ?? pkg.packageName,
-          docsText: exp.docsText,
-          throwsEntries: exp.throwsEntries,
-          relatedExports,
-          signature: exp.signature,
-          declaredType: exp.declaredType,
-          sourcePath: exp.sourcePath,
-          isExperimental: exp.isExperimental,
-        });
-        await fs.writeFile(path.join(expDir, 'index.mdx'), mdx, 'utf8');
+      for (const locale of LOCALES) {
+        const localeRoot = locale.contentDir
+          ? path.join(docsRoot, locale.contentDir)
+          : docsRoot;
+        const pkgDir = path.join(localeRoot, 'api-reference', bucket.docsDirName);
+        await ensureDir(pkgDir);
+        await cleanupStaleExportDirs(pkgDir, exportSlugs);
+        await fs.writeFile(
+          path.join(pkgDir, 'index.mdx'),
+          renderPackageIndex({
+            localeLabels: locale.labels,
+            packageName: bucket.docsPackageName,
+            publicExports,
+            experimentalExports: bucket.experimentalExports,
+          }),
+          'utf8'
+        );
+
+        for (const exp of exports) {
+          const expDir = path.join(pkgDir, exp.slug);
+          await ensureDir(expDir);
+          const relatedExports = pickRelatedExports(publicExports, exp);
+          const mdx = renderExportPage({
+            localeLabels: locale.labels,
+            exportName: exp.name,
+            exportKind: exp.kind,
+            packageName: exp.importPath ?? bucket.docsPackageName,
+            docsText: exp.docsText,
+            throwsEntries: exp.throwsEntries,
+            relatedExports,
+            signature: exp.signature,
+            declaredType: exp.declaredType,
+            sourcePath: exp.sourcePath,
+            isExperimental: exp.isExperimental,
+          });
+          await fs.writeFile(path.join(expDir, 'index.mdx'), mdx, 'utf8');
+        }
       }
     }
   }
@@ -744,11 +778,11 @@ async function generate() {
     const localeRoot = locale.contentDir
       ? path.join(docsRoot, locale.contentDir)
       : docsRoot;
-    const referenceDir = path.join(localeRoot, 'reference');
-    await ensureDir(referenceDir);
-    await cleanupStalePackageDirs(referenceDir, packageDirNames);
+    const apiReferenceDir = path.join(localeRoot, 'api-reference');
+    await ensureDir(apiReferenceDir);
+    await cleanupStalePackageDirs(apiReferenceDir, packageDirNames);
     await fs.writeFile(
-      path.join(referenceDir, 'versions.mdx'),
+      path.join(apiReferenceDir, 'versions.mdx'),
       renderVersionsPage({
         localeId: locale.id,
         localeLabels: locale.labels,

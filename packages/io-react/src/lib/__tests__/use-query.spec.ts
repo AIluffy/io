@@ -110,27 +110,20 @@ describe('@iostore/react: useQuery', () => {
     });
   });
 
-  it('does not trigger an extra fetch when autoFetch is already enabled', async () => {
+  it('supports query handle input', async () => {
     const client = createQueryClient();
-    const queryFn = vi.fn(async () => 5);
-    await client
-      .query({
-        key: ['react', 'auto-fetch'],
-        queryFn,
-        autoFetch: true,
-      })
-      .fetch();
+    const query = client.defineQuery({
+      key: ['handle', 'input'],
+      queryFn: async () => 5,
+    });
 
-    expect(queryFn).toHaveBeenCalledTimes(1);
-
+    let latest: UseQueryResult<number> | undefined;
     const App = () => {
-      useQuery({
+      latest = useQuery({
         client,
-        key: ['react', 'auto-fetch'],
-        queryFn,
-        autoFetch: true,
+        query,
       });
-      return React.createElement('span', null, 'ok');
+      return React.createElement('span', null, String(latest.data ?? 'loading'));
     };
 
     let renderer!: ReactTestRenderer;
@@ -139,7 +132,7 @@ describe('@iostore/react: useQuery', () => {
     });
     await flushAsync();
 
-    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(latest?.data).toBe(5);
 
     await act(async () => {
       renderer.unmount();

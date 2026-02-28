@@ -1,30 +1,24 @@
 ---
 title: "createMutation"
-description: "Create a standalone mutation state machine." 
+description: "Function API reference."
 ---
+
 
 ## When to Use
 
-Use `createMutation` for write operations with retry, optimistic context, cancellation, and lifecycle callbacks.
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-function createMutation<
-  TData = unknown,
-  TVariables = void,
-  TError = Error,
-  TContext = unknown,
->(
-  options: IoMutationOptions<TData, TVariables, TError, TContext>,
-): IoMutation<TData, TVariables, TError>;
+<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>
 ```
 
 ## Parameters
 
-| Name | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `options` | `IoMutationOptions<TData, TVariables, TError, TContext>` | Yes | — | Mutation function, retry policy, and lifecycle callbacks. |
+| Name | Type |
+| --- | --- |
+| options | `IoMutationOptions<TData, TVariables, TError, TContext>` |
 
 ## Returns
 
@@ -33,31 +27,23 @@ function createMutation<
 ## Minimal Example
 
 ```ts
-const mutation = createMutation({
-  mutationFn: (title: string) =>
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title }),
-    }).then((r) => r.json()),
-  retry: 1,
-});
+import { createMutation } from '@iostore/store/query';
 
-const created = await mutation.mutateAsync('Ship docs update');
-console.log(created);
+const result = createMutation(/* ...args */);
+console.log(result);
 ```
 
 ## Common Pitfalls
 
-- Doing optimistic cache writes without rollback data from `onMutate` context.
-- Treating cancellation as a business failure condition.
-- Forgetting to expose `mutation.flags` in UI state.
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
 
 ## Related APIs
 
-- [IoMutation](../io-mutation/)
-- [IoMutationOptions](../io-mutation-options/)
+- [createQueryClient](../create-query-client/)
 - [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
+- [getDefaultClient](../get-default-client/)
 
 ## Source
 

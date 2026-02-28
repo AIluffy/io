@@ -24,7 +24,7 @@ sidebar:
 ## 最小示例
 
 ```ts
-const current = client.query({
+const current = client.defineQuery({
   key: ['users', { page, pageSize }],
   queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
 });

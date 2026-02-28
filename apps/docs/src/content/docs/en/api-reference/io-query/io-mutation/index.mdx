@@ -1,42 +1,39 @@
 ---
 title: "IoMutation"
-description: "Reactive mutation instance type."
+description: "Type API reference."
 ---
+
 
 ## When to Use
 
-Use `IoMutation` to execute writes and observe mutation lifecycle state.
+Use this type alias to model reusable type shapes.
 
 ## Signature
 
 ```ts
-type IoMutation<TData = unknown, TVariables = void, TError = Error> =
-  IoUnit<IoMutationState<TData, TError>> & {
-    mutate(variables: TVariables): void;
-    mutateAsync(variables: TVariables): Promise<TData>;
-    reset(): void;
-    cancel(): void;
-    readonly flags: IoMutationDerivedFlags;
-  };
+IoMutation<TData, TVariables, TError>
 ```
 
 ## Minimal Example
 
 ```ts
-mutation.mutate({ title: 'todo' });
-const created = await mutation.mutateAsync({ title: 'todo-2' });
-console.log(created, mutation.flags.isSuccess);
+import type { IoMutation } from '@iostore/store/query';
+
+let value!: IoMutation;
+console.log(value);
 ```
 
 ## Common Pitfalls
 
-- Using `mutate` where a Promise chain is required; use `mutateAsync` there.
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
 
 ## Related APIs
 
-- [createMutation](../create-mutation/)
-- [IoMutationOptions](../io-mutation-options/)
-- [IoMutationState](../io-mutation-state/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

@@ -1,89 +1,49 @@
 ---
 title: "createQueryClient"
-description: "Create a query cache coordinator." 
+description: "Function API reference."
 ---
+
 
 ## When to Use
 
-Use `createQueryClient` to centralize query dedupe, cache access, batch invalidation/cancellation/removal, cache events, and GC.
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-function createQueryClient(options?: IoQueryClientOptions): IoQueryClient;
+(options?: IoQueryClientOptions) => IoQueryClient
 ```
 
-## Parameters (IoQueryClientOptions)
+## Parameters
 
-| Name | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `defaultStaleTime` | `number` | No | `0` | Default freshness window in ms. |
-| `defaultGcTime` | `number` | No | `300000` | Default GC delay after last observer unsubscribes. |
-| `defaultRetry` | `number` | No | `0` | Default retry attempts for query failures. |
-| `defaultRetryDelay` | `(attempt: number) => number` | No | `min(1000 * 2^attempt, 30000)` | Default backoff function. |
+| Name | Type |
+| --- | --- |
+| options | `IoQueryClientOptions` |
 
 ## Returns
 
 `IoQueryClient`
 
-## Example: Dedupe + Batch Ops + Events
+## Minimal Example
 
 ```ts
 import { createQueryClient } from '@iostore/store/query';
 
-const client = createQueryClient({ defaultStaleTime: 10_000, defaultRetry: 2 });
-const fetchUser = ({ signal }: { signal: AbortSignal }) =>
-  fetch('/api/users/1', { signal }).then((r) => r.json());
-
-const unlisten = client.subscribe((event) => {
-  console.log(event.type, event.query.keyHash);
-});
-
-const userQuery = client.query({
-  key: ['user', 1],
-  queryFn: fetchUser,
-});
-
-await userQuery.fetch();
-// Same key => same query instance (dedupe)
-const again = client.query({ key: ['user', 1], queryFn: fetchUser });
-console.log(again === userQuery); // true
-
-// Batch operations
-client.invalidateQueries({ key: ['user'] });
-client.cancelQueries({ key: ['user'] });
-client.removeQueries({ key: ['user', 1], exact: true });
-
-unlisten();
-```
-
-## Example: Default Client
-
-```ts
-import { getDefaultClient, resetDefaultClient } from '@iostore/store/query';
-
-const client = getDefaultClient();
-const query = client.query({
-  key: ['profile'],
-  queryFn: ({ signal }) => fetch('/api/profile', { signal }).then((r) => r.json()),
-});
-
-await query.fetch();
-resetDefaultClient(); // useful in tests/SSR request boundaries
+const result = createQueryClient(/* ...args */);
+console.log(result);
 ```
 
 ## Common Pitfalls
 
-- Sharing one singleton client across SSR requests (can leak user-scoped data).
-- Assuming retries are enabled by default (`defaultRetry` defaults to `0`).
-- Forgetting `clear()`/`resetDefaultClient()` in isolated tests.
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
 
 ## Related APIs
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryClientOptions](../io-query-client-options/)
+- [createMutation](../create-mutation/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
 - [getDefaultClient](../get-default-client/)
-- [resetDefaultClient](../reset-default-client/)
 
 ## Source
 

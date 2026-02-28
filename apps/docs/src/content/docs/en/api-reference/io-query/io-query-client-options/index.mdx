@@ -16,12 +16,15 @@ IoQueryClientOptions
 
 ## Properties
 
-| Name | Type | Required | Default |
-| --- | --- | --- | --- |
-| defaultStaleTime | `number` | No | `0` |
-| defaultGcTime | `number` | No | `300000` |
-| defaultRetry | `number` | No | `0` |
-| defaultRetryDelay | `(attempt: number) => number` | No | exponential backoff (`1000` to `30000`) |
+| Name | Type |
+| --- | --- |
+| defaultStaleTime | `number` |
+| defaultGcTime | `number` |
+| defaultRetry | `number` |
+| defaultRetryDelay | `(attempt: number) => number` |
+| defaultRefetchOnMount | `IoRefetchOnMount` |
+| defaultRefetchOnWindowFocus | `boolean` |
+| defaultRefetchOnReconnect | `boolean` |
 
 ## Minimal Example
 
@@ -39,9 +42,10 @@ console.log(value);
 
 ## Related APIs
 
-- [createQueryClient](../create-query-client/)
-- [IoQueryClient](../io-query-client/)
-- [IoQueryOptions](../io-query-options/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

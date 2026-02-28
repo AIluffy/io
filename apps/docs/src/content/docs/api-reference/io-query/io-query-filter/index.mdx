@@ -20,7 +20,10 @@ IoQueryFilter
 | --- | --- |
 | key | `IoQueryKey` |
 | exact | `boolean` |
-| predicate | `(query: IoQuery<unknown, unknown>) => boolean` |
+| active | `boolean` |
+| stale | `boolean` |
+| fetching | `boolean` |
+| predicate | `(query: IoQueryHandle<unknown, unknown>) => boolean` |
 
 ## 最小示例
 
@@ -38,9 +41,10 @@ console.log(value);
 
 ## 相关 API
 
-- [IoQueryClient](../io-query-client/)
-- [IoQueryKey](../io-query-key/)
-- [IoQueryOptions](../io-query-options/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

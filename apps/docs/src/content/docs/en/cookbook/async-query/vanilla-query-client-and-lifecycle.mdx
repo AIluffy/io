@@ -30,7 +30,7 @@ const client = createQueryClient({
   defaultRetry: 1,
 });
 
-const userQuery = client.query({
+const userQuery = client.defineQuery({
   key: ['user', 1],
   queryFn: ({ signal }) => fetch('/api/users/1', { signal }).then((r) => r.json()),
 });
