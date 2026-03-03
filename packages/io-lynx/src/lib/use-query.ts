@@ -1,4 +1,8 @@
 import type {
+  IoMutation,
+  IoMutationDerivedFlags,
+  IoMutationOptions,
+  IoMutationState,
   IoQueryClient,
   IoQueryDefinition,
   IoQueryHandle,
@@ -8,6 +12,8 @@ import type {
 } from '@iostore/store/query';
 
 import {
+  createMutation,
+  deriveMutationFlags,
   getDefaultClient,
   hashKey,
 } from '@iostore/store/query';
@@ -43,6 +49,21 @@ export type IoLynxQueryResult<TData, TError = Error, TSelected = TData> =
     query: IoQueryHandle<TData, TError>;
     observer: IoQueryObserver<TSelected, TError>;
   };
+
+export type IoLynxSuspenseQueryResult<TData, TError = Error, TSelected = TData> =
+  IoLynxQueryResult<TData, TError, TSelected> & {
+    data: TSelected;
+  };
+
+export type IoLynxMutationResult<TData, TVariables, TError = Error> =
+  IoMutationState<TData, TError> &
+    IoMutationDerivedFlags & {
+      mutate: (variables: TVariables) => void;
+      mutateAsync: (variables: TVariables) => Promise<TData>;
+      reset: () => void;
+      cancel: () => void;
+      mutation: IoMutation<TData, TVariables, TError>;
+    };
 
 function isHandleOptions<TData, TError, TSelected>(
   options: IoUseQueryOptions<TData, TError, TSelected>,
@@ -130,5 +151,79 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
     cancel: () => query.cancel(),
     query,
     observer,
+  };
+}
+
+export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
+  options: Omit<IoUseQueryOptions<TData, TError, TSelected>, 'enabled' | 'placeholderData'>,
+): IoLynxSuspenseQueryResult<TData, TError, TSelected> {
+  const result = useQuery<TData, TError, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseQueryOptions<TData, TError, TSelected>);
+
+  if (result.status === 'error' && result.error !== null) {
+    throw result.error;
+  }
+
+  if (result.status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return {
+    ...result,
+    data: result.observer.read() as TSelected,
+  };
+}
+
+export function useMutation<
+  TData,
+  TVariables,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): IoLynxMutationResult<TData, TVariables, TError> {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  const mutation = useMemo(
+    () =>
+      createMutation<TData, TVariables, TError, TContext>({
+        get mutationFn() {
+          return optionsRef.current.mutationFn;
+        },
+        get retry() {
+          return optionsRef.current.retry;
+        },
+        get retryDelay() {
+          return optionsRef.current.retryDelay;
+        },
+        get onMutate() {
+          return optionsRef.current.onMutate;
+        },
+        get onSuccess() {
+          return optionsRef.current.onSuccess;
+        },
+        get onError() {
+          return optionsRef.current.onError;
+        },
+        get onSettled() {
+          return optionsRef.current.onSettled;
+        },
+      }),
+    [],
+  );
+
+  const state = useIO(mutation);
+
+  return {
+    ...state,
+    ...deriveMutationFlags(state),
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    reset: mutation.reset,
+    cancel: mutation.cancel,
+    mutation,
   };
 }

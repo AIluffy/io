@@ -62,6 +62,15 @@ export type IoSolidInfiniteQueryResult<
   observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam>;
 };
 
+export type IoSolidSuspenseInfiniteQueryResult<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> = IoSolidInfiniteQueryResult<TData, TError, TPageParam, TSelected> & {
+  data: Accessor<TSelected>;
+};
+
 function isHandleOptions<TData, TError, TPageParam, TSelected>(
   options: IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
 ): options is IoUseInfiniteQueryHandleOptions<TData, TError, TPageParam, TSelected> {
@@ -98,7 +107,8 @@ export function useInfiniteQuery<
 
   const query = isHandleOptions(options)
     ? options.query
-    : client.defineInfiniteQuery<TData, TError, TPageParam>({
+    : client.getInfiniteQuery<TData, TError, TPageParam>(options.key) ??
+      client.defineInfiniteQuery<TData, TError, TPageParam>({
         key: options.key,
         queryFn: options.queryFn,
         staleTime: options.staleTime,
@@ -142,4 +152,36 @@ export function useInfiniteQuery<
     query,
     observer,
   };
+}
+
+export function useSuspenseInfiniteQuery<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+>(
+  options: Omit<
+    IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+    'enabled' | 'placeholderData'
+  >,
+): IoSolidSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected> {
+  const result = useInfiniteQuery<TData, TError, TPageParam, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>);
+
+  if (result.state().status === 'error' && result.state().error !== null) {
+    throw result.state().error;
+  }
+
+  if (result.state().status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return result as IoSolidSuspenseInfiniteQueryResult<
+    TData,
+    TError,
+    TPageParam,
+    TSelected
+  >;
 }
