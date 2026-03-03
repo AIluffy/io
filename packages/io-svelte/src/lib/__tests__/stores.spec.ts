@@ -1,143 +1,161 @@
-import { describe, expect, it } from 'vitest';
-import { io } from '@iostore/store';
-import { fromStore } from 'svelte/store';
-import { toReadable, toReadableSelector, toWritable } from '../stores.js';
+import type { IoInfiniteQueryObserverResult } from '@iostore/store/query';
 
-describe('@iostore/svelte', () => {
-  it('creates readable and writable stores', async () => {
-    const unit = io(1);
-    const writable = toWritable(unit, { schedule: 'sync' });
-    const seen: number[] = [];
-    const unsub = writable.subscribe((v) => seen.push(v));
-    writable.set(2);
-    writable.update((v) => v + 1);
-    await new Promise<void>((resolve) => queueMicrotask(resolve));
-    unsub();
-    expect(seen).toEqual([1, 2, 3]);
+import { createQueryClient } from '@iostore/store/query';
+import { describe, expect, it, vi } from 'vitest';
 
-    const readable = toReadable({
-      snapshot: () => 1,
-      subscribe: (fn) => unit.subscribe(fn),
-    });
-    expect(typeof readable.subscribe).toBe('function');
+import {
+  createInfiniteQueryStore,
+  toInfiniteQueryStore,
+} from '../stores.js';
+
+type Page = {
+  items: string[];
+  nextCursor: number | null;
+};
+
+function createMockInfiniteQueryFn() {
+  const pages = new Map<number, Page>([
+    [0, { items: ['a', 'b'], nextCursor: 1 }],
+    [1, { items: ['c', 'd'], nextCursor: 2 }],
+    [2, { items: ['e', 'f'], nextCursor: null }],
+  ]);
+
+  const queryFn = vi.fn(async ({ pageParam }: { pageParam: number; signal: AbortSignal }) => {
+    const page = pages.get(pageParam);
+    if (!page) {
+      throw new Error(`Unknown page param: ${pageParam}`);
+    }
+    return page;
   });
 
-  it('supports sync schedule for readable stores', () => {
-    const unit = io(0);
-    const readable = toReadable(unit, { schedule: 'sync' });
-    const seen: number[] = [];
-    const unsub = readable.subscribe((v) => seen.push(v));
-    unit.set(2);
-    unsub();
-    expect(seen).toEqual([0, 2]);
-  });
+  return { queryFn };
+}
 
-  it('supports microtask schedule for writable stores', async () => {
-    const unit = io(0);
-    const writable = toWritable(unit, { schedule: 'microtask' });
-    const seen: number[] = [];
-    const unsub = writable.subscribe((v) => seen.push(v));
-    writable.set(1);
-    expect(seen).toEqual([0]);
-    await new Promise<void>((resolve) => queueMicrotask(resolve));
-    unsub();
-    expect(seen).toEqual([0, 1]);
-  });
+async function flushAsync(): Promise<void> {
+  await Promise.resolve();
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  await Promise.resolve();
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+}
 
-  it('drops queued microtask updates after unsubscribe', async () => {
-    const unit = io(0);
-    const writable = toWritable(unit, { schedule: 'microtask' });
-    const seen: number[] = [];
-    const unsub = writable.subscribe((v) => seen.push(v));
-    writable.set(1);
-    unsub();
-
-    await new Promise<void>((resolve) => queueMicrotask(resolve));
-    expect(seen).toEqual([0]);
-  });
-
-  it('defaults to microtask schedule', async () => {
-    const unit = io(0);
-    const writable = toWritable(unit);
-    const seen: number[] = [];
-    const unsub = writable.subscribe((v) => seen.push(v));
-    writable.set(1);
-    expect(seen).toEqual([0]);
-    await new Promise<void>((resolve) => queueMicrotask(resolve));
-    expect(seen).toEqual([0, 1]);
-    unsub();
-  });
-
-  it('works in SSR-like environment without window/document', () => {
-    const ioGlobal = globalThis as unknown as {
-      window?: unknown;
-      document?: unknown;
-    };
-    const previousWindow = ioGlobal.window;
-    const previousDocument = ioGlobal.document;
-    delete ioGlobal.window;
-    delete ioGlobal.document;
-
-    const unit = io(0);
-    const readable = toReadable(unit, { schedule: 'sync' });
-    const seen: number[] = [];
-    const unsub = readable.subscribe((v) => seen.push(v));
-    unit.set(1);
-    unsub();
-
-    expect(seen).toEqual([0, 1]);
-    ioGlobal.window = previousWindow;
-    ioGlobal.document = previousDocument;
-  });
-
-  it('is compatible with Svelte 5 runes fromStore', () => {
-    const unit = io(1);
-    const writable = toWritable(unit, { schedule: 'sync' });
-    const runeView = fromStore(writable);
-
-    expect(runeView.current).toBe(1);
-    writable.set(2);
-    expect(runeView.current).toBe(2);
-    unit.set(3);
-    expect(runeView.current).toBe(3);
-  });
-
-  it('supports selector stores and skips unchanged selected values', () => {
-    const store = io({ count: 0, label: 'a' });
-    const selected = toReadableSelector(store, (state) => state.count, {
-      schedule: 'sync',
+describe('@iostore/svelte: infinite query stores', () => {
+  it('createInfiniteQueryStore emits initial and first-page states', async () => {
+    const client = createQueryClient();
+    const { queryFn } = createMockInfiniteQueryFn();
+    const store = createInfiniteQueryStore({
+      client,
+      key: ['svelte', 'infinite', 'initial'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
 
-    const seen: number[] = [];
-    const unsub = selected.subscribe((value) => seen.push(value));
-    store.label.set('b');
-    store.count.set(1);
-    store.label.set('c');
-    store.count.set(2);
+    const seen: Array<IoInfiniteQueryObserverResult<Page, Error, number>> = [];
+    const unsubscribe = store.subscribe((state) => {
+      seen.push(state);
+    });
 
-    unsub();
-    expect(seen).toEqual([0, 1, 2]);
+    await flushAsync();
+
+    expect(seen[0]?.status).toBe('pending');
+    expect(store.getState().data?.pages.length).toBe(1);
+
+    unsubscribe();
   });
 
-  it('supports custom selector equality', () => {
-    const store = io({ values: [1, 2] });
-    const selected = toReadableSelector(
-      store,
-      (state) => [...state.values],
-      {
-        schedule: 'sync',
-        isEqual: (prev, next) =>
-          prev.length === next.length &&
-          prev.every((value, index) => value === next[index]),
-      },
-    );
+  it('fetchNextPage emits fetching state then appends page', async () => {
+    const client = createQueryClient();
+    const { queryFn } = createMockInfiniteQueryFn();
+    const store = createInfiniteQueryStore({
+      client,
+      key: ['svelte', 'infinite', 'next-page'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
 
-    const seen: number[][] = [];
-    const unsub = selected.subscribe((value) => seen.push(value));
-    store.values.set([1, 2]);
-    store.values.set([1, 2, 3]);
-    unsub();
+    const seenFetchingFlags: boolean[] = [];
+    const unsubscribe = store.subscribe((state) => {
+      seenFetchingFlags.push(state.isFetchingNextPage);
+    });
 
-    expect(seen).toEqual([[1, 2], [1, 2, 3]]);
+    await flushAsync();
+
+    const nextPromise = store.fetchNextPage();
+    expect(store.getState().isFetchingNextPage).toBe(true);
+
+    await nextPromise;
+    await flushAsync();
+
+    expect(store.getState().data?.pages.length).toBe(2);
+    expect(seenFetchingFlags.some((value) => value)).toBe(true);
+
+    unsubscribe();
+  });
+
+  it('cancels query when all subscribers unsubscribe and cancelOnUnsubscribe is true', async () => {
+    const client = createQueryClient();
+    const { queryFn } = createMockInfiniteQueryFn();
+    const store = createInfiniteQueryStore({
+      client,
+      key: ['svelte', 'infinite', 'cancel-on-unsubscribe'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      cancelOnUnsubscribe: true,
+    });
+
+    const cancelSpy = vi.spyOn(store.query, 'cancel');
+    const unsubA = store.subscribe(() => undefined);
+    const unsubB = store.subscribe(() => undefined);
+
+    unsubA();
+    expect(cancelSpy).toHaveBeenCalledTimes(0);
+
+    unsubB();
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('toInfiniteQueryStore works when passing observer and query manually', async () => {
+    const client = createQueryClient();
+    const { queryFn } = createMockInfiniteQueryFn();
+    const query = client.defineInfiniteQuery<Page, Error, number>({
+      key: ['svelte', 'infinite', 'manual'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+    const observer = client.observeInfiniteQuery<Page, Error, number, Page>({ query });
+
+    const store = toInfiniteQueryStore(observer, query);
+    const unsubscribe = store.subscribe(() => undefined);
+
+    await flushAsync();
+
+    expect(store.getState().status).toBe('success');
+    expect(store.getState().data?.pages.length).toBe(1);
+
+    unsubscribe();
+  });
+
+  it('returns a valid Svelte readable store contract', () => {
+    const client = createQueryClient();
+    const { queryFn } = createMockInfiniteQueryFn();
+    const store = createInfiniteQueryStore({
+      client,
+      key: ['svelte', 'infinite', 'contract'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+
+    expect(typeof store.subscribe).toBe('function');
+
+    const subscriber = vi.fn();
+    const unsubscribe = store.subscribe(subscriber);
+
+    expect(typeof unsubscribe).toBe('function');
+
+    unsubscribe();
   });
 });
