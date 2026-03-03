@@ -86,6 +86,52 @@ export type IoQueryObserverOptions<
 export type IoQueryObserverResult<TData = unknown, TError = Error> =
   IoQueryState<TData, TError> & IoQueryDerivedFlags;
 
+export type InfiniteData<TData = unknown, TPageParam = unknown> = {
+  readonly pages: readonly TData[];
+  readonly pageParams: readonly TPageParam[];
+};
+
+export type IoInfiniteQueryDefinition<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+> = Omit<IoQueryDefinition<TData, TError>, 'queryFn'> & {
+  readonly queryFn: (context: {
+    signal: AbortSignal;
+    pageParam: TPageParam;
+  }) => Promise<TData>;
+  readonly initialPageParam: TPageParam;
+  readonly getNextPageParam: (
+    lastPage: TData,
+    allPages: readonly TData[],
+    lastPageParam: TPageParam,
+    allPageParams: readonly TPageParam[],
+  ) => TPageParam | undefined | null;
+  readonly getPreviousPageParam?: (
+    firstPage: TData,
+    allPages: readonly TData[],
+    firstPageParam: TPageParam,
+    allPageParams: readonly TPageParam[],
+  ) => TPageParam | undefined | null;
+  readonly maxPages?: number;
+};
+
+export type IoInfiniteQueryState<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+> = Omit<IoQueryState<TData, TError>, 'data'> & {
+  readonly data: InfiniteData<TData, TPageParam> | undefined;
+  readonly fetchDirection: 'forward' | 'backward' | null;
+};
+
+export type IoInfiniteQueryDerivedFlags = IoQueryDerivedFlags & {
+  readonly isFetchingNextPage: boolean;
+  readonly isFetchingPreviousPage: boolean;
+  readonly hasNextPage: boolean;
+  readonly hasPreviousPage: boolean;
+};
+
 export type IoQueryHandle<TData = unknown, TError = Error> = {
   readonly key: IoQueryKey;
   readonly keyHash: string;
@@ -105,6 +151,39 @@ export type IoQueryHandle<TData = unknown, TError = Error> = {
   subscribeUpdate(fn: (update: IoUpdate) => void): IoUnsubscribe;
 };
 
+export type IoInfiniteQueryHandle<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+> = {
+  readonly key: IoQueryKey;
+  readonly keyHash: string;
+  fetchNextPage(): Promise<InfiniteData<TData, TPageParam>>;
+  fetchPreviousPage(): Promise<InfiniteData<TData, TPageParam>>;
+  refetchAllPages(): Promise<InfiniteData<TData, TPageParam>>;
+  prefetch(): Promise<void>;
+  ensureData(): Promise<InfiniteData<TData, TPageParam>>;
+  invalidate(refetch?: boolean): void;
+  cancel(): void;
+  reset(): void;
+  setData(
+    updater:
+      | InfiniteData<TData, TPageParam>
+      | ((
+          prev: InfiniteData<TData, TPageParam> | undefined,
+        ) => InfiniteData<TData, TPageParam>),
+  ): void;
+  getData(): InfiniteData<TData, TPageParam> | undefined;
+  getState(): IoInfiniteQueryState<TData, TError, TPageParam>;
+  getFlags(): IoInfiniteQueryDerivedFlags;
+  readonly isActive: boolean;
+  readonly observerCount: number;
+  subscribe(
+    fn: (state: IoInfiniteQueryState<TData, TError, TPageParam>) => void,
+  ): IoUnsubscribe;
+  subscribeUpdate(fn: (update: IoUpdate) => void): IoUnsubscribe;
+};
+
 export type IoQueryObserver<TData = unknown, TError = Error> =
   IoUnit<IoQueryObserverResult<TData, TError>> & {
     readonly key: IoQueryKey;
@@ -121,6 +200,53 @@ export type IoQueryObserver<TData = unknown, TError = Error> =
       options: Partial<IoQueryObserverOptions<TData, TError, TData>>,
     ): void;
   };
+
+export type IoInfiniteQueryObserverOptions<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> = IoQueryObserverCallbacks<TSelected, TError> & {
+  readonly query:
+    | IoInfiniteQueryDefinition<TData, TError, TPageParam>
+    | IoInfiniteQueryHandle<TData, TError, TPageParam>;
+  readonly enabled?: boolean;
+  readonly placeholderData?: TSelected | (() => TSelected);
+  readonly select?: (data: InfiniteData<TData, TPageParam> | undefined) => TSelected;
+  readonly refetchOnMount?: IoRefetchOnMount;
+  readonly refetchOnWindowFocus?: boolean;
+  readonly refetchOnReconnect?: boolean;
+};
+
+export type IoInfiniteQueryObserverResult<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+> = IoInfiniteQueryState<TData, TError, TPageParam> &
+  IoInfiniteQueryDerivedFlags;
+
+export type IoInfiniteQueryObserver<
+  TData = unknown,
+  TError = Error,
+  TPageParam = unknown,
+> = IoUnit<IoInfiniteQueryObserverResult<TData, TError, TPageParam>> & {
+  readonly key: IoQueryKey;
+  readonly keyHash: string;
+  readonly query: IoInfiniteQueryHandle<unknown, TError, TPageParam>;
+  fetchNextPage(): Promise<InfiniteData<unknown, TPageParam>>;
+  fetchPreviousPage(): Promise<InfiniteData<unknown, TPageParam>>;
+  refetchAllPages(): Promise<InfiniteData<unknown, TPageParam>>;
+  prefetch(): Promise<void>;
+  invalidate(refetch?: boolean): void;
+  cancel(): void;
+  read(): InfiniteData<TData, TPageParam>;
+  dispose(): void;
+  setOptions(
+    options: Partial<
+      IoInfiniteQueryObserverOptions<TData, TError, TPageParam, TData>
+    >,
+  ): void;
+};
 
 export type IoMutation<
   TData = unknown,
@@ -191,8 +317,15 @@ export type IoDehydratedQuery = {
   state: IoQueryState<unknown, unknown>;
 };
 
+export type IoDehydratedInfiniteQuery = {
+  readonly key: IoQueryKey;
+  readonly keyHash: string;
+  readonly state: IoInfiniteQueryState<unknown, unknown, unknown>;
+};
+
 export type IoDehydratedState = {
   queries: IoDehydratedQuery[];
+  readonly infiniteQueries: readonly IoDehydratedInfiniteQuery[];
 };
 
 export type IoDehydrateOptions = {
@@ -207,14 +340,38 @@ export type IoQueryClient = {
   defineQuery<TData = unknown, TError = Error>(
     definition: IoQueryDefinition<TData, TError>,
   ): IoQueryHandle<TData, TError>;
+  defineInfiniteQuery<TData = unknown, TError = Error, TPageParam = unknown>(
+    definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+  ): IoInfiniteQueryHandle<TData, TError, TPageParam>;
   observeQuery<TData = unknown, TError = Error, TSelected = TData>(
     options: IoQueryObserverOptions<TData, TError, TSelected>,
   ): IoQueryObserver<TSelected, TError>;
+  observeInfiniteQuery<
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+    TSelected = InfiniteData<TData, TPageParam>,
+  >(
+    options: IoInfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TPageParam,
+      TSelected
+    >,
+  ): IoInfiniteQueryObserver<TSelected, TError, TPageParam>;
   fetchQuery<TData = unknown, TError = Error>(
     input: IoQueryInput<TData, TError>,
   ): Promise<TData>;
   prefetchQuery<TData = unknown, TError = Error>(
     input: IoQueryInput<TData, TError>,
+  ): Promise<void>;
+  prefetchInfiniteQuery<
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    input: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+    pages?: number,
   ): Promise<void>;
   ensureQueryData<TData = unknown, TError = Error>(
     input: IoQueryInput<TData, TError>,

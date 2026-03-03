@@ -1,12 +1,18 @@
+import { createInfiniteQueryObserver } from './infinite-query-observer.js';
 import { createMutation } from './mutation.js';
 import { createQueryObserver } from './query-observer.js';
 import { createQueryCache } from './query-cache.js';
+import type { NormalizedInfiniteQueryDefinition } from './infinite-query-record.js';
 import type { NormalizedQueryDefinition } from './query-record.js';
 import type {
   IoDehydrateOptions,
   IoDehydratedQuery,
   IoDehydratedState,
   IoHydrateOptions,
+  IoInfiniteQueryDefinition,
+  IoInfiniteQueryHandle,
+  IoInfiniteQueryObserver,
+  IoInfiniteQueryObserverOptions,
   IoMutation,
   IoMutationOptions,
   IoQueryClient,
@@ -63,6 +69,17 @@ function createSeededQueryFn(keyHash: string): (context: {
   };
 }
 
+function createSeededInfiniteQueryFn<TPageParam>(keyHash: string): (context: {
+  signal: AbortSignal;
+  pageParam: TPageParam;
+}) => Promise<never> {
+  return async () => {
+    throw new Error(
+      `infiniteQuery.fetch: queryFn is not available for key ${keyHash}. Call defineInfiniteQuery(...) first.`,
+    );
+  };
+}
+
 export function createQueryClient(
   options: IoQueryClientOptions = {},
 ): IoQueryClient {
@@ -85,6 +102,24 @@ export function createQueryClient(
     key: definition.key,
     keyHash: hashKey(definition.key),
     queryFn: definition.queryFn,
+    staleTime: definition.staleTime ?? defaults.staleTime,
+    gcTime: definition.gcTime ?? defaults.gcTime,
+    retry: definition.retry ?? defaults.retry,
+    retryDelay: definition.retryDelay ?? defaults.retryDelay,
+    canFetch,
+  });
+
+  const normalizeInfiniteDefinition = <TData, TError, TPageParam>(
+    definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+    canFetch = true,
+  ): NormalizedInfiniteQueryDefinition<TData, TError, TPageParam> => ({
+    key: definition.key,
+    keyHash: hashKey(definition.key),
+    queryFn: definition.queryFn,
+    initialPageParam: definition.initialPageParam,
+    getNextPageParam: definition.getNextPageParam,
+    getPreviousPageParam: definition.getPreviousPageParam,
+    maxPages: definition.maxPages,
     staleTime: definition.staleTime ?? defaults.staleTime,
     gcTime: definition.gcTime ?? defaults.gcTime,
     retry: definition.retry ?? defaults.retry,
@@ -116,9 +151,78 @@ export function createQueryClient(
     input: IoQueryInput<TData, TError>,
   ): Promise<void> => resolveHandle(input).prefetch();
 
+
+  const prefetchInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    input: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+    pages = 1,
+  ): Promise<void> => {
+    const handle = defineInfiniteQuery(input);
+
+    const tasks = Array.from({ length: Math.max(1, pages) });
+    return tasks
+      .reduce<Promise<void>>(
+        (promise) =>
+          promise.then(() => handle.fetchNextPage().then(() => undefined)),
+        Promise.resolve(),
+      )
+      .catch((error: unknown) => {
+        reportBackgroundError('query.prefetchInfiniteQuery()', error);
+      });
+  };
+
   const ensureQueryData = <TData = unknown, TError = Error>(
     input: IoQueryInput<TData, TError>,
   ): Promise<TData> => resolveHandle(input).ensureData();
+
+
+  const defineInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+  ): IoInfiniteQueryHandle<TData, TError, TPageParam> => {
+    const normalized = normalizeInfiniteDefinition(definition, true);
+    return cache.defineInfinite(normalized);
+  };
+
+  const observeInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+    TSelected = TData,
+  >(
+    observerOptions: IoInfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TPageParam,
+      TSelected
+    >,
+  ): IoInfiniteQueryObserver<TSelected, TError, TPageParam> => {
+    const handle =
+      'fetchNextPage' in observerOptions.query
+        ? observerOptions.query
+        : defineInfiniteQuery(observerOptions.query);
+
+    const record = cache.getInfiniteRecord<TData, TError, TPageParam>(handle.key);
+    if (!record) {
+      throw new Error(
+        `observeInfiniteQuery: query record is unavailable for key ${handle.keyHash}`,
+      );
+    }
+
+    return createInfiniteQueryObserver<TData, TError, TPageParam, TSelected>({
+      record,
+      observerOptions,
+      defaultRefetchOnMount: defaults.refetchOnMount,
+      defaultRefetchOnWindowFocus: defaults.refetchOnWindowFocus,
+      defaultRefetchOnReconnect: defaults.refetchOnReconnect,
+    });
+  };
 
   const observeQuery = <TData = unknown, TError = Error, TSelected = TData>(
     observerOptions: IoQueryObserverOptions<TData, TError, TSelected>,
@@ -202,6 +306,9 @@ export function createQueryClient(
     for (const query of getQueries(filter)) {
       query.invalidate(refetch);
     }
+    for (const query of cache.getAllInfinite(filter)) {
+      query.invalidate(refetch);
+    }
   };
 
   const refetchQueries = async (filter?: IoQueryFilter): Promise<void> => {
@@ -210,10 +317,18 @@ export function createQueryClient(
         return query.fetch(true).then(() => undefined);
       }),
     );
+    await Promise.all(
+      cache.getAllInfinite(filter).map((query) => {
+        return query.refetchAllPages().then(() => undefined);
+      }),
+    );
   };
 
   const cancelQueries = (filter?: IoQueryFilter): void => {
     for (const query of getQueries(filter)) {
+      query.cancel();
+    }
+    for (const query of cache.getAllInfinite(filter)) {
       query.cancel();
     }
   };
@@ -222,10 +337,16 @@ export function createQueryClient(
     for (const query of getQueries(filter)) {
       query.reset();
     }
+    for (const query of cache.getAllInfinite(filter)) {
+      query.reset();
+    }
   };
 
   const removeQueries = (filter?: IoQueryFilter): void => {
     for (const query of getQueries(filter)) {
+      cache.removeByHash(query.keyHash, false);
+    }
+    for (const query of cache.getAllInfinite(filter)) {
       cache.removeByHash(query.keyHash, false);
     }
   };
@@ -235,7 +356,7 @@ export function createQueryClient(
   };
 
   const dehydrate = (dehydrateOptions?: IoDehydrateOptions): IoDehydratedState => {
-    return dehydrateQueries(getQueries(), dehydrateOptions);
+    return dehydrateQueries(getQueries(), cache.getAllInfinite(), dehydrateOptions);
   };
 
   const hydrate = (
@@ -262,13 +383,37 @@ export function createQueryClient(
         query.state,
       );
     }
+
+    for (const query of filtered.infiniteQueries) {
+      const existing = cache.getInfiniteRecord<unknown, unknown, unknown>(query.key);
+      if (existing) {
+        existing.hydrate(query.state);
+        continue;
+      }
+
+      cache.seedInfinite(
+        normalizeInfiniteDefinition<unknown, Error, unknown>(
+          {
+            key: query.key,
+            queryFn: createSeededInfiniteQueryFn(query.keyHash),
+            initialPageParam: undefined,
+            getNextPageParam: () => null,
+          },
+          false,
+        ),
+        query.state,
+      );
+    }
   };
 
   return {
     defineQuery,
+    defineInfiniteQuery,
     observeQuery,
+    observeInfiniteQuery,
     fetchQuery,
     prefetchQuery,
+    prefetchInfiniteQuery,
     ensureQueryData,
     mutation,
     invalidateQueries,

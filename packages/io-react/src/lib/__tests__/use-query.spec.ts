@@ -1,4 +1,5 @@
 import type {
+  UseInfiniteQueryResult,
   UseMutationResult,
   UseQueryResult,
   UseSuspenseQueryResult,
@@ -10,7 +11,13 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useMutation, useQuery, useSuspenseQuery } from '../../index.js';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from '../../index.js';
 
 const createRenderer = (element: unknown): ReactTestRenderer =>
   TestRenderer.create(element as never);
@@ -265,6 +272,95 @@ describe('@iostore/react: useSuspenseQuery', () => {
       type: 'span',
       children: ['9'],
     });
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+});
+
+
+describe('@iostore/react: useInfiniteQuery', () => {
+  it('fetches next pages and exposes flags', async () => {
+    const client = createQueryClient();
+    let latest: UseInfiniteQueryResult<number, Error, number> | undefined;
+
+    const App = () => {
+      latest = useInfiniteQuery({
+        client,
+        key: ['react', 'infinite'],
+        initialPageParam: 1,
+        queryFn: async ({ pageParam }) => pageParam,
+        getNextPageParam: (lastPage) => (lastPage < 2 ? lastPage + 1 : null),
+      });
+      return React.createElement('span', null, String(latest.data?.pages.length ?? 0));
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(React.createElement(App));
+    });
+    await flushAsync();
+
+    expect(latest?.data?.pages).toEqual([1]);
+    expect(latest?.hasNextPage).toBe(true);
+
+    await act(async () => {
+      await latest?.fetchNextPage();
+    });
+
+    expect(latest?.data?.pages).toEqual([1, 2]);
+    expect(latest?.hasNextPage).toBe(false);
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+});
+
+describe('@iostore/react: useSuspenseInfiniteQuery', () => {
+  it('suspends until first page resolves', async () => {
+    const client = createQueryClient();
+    const deferred = createDeferred<number>();
+    let latestPages: number[] | undefined;
+
+    const View = () => {
+      const result = useSuspenseInfiniteQuery({
+        client,
+        key: ['react', 'suspense-infinite'],
+        initialPageParam: 0,
+        queryFn: async () => deferred.promise,
+        getNextPageParam: () => null,
+      });
+      if (result.data) {
+        latestPages = result.data.pages as unknown as number[];
+      }
+      return React.createElement('span', null, 'ready');
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(
+        React.createElement(
+          React.Suspense,
+          { fallback: React.createElement('span', null, 'loading') },
+          React.createElement(View),
+        ),
+      );
+    });
+
+    expect(renderer.toJSON()).toMatchObject({
+      type: 'span',
+      children: ['loading'],
+    });
+
+    await act(async () => {
+      deferred.resolve(7);
+      await deferred.promise;
+    });
+    await flushAsync();
+
+    expect(latestPages).toEqual([7]);
 
     await act(async () => {
       renderer.unmount();
