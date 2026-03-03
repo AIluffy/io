@@ -194,7 +194,7 @@ export function useSuspenseInfiniteQuery<
   }
 
   if (result.status === 'pending') {
-    throw result.query.fetchNextPage();
+    throw result.observer.read();
   }
 
   const data = result.observer.read() as unknown as TSelected;
