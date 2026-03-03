@@ -2,11 +2,13 @@ import type {
   IoDehydrateOptions,
   IoDehydratedState,
   IoHydrateOptions,
+  IoInfiniteQueryHandle,
   IoQueryHandle,
 } from './types.js';
 
 export function dehydrateQueries(
   queries: IoQueryHandle<unknown, unknown>[],
+  infiniteQueries: IoInfiniteQueryHandle<unknown, unknown, unknown>[],
   options?: IoDehydrateOptions,
 ): IoDehydratedState {
   const shouldDehydrateQuery = options?.shouldDehydrateQuery;
@@ -24,7 +26,18 @@ export function dehydrateQueries(
         keyHash: query.keyHash,
         state: query.getState(),
       })),
-    infiniteQueries: [],
+    infiniteQueries: infiniteQueries
+      .filter((query) => {
+        if (!shouldDehydrateQuery) {
+          return true;
+        }
+        return shouldDehydrateQuery(query as unknown as IoQueryHandle<unknown, unknown>);
+      })
+      .map((query) => ({
+        key: query.key,
+        keyHash: query.keyHash,
+        state: query.getState(),
+      })),
   };
 }
 
