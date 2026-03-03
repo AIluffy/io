@@ -153,4 +153,29 @@ describe('@iostore/solid: useInfiniteQuery', () => {
 
     expect(disposeSpy).toHaveBeenCalledTimes(1);
   });
+
+
+  it('supports handle mode input', async () => {
+    const client = createQueryClient({ defaultRetry: 0 });
+    const { queryFn } = createMockInfiniteQueryFn();
+    const query = client.defineInfiniteQuery<Page, Error, number>({
+      key: ['solid', 'infinite', 'handle'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+
+    let result: IoSolidInfiniteQueryResult<Page, Error, number> | undefined;
+    let dispose: () => void = () => undefined;
+
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      result = useInfiniteQuery({ query, client });
+    });
+
+    await flushAsync();
+    expect(result?.state().status).toBe('success');
+
+    dispose();
+  });
 });

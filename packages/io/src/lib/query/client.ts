@@ -6,11 +6,14 @@ import type { NormalizedInfiniteQueryDefinition } from './infinite-query-record.
 import type { NormalizedQueryDefinition } from './query-record.js';
 import type {
   IoDehydrateOptions,
+  IoDehydratedInfiniteQuery,
   IoDehydratedQuery,
   IoDehydratedState,
+  InfiniteData,
   IoHydrateOptions,
   IoInfiniteQueryDefinition,
   IoInfiniteQueryHandle,
+  IoInfiniteQueryState,
   IoInfiniteQueryObserver,
   IoInfiniteQueryObserverOptions,
   IoMutation,
@@ -259,6 +262,11 @@ export function createQueryClient(
   ): IoQueryHandle<TData, TError> | undefined =>
     cache.getHandle<TData, TError>(key);
 
+  const getInfiniteQuery = <TData = unknown, TError = Error, TPageParam = unknown>(
+    key: readonly unknown[],
+  ): IoInfiniteQueryHandle<TData, TError, TPageParam> | undefined =>
+    cache.getInfiniteHandle<TData, TError, TPageParam>(key);
+
   const getQueries = (filter?: IoQueryFilter): IoQueryHandle<unknown, unknown>[] =>
     cache.getAll(filter);
 
@@ -266,9 +274,23 @@ export function createQueryClient(
     key: readonly unknown[],
   ): TData | undefined => getQuery<TData>(key)?.getData();
 
+  const getInfiniteQueryData = <TData = unknown, TPageParam = unknown>(
+    key: readonly unknown[],
+  ): InfiniteData<TData, TPageParam> | undefined =>
+    getInfiniteQuery<TData, Error, TPageParam>(key)?.getData();
+
   const getQueryState = <TData = unknown, TError = Error>(
     key: readonly unknown[],
   ): IoQueryState<TData, TError> | undefined => getQuery<TData, TError>(key)?.getState();
+
+  const getInfiniteQueryState = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    key: readonly unknown[],
+  ): IoInfiniteQueryState<TData, TError, TPageParam> | undefined =>
+    getInfiniteQuery<TData, TError, TPageParam>(key)?.getState();
 
   const setQueryData = <TData = unknown>(
     key: readonly unknown[],
@@ -286,6 +308,35 @@ export function createQueryClient(
         {
           key,
           queryFn: createSeededQueryFn(keyHash),
+        },
+        false,
+      ),
+    );
+    seeded.setData(updater);
+  };
+
+  const setInfiniteQueryData = <TData = unknown, TPageParam = unknown>(
+    key: readonly unknown[],
+    updater:
+      | InfiniteData<TData, TPageParam>
+      | ((
+          prev: InfiniteData<TData, TPageParam> | undefined,
+        ) => InfiniteData<TData, TPageParam>),
+  ): void => {
+    const existing = getInfiniteQuery<TData, Error, TPageParam>(key);
+    if (existing) {
+      existing.setData(updater);
+      return;
+    }
+
+    const keyH = hashKey(key);
+    const seeded = cache.defineInfinite(
+      normalizeInfiniteDefinition<TData, Error, TPageParam>(
+        {
+          key,
+          queryFn: createSeededInfiniteQueryFn<TPageParam>(keyH),
+          initialPageParam: undefined as TPageParam,
+          getNextPageParam: () => null,
         },
         false,
       ),
@@ -384,7 +435,7 @@ export function createQueryClient(
       );
     }
 
-    for (const query of filtered.infiniteQueries) {
+    for (const query of (filtered.infiniteQueries ?? [])) {
       const existing = cache.getInfiniteRecord<unknown, unknown, unknown>(query.key);
       if (existing) {
         existing.hydrate(query.state);
@@ -423,9 +474,13 @@ export function createQueryClient(
     removeQueries,
     getQueryData,
     setQueryData,
+    getInfiniteQueryData,
+    setInfiniteQueryData,
     setQueriesData,
     getQueryState,
+    getInfiniteQueryState,
     getQuery,
+    getInfiniteQuery,
     getQueries,
     dehydrate,
     hydrate,
@@ -458,6 +513,25 @@ export function isDehydratedQuery(
   }
 
   return true;
+}
+
+export function isDehydratedInfiniteQuery(
+  value: unknown,
+): value is IoDehydratedInfiniteQuery {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  if (!('key' in value) || !('keyHash' in value) || !('state' in value)) {
+    return false;
+  }
+
+  const state = (value as { state: unknown }).state;
+  if (typeof state !== 'object' || state === null) {
+    return false;
+  }
+
+  return 'fetchDirection' in state;
 }
 
 export function safeRefetch(

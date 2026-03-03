@@ -153,4 +153,28 @@ describe('@iostore/vue: useInfiniteQuery', () => {
 
     scope.stop();
   });
+
+
+  it('supports handle mode input', async () => {
+    const client = createQueryClient({ defaultRetry: 0 });
+    const { queryFn } = createMockInfiniteQueryFn();
+    const scope = effectScope();
+
+    const handle = client.defineInfiniteQuery<Page, Error, number>({
+      key: ['vue', 'infinite', 'handle'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+
+    let result: IoVueInfiniteQueryResult<Page, Error, number> | undefined;
+    scope.run(() => {
+      result = useInfiniteQuery({ query: handle, client });
+    });
+
+    await flushAsync();
+    expect(result?.state.value.status).toBe('success');
+
+    scope.stop();
+  });
 });

@@ -58,45 +58,6 @@ export type IoLynxInfiniteQueryResult<
   observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam>;
 };
 
-const INFINITE_QUERY_HANDLES = new WeakMap<
-  IoQueryClient,
-  Map<string, IoInfiniteQueryHandle<unknown, unknown, unknown>>
->();
-
-function getCachedInfiniteQuery<TData, TError, TPageParam>(
-  client: IoQueryClient,
-  keyHash: string,
-): IoInfiniteQueryHandle<TData, TError, TPageParam> | undefined {
-  const map = INFINITE_QUERY_HANDLES.get(client);
-  const existing = map?.get(keyHash);
-  return existing as IoInfiniteQueryHandle<TData, TError, TPageParam> | undefined;
-}
-
-function setCachedInfiniteQuery<TData, TError, TPageParam>(
-  client: IoQueryClient,
-  keyHash: string,
-  query: IoInfiniteQueryHandle<TData, TError, TPageParam>,
-): void {
-  const map = INFINITE_QUERY_HANDLES.get(client);
-  if (map) {
-    map.set(keyHash, query as IoInfiniteQueryHandle<unknown, unknown, unknown>);
-    return;
-  }
-
-  INFINITE_QUERY_HANDLES.set(
-    client,
-    new Map<string, IoInfiniteQueryHandle<unknown, unknown, unknown>>([
-      [keyHash, query as IoInfiniteQueryHandle<unknown, unknown, unknown>],
-    ]),
-  );
-}
-
-type IoQueryClientWithInfiniteGetter = IoQueryClient & {
-  getInfiniteQuery?<TData = unknown, TError = Error, TPageParam = unknown>(
-    key: readonly unknown[],
-  ): IoInfiniteQueryHandle<TData, TError, TPageParam> | undefined;
-};
-
 function isHandleOptions<TData, TError, TPageParam, TSelected>(
   options: IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
 ): options is IoUseInfiniteQueryHandleOptions<TData, TError, TPageParam, TSelected> {
@@ -153,24 +114,14 @@ export function useInfiniteQuery<
       TSelected
     >;
 
-    const cached = getCachedInfiniteQuery<TData, TError, TPageParam>(
-      client,
-      keyHash,
-    );
-    if (cached) {
-      return cached;
-    }
-
-    const maybeClient = client as IoQueryClientWithInfiniteGetter;
-    const existing = maybeClient.getInfiniteQuery?.<TData, TError, TPageParam>(
+    const existing = client.getInfiniteQuery<TData, TError, TPageParam>(
       current.key,
     );
     if (existing) {
-      setCachedInfiniteQuery(client, keyHash, existing);
       return existing;
     }
 
-    const defined = client.defineInfiniteQuery<TData, TError, TPageParam>({
+    return client.defineInfiniteQuery<TData, TError, TPageParam>({
       key: current.key,
       queryFn: current.queryFn,
       staleTime: current.staleTime,
@@ -182,14 +133,7 @@ export function useInfiniteQuery<
       getPreviousPageParam: current.getPreviousPageParam,
       maxPages: current.maxPages,
     });
-
-    setCachedInfiniteQuery(client, keyHash, defined);
-    return defined;
   }, [client, keyHash]);
-
-  useEffect(() => {
-    setCachedInfiniteQuery(client, keyHash, infiniteQuery);
-  }, [client, keyHash, infiniteQuery]);
 
   const observer = useMemo(() => {
     return client.observeInfiniteQuery<TData, TError, TPageParam, TSelected>(
@@ -225,3 +169,45 @@ export function useInfiniteQuery<
     observer,
   };
 }
+
+export type IoLynxSuspenseInfiniteQueryResult<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> = IoLynxInfiniteQueryResult<TData, TError, TPageParam, TSelected> & {
+  data: TSelected;
+};
+
+export function useSuspenseInfiniteQuery<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+>(
+  options: Omit<
+    IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+    'enabled' | 'placeholderData'
+  >,
+): IoLynxSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected> {
+  const result = useInfiniteQuery<TData, TError, TPageParam, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>);
+
+  if (result.status === 'error' && result.error !== null) {
+    throw result.error;
+  }
+
+  if (result.status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return result as IoLynxSuspenseInfiniteQueryResult<
+    TData,
+    TError,
+    TPageParam,
+    TSelected
+  >;
+}
+

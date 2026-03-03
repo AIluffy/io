@@ -34,7 +34,7 @@ vi.mock('@lynx-js/react', () => ({
   },
 }));
 
-import { useInfiniteQuery } from '../use-infinite-query.js';
+import { useInfiniteQuery, useSuspenseInfiniteQuery } from '../use-infinite-query.js';
 
 function resetCapture(): void {
   capture.onStoreChangeCalls = 0;
@@ -171,5 +171,9 @@ describe('@iostore/lynx: useInfiniteQuery', () => {
 
     expect(cancelSpy).toHaveBeenCalledTimes(1);
     expect(disposeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('exports useSuspenseInfiniteQuery', () => {
+    expect(typeof useSuspenseInfiniteQuery).toBe('function');
   });
 });
