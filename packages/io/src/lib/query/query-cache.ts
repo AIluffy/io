@@ -233,6 +233,13 @@ export function createQueryCache(): QueryCache {
   const define = <TData, TError>(
     definition: NormalizedQueryDefinition<TData, TError>,
   ): IoQueryHandle<TData, TError> => {
+    if (infiniteEntries.has(definition.keyHash)) {
+      throw new Error(
+        `defineQuery: key "${definition.keyHash}" is already registered as an infinite query. ` +
+          'A key cannot be used for both regular and infinite queries.',
+      );
+    }
+
     const existing = entries.get(definition.keyHash) as CacheEntry<
       TData,
       TError
@@ -276,6 +283,13 @@ export function createQueryCache(): QueryCache {
   const defineInfinite = <TData, TError, TPageParam>(
     definition: NormalizedInfiniteQueryDefinition<TData, TError, TPageParam>,
   ): IoInfiniteQueryHandle<TData, TError, TPageParam> => {
+    if (entries.has(definition.keyHash)) {
+      throw new Error(
+        `defineInfiniteQuery: key "${definition.keyHash}" is already registered as a regular query. ` +
+          'A key cannot be used for both regular and infinite queries.',
+      );
+    }
+
     const existing = infiniteEntries.get(definition.keyHash) as InfiniteCacheEntry<
       TData,
       TError,
@@ -427,6 +441,13 @@ export function createQueryCache(): QueryCache {
         if (stale !== filter.stale) {
           return false;
         }
+      }
+
+      if (
+        filter.predicate &&
+        !filter.predicate(handle as unknown as IoQueryHandle<unknown, unknown>)
+      ) {
+        return false;
       }
 
       return true;

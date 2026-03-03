@@ -4,6 +4,7 @@ export {
   createQueryClient,
   getDefaultClient,
   isDehydratedQuery,
+  isDehydratedInfiniteQuery,
   resetDefaultClient,
   safeRefetch,
 } from './client.js';

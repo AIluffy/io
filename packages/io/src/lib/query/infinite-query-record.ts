@@ -489,7 +489,6 @@ export function createInfiniteQueryRecord<TData, TError, TPageParam>(options: {
         error: null,
         failureCount: 0,
         failureReason: null,
-        data: undefined,
       },
       {
         action: 'infiniteQuery.refetchAll.start',

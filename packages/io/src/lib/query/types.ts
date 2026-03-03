@@ -158,9 +158,9 @@ export type IoInfiniteQueryHandle<
 > = {
   readonly key: IoQueryKey;
   readonly keyHash: string;
-  fetchNextPage(): Promise<InfiniteData<TData, TPageParam>>;
-  fetchPreviousPage(): Promise<InfiniteData<TData, TPageParam>>;
-  refetchAllPages(): Promise<InfiniteData<TData, TPageParam>>;
+  fetchNextPage(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
+  fetchPreviousPage(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
+  refetchAllPages(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
   prefetch(): Promise<void>;
   ensureData(): Promise<InfiniteData<TData, TPageParam>>;
   invalidate(refetch?: boolean): void;
@@ -325,7 +325,7 @@ export type IoDehydratedInfiniteQuery = {
 
 export type IoDehydratedState = {
   queries: IoDehydratedQuery[];
-  readonly infiniteQueries: readonly IoDehydratedInfiniteQuery[];
+  readonly infiniteQueries?: readonly IoDehydratedInfiniteQuery[];
 };
 
 export type IoDehydrateOptions = {
@@ -334,6 +334,7 @@ export type IoDehydrateOptions = {
 
 export type IoHydrateOptions = {
   shouldHydrateQuery?: (query: IoDehydratedQuery) => boolean;
+  shouldHydrateInfiniteQuery?: (query: IoDehydratedInfiniteQuery) => boolean;
 };
 
 export type IoQueryClient = {
@@ -404,6 +405,23 @@ export type IoQueryClient = {
   getQuery<TData = unknown, TError = Error>(
     key: IoQueryKey,
   ): IoQueryHandle<TData, TError> | undefined;
+  getInfiniteQuery<TData = unknown, TError = Error, TPageParam = unknown>(
+    key: IoQueryKey,
+  ): IoInfiniteQueryHandle<TData, TError, TPageParam> | undefined;
+  getInfiniteQueryData<TData = unknown, TPageParam = unknown>(
+    key: IoQueryKey,
+  ): InfiniteData<TData, TPageParam> | undefined;
+  setInfiniteQueryData<TData = unknown, TPageParam = unknown>(
+    key: IoQueryKey,
+    updater:
+      | InfiniteData<TData, TPageParam>
+      | ((
+          prev: InfiniteData<TData, TPageParam> | undefined,
+        ) => InfiniteData<TData, TPageParam>),
+  ): void;
+  getInfiniteQueryState<TData = unknown, TError = Error, TPageParam = unknown>(
+    key: IoQueryKey,
+  ): IoInfiniteQueryState<TData, TError, TPageParam> | undefined;
   getQueries(filter?: IoQueryFilter): IoQueryHandle<unknown, unknown>[];
   dehydrate(options?: IoDehydrateOptions): IoDehydratedState;
   hydrate(state: IoDehydratedState, options?: IoHydrateOptions): void;
