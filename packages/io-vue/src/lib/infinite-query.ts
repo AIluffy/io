@@ -61,6 +61,15 @@ export type IoVueInfiniteQueryResult<
   observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam>;
 };
 
+export type IoVueSuspenseInfiniteQueryResult<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> = IoVueInfiniteQueryResult<TData, TError, TPageParam, TSelected> & {
+  data: ShallowRef<TSelected>;
+};
+
 function isHandleOptions<TData, TError, TPageParam, TSelected>(
   options: IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
 ): options is IoUseInfiniteQueryHandleOptions<TData, TError, TPageParam, TSelected> {
@@ -97,7 +106,8 @@ export function useInfiniteQuery<
 
   const query = isHandleOptions(options)
     ? options.query
-    : client.defineInfiniteQuery<TData, TError, TPageParam>({
+    : client.getInfiniteQuery<TData, TError, TPageParam>(options.key) ??
+      client.defineInfiniteQuery<TData, TError, TPageParam>({
         key: options.key,
         queryFn: options.queryFn,
         staleTime: options.staleTime,
@@ -115,7 +125,10 @@ export function useInfiniteQuery<
   );
 
   const state = useIO(observer);
-  const data = useIOSelector(observer, (value) => value.data as unknown as TSelected | undefined);
+  const data = useIOSelector(
+    observer,
+    (value) => value.data as unknown as TSelected | undefined,
+  );
 
   onScopeDispose(() => {
     if (options.cancelOnDispose) {
@@ -136,4 +149,36 @@ export function useInfiniteQuery<
     query,
     observer,
   };
+}
+
+export function useSuspenseInfiniteQuery<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+>(
+  options: Omit<
+    IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+    'enabled' | 'placeholderData'
+  >,
+): IoVueSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected> {
+  const result = useInfiniteQuery<TData, TError, TPageParam, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>);
+
+  if (result.state.value.status === 'error' && result.state.value.error !== null) {
+    throw result.state.value.error;
+  }
+
+  if (result.state.value.status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return result as IoVueSuspenseInfiniteQueryResult<
+    TData,
+    TError,
+    TPageParam,
+    TSelected
+  >;
 }

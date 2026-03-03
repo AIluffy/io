@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 const STORE_COVERAGE_THRESHOLDS = {
   lines: 80,
   functions: 80,
-  branches: 65,
+  branches: 75,
   statements: 80,
   'src/lib/core/*.ts': {
     lines: 80,
@@ -13,8 +13,8 @@ const STORE_COVERAGE_THRESHOLDS = {
   },
   'src/lib/core/node-factory/**/*.ts': {
     lines: 75,
-    functions: 60,
-    branches: 60,
+    functions: 75,
+    branches: 70,
     statements: 75,
   },
 } as const;

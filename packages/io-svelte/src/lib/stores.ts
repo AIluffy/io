@@ -12,11 +12,19 @@ import type {
   IoQueryObserver,
   IoQueryObserverOptions,
   IoQueryObserverResult,
+  IoMutation,
+  IoMutationDerivedFlags,
+  IoMutationOptions,
+  IoMutationState,
 } from '@iostore/store/query';
 import type { Readable, Writable } from 'svelte/store';
 
 import { createScheduledDispatcher } from '@iostore/store';
-import { getDefaultClient } from '@iostore/store/query';
+import {
+  createMutation,
+  deriveMutationFlags,
+  getDefaultClient,
+} from '@iostore/store/query';
 
 type IoSource<T> = {
   snapshot(): T;
@@ -380,4 +388,127 @@ export function createInfiniteQueryStore<
   return toInfiniteQueryStore(observer, query, {
     cancelOnUnsubscribe: options.cancelOnUnsubscribe,
   });
+}
+
+
+export type IoMutationStore<TData, TVariables, TError = Error> =
+  Readable<IoMutationState<TData, TError> & IoMutationDerivedFlags> & {
+    getState: () => IoMutationState<TData, TError> & IoMutationDerivedFlags;
+    mutate: (variables: TVariables) => void;
+    mutateAsync: (variables: TVariables) => Promise<TData>;
+    reset: () => void;
+    cancel: () => void;
+    mutation: IoMutation<TData, TVariables, TError>;
+  };
+
+export type IoSuspenseQueryStore<TData, TError = Error, TSelected = TData> =
+  IoQueryStore<TData, TError, TSelected> & {
+    read: () => TSelected;
+    promise: () => Promise<TSelected> | null;
+  };
+
+export type IoSuspenseInfiniteQueryStore<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> = IoInfiniteQueryStore<TData, TError, TPageParam, TSelected> & {
+  read: () => TSelected;
+  promise: () => Promise<TSelected> | null;
+};
+
+export function createMutationStore<
+  TData,
+  TVariables,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): IoMutationStore<TData, TVariables, TError> {
+  const mutation = createMutation<TData, TVariables, TError, TContext>(options);
+
+  const snapshot = (): IoMutationState<TData, TError> & IoMutationDerivedFlags => {
+    const state = mutation.snapshot();
+    return {
+      ...state,
+      ...deriveMutationFlags(state),
+    };
+  };
+
+  return {
+    subscribe(run) {
+      run(snapshot());
+      return mutation.subscribe((state) => {
+        run({
+          ...state,
+          ...deriveMutationFlags(state),
+        });
+      });
+    },
+    getState: snapshot,
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    reset: mutation.reset,
+    cancel: mutation.cancel,
+    mutation,
+  };
+}
+
+export function createSuspenseQueryStore<TData, TError = Error, TSelected = TData>(
+  options: IoCreateQueryStoreOptions<TData, TError, TSelected>,
+): IoSuspenseQueryStore<TData, TError, TSelected> {
+  const store = createQueryStore(options);
+
+  return {
+    ...store,
+    read: () => store.observer.read(),
+    promise: () => {
+      const state = store.getState();
+      if (state.status !== 'pending') {
+        return null;
+      }
+
+      try {
+        store.observer.read();
+        return null;
+      } catch (error) {
+        if (error instanceof Promise) {
+          return error as Promise<TSelected>;
+        }
+        return null;
+      }
+    },
+  };
+}
+
+export function createSuspenseInfiniteQueryStore<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+>(
+  options: IoCreateInfiniteQueryStoreOptions<TData, TError, TPageParam, TSelected>,
+): IoSuspenseInfiniteQueryStore<TData, TError, TPageParam, TSelected> {
+  const store = createInfiniteQueryStore(options);
+
+  return {
+    ...store,
+    read: () => store.observer.read() as unknown as TSelected,
+    promise: () => {
+      const state = store.getState();
+      if (state.status !== 'pending') {
+        return null;
+      }
+
+      try {
+        store.observer.read();
+        return null;
+      } catch (error) {
+        if (error instanceof Promise) {
+          return error as Promise<TSelected>;
+        }
+        return null;
+      }
+    },
+  };
 }

@@ -34,7 +34,11 @@ vi.mock('@lynx-js/react', () => ({
   },
 }));
 
-import { useQuery } from '../use-query.js';
+import {
+  useMutation,
+  useQuery,
+  useSuspenseQuery,
+} from '../use-query.js';
 
 function resetCapture(): void {
   capture.onStoreChangeCalls = 0;
@@ -134,5 +138,30 @@ describe('@iostore/lynx: useQuery', () => {
 
     await result.refetch();
     expect(client.getQueryData<number>(['lynx', 'query-actions'])).toBe(3);
+  });
+
+
+  it('supports useMutation state and async mutate', async () => {
+    resetCapture();
+    const result = useMutation({
+      mutationFn: async (value: number) => value * 2,
+    });
+
+    await expect(result.mutateAsync(3)).resolves.toBe(6);
+    expect(result.mutation.snapshot().status).toBe('success');
+    expect(result.mutation.snapshot().data).toBe(6);
+  });
+
+  it('throws pending promise in useSuspenseQuery', () => {
+    resetCapture();
+    const client = createQueryClient();
+
+    expect(() =>
+      useSuspenseQuery({
+        client,
+        key: ['lynx', 'suspense-query'],
+        queryFn: async () => 1,
+      }),
+    ).toThrowError(Promise);
   });
 });
