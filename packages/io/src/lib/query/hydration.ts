@@ -24,6 +24,7 @@ export function dehydrateQueries(
         keyHash: query.keyHash,
         state: query.getState(),
       })),
+    infiniteQueries: [],
   };
 }
 
@@ -38,5 +39,6 @@ export function filterHydrationQueries(
 
   return {
     queries: state.queries.filter((query) => shouldHydrateQuery(query)),
+    infiniteQueries: state.infiniteQueries,
   };
 }

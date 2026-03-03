@@ -7,6 +7,10 @@ import type {
   IoDehydratedQuery,
   IoDehydratedState,
   IoHydrateOptions,
+  IoInfiniteQueryDefinition,
+  IoInfiniteQueryHandle,
+  IoInfiniteQueryObserver,
+  IoInfiniteQueryObserverOptions,
   IoMutation,
   IoMutationOptions,
   IoQueryClient,
@@ -116,9 +120,52 @@ export function createQueryClient(
     input: IoQueryInput<TData, TError>,
   ): Promise<void> => resolveHandle(input).prefetch();
 
+
+  const prefetchInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    _input: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+    _pages?: number,
+  ): Promise<void> => {
+    void _input;
+    void _pages;
+    throw new Error('query.prefetchInfiniteQuery: not implemented');
+  };
+
   const ensureQueryData = <TData = unknown, TError = Error>(
     input: IoQueryInput<TData, TError>,
   ): Promise<TData> => resolveHandle(input).ensureData();
+
+
+  const defineInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+  >(
+    _definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>,
+  ): IoInfiniteQueryHandle<TData, TError, TPageParam> => {
+    void _definition;
+    throw new Error('query.defineInfiniteQuery: not implemented');
+  };
+
+  const observeInfiniteQuery = <
+    TData = unknown,
+    TError = Error,
+    TPageParam = unknown,
+    TSelected = TData,
+  >(
+    _options: IoInfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TPageParam,
+      TSelected
+    >,
+  ): IoInfiniteQueryObserver<TSelected, TError, TPageParam> => {
+    void _options;
+    throw new Error('query.observeInfiniteQuery: not implemented');
+  };
 
   const observeQuery = <TData = unknown, TError = Error, TSelected = TData>(
     observerOptions: IoQueryObserverOptions<TData, TError, TSelected>,
@@ -266,9 +313,12 @@ export function createQueryClient(
 
   return {
     defineQuery,
+    defineInfiniteQuery,
     observeQuery,
+    observeInfiniteQuery,
     fetchQuery,
     prefetchQuery,
+    prefetchInfiniteQuery,
     ensureQueryData,
     mutation,
     invalidateQueries,
