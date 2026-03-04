@@ -34,6 +34,10 @@ type ResolvedObserverOptions<TData, TError, TSelected> = {
   onSettled?: (data: TSelected | undefined, error: TError | null) => void;
 };
 
+type SelectedDataResult<TData, TError> = {
+  state: IoQueryState<TData, TError>;
+};
+
 function resolvePlaceholderData<TData>(
   value: TData | (() => TData) | undefined,
 ): TData | undefined {
@@ -76,6 +80,91 @@ function resolveOptions<TData, TError, TSelected>(
   };
 }
 
+function deriveSelectedData<TData, TError, TSelected>(
+  baseResult: IoQueryState<TData, TError>,
+  resolvedOptions: ResolvedObserverOptions<TData, TError, TSelected>,
+): SelectedDataResult<TSelected, TError> {
+  const baseData = baseResult.data as TData | undefined;
+  let selected: TSelected | undefined;
+  let isPlaceholderData = false;
+
+  if (baseData !== undefined) {
+    selected = resolvedOptions.select
+      ? resolvedOptions.select(baseData)
+      : (baseData as unknown as TSelected);
+  } else if (baseResult.status === 'pending') {
+    selected = resolvePlaceholderData(resolvedOptions.placeholderData);
+    isPlaceholderData = selected !== undefined;
+  }
+
+  const status =
+    isPlaceholderData && baseResult.status === 'pending' ? 'success' : baseResult.status;
+
+  return {
+    state: {
+      status,
+      fetchStatus: baseResult.fetchStatus,
+      data: selected,
+      error: baseResult.error,
+      dataUpdatedAt: baseResult.dataUpdatedAt,
+      errorUpdatedAt: baseResult.errorUpdatedAt,
+      failureCount: baseResult.failureCount,
+      failureReason: baseResult.failureReason,
+      isInvalidated: baseResult.isInvalidated,
+      isPlaceholderData,
+    },
+  };
+}
+
+function assembleObserverResult<TData, TError>(
+  selectedResult: IoQueryState<TData, TError>,
+  flags: ReturnType<typeof deriveQueryFlags>,
+): IoQueryObserverResult<TData, TError> {
+  return {
+    ...selectedResult,
+    ...flags,
+  };
+}
+
+function buildQueryActions<TData, TError, TSelected>(
+  record: QueryRecord<TData, TError>,
+  fetchedAfterMount: () => boolean,
+): IoQueryObserver<TSelected, TError>['query'] {
+  return {
+    key: record.key,
+    keyHash: record.keyHash,
+    fetch: (force = false) => record.fetch(force),
+    prefetch: () => record.prefetch(),
+    ensureData: () => record.ensureData(),
+    invalidate: (refetch = true) => {
+      record.invalidate(refetch);
+    },
+    cancel: () => {
+      record.cancel();
+    },
+    reset: () => {
+      record.reset();
+    },
+    setData: (updater) => {
+      record.setData(updater as TData | ((prev: TData | undefined) => TData));
+    },
+    getData: () => record.getState().data as unknown as TSelected | undefined,
+    getState: () => record.getState() as unknown as IoQueryState<TSelected, TError>,
+    getFlags: () => record.getFlags(fetchedAfterMount()),
+    get isActive() {
+      return record.isActive;
+    },
+    get observerCount() {
+      return record.observerCount;
+    },
+    subscribe: (fn) =>
+      record.subscribe((state) => {
+        fn(state as unknown as IoQueryState<TSelected, TError>);
+      }),
+    subscribeUpdate: (fn) => record.subscribeUpdate(fn),
+  };
+}
+
 export function createQueryObserver<TData, TError, TSelected = TData>(options: {
   record: QueryRecord<TData, TError>;
   observerOptions: IoQueryObserverOptions<TData, TError, TSelected>;
@@ -102,22 +191,15 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
 
   const buildResult = (): IoQueryObserverResult<TSelected, TError> => {
     const base = record.getState();
-    const baseData = base.data as TData | undefined;
-
-    let selected = undefined as TSelected | undefined;
-    let isPlaceholderData = false;
-
     try {
-      if (baseData !== undefined) {
-        selected = resolvedOptions.select
-          ? resolvedOptions.select(baseData)
-          : (baseData as unknown as TSelected);
-      } else if (base.status === 'pending') {
-        selected = resolvePlaceholderData(resolvedOptions.placeholderData);
-        isPlaceholderData = selected !== undefined;
-      }
+      const selectedResult = deriveSelectedData(base, resolvedOptions);
+      const flags = deriveQueryFlags(selectedResult.state, {
+        isStale: record.isStale(base),
+        isFetchedAfterMount: fetchedAfterMount,
+      });
+      return assembleObserverResult(selectedResult.state, flags);
     } catch (error) {
-      return {
+      const errorState: IoQueryState<TSelected, TError> = {
         status: 'error',
         fetchStatus: 'idle',
         data: undefined,
@@ -128,50 +210,13 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
         failureReason: error as TError,
         isInvalidated: base.isInvalidated,
         isPlaceholderData: false,
-        ...deriveQueryFlags(
-          {
-            status: 'error',
-            fetchStatus: 'idle',
-            data: undefined,
-            error: error as TError,
-            dataUpdatedAt: base.dataUpdatedAt,
-            errorUpdatedAt: Date.now(),
-            failureCount: base.failureCount,
-            failureReason: error as TError,
-            isInvalidated: base.isInvalidated,
-            isPlaceholderData: false,
-          },
-          {
-            isStale: record.isStale(base),
-            isFetchedAfterMount: fetchedAfterMount,
-          },
-        ),
       };
-    }
-
-    const status =
-      isPlaceholderData && base.status === 'pending' ? 'success' : base.status;
-
-    const nextState: IoQueryState<TSelected, TError> = {
-      status,
-      fetchStatus: base.fetchStatus,
-      data: selected,
-      error: base.error,
-      dataUpdatedAt: base.dataUpdatedAt,
-      errorUpdatedAt: base.errorUpdatedAt,
-      failureCount: base.failureCount,
-      failureReason: base.failureReason,
-      isInvalidated: base.isInvalidated,
-      isPlaceholderData,
-    };
-
-    return {
-      ...nextState,
-      ...deriveQueryFlags(nextState, {
+      const flags = deriveQueryFlags(errorState, {
         isStale: record.isStale(base),
         isFetchedAfterMount: fetchedAfterMount,
-      }),
-    };
+      });
+      return assembleObserverResult(errorState, flags);
+    }
   };
 
   const holder = io(
@@ -299,6 +344,8 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
     onlineUnsub();
   };
 
+  const queryActions = buildQueryActions(record, () => fetchedAfterMount);
+
   const observer: IoQueryObserver<TSelected, TError> = {
     get: () => unit.get(),
     set: (next) => unit.set(next),
@@ -315,39 +362,7 @@ export function createQueryObserver<TData, TError, TSelected = TData>(options: {
     },
     key: record.key,
     keyHash: record.keyHash,
-    query: {
-      key: record.key,
-      keyHash: record.keyHash,
-      fetch: (force = false) => record.fetch(force),
-      prefetch: () => record.prefetch(),
-      ensureData: () => record.ensureData(),
-      invalidate: (refetch = true) => {
-        record.invalidate(refetch);
-      },
-      cancel: () => {
-        record.cancel();
-      },
-      reset: () => {
-        record.reset();
-      },
-      setData: (updater) => {
-        record.setData(updater as TData | ((prev: TData | undefined) => TData));
-      },
-      getData: () => record.getState().data as unknown as TSelected | undefined,
-      getState: () => record.getState() as unknown as IoQueryState<TSelected, TError>,
-      getFlags: () => record.getFlags(fetchedAfterMount),
-      get isActive() {
-        return record.isActive;
-      },
-      get observerCount() {
-        return record.observerCount;
-      },
-      subscribe: (fn) =>
-        record.subscribe((state) => {
-          fn(state as unknown as IoQueryState<TSelected, TError>);
-        }),
-      subscribeUpdate: (fn) => record.subscribeUpdate(fn),
-    },
+    query: queryActions,
     fetch: () => record.fetch(false),
     refetch: () => record.fetch(true),
     prefetch: () => record.prefetch(),

@@ -13,6 +13,7 @@ import type {
   IoQueryHandle,
   IoQueryState,
   IoUnsubscribe,
+  KeyHash,
 } from './types.js';
 import { hashKey, keyMatches } from './utils.js';
 
@@ -51,7 +52,7 @@ type QueryCache = {
   ): InfiniteQueryRecord<TData, TError, TPageParam> | undefined;
   getAll(filter?: IoQueryFilter): IoQueryHandle<unknown, unknown>[];
   getAllInfinite(filter?: IoQueryFilter): IoInfiniteQueryHandle<unknown, unknown, unknown>[];
-  removeByHash(keyHash: string, reset: boolean): void;
+  removeByHash(keyHash: KeyHash, reset: boolean): void;
   clear(reset: boolean): void;
   subscribe(fn: (event: IoQueryCacheEvent) => void): IoUnsubscribe;
   seed<TData, TError>(
@@ -67,7 +68,7 @@ type QueryCache = {
 function matchesFilter(
   query: IoQueryHandle<unknown, unknown>,
   filter?: IoQueryFilter,
-  filterKeyHash?: string,
+  filterKeyHash?: KeyHash,
 ): boolean {
   if (!filter) {
     return true;
@@ -190,8 +191,8 @@ function createInfiniteHandle<TData, TError, TPageParam>(
 }
 
 export function createQueryCache(): QueryCache {
-  const entries = new Map<string, AnyEntry>();
-  const infiniteEntries = new Map<string, AnyInfiniteEntry>();
+  const entries = new Map<KeyHash, AnyEntry>();
+  const infiniteEntries = new Map<KeyHash, AnyInfiniteEntry>();
   const listeners = new Set<(event: IoQueryCacheEvent) => void>();
 
   const notify = (event: IoQueryCacheEvent): void => {
@@ -200,7 +201,7 @@ export function createQueryCache(): QueryCache {
     }
   };
 
-  const removeByHash = (keyHash: string, reset: boolean): void => {
+  const removeByHash = (keyHash: KeyHash, reset: boolean): void => {
     const entry = entries.get(keyHash);
     if (entry) {
       entry.record.cancel();

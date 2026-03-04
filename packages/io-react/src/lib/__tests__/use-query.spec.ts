@@ -279,6 +279,49 @@ describe('@iostore/react: useSuspenseQuery', () => {
   });
 });
 
+describe('@iostore/react: useSuspenseQuery (React.use)', () => {
+  it('supports optional React.use suspense integration', async () => {
+    const client = createQueryClient();
+    const deferred = createDeferred<number>();
+
+    const View = () => {
+      const result = useSuspenseQuery(
+        {
+          client,
+          key: ['react', 'suspense', 'use'],
+          queryFn: async () => deferred.promise,
+        },
+        { useReactUseHook: true },
+      );
+      return React.createElement('span', null, String(result.data));
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(
+        React.createElement(
+          React.Suspense,
+          { fallback: React.createElement('span', null, 'loading') },
+          React.createElement(View),
+        ),
+      );
+    });
+
+    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['loading'] });
+
+    await act(async () => {
+      deferred.resolve(11);
+      await deferred.promise;
+    });
+    await flushAsync();
+
+    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['11'] });
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+});
 
 describe('@iostore/react: useInfiniteQuery', () => {
   it('fetches next pages and exposes flags', async () => {
@@ -361,6 +404,51 @@ describe('@iostore/react: useSuspenseInfiniteQuery', () => {
     await flushAsync();
 
     expect(latestPages).toEqual([7]);
+
+    await act(async () => {
+      renderer.unmount();
+    });
+  });
+
+
+  it('supports optional React.use suspense integration', async () => {
+    const client = createQueryClient();
+    const deferred = createDeferred<number>();
+
+    const View = () => {
+      const result = useSuspenseInfiniteQuery(
+        {
+          client,
+          key: ['react', 'suspense-infinite', 'use'],
+          initialPageParam: 0,
+          queryFn: async () => deferred.promise,
+          getNextPageParam: () => null,
+        },
+        { useReactUseHook: true },
+      );
+      return React.createElement('span', null, String((result.data.pages as number[])[0]));
+    };
+
+    let renderer!: ReactTestRenderer;
+    await act(async () => {
+      renderer = createRenderer(
+        React.createElement(
+          React.Suspense,
+          { fallback: React.createElement('span', null, 'loading') },
+          React.createElement(View),
+        ),
+      );
+    });
+
+    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['loading'] });
+
+    await act(async () => {
+      deferred.resolve(8);
+      await deferred.promise;
+    });
+    await flushAsync();
+
+    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['8'] });
 
     await act(async () => {
       renderer.unmount();

@@ -1,7 +1,7 @@
 /**
  * Shared helpers for query client internals.
  */
-import type { IoQueryHandle, IoQueryInput } from './types.js';
+import type { IoQueryHandle, IoQueryInput, KeyHash } from './types.js';
 
 export function isHandle<TData, TError>(
   value: IoQueryInput<TData, TError>,
@@ -15,7 +15,7 @@ export function isHandle<TData, TError>(
   );
 }
 
-export function createSeededQueryFn(keyHash: string): (context: {
+export function createSeededQueryFn(keyHash: KeyHash): (context: {
   signal: AbortSignal;
 }) => Promise<never> {
   return async () => {
@@ -25,7 +25,7 @@ export function createSeededQueryFn(keyHash: string): (context: {
   };
 }
 
-export function createSeededInfiniteQueryFn<TPageParam>(keyHash: string): (context: {
+export function createSeededInfiniteQueryFn<TPageParam>(keyHash: KeyHash): (context: {
   signal: AbortSignal;
   pageParam: TPageParam;
 }) => Promise<never> {
