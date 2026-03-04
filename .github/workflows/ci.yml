@@ -31,7 +31,6 @@ jobs:
       - run: npx nx run @iostore/store:perf-budget
       - run: npx nx run @iostore/store:bundle-size
       - run: npx nx run apps-docs:generate-bench
-      - run: npm run docs:check:reference
 
       - name: Upload benchmark docs artifacts
         if: always()

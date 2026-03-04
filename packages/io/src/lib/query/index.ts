@@ -9,8 +9,8 @@ export {
   safeRefetch,
 } from './client.js';
 export { hashKey } from './utils.js';
-export { getFocusManager } from './focus-manager.js';
-export { getOnlineManager } from './online-manager.js';
+export { getFocusManager, resetFocusManager } from './focus-manager.js';
+export { getOnlineManager, resetOnlineManager } from './online-manager.js';
 
 export type {
   InfiniteData,
