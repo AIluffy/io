@@ -1,0 +1,32 @@
+---
+title: 标准查询（useQuery）
+description: 在 Vue 中落地可缓存、可刷新、可取消的标准查询。
+sidebar:
+  order: 2
+---
+
+## 最小示例
+
+```ts
+import { computed } from 'vue';
+import { useQuery } from '@iostore/vue';
+
+const users = useQuery({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+
+const isLoading = computed(() => users.state.value.isLoading);
+const data = computed(() => users.data.value);
+```
+
+## 使用要点
+
+- Vue 结果对象以 `state` / `data` 两个 `ShallowRef` 为核心读取入口。
+- 把业务参数放进 `key`，避免缓存串用。
+- 在 `queryFn` 中透传 `signal`，支持取消。
+
+## 继续阅读
+
+- [无限查询](./use-infinite-query/)
+- [高级模式](./advanced-patterns/)

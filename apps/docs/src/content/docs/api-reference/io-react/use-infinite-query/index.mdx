@@ -1,0 +1,46 @@
+---
+title: "useInfiniteQuery"
+description: "React 中的 Infinite Query Hook。"
+---
+
+## 一句话定位
+
+在 React 组件中订阅 Infinite Query 状态，并暴露翻页、重取、失效、取消等操作。
+
+## 签名
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
+  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## 关键参数
+
+- `options` 支持两种模式：
+  - **定义式**：直接传 `key/queryFn/initialPageParam/getNextPageParam...`
+  - **句柄式**：传 `query: IoInfiniteQueryHandle`
+- `cancelOnUnmount`：组件卸载时自动 `cancel()`。
+
+## 返回值亮点
+
+- 状态：`data.pages`、`data.pageParams`、`hasNextPage`、`isFetchingNextPage`
+- 方法：`fetchNextPage`、`fetchPreviousPage`、`refetch`、`invalidate`、`cancel`
+
+## 示例
+
+```tsx
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
+
+await feed.fetchNextPage();
+```
+
+## 源码
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

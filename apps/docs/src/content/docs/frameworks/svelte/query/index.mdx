@@ -1,0 +1,16 @@
+---
+title: Query 功能矩阵
+description: Svelte 下 Query 能力总览与选型建议。
+sidebar:
+  order: 1
+---
+
+本节按「标准查询 / 无限查询 / 高级模式」组织 Svelte 的 Query 用法。
+
+## 能力矩阵
+
+| 场景 | 推荐页面 | 核心 API |
+| --- | --- | --- |
+| 单资源请求 | [标准查询](./use-query/) | `createQueryStore` / `toQueryStore` |
+| 无限滚动/加载更多 | [无限查询](./use-infinite-query/) | `createInfiniteQueryStore` / `toInfiniteQueryStore` |
+| 组合封装与性能优化 | [高级模式](./advanced-patterns/) | key 设计、取消、预取 |

@@ -1,0 +1,46 @@
+---
+title: "useInfiniteQuery"
+description: "Infinite Query hook for React."
+---
+
+## What it does
+
+Subscribes to Infinite Query state in React and exposes paging/refetch/invalidate/cancel operations.
+
+## Signature
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
+  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Key options
+
+- Two modes:
+  - **Definition mode**: pass `key/queryFn/initialPageParam/getNextPageParam...`
+  - **Handle mode**: pass `query: IoInfiniteQueryHandle`
+- `cancelOnUnmount`: calls `cancel()` when component unmounts.
+
+## Result highlights
+
+- State: `data.pages`, `data.pageParams`, `hasNextPage`, `isFetchingNextPage`
+- Actions: `fetchNextPage`, `fetchPreviousPage`, `refetch`, `invalidate`, `cancel`
+
+## Example
+
+```tsx
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
+
+await feed.fetchNextPage();
+```
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

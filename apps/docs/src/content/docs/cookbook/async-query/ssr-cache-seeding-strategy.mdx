@@ -53,6 +53,10 @@ if (initialUser) {
 - 把 key 定义抽到共享模块，减少偏差。
 - SSR 命中后仍保留失效刷新路径。
 
+## Infinite Query 的 SSR
+
+Infinite Query 同样支持脱水/注水。服务端可以使用 `prefetchInfiniteQuery(definition, pages)` 预取多页，再通过 `dehydrate()` 输出 `infiniteQueries` 字段。
+
 ## 下一步
 
 - 继续：[React 适配](./react-adapter/)

@@ -1,65 +1,37 @@
 ---
 title: "IoQueryClient"
-description: "Type API reference."
+description: "Client interface for standard Query and Infinite Query workflows."
 ---
 
+## What it is
 
-## When to Use
+`IoQueryClient` is the runtime entrypoint for query definition, observation, cache IO, invalidation/refetch, and hydration.
 
-Use this type alias to model reusable type shapes.
+## Infinite Query capabilities
 
-## Signature
+In addition to standard query methods, it also exposes:
 
-```ts
-IoQueryClient
-```
+- `defineInfiniteQuery(definition)`
+- `observeInfiniteQuery(options)`
+- `prefetchInfiniteQuery(definition, pages?)`
+- `getInfiniteQuery(key)`
+- `getInfiniteQueryData(key)`
+- `setInfiniteQueryData(key, updater)`
+- `getInfiniteQueryState(key)`
 
-## Properties
-
-| Name | Type |
-| --- | --- |
-| defineQuery | `<TData = unknown, TError = Error>(definition: IoQueryDefinition<TData, TError>) => IoQueryHandle<TData, TError>` |
-| observeQuery | `<TData = unknown, TError = Error, TSelected = TData>(options: IoQueryObserverOptions<TData, TError, TSelected>) => IoQueryObserver<TSelected, TError>` |
-| fetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
-| prefetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<void>` |
-| ensureQueryData | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
-| mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
-| invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
-| refetchQueries | `(filter?: IoQueryFilter) => Promise<void>` |
-| cancelQueries | `(filter?: IoQueryFilter) => void` |
-| resetQueries | `(filter?: IoQueryFilter) => void` |
-| removeQueries | `(filter?: IoQueryFilter) => void` |
-| getQueryData | `<TData = unknown>(key: IoQueryKey) => TData \| undefined` |
-| setQueryData | `<TData = unknown>(key: IoQueryKey, updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
-| setQueriesData | `<TData = unknown>(filter: IoQueryFilter, updater: (prev: TData \| undefined) => TData) => void` |
-| getQueryState | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
-| getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryHandle<TData, TError> \| undefined` |
-| getQueries | `(filter?: IoQueryFilter) => IoQueryHandle<unknown, unknown>[]` |
-| dehydrate | `(options?: IoDehydrateOptions) => IoDehydratedState` |
-| hydrate | `(state: IoDehydratedState, options?: IoHydrateOptions) => void` |
-| clear | `() => void` |
-| subscribe | `(fn: (event: IoQueryCacheEvent) => void) => IoUnsubscribe` |
-
-## Minimal Example
+## Example
 
 ```ts
-import type { IoQueryClient } from '@iostore/store/query';
+const feed = client.defineInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) => fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
 
-let value!: IoQueryClient;
-console.log(value);
+await feed.fetchNextPage();
+client.invalidateQueries({ key: ['feed'], exact: true });
 ```
-
-## Common Pitfalls
-
-- Avoid over-expanding complex aliases in user-facing docs.
-- Keep aliases stable to prevent downstream type breakage.
-
-## Related APIs
-
-- [IoDataStatus](../io-data-status/)
-- [IoDehydratedQuery](../io-dehydrated-query/)
-- [IoDehydratedState](../io-dehydrated-state/)
-- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

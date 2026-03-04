@@ -1,0 +1,17 @@
+---
+title: "UseInfiniteQueryResult"
+description: "useInfiniteQuery 的返回结果类型。"
+---
+
+`UseInfiniteQueryResult` = `IoInfiniteQueryObserverResult` + 操作方法：
+
+- `fetchNextPage()`
+- `fetchPreviousPage()`
+- `refetch()`
+- `prefetch()`
+- `invalidate(refetch?)`
+- `cancel()`
+
+并额外挂载 `query` 与 `observer` 句柄。
+
+源码：`packages/io-react/src/lib/use-infinite-query.ts`
