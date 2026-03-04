@@ -1,0 +1,50 @@
+---
+title: "useSuspenseQuery"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TSelected = TData>(options: IoUseSuspenseQueryOptions<TData, TError, TSelected>) => IoVueSuspenseQueryResult<TData, TError, TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseSuspenseQueryOptions<TData, TError, TSelected>` |
+
+## Returns
+
+`IoVueSuspenseQueryResult<TData, TError, TSelected>`
+
+## Minimal Example
+
+```ts
+import { useSuspenseQuery } from '@iostore/vue';
+
+const result = useSuspenseQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useInfiniteQuery](../use-infinite-query/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

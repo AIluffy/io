@@ -1,0 +1,55 @@
+---
+title: "IoVueInfiniteQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoVueInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoInfiniteQueryObserverResult<TSelected, TError, TPageParam>>` |
+| data | `ShallowRef<TSelected>` |
+| fetchNextPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| fetchPreviousPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| refetch | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoInfiniteQueryHandle<TData, TError, TPageParam>` |
+| observer | `IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
+
+## Minimal Example
+
+```ts
+import type { IoVueInfiniteQueryResult } from '@iostore/vue';
+
+let value!: IoVueInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoVueMutationResult](../io-vue-mutation-result/)
+- [IoVueQueryResult](../io-vue-query-result/)
+- [IoVueSuspenseInfiniteQueryResult](../io-vue-suspense-infinite-query-result/)
+- [IoVueSuspenseQueryResult](../io-vue-suspense-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/infinite-query.ts`

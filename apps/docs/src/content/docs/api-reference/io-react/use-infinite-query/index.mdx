@@ -1,45 +1,49 @@
 ---
 title: "useInfiniteQuery"
-description: "React 中的 Infinite Query Hook。"
+description: "函数 API 参考。"
 ---
 
-## 一句话定位
 
-在 React 组件中订阅 Infinite Query 状态，并暴露翻页、重取、失效、取消等操作。
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
 
 ## 签名
 
 ```ts
-<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
-  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
-) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
 ```
 
-## 关键参数
+## 参数
 
-- `options` 支持两种模式：
-  - **定义式**：直接传 `key/queryFn/initialPageParam/getNextPageParam...`
-  - **句柄式**：传 `query: IoInfiniteQueryHandle`
-- `cancelOnUnmount`：组件卸载时自动 `cancel()`。
+| Name | Type |
+| --- | --- |
+| options | `UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>` |
 
-## 返回值亮点
+## 返回
 
-- 状态：`data.pages`、`data.pageParams`、`hasNextPage`、`isFetchingNextPage`
-- 方法：`fetchNextPage`、`fetchPreviousPage`、`refetch`、`invalidate`、`cancel`
+`UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>`
 
-## 示例
+## 最小示例
 
-```tsx
-const feed = useInfiniteQuery({
-  key: ['feed'],
-  initialPageParam: 0,
-  queryFn: ({ signal, pageParam }) =>
-    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
-  getNextPageParam: (lastPage) => lastPage.nextCursor,
-});
+```ts
+import { useInfiniteQuery } from '@iostore/react';
 
-await feed.fetchNextPage();
+const result = useInfiniteQuery(/* ...args */);
+console.log(result);
 ```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
 
 ## 源码
 

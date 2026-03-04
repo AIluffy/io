@@ -1,0 +1,40 @@
+---
+title: "IoVueSuspenseQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoVueSuspenseQueryResult<TData, TError, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoVueSuspenseQueryResult } from '@iostore/vue';
+
+let value!: IoVueSuspenseQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoVueInfiniteQueryResult](../io-vue-infinite-query-result/)
+- [IoVueMutationResult](../io-vue-mutation-result/)
+- [IoVueQueryResult](../io-vue-query-result/)
+- [IoVueSuspenseInfiniteQueryResult](../io-vue-suspense-infinite-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

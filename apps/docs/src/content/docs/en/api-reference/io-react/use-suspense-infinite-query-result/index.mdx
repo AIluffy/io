@@ -1,8 +1,40 @@
 ---
 title: "UseSuspenseInfiniteQueryResult"
-description: "Result type returned by useSuspenseInfiniteQuery."
+description: "Type API reference."
 ---
 
-Extends `UseInfiniteQueryResult` and guarantees `data` is present (non-undefined).
 
-Source: `packages/io-react/src/lib/use-infinite-query.ts`
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { UseSuspenseInfiniteQueryResult } from '@iostore/react';
+
+let value!: UseSuspenseInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryOptions](../use-infinite-query-options/)
+- [UseInfiniteQueryResult](../use-infinite-query-result/)
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

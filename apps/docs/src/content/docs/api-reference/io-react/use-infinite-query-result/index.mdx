@@ -1,17 +1,40 @@
 ---
 title: "UseInfiniteQueryResult"
-description: "useInfiniteQuery 的返回结果类型。"
+description: "类型 API 参考。"
 ---
 
-`UseInfiniteQueryResult` = `IoInfiniteQueryObserverResult` + 操作方法：
 
-- `fetchNextPage()`
-- `fetchPreviousPage()`
-- `refetch()`
-- `prefetch()`
-- `invalidate(refetch?)`
-- `cancel()`
+## 何时使用
 
-并额外挂载 `query` 与 `observer` 句柄。
+当你需要复用类型结构时使用此类型别名。
 
-源码：`packages/io-react/src/lib/use-infinite-query.ts`
+## 签名
+
+```ts
+UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## 最小示例
+
+```ts
+import type { UseInfiniteQueryResult } from '@iostore/react';
+
+let value!: UseInfiniteQueryResult;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryOptions](../use-infinite-query-options/)
+- [UseMutationResult](../use-mutation-result/)
+
+## 源码
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

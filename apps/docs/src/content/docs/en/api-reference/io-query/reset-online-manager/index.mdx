@@ -1,0 +1,48 @@
+---
+title: "resetOnlineManager"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+() => void
+```
+
+## Parameters
+
+(none)
+
+## Returns
+
+`void`
+
+## Minimal Example
+
+```ts
+import { resetOnlineManager } from '@iostore/store/query';
+
+const result = resetOnlineManager(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createMutation](../create-mutation/)
+- [createQueryClient](../create-query-client/)
+- [deriveMutationFlags](../derive-mutation-flags/)
+- [deriveQueryFlags](../derive-query-flags/)
+
+## Source
+
+- `packages/io/src/lib/query/online-manager.ts`

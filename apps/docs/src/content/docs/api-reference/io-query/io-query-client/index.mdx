@@ -1,37 +1,72 @@
 ---
 title: "IoQueryClient"
-description: "Query 客户端接口，统一管理普通 Query 与 Infinite Query。"
+description: "类型 API 参考。"
 ---
 
-## 一句话定位
 
-`IoQueryClient` 是 Query 运行时入口：负责定义查询、观察状态、缓存读写、失效、重取、脱水/注水。
+## 何时使用
 
-## Infinite Query 相关能力
+当你需要复用类型结构时使用此类型别名。
 
-除常规 Query 方法外，`IoQueryClient` 还提供：
-
-- `defineInfiniteQuery(definition)`
-- `observeInfiniteQuery(options)`
-- `prefetchInfiniteQuery(definition, pages?)`
-- `getInfiniteQuery(key)`
-- `getInfiniteQueryData(key)`
-- `setInfiniteQueryData(key, updater)`
-- `getInfiniteQueryState(key)`
-
-## 示例
+## 签名
 
 ```ts
-const feed = client.defineInfiniteQuery({
-  key: ['feed'],
-  initialPageParam: 0,
-  queryFn: ({ signal, pageParam }) => fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
-  getNextPageParam: (lastPage) => lastPage.nextCursor,
-});
-
-await feed.fetchNextPage();
-client.invalidateQueries({ key: ['feed'], exact: true });
+IoQueryClient
 ```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| defineQuery | `<TData = unknown, TError = Error>(definition: IoQueryDefinition<TData, TError>) => IoQueryHandle<TData, TError>` |
+| defineInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>) => IoInfiniteQueryHandle<TData, TError, TPageParam>` |
+| observeQuery | `<TData = unknown, TError = Error, TSelected = TData>(options: IoQueryObserverOptions<TData, TError, TSelected>) => IoQueryObserver<TSelected, TError>` |
+| observeInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: IoInfiniteQueryObserverOptions<TData, TError, TPageParam, TSelected>) => IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
+| fetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
+| prefetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<void>` |
+| prefetchInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(input: IoInfiniteQueryDefinition<TData, TError, TPageParam>, pages?: number) => Promise<void>` |
+| ensureQueryData | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
+| mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
+| invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
+| refetchQueries | `(filter?: IoQueryFilter) => Promise<void>` |
+| cancelQueries | `(filter?: IoQueryFilter) => void` |
+| resetQueries | `(filter?: IoQueryFilter) => void` |
+| removeQueries | `(filter?: IoQueryFilter) => void` |
+| getQueryData | `<TData = unknown>(key: IoQueryKey) => TData \| undefined` |
+| setQueryData | `<TData = unknown>(key: IoQueryKey, updater: TData \| ((prev: TData \| undefined) => TData)) => void` |
+| setQueriesData | `<TData = unknown>(filter: IoQueryFilter, updater: (prev: TData \| undefined) => TData) => void` |
+| getQueryState | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
+| getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryHandle<TData, TError> \| undefined` |
+| getInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(key: IoQueryKey) => IoInfiniteQueryHandle<TData, TError, TPageParam> \| undefined` |
+| getInfiniteQueryData | `<TData = unknown, TPageParam = unknown>(key: IoQueryKey) => InfiniteData<TData, TPageParam> \| undefined` |
+| setInfiniteQueryData | `<TData = unknown, TPageParam = unknown>(key: IoQueryKey, updater: InfiniteData<TData, TPageParam> \| ((prev: InfiniteData<TData, TPageParam> \| undefined) => InfiniteData<TData, TPageParam>)) => void` |
+| getInfiniteQueryState | `<TData = unknown, TError = Error, TPageParam = unknown>(key: IoQueryKey) => IoInfiniteQueryState<TData, TError, TPageParam> \| undefined` |
+| getQueries | `(filter?: IoQueryFilter) => IoQueryHandle<unknown, unknown>[]` |
+| dehydrate | `(options?: IoDehydrateOptions) => IoDehydratedState` |
+| hydrate | `(state: IoDehydratedState, options?: IoHydrateOptions) => void` |
+| clear | `() => void` |
+| subscribe | `(fn: (event: IoQueryCacheEvent) => void) => IoUnsubscribe` |
+
+## 最小示例
+
+```ts
+import type { IoQueryClient } from '@iostore/store/query';
+
+let value!: IoQueryClient;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [InfiniteData](../infinite-data/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
 
 ## 源码
 

@@ -1,17 +1,40 @@
 ---
 title: "UseInfiniteQueryResult"
-description: "Result type returned by useInfiniteQuery."
+description: "Type API reference."
 ---
 
-`UseInfiniteQueryResult` = `IoInfiniteQueryObserverResult` plus actions:
 
-- `fetchNextPage()`
-- `fetchPreviousPage()`
-- `refetch()`
-- `prefetch()`
-- `invalidate(refetch?)`
-- `cancel()`
+## When to Use
 
-It also includes `query` and `observer` handles.
+Use this type alias to model reusable type shapes.
 
-Source: `packages/io-react/src/lib/use-infinite-query.ts`
+## Signature
+
+```ts
+UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { UseInfiniteQueryResult } from '@iostore/react';
+
+let value!: UseInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryOptions](../use-infinite-query-options/)
+- [UseMutationResult](../use-mutation-result/)
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

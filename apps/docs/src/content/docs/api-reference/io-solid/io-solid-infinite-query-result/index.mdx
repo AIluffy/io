@@ -1,0 +1,56 @@
+---
+title: "IoSolidInfiniteQueryResult"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoSolidInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoInfiniteQueryObserverResult<TSelected, TError, TPageParam>>` |
+| data | `Accessor<TSelected>` |
+| error | `Accessor<TError>` |
+| fetchNextPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| fetchPreviousPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| refetch | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoInfiniteQueryHandle<TData, TError, TPageParam>` |
+| observer | `IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
+
+## 最小示例
+
+```ts
+import type { IoSolidInfiniteQueryResult } from '@iostore/solid';
+
+let value!: IoSolidInfiniteQueryResult;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoSolidMutationResult](../io-solid-mutation-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseInfiniteQueryResult](../io-solid-suspense-infinite-query-result/)
+- [IoSolidSuspenseQueryResult](../io-solid-suspense-query-result/)
+
+## 源码
+
+- `packages/io-solid/src/lib/use-infinite-query.ts`

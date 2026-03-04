@@ -1,0 +1,40 @@
+---
+title: "IoSuspenseInfiniteQueryStore"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoSuspenseInfiniteQueryStore<TData, TError, TPageParam, TSelected>
+```
+
+## 最小示例
+
+```ts
+import type { IoSuspenseInfiniteQueryStore } from '@iostore/svelte';
+
+let value!: IoSuspenseInfiniteQueryStore;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoInfiniteQueryStore](../io-infinite-query-store/)
+- [IoMutationStore](../io-mutation-store/)
+- [IoQueryStore](../io-query-store/)
+- [IoSuspenseQueryStore](../io-suspense-query-store/)
+
+## 源码
+
+- `packages/io-svelte/src/lib/stores.ts`

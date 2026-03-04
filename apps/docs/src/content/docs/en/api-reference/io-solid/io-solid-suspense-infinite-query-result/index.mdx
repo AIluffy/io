@@ -1,0 +1,40 @@
+---
+title: "IoSolidSuspenseInfiniteQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSolidSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoSolidSuspenseInfiniteQueryResult } from '@iostore/solid';
+
+let value!: IoSolidSuspenseInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoSolidInfiniteQueryResult](../io-solid-infinite-query-result/)
+- [IoSolidMutationResult](../io-solid-mutation-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseQueryResult](../io-solid-suspense-query-result/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-infinite-query.ts`

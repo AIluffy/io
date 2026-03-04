@@ -1,0 +1,50 @@
+---
+title: "useSuspenseInfiniteQuery"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: IoUseSuspenseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>) => IoSolidSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseSuspenseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>` |
+
+## Returns
+
+`IoSolidSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>`
+
+## Minimal Example
+
+```ts
+import { useSuspenseInfiniteQuery } from '@iostore/solid';
+
+const result = useSuspenseInfiniteQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useInfiniteQuery](../use-infinite-query/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useMutation](../use-mutation/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-infinite-query.ts`

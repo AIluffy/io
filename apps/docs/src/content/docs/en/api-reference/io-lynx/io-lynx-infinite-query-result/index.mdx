@@ -1,0 +1,40 @@
+---
+title: "IoLynxInfiniteQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoLynxInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoLynxInfiniteQueryResult } from '@iostore/lynx';
+
+let value!: IoLynxInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoLynxMutationResult](../io-lynx-mutation-result/)
+- [IoLynxQueryResult](../io-lynx-query-result/)
+- [IoLynxSuspenseInfiniteQueryResult](../io-lynx-suspense-infinite-query-result/)
+- [IoLynxSuspenseQueryResult](../io-lynx-suspense-query-result/)
+
+## Source
+
+- `packages/io-lynx/src/lib/use-infinite-query.ts`

@@ -1,0 +1,40 @@
+---
+title: "IoSolidSuspenseQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSolidSuspenseQueryResult<TData, TError, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoSolidSuspenseQueryResult } from '@iostore/solid';
+
+let value!: IoSolidSuspenseQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoSolidInfiniteQueryResult](../io-solid-infinite-query-result/)
+- [IoSolidMutationResult](../io-solid-mutation-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseInfiniteQueryResult](../io-solid-suspense-infinite-query-result/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-query.ts`

@@ -1,0 +1,40 @@
+---
+title: "IoInfiniteQueryObserver"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoInfiniteQueryObserver<TData, TError, TPageParam>
+```
+
+## Minimal Example
+
+```ts
+import type { IoInfiniteQueryObserver } from '@iostore/store/query';
+
+let value!: IoInfiniteQueryObserver;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [InfiniteData](../infinite-data/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

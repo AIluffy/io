@@ -1,45 +1,49 @@
 ---
 title: "useInfiniteQuery"
-description: "Infinite Query hook for React."
+description: "Function API reference."
 ---
 
-## What it does
 
-Subscribes to Infinite Query state in React and exposes paging/refetch/invalidate/cancel operations.
+## When to Use
+
+Use this function when you need this behavior from the package API.
 
 ## Signature
 
 ```ts
-<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
-  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
-) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>) => UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
 ```
 
-## Key options
+## Parameters
 
-- Two modes:
-  - **Definition mode**: pass `key/queryFn/initialPageParam/getNextPageParam...`
-  - **Handle mode**: pass `query: IoInfiniteQueryHandle`
-- `cancelOnUnmount`: calls `cancel()` when component unmounts.
+| Name | Type |
+| --- | --- |
+| options | `UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>` |
 
-## Result highlights
+## Returns
 
-- State: `data.pages`, `data.pageParams`, `hasNextPage`, `isFetchingNextPage`
-- Actions: `fetchNextPage`, `fetchPreviousPage`, `refetch`, `invalidate`, `cancel`
+`UseInfiniteQueryResult<TData, TError, TPageParam, TSelected>`
 
-## Example
+## Minimal Example
 
-```tsx
-const feed = useInfiniteQuery({
-  key: ['feed'],
-  initialPageParam: 0,
-  queryFn: ({ signal, pageParam }) =>
-    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
-  getNextPageParam: (lastPage) => lastPage.nextCursor,
-});
+```ts
+import { useInfiniteQuery } from '@iostore/react';
 
-await feed.fetchNextPage();
+const result = useInfiniteQuery(/* ...args */);
+console.log(result);
 ```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
 
 ## Source
 

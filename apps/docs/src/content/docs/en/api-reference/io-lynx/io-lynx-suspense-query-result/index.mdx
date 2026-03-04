@@ -1,0 +1,40 @@
+---
+title: "IoLynxSuspenseQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoLynxSuspenseQueryResult<TData, TError, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoLynxSuspenseQueryResult } from '@iostore/lynx';
+
+let value!: IoLynxSuspenseQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoLynxInfiniteQueryResult](../io-lynx-infinite-query-result/)
+- [IoLynxMutationResult](../io-lynx-mutation-result/)
+- [IoLynxQueryResult](../io-lynx-query-result/)
+- [IoLynxSuspenseInfiniteQueryResult](../io-lynx-suspense-infinite-query-result/)
+
+## Source
+
+- `packages/io-lynx/src/lib/use-query.ts`

@@ -1,0 +1,52 @@
+---
+title: "IoVueMutationResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoVueMutationResult<TData, TVariables, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoMutationState<TData, TError>>` |
+| flags | `ShallowRef<IoMutationDerivedFlags>` |
+| mutate | `(variables: TVariables) => void` |
+| mutateAsync | `(variables: TVariables) => Promise<TData>` |
+| reset | `() => void` |
+| cancel | `() => void` |
+| mutation | `IoMutation<TData, TVariables, TError>` |
+
+## Minimal Example
+
+```ts
+import type { IoVueMutationResult } from '@iostore/vue';
+
+let value!: IoVueMutationResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoVueInfiniteQueryResult](../io-vue-infinite-query-result/)
+- [IoVueQueryResult](../io-vue-query-result/)
+- [IoVueSuspenseInfiniteQueryResult](../io-vue-suspense-infinite-query-result/)
+- [IoVueSuspenseQueryResult](../io-vue-suspense-query-result/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

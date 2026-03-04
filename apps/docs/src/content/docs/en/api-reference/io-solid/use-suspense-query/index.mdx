@@ -1,0 +1,50 @@
+---
+title: "useSuspenseQuery"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TSelected = TData>(options: IoUseSuspenseQueryOptions<TData, TError, TSelected>) => IoSolidSuspenseQueryResult<TData, TError, TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoUseSuspenseQueryOptions<TData, TError, TSelected>` |
+
+## Returns
+
+`IoSolidSuspenseQueryResult<TData, TError, TSelected>`
+
+## Minimal Example
+
+```ts
+import { useSuspenseQuery } from '@iostore/solid';
+
+const result = useSuspenseQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [useInfiniteQuery](../use-infinite-query/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+- [useMutation](../use-mutation/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-query.ts`

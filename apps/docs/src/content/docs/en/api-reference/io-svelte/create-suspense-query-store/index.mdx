@@ -1,0 +1,50 @@
+---
+title: "createSuspenseQueryStore"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TSelected = TData>(options: IoCreateQueryStoreOptions<TData, TError, TSelected>) => IoSuspenseQueryStore<TData, TError, TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoCreateQueryStoreOptions<TData, TError, TSelected>` |
+
+## Returns
+
+`IoSuspenseQueryStore<TData, TError, TSelected>`
+
+## Minimal Example
+
+```ts
+import { createSuspenseQueryStore } from '@iostore/svelte';
+
+const result = createSuspenseQueryStore(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createInfiniteQueryStore](../create-infinite-query-store/)
+- [createMutationStore](../create-mutation-store/)
+- [createQueryStore](../create-query-store/)
+- [createSuspenseInfiniteQueryStore](../create-suspense-infinite-query-store/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

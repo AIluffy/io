@@ -1,0 +1,40 @@
+---
+title: "ResolveInfiniteQueryInput"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+ResolveInfiniteQueryInput<TData, TError, TPageParam>
+```
+
+## Minimal Example
+
+```ts
+import type { ResolveInfiniteQueryInput } from '@iostore/react/rsc';
+
+let value!: ResolveInfiniteQueryInput;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryOptions](../use-infinite-query-options/)
+- [UseInfiniteQueryResult](../use-infinite-query-result/)
+- [UseMutationResult](../use-mutation-result/)
+
+## Source
+
+- `packages/io-react/src/lib/rsc-safe.ts`

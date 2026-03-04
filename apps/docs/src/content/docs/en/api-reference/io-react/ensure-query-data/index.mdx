@@ -1,0 +1,50 @@
+---
+title: "ensureQueryData"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error>(options: { input: ResolveQueryInput<TData, TError>; client?: IoQueryClient; }) => Promise<TData>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `{ input: ResolveQueryInput<TData, TError>; client?: IoQueryClient; }` |
+
+## Returns
+
+`Promise<TData>`
+
+## Minimal Example
+
+```ts
+import { ensureQueryData } from '@iostore/react/rsc';
+
+const result = ensureQueryData(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
+- [useInfiniteQuery](../use-infinite-query/)
+
+## Source
+
+- `packages/io-react/src/lib/rsc-safe.ts`

@@ -1,10 +1,40 @@
 ---
 title: "UseInfiniteQueryOptions"
-description: "useInfiniteQuery 的参数类型。"
+description: "类型 API 参考。"
 ---
 
-`UseInfiniteQueryOptions` 是联合类型，支持**定义式**和**Handle 式**两种调用方式。
 
-关键字段：`initialPageParam`、`getNextPageParam`、`getPreviousPageParam`、`maxPages`、`cancelOnUnmount`。
+## 何时使用
 
-源码：`packages/io-react/src/lib/use-infinite-query.ts`
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>
+```
+
+## 最小示例
+
+```ts
+import type { UseInfiniteQueryOptions } from '@iostore/react';
+
+let value!: UseInfiniteQueryOptions;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryResult](../use-infinite-query-result/)
+- [UseMutationResult](../use-mutation-result/)
+
+## 源码
+
+- `packages/io-react/src/lib/use-infinite-query.ts`
