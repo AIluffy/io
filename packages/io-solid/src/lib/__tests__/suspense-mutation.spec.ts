@@ -48,8 +48,11 @@ describe('@iostore/solid suspense+mutation', () => {
           client,
           key: ['solid', 'suspense-infinite'],
           initialPageParam: 0,
-          queryFn: async ({ pageParam }) => ({ value: pageParam, next: null as number | null }),
-          getNextPageParam: (last) => last.next,
+          queryFn: async ({ pageParam }: { pageParam: number }) => ({
+            value: pageParam,
+            next: null as number | null,
+          }),
+          getNextPageParam: (last: { value: number; next: number | null }) => last.next,
         }),
       ).toThrowError(Promise);
       dispose();

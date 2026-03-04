@@ -1,12 +1,7 @@
-import type { IoInfiniteQueryObserverResult } from '@iostore/store/query';
-
 import { createQueryClient } from '@iostore/store/query';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createInfiniteQueryStore,
-  toInfiniteQueryStore,
-} from '../stores.js';
+import { createInfiniteQueryStore, toInfiniteQueryStore } from '../stores.js';
 
 type Page = {
   items: string[];
@@ -20,13 +15,15 @@ function createMockInfiniteQueryFn() {
     [2, { items: ['e', 'f'], nextCursor: null }],
   ]);
 
-  const queryFn = vi.fn(async ({ pageParam }: { pageParam: number; signal: AbortSignal }) => {
-    const page = pages.get(pageParam);
-    if (!page) {
-      throw new Error(`Unknown page param: ${pageParam}`);
-    }
-    return page;
-  });
+  const queryFn = vi.fn(
+    async ({ pageParam }: { pageParam: number; signal: AbortSignal }) => {
+      const page = pages.get(pageParam);
+      if (!page) {
+        throw new Error(`Unknown page param: ${pageParam}`);
+      }
+      return page;
+    },
+  );
 
   return { queryFn };
 }
@@ -50,7 +47,7 @@ describe('@iostore/svelte: infinite query stores', () => {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
 
-    const seen: Array<IoInfiniteQueryObserverResult<Page, Error, number>> = [];
+    const seen: Array<ReturnType<typeof store.getState>> = [];
     const unsubscribe = store.subscribe((state) => {
       seen.push(state);
     });
@@ -125,7 +122,9 @@ describe('@iostore/svelte: infinite query stores', () => {
       initialPageParam: 0,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
-    const observer = client.observeInfiniteQuery<Page, Error, number, Page>({ query });
+    const observer = client.observeInfiniteQuery<Page, Error, number, Page>({
+      query,
+    });
 
     const store = toInfiniteQueryStore(observer, query);
     const unsubscribe = store.subscribe(() => undefined);

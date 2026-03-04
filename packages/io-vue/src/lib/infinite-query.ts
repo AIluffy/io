@@ -43,6 +43,21 @@ type IoUseInfiniteQueryOptions<
   | IoUseInfiniteQueryDefinitionOptions<TData, TError, TPageParam, TSelected>
   | IoUseInfiniteQueryHandleOptions<TData, TError, TPageParam, TSelected>;
 
+type IoUseSuspenseInfiniteQueryOptions<
+  TData,
+  TError = Error,
+  TPageParam = unknown,
+  TSelected = InfiniteData<TData, TPageParam>,
+> =
+  | Omit<
+      IoUseInfiniteQueryDefinitionOptions<TData, TError, TPageParam, TSelected>,
+      'enabled' | 'placeholderData'
+    >
+  | Omit<
+      IoUseInfiniteQueryHandleOptions<TData, TError, TPageParam, TSelected>,
+      'enabled' | 'placeholderData'
+    >;
+
 export type IoVueInfiniteQueryResult<
   TData,
   TError = Error,
@@ -157,10 +172,7 @@ export function useSuspenseInfiniteQuery<
   TPageParam = unknown,
   TSelected = InfiniteData<TData, TPageParam>,
 >(
-  options: Omit<
-    IoUseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
-    'enabled' | 'placeholderData'
-  >,
+  options: IoUseSuspenseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
 ): IoVueSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected> {
   const result = useInfiniteQuery<TData, TError, TPageParam, TSelected>({
     ...options,

@@ -50,7 +50,11 @@ describe('@iostore/react: useQuery', () => {
         key: ['react', 'query'],
         queryFn,
       });
-      return React.createElement('span', null, String(latest.data ?? 'loading'));
+      return React.createElement(
+        'span',
+        null,
+        String(latest.data ?? 'loading'),
+      );
     };
 
     let renderer!: ReactTestRenderer;
@@ -130,7 +134,11 @@ describe('@iostore/react: useQuery', () => {
         client,
         query,
       });
-      return React.createElement('span', null, String(latest.data ?? 'loading'));
+      return React.createElement(
+        'span',
+        null,
+        String(latest.data ?? 'loading'),
+      );
     };
 
     let renderer!: ReactTestRenderer;
@@ -307,7 +315,10 @@ describe('@iostore/react: useSuspenseQuery (React.use)', () => {
       );
     });
 
-    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['loading'] });
+    expect(renderer.toJSON()).toMatchObject({
+      type: 'span',
+      children: ['loading'],
+    });
 
     await act(async () => {
       deferred.resolve(11);
@@ -336,7 +347,11 @@ describe('@iostore/react: useInfiniteQuery', () => {
         queryFn: async ({ pageParam }) => pageParam,
         getNextPageParam: (lastPage) => (lastPage < 2 ? lastPage + 1 : null),
       });
-      return React.createElement('span', null, String(latest.data?.pages.length ?? 0));
+      return React.createElement(
+        'span',
+        null,
+        String(latest.data?.pages.length ?? 0),
+      );
     };
 
     let renderer!: ReactTestRenderer;
@@ -410,7 +425,6 @@ describe('@iostore/react: useSuspenseInfiniteQuery', () => {
     });
   });
 
-
   it('supports optional React.use suspense integration', async () => {
     const client = createQueryClient();
     const deferred = createDeferred<number>();
@@ -426,7 +440,7 @@ describe('@iostore/react: useSuspenseInfiniteQuery', () => {
         },
         { useReactUseHook: true },
       );
-      return React.createElement('span', null, String((result.data.pages as number[])[0]));
+      return React.createElement('span', null, String(result.data.pages[0]));
     };
 
     let renderer!: ReactTestRenderer;
@@ -440,7 +454,10 @@ describe('@iostore/react: useSuspenseInfiniteQuery', () => {
       );
     });
 
-    expect(renderer.toJSON()).toMatchObject({ type: 'span', children: ['loading'] });
+    expect(renderer.toJSON()).toMatchObject({
+      type: 'span',
+      children: ['loading'],
+    });
 
     await act(async () => {
       deferred.resolve(8);

@@ -39,6 +39,16 @@ type IoUseQueryOptions<TData, TError = Error, TSelected = TData> =
   | IoUseQueryDefinitionOptions<TData, TError, TSelected>
   | IoUseQueryHandleOptions<TData, TError, TSelected>;
 
+type IoUseSuspenseQueryOptions<TData, TError = Error, TSelected = TData> =
+  | Omit<
+      IoUseQueryDefinitionOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >
+  | Omit<
+      IoUseQueryHandleOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >;
+
 export type IoLynxQueryResult<TData, TError = Error, TSelected = TData> =
   IoQueryObserverResult<TSelected, TError> & {
     fetch: () => Promise<TData>;
@@ -155,7 +165,7 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
 }
 
 export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
-  options: Omit<IoUseQueryOptions<TData, TError, TSelected>, 'enabled' | 'placeholderData'>,
+  options: IoUseSuspenseQueryOptions<TData, TError, TSelected>,
 ): IoLynxSuspenseQueryResult<TData, TError, TSelected> {
   const result = useQuery<TData, TError, TSelected>({
     ...options,

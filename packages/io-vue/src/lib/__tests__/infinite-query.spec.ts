@@ -118,7 +118,10 @@ describe('@iostore/vue: useInfiniteQuery', () => {
       });
     });
 
-    const disposeSpy = vi.spyOn(result!.observer, 'dispose');
+    if (!result) {
+      throw new Error('expected result');
+    }
+    const disposeSpy = vi.spyOn(result.observer, 'dispose');
 
     scope.stop();
 

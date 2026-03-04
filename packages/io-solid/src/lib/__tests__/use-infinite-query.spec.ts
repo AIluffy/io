@@ -111,7 +111,7 @@ describe('@iostore/solid: useInfiniteQuery', () => {
 
     createRoot((rootDispose) => {
       dispose = rootDispose;
-      result = useInfiniteQuery({
+      result = useInfiniteQuery<Page, Error, number>({
         client,
         key: ['solid', 'infinite', 'error'],
         queryFn,
@@ -147,7 +147,10 @@ describe('@iostore/solid: useInfiniteQuery', () => {
       });
     });
 
-    const disposeSpy = vi.spyOn(result!.observer, 'dispose');
+    if (!result) {
+      throw new Error('expected result');
+    }
+    const disposeSpy = vi.spyOn(result.observer, 'dispose');
 
     dispose();
 
