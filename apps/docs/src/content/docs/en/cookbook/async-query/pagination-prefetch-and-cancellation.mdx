@@ -1,66 +1,47 @@
 ---
 title: Pagination, Prefetch, and Cancellation
-description: Build scalable long-list behavior with stable keys and controlled prefetching.
+description: Split standard pagination and Infinite Query pagination, then choose by workload.
 sidebar:
   order: 8
 ---
 
-## What It Is
+## 5.1 Standard page-based pagination
 
-Pagination workloads need stable page keys, selective prefetch, and cancellation of outdated in-flight requests.
-
-## When to Use
-
-- Data is loaded by page/cursor.
-- You want next-page prefetch to smooth UX.
-- You need to avoid stale overwrite during fast switches.
-
-## Core API
-
-- [io-query-key](/en/api-reference/io-query/io-query-key/)
-- [io-query-filter](/en/api-reference/io-query/io-query-filter/)
-- [io-query-client](/en/api-reference/io-query/io-query-client/)
-
-## Minimal Example
+Use this for deterministic page numbers (`page=1,2,3...`):
 
 ```ts
 const current = client.defineQuery({
   key: ['users', { page, pageSize }],
   queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
 });
-
-if (current.getData()?.hasMore) {
-  const next = page + 1;
-  await client
-    .query({
-      key: ['users', { page: next, pageSize }],
-      queryFn: ({ signal }) =>
-        fetch(`/api/users?page=${next}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
-    })
-    .prefetch();
-}
-
-current.cancel();
 ```
 
+Guidelines:
 
-## getData() vs snapshot().data
-
-`current.getData()` is a shortcut for `current.snapshot().data`.
-Use whichever reads better in your call site; both reflect current cached data.
-
-## Common Pitfalls
-
-- Missing page/cursor params in key.
-- Prefetching on every scroll event without guard.
-- Appending rows without id-based dedupe.
-
-## Practical Guidance
-
+- Include page params in the key.
 - Prefetch only when `hasMore` is true.
-- Treat cancellation as control flow, not business failure.
-- Standardize pagination response shape across endpoints.
 
-## Next Steps
+## 5.2 Infinite Query prefetch and cancellation
 
-- Continue with [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/)
+Use this for endless loading:
+
+```ts
+await client.prefetchInfiniteQuery(
+  {
+    key: ['feed'],
+    initialPageParam: 0,
+    queryFn: ({ signal, pageParam }) =>
+      fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  },
+  3,
+);
+```
+
+- The second parameter controls how many pages to prefetch (`3` in this example).
+- `cancel()` aborts in-flight fetch and resets direction state.
+
+## Choosing strategy
+
+- **Numbered pages**: `defineQuery` + prefetch next page.
+- **Infinite feed**: `defineInfiniteQuery` / `useInfiniteQuery`.

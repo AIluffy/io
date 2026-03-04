@@ -1,0 +1,86 @@
+---
+title: Infinite Query：无限加载与分页窗口
+description: 从首个无限滚动示例到 maxPages 滑动窗口、双向加载与取消控制。
+sidebar:
+  order: 9
+---
+
+## 为什么要用 Infinite Query
+
+普通 Query 管理的是单个 `TData`；Infinite Query 管理的是按页累积的数据：
+
+```ts
+type InfiniteData<TData, TPageParam> = {
+  pages: readonly TData[];
+  pageParams: readonly TPageParam[];
+};
+```
+
+适用场景：无限滚动、加载更多、聊天记录双向翻页。
+
+## 第一个可运行示例
+
+```tsx
+import { useInfiniteQuery } from '@iostore/react';
+
+type Page = { items: { id: number; title: string }[]; nextCursor: number | null };
+
+export function Feed() {
+  const feed = useInfiniteQuery<Page, Error, number>({
+    key: ['feed'],
+    initialPageParam: 0,
+    queryFn: async ({ signal, pageParam }) => {
+      const res = await fetch(`/api/feed?cursor=${pageParam}`, { signal });
+      return (await res.json()) as Page;
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+
+  const rows = feed.data?.pages.flatMap((page) => page.items) ?? [];
+
+  return (
+    <>
+      {rows.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
+      <button disabled={!feed.hasNextPage || feed.isFetchingNextPage} onClick={() => void feed.fetchNextPage()}>
+        {feed.isFetchingNextPage ? '加载中...' : '加载更多'}
+      </button>
+    </>
+  );
+}
+```
+
+## 核心参数
+
+| 参数 | 是否必填 | 说明 |
+| --- | --- | --- |
+| `initialPageParam` | 是 | 第一页参数 |
+| `queryFn({ signal, pageParam })` | 是 | 相比普通 Query，新增 `pageParam` |
+| `getNextPageParam(lastPage, allPages, lastPageParam, allPageParams)` | 是 | 返回 `null/undefined` 表示无下一页 |
+| `getPreviousPageParam(...)` | 否 | 启用向前加载（聊天记录） |
+| `maxPages` | 否 | 限制缓存页数，超出后按方向裁剪 |
+
+## 状态字段与操作方法
+
+- 数据字段：`data.pages`、`data.pageParams`
+- 方向字段：`fetchDirection`（`forward` / `backward` / `null`）
+- 派生字段：`hasNextPage`、`hasPreviousPage`、`isFetchingNextPage`、`isFetchingPreviousPage`
+
+常用方法：
+
+- `fetchNextPage()` / `fetchPreviousPage()`
+- `refetch()`（Hook 层映射到 `refetchAllPages()`）
+- `prefetch()`
+- `invalidate(refetch?)`
+- `cancel()`
+
+## 与普通分页的关系
+
+- 页码型列表：优先看 [`分页、预取与取消`](./pagination-prefetch-and-cancellation/)
+- 无限滚动：优先使用 Infinite Query，减少手写聚合逻辑
+
+## 下一步
+
+- React Hook API：[`useInfiniteQuery`](/api-reference/io-react/use-infinite-query/)
+- Suspense 版本：[`useSuspenseInfiniteQuery`](/api-reference/io-react/use-suspense-infinite-query/)

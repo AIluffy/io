@@ -1,0 +1,32 @@
+---
+title: 无限查询（useInfiniteQuery）
+description: 在 React 中实现「加载更多 / 无限滚动 / 双向翻页」。
+sidebar:
+  order: 3
+---
+
+## 最小示例
+
+```ts
+import { useInfiniteQuery } from '@iostore/react';
+
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+```
+
+## 使用要点
+
+- `data.pages` 保存每一页结果，渲染时建议 `flatMap`。
+- `getNextPageParam` 返回 `null/undefined` 即表示没有下一页。
+- 需要双向加载时补充 `getPreviousPageParam`。
+- 建议结合 `maxPages` 控制内存窗口。
+
+## 继续阅读
+
+- [高级模式](./advanced-patterns/)
+- [Query Cookbook：Infinite Query](/cookbook/async-query/infinite-query/)

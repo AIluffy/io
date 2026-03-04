@@ -1,0 +1,17 @@
+---
+title: "UseInfiniteQueryResult"
+description: "Result type returned by useInfiniteQuery."
+---
+
+`UseInfiniteQueryResult` = `IoInfiniteQueryObserverResult` plus actions:
+
+- `fetchNextPage()`
+- `fetchPreviousPage()`
+- `refetch()`
+- `prefetch()`
+- `invalidate(refetch?)`
+- `cancel()`
+
+It also includes `query` and `observer` handles.
+
+Source: `packages/io-react/src/lib/use-infinite-query.ts`

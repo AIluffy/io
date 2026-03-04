@@ -1,58 +1,53 @@
 ---
 title: React Adapter
-description: Use useQuery/useMutation/useSuspenseQuery in React with predictable lifecycle behavior.
+description: Use one React model for useQuery / useInfiniteQuery / useMutation / suspense variants.
 sidebar:
   order: 10
 ---
 
-## What It Is
-
-The React adapter maps query state machines into hook results aligned with React rendering semantics.
-
-## When to Use
-
-- You need declarative query + mutation flow in React components.
-- You need explicit loading/error/success handling in UI.
-
 ## Core API
 
 - [useQuery](/en/api-reference/io-react/use-query/)
+- [useInfiniteQuery](/en/api-reference/io-react/use-infinite-query/)
 - [useMutation](/en/api-reference/io-react/use-mutation/)
 - [useSuspenseQuery](/en/api-reference/io-react/use-suspense-query/)
+- [useSuspenseInfiniteQuery](/en/api-reference/io-react/use-suspense-infinite-query/)
 
-## Minimal Example
+## Choosing between useQuery and useInfiniteQuery
+
+| Scenario | Recommendation |
+| --- | --- |
+| Single resource / single page data | `useQuery` |
+| Endless list, load more, chat history | `useInfiniteQuery` |
+
+## Minimal useInfiniteQuery example
 
 ```tsx
-import { useMutation, useQuery } from '@iostore/react';
+import { useInfiniteQuery } from '@iostore/react';
 
-const todos = useQuery({
-  key: ['todos'],
-  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+  cancelOnUnmount: true,
 });
 
-const addTodo = useMutation({
-  mutationFn: (title: string) =>
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title }),
-    }).then((r) => r.json()),
-  onSuccess: () => todos.query.invalidate(),
-});
+const rows = feed.data?.pages.flatMap((page) => page.items) ?? [];
 ```
 
-## Common Pitfalls
+## Suspense flows
 
-- Ignoring `signal` in query functions.
-- Surfacing `AbortError` as user-visible business failure.
-- Reusing one client where route-level isolation is needed.
+As with `useSuspenseQuery`, pair `useSuspenseInfiniteQuery` with ErrorBoundary.
+Loading is delegated to Suspense fallback instead of manual `isLoading` branches.
 
-## Practical Guidance
+## Common pitfalls
 
-- Skip `client` option by default; pass one only for explicit isolation.
-- Use invalidation as the default post-write action.
-- Pair Suspense flows with ErrorBoundary.
+- Ignoring `signal` in `queryFn`, breaking cancellation.
+- Treating `AbortError` as user-facing business failure.
+- Building endless lists with `useQuery` + manual page stitching.
 
-## Next Steps
+## Next step
 
-- Continue with [Vue Adapter](./vue-adapter/)
+- Continue with [Infinite Query: Endless Loading and Page Windows](./infinite-query/)

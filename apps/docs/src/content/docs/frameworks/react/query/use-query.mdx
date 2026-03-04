@@ -1,0 +1,28 @@
+---
+title: 标准查询（useQuery）
+description: 在 React 中落地可缓存、可刷新、可取消的标准查询。
+sidebar:
+  order: 2
+---
+
+## 最小示例
+
+```ts
+import { useQuery } from '@iostore/react';
+
+const users = useQuery({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+## 使用要点
+
+- 把业务参数放进 `key`，避免缓存串用。
+- 在 `queryFn` 中透传 `signal`，支持取消。
+- 区分 `isLoading` 与 `isFetching`：前者是首次加载，后者包含后台刷新。
+
+## 继续阅读
+
+- [无限查询](./use-infinite-query/)
+- [高级模式](./advanced-patterns/)

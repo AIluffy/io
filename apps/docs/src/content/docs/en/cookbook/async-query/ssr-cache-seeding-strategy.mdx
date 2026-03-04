@@ -53,6 +53,10 @@ if (initialUser) {
 - Share key builders between server and client.
 - Keep invalidation/refetch active after hydration.
 
+## Infinite Query SSR
+
+Infinite Query supports hydrate/dehydrate as well. On the server, call `prefetchInfiniteQuery(definition, pages)` to prefetch multiple pages, then include `infiniteQueries` from `dehydrate()`.
+
 ## Next Steps
 
 - Continue with [React Adapter](./react-adapter/)

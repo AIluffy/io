@@ -1,0 +1,163 @@
+---
+title: Lynx
+description: 在 ReactLynx 中使用 useIO / useIOSelector 高效订阅 IO 状态。
+sidebar:
+  order: 3
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+`@iostore/lynx` 为 ReactLynx 提供与 React 近似的订阅体验，并保持 Lynx 平台语义。
+
+## 适用场景
+
+- Lynx 页面状态订阅与更新。
+- 需要选择器裁剪渲染范围。
+- 需要在移动端高频交互中保持稳定通知节奏。
+
+## 安装
+
+安装相关依赖（任选一种包管理工具）：
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
+```bash
+npm i @iostore/store @iostore/lynx @lynx-js/react
+```
+
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/lynx @lynx-js/react
+```
+
+  </TabItem>
+</Tabs>
+
+## 最小接入
+
+```tsx
+import { root } from '@lynx-js/react';
+import { io } from '@iostore/store';
+import { useIO } from '@iostore/lynx';
+
+const count = io(0);
+
+function Counter() {
+  const value = useIO(count);
+  return (
+    <view>
+      <text>{value}</text>
+      <view bindtap={() => count.set((v) => v + 1)}>
+        <text>+1</text>
+      </view>
+    </view>
+  );
+}
+
+root.render(<Counter />);
+```
+
+## TypeScript 配置
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react"
+  }
+}
+```
+
+## useIOSelector
+
+```tsx
+import { useIOSelector } from '@iostore/lynx';
+
+const store = io({ count: 0, other: 0 });
+
+function CountOnly() {
+  const count = useIOSelector(store, (state) => state.count);
+  return <text>{count}</text>;
+}
+```
+
+如需自定义比较逻辑：
+
+```tsx
+const parity = useIOSelector(store, (state) => ({ p: state.count % 2 }), {
+  isEqual: (prev, next) => prev.p === next.p,
+});
+```
+
+## 调度策略
+
+```tsx
+const value = useIO(count, { schedule: 'microtask' });
+```
+
+可选值：`sync` | `microtask` | `animationFrame`。
+
+## API 速查
+
+| 场景 | API | 说明 |
+| --- | --- | --- |
+| 读取 Unit/Derived | `useIO(unitOrDerived, options?)` | 在 ReactLynx 组件中订阅状态。 |
+| 读取 Scope 片段 | `useIOSelector(scope, selector, options?)` | 精确控制渲染范围。 |
+| 选择器比较 | `options.isEqual(prev, next)` | 控制对象选择器更新频率。 |
+| 通知调度 | `options.schedule` | `sync` / `microtask` / `animationFrame`。 |
+| 写入状态 | `unit.set(next | updater)` | 与框架无关的核心写入方式。 |
+
+## 错误示例与推荐写法
+
+~~~tsx
+// 错误：使用 Web createRoot
+// createRoot(document.getElementById('root')!).render(<App />);
+
+// 推荐：使用 Lynx root
+root.render(<App />);
+~~~
+
+~~~tsx
+// 错误：对象 selector 不加比较函数
+const slice = useIOSelector(store, (s) => ({ p: s.count % 2 }));
+
+// 推荐：补 isEqual，减少无效渲染
+const slice2 = useIOSelector(store, (s) => ({ p: s.count % 2 }), {
+  isEqual: (a, b) => a.p === b.p,
+});
+~~~
+
+## 平台注意事项
+
+- 使用 Lynx 原生标签与事件：`view` / `text` / `input`、`bindtap` / `bindinput`。
+- 应用入口使用 `root.render(...)`，不要使用 Web 的 `createRoot`。
+- 接入前建议阅读 Lynx 文档总入口：[`llms.txt`](https://lynxjs.org/llms.txt)。
+
+## 下一步
+
+- 结合 [Persist](/cookbook/persist/) 做持久化。
+- 阅读 [Lynx 快速开始](https://lynxjs.org/guide/start/quick-start.html)。
+
+
+## 文档导航
+
+- [Query 功能域](./query/)
+- [状态管理](./state/)

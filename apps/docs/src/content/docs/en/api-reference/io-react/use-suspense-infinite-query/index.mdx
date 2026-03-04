@@ -1,0 +1,26 @@
+---
+title: "useSuspenseInfiniteQuery"
+description: "Suspense variant of useInfiniteQuery."
+---
+
+## What it does
+
+Reads Infinite Query inside a Suspense boundary. When data is not ready, it throws a Promise for fallback rendering.
+
+## Signature
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
+  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+  suspenseOptions?: { useReactUseHook?: boolean },
+) => UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Usage notes
+
+- Pair with ErrorBoundary.
+- Useful when multi-page data is required before render.
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

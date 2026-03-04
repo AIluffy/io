@@ -1,58 +1,53 @@
 ---
 title: React 适配
-description: 用 useQuery/useMutation/useSuspenseQuery 在 React 中落地 Query。
+description: 在 React 中统一 useQuery / useInfiniteQuery / useMutation / useSuspense* 的查询模型。
 sidebar:
   order: 10
 ---
 
-## 是什么
-
-React 适配层把 Query 状态机映射为 hooks 结果，保持渲染语义与取消语义一致。
-
-## 何时使用
-
-- React 页面需要声明式查询与提交。
-- 你要在组件中统一处理 loading/error/success。
-
 ## 核心 API
 
 - [useQuery](/api-reference/io-react/use-query/)
+- [useInfiniteQuery](/api-reference/io-react/use-infinite-query/)
 - [useMutation](/api-reference/io-react/use-mutation/)
 - [useSuspenseQuery](/api-reference/io-react/use-suspense-query/)
+- [useSuspenseInfiniteQuery](/api-reference/io-react/use-suspense-infinite-query/)
 
-## 最小示例
+## useQuery 与 useInfiniteQuery 如何选
+
+| 场景 | 推荐 |
+| --- | --- |
+| 单资源/单页数据 | `useQuery` |
+| 无限滚动、加载更多、聊天记录 | `useInfiniteQuery` |
+
+## useInfiniteQuery 最小示例
 
 ```tsx
-import { useMutation, useQuery } from '@iostore/react';
+import { useInfiniteQuery } from '@iostore/react';
 
-const todos = useQuery({
-  key: ['todos'],
-  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+  cancelOnUnmount: true,
 });
 
-const addTodo = useMutation({
-  mutationFn: (title: string) =>
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title }),
-    }).then((r) => r.json()),
-  onSuccess: () => todos.query.invalidate(),
-});
+const rows = feed.data?.pages.flatMap((page) => page.items) ?? [];
 ```
+
+## Suspense 场景
+
+`useSuspenseInfiniteQuery` 与 `useSuspenseQuery` 一样，推荐搭配 ErrorBoundary 使用；
+当查询未就绪时由 Suspense 兜底，页面不需要手写 `isLoading` 分支。
 
 ## 常见误区
 
-- 在 `queryFn` 里忽略 `signal`。
-- 误把 `AbortError` 当业务失败提示。
-- 自定义 client 没有按页面边界隔离。
-
-## 实践建议
-
-- 默认不传 `client`，需要隔离时再传。
-- 优先使用 `query.invalidate()` 保持一致性。
-- Suspense 场景始终搭配 ErrorBoundary。
+- `queryFn` 忽略 `signal`，导致取消不生效。
+- 误把 `AbortError` 当业务错误展示。
+- 无限滚动场景继续用 `useQuery` 手工拼页，导致状态和取消逻辑分散。
 
 ## 下一步
 
-- 继续：[Vue 适配](./vue-adapter/)
+- 深入阅读：[Infinite Query：无限加载与分页窗口](./infinite-query/)

@@ -1,0 +1,26 @@
+---
+title: "useSuspenseInfiniteQuery"
+description: "Suspense 版本的 Infinite Query Hook。"
+---
+
+## 一句话定位
+
+在 Suspense 边界内读取 Infinite Query，数据未就绪时抛出 Promise，由 Suspense fallback 接管。
+
+## 签名
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(
+  options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+  suspenseOptions?: { useReactUseHook?: boolean },
+) => UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## 使用建议
+
+- 必须配合 ErrorBoundary。
+- 适合首屏必须拿到多页数据的场景。
+
+## 源码
+
+- `packages/io-react/src/lib/use-infinite-query.ts`
