@@ -1,0 +1,53 @@
+---
+title: 无限查询（Infinite Query Store）
+description: 在 Svelte 中实现「加载更多 / 无限滚动 / 双向翻页」。
+sidebar:
+  order: 3
+---
+
+## 最小示例
+
+```ts
+import { createInfiniteQueryStore } from '@iostore/svelte';
+
+export const feed = createInfiniteQueryStore({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+```
+
+```svelte
+<script lang="ts">
+  import { feed } from './stores';
+
+  $: rows = $feed.data?.pages.flatMap((page) => page.items) ?? [];
+</script>
+
+{#each rows as row}
+  <div>{row.title}</div>
+{/each}
+
+<button disabled={!$feed.hasNextPage} on:click={() => feed.fetchNextPage()}>
+  Load more
+</button>
+```
+
+## 使用要点
+
+- `createInfiniteQueryStore` / `toInfiniteQueryStore` 对应 Infinite Query 场景。
+- 通过 `$feed.data.pages` 渲染累计结果。
+- 建议配合 `maxPages` 控制内存窗口。
+
+## 继续阅读
+
+- [高级模式](./advanced-patterns/)
+- [Query Cookbook：Infinite Query](/cookbook/async-query/infinite-query/)
+
+
+## 深入阅读（Query 工程）
+
+- [Svelte 适配入口](/cookbook/async-query/svelte-adapter/)
+- [推荐延伸页面](/cookbook/async-query/svelte-adapter/production-patterns/)

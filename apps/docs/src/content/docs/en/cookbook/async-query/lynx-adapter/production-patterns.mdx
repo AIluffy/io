@@ -1,0 +1,46 @@
+---
+title: "Production Patterns"
+description: "Handle pagination, prefetch, cancellation, retry, and rollout troubleshooting in Lynx."
+sidebar:
+  order: 4
+---
+
+## Infinite Query and Window Control
+
+```tsx
+import { useInfiniteQuery } from '@iostore/lynx';
+
+const feed = useInfiniteQuery({
+  key: ['feed', 'home'],
+  initialPageParam: null as string | null,
+  queryFn: ({ signal, pageParam }) => {
+    'background only';
+    return fetch('/api/feed?cursor=' + (pageParam ?? ''), { signal }).then((r) => r.json());
+  },
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+  maxPages: 5,
+  cancelOnUnmount: true,
+});
+```
+
+- Use `maxPages` to cap in-memory window and avoid unbounded accumulation.
+- Check `isFetchingNextPage` before triggering load-more on scroll end.
+- Enable cancellation by default for high-frequency list switching.
+
+## Prefetch, Retry, and Performance
+
+1. Run `prefetch` before route transitions to reduce first-render wait.
+2. Use bounded retries (1-2) for network jitter; do not retry business failures.
+3. Use `select` to trim render payload and reduce unrelated updates.
+4. Handle cancellation uniformly and exclude `AbortError` from alert pipelines.
+
+## Related APIs
+
+- [Query core: createQueryClient](/en/api-reference/io-query/create-query-client/)
+- [Query core: dehydrate/hydrate](/en/api-reference/io-query/io-dehydrate-options/)
+- [Lynx adapter API](/en/api-reference/io-lynx/)
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)

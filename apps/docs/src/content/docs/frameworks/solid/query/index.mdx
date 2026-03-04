@@ -1,0 +1,22 @@
+---
+title: Query 功能矩阵
+description: Solid 下 Query 能力总览与选型建议。
+sidebar:
+  order: 1
+---
+
+本节按「标准查询 / 无限查询 / 高级模式」组织 Solid 的 Query 用法。
+
+## 能力矩阵
+
+| 场景 | 推荐页面 | 核心 API |
+| --- | --- | --- |
+| 单资源请求 | [标准查询](./use-query/) | `useQuery` |
+| 无限滚动/加载更多 | [无限查询](./use-infinite-query/) | `useInfiniteQuery（通过 Query Adapter）` |
+| 组合封装与性能优化 | [高级模式](./advanced-patterns/) | key 设计、取消、预取 |
+
+
+## 深入阅读（Query 工程）
+
+- [Solid 适配入口](/cookbook/async-query/solid-adapter/)
+- 固定路径：`概览 -> quick-start -> read-write-workflow -> production-patterns`

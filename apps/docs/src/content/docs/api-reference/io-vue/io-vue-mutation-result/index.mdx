@@ -1,0 +1,52 @@
+---
+title: "IoVueMutationResult"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoVueMutationResult<TData, TVariables, TError>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| state | `ShallowRef<IoMutationState<TData, TError>>` |
+| flags | `ShallowRef<IoMutationDerivedFlags>` |
+| mutate | `(variables: TVariables) => void` |
+| mutateAsync | `(variables: TVariables) => Promise<TData>` |
+| reset | `() => void` |
+| cancel | `() => void` |
+| mutation | `IoMutation<TData, TVariables, TError>` |
+
+## 最小示例
+
+```ts
+import type { IoVueMutationResult } from '@iostore/vue';
+
+let value!: IoVueMutationResult;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoVueInfiniteQueryResult](../io-vue-infinite-query-result/)
+- [IoVueQueryResult](../io-vue-query-result/)
+- [IoVueSuspenseInfiniteQueryResult](../io-vue-suspense-infinite-query-result/)
+- [IoVueSuspenseQueryResult](../io-vue-suspense-query-result/)
+
+## 源码
+
+- `packages/io-vue/src/lib/query.ts`

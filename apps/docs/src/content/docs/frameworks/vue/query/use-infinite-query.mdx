@@ -1,0 +1,42 @@
+---
+title: 无限查询（useInfiniteQuery）
+description: 在 Vue 中实现「加载更多 / 无限滚动 / 双向翻页」。
+sidebar:
+  order: 3
+---
+
+## 最小示例
+
+```ts
+import { computed } from 'vue';
+import { useInfiniteQuery } from '@iostore/vue';
+
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+
+const rows = computed(() =>
+  feed.data.value?.pages.flatMap((page) => page.items) ?? [],
+);
+```
+
+## 使用要点
+
+- 通过 `feed.data.value?.pages` 渲染累计页。
+- `getNextPageParam` 返回 `null/undefined` 表示没有下一页。
+- 建议结合 `maxPages` 控制内存窗口。
+
+## 继续阅读
+
+- [高级模式](./advanced-patterns/)
+- [Query Cookbook：Infinite Query](/cookbook/async-query/infinite-query/)
+
+
+## 深入阅读（Query 工程）
+
+- [Vue 适配入口](/cookbook/async-query/vue-adapter/)
+- [推荐延伸页面](/cookbook/async-query/vue-adapter/production-patterns/)

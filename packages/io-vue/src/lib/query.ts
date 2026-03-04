@@ -1,4 +1,8 @@
 import type {
+  IoMutation,
+  IoMutationDerivedFlags,
+  IoMutationOptions,
+  IoMutationState,
   IoQueryClient,
   IoQueryDefinition,
   IoQueryHandle,
@@ -8,28 +12,46 @@ import type {
 } from '@iostore/store/query';
 import type { ShallowRef } from 'vue';
 
-import { getDefaultClient } from '@iostore/store/query';
+import {
+  createMutation,
+  deriveMutationFlags,
+  getDefaultClient,
+} from '@iostore/store/query';
 import { onScopeDispose } from 'vue';
 
 import { useIO, useIOSelector } from './adapters.js';
 
-type IoUseQueryDefinitionOptions<TData, TError, TSelected> =
-  IoQueryDefinition<TData, TError> &
-    Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> & {
-      client?: IoQueryClient;
-      cancelOnDispose?: boolean;
-    };
-
-type IoUseQueryHandleOptions<TData, TError, TSelected> =
+type IoUseQueryDefinitionOptions<TData, TError, TSelected> = IoQueryDefinition<
+  TData,
+  TError
+> &
   Omit<IoQueryObserverOptions<TData, TError, TSelected>, 'query'> & {
-    query: IoQueryHandle<TData, TError>;
     client?: IoQueryClient;
     cancelOnDispose?: boolean;
   };
 
+type IoUseQueryHandleOptions<TData, TError, TSelected> = Omit<
+  IoQueryObserverOptions<TData, TError, TSelected>,
+  'query'
+> & {
+  query: IoQueryHandle<TData, TError>;
+  client?: IoQueryClient;
+  cancelOnDispose?: boolean;
+};
+
 type IoUseQueryOptions<TData, TError = Error, TSelected = TData> =
   | IoUseQueryDefinitionOptions<TData, TError, TSelected>
   | IoUseQueryHandleOptions<TData, TError, TSelected>;
+
+type IoUseSuspenseQueryOptions<TData, TError = Error, TSelected = TData> =
+  | Omit<
+      IoUseQueryDefinitionOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >
+  | Omit<
+      IoUseQueryHandleOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >;
 
 export type IoVueQueryResult<TData, TError = Error, TSelected = TData> = {
   state: ShallowRef<IoQueryObserverResult<TSelected, TError>>;
@@ -41,6 +63,24 @@ export type IoVueQueryResult<TData, TError = Error, TSelected = TData> = {
   cancel: () => void;
   query: IoQueryHandle<TData, TError>;
   observer: IoQueryObserver<TSelected, TError>;
+};
+
+export type IoVueSuspenseQueryResult<
+  TData,
+  TError = Error,
+  TSelected = TData,
+> = IoVueQueryResult<TData, TError, TSelected> & {
+  data: ShallowRef<TSelected>;
+};
+
+export type IoVueMutationResult<TData, TVariables, TError = Error> = {
+  state: ShallowRef<IoMutationState<TData, TError>>;
+  flags: ShallowRef<IoMutationDerivedFlags>;
+  mutate: (variables: TVariables) => void;
+  mutateAsync: (variables: TVariables) => Promise<TData>;
+  reset: () => void;
+  cancel: () => void;
+  mutation: IoMutation<TData, TVariables, TError>;
 };
 
 function isHandleOptions<TData, TError, TSelected>(
@@ -74,7 +114,7 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
 
   const query = isHandleOptions(options)
     ? options.query
-    : client.getQuery<TData, TError>(options.key) ??
+    : (client.getQuery<TData, TError>(options.key) ??
       client.defineQuery<TData, TError>({
         key: options.key,
         queryFn: options.queryFn,
@@ -82,7 +122,7 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
         gcTime: options.gcTime,
         retry: options.retry,
         retryDelay: options.retryDelay,
-      });
+      }));
 
   const observer = client.observeQuery<TData, TError, TSelected>(
     resolveObserverOptions(options, query),
@@ -108,5 +148,50 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
     cancel: () => query.cancel(),
     query,
     observer,
+  };
+}
+
+export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
+  options: IoUseSuspenseQueryOptions<TData, TError, TSelected>,
+): IoVueSuspenseQueryResult<TData, TError, TSelected> {
+  const result = useQuery<TData, TError, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseQueryOptions<TData, TError, TSelected>);
+
+  if (
+    result.state.value.status === 'error' &&
+    result.state.value.error !== null
+  ) {
+    throw result.state.value.error;
+  }
+
+  if (result.state.value.status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return result as IoVueSuspenseQueryResult<TData, TError, TSelected>;
+}
+
+export function useMutation<
+  TData,
+  TVariables,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): IoVueMutationResult<TData, TVariables, TError> {
+  const mutation = createMutation<TData, TVariables, TError, TContext>(options);
+  const state = useIO(mutation);
+  const flags = useIOSelector(mutation, (value) => deriveMutationFlags(value));
+
+  return {
+    state,
+    flags,
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    reset: mutation.reset,
+    cancel: mutation.cancel,
+    mutation,
   };
 }

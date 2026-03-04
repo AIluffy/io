@@ -1,0 +1,131 @@
+---
+title: Svelte
+description: Adapt IO nodes to Svelte stores with toReadable and toWritable.
+sidebar:
+  order: 5
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+`@iostore/svelte` gives you standard Svelte store adapters for clean integration with `$store` syntax.
+
+## When to Use
+
+- Subscribe to IO state in Svelte components.
+- Use `$` syntax for template reading.
+- Keep read/write boundaries explicit.
+
+## Install
+
+Install the required packages (choose one package manager):
+
+<Tabs default="npm">
+  <TabItem label="npm">
+
+```bash
+npm i @iostore/store @iostore/svelte
+```
+
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```bash
+pnpm add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```bash
+yarn add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```bash
+bun add @iostore/store @iostore/svelte
+```
+
+  </TabItem>
+</Tabs>
+
+## Minimal Integration
+
+### toReadable (read-only)
+
+```ts
+import { io } from '@iostore/store';
+import { toReadable } from '@iostore/svelte';
+
+const store = io({ count: 0 });
+const readable = toReadable(store.count);
+```
+
+### toWritable (read-write)
+
+```ts
+import { toWritable } from '@iostore/svelte';
+
+const writable = toWritable(store.count);
+```
+
+## Scheduling
+
+```ts
+const readable = toReadable(store.count, { schedule: 'sync' });
+```
+
+Available: `sync` | `microtask` | `animationFrame`.
+
+## API Quick Reference
+
+| Scenario | API | Notes |
+| --- | --- | --- |
+| Read-only adapter | `toReadable(unitOrDerived, options?)` | Creates a read-only Svelte store. |
+| Writable adapter | `toWritable(unit, options?)` | Creates a writable Svelte store. |
+| Notification scheduling | `options.schedule` | `sync`, `microtask`, `animationFrame`. |
+| Core writes | `unit.set(next | updater)` | Update outside templates when needed. |
+| Burst writes | `batch(fn)` | Coalesces frequent updates. |
+
+## Wrong vs Recommended
+
+~~~ts
+// Wrong: using writable store for read-only UI
+const count = toWritable(store.count);
+
+// Recommended: default to read-only adapter
+const countView = toReadable(store.count);
+~~~
+
+~~~ts
+// Wrong: no rate control for high-frequency input
+const keyword = toWritable(store.keyword);
+
+// Recommended: apply throttle/debounce in write path
+// See /en/cookbook/throttle and /en/cookbook/debounce
+~~~
+
+## Common Issues
+
+- Using `toWritable` when read-only is enough.
+- Spreading writable stores too broadly and increasing coupling.
+- Missing rate control in high-frequency inputs.
+
+## Practical Guidance
+
+- Default to `toReadable`, opt into `toWritable` only at input edges.
+- Keep data flow mostly one-way with localized writable nodes.
+- Pair high-frequency interactions with [Throttle](/en/cookbook/throttle/) or [Debounce](/en/cookbook/debounce/).
+
+## Next Steps
+
+- Learn [Subscriptions](/en/cookbook/subscriptions/) value vs update streams.
+- For SSR, see [SvelteKit](/en/frameworks/sveltekit/).
+
+
+## Documentation Map
+
+- [Query guides](./query/)
+- [State management](./state/)

@@ -1,0 +1,25 @@
+---
+title: Standard Query (useQuery)
+description: Implement cache-aware, cancelable queries in React.
+sidebar:
+  order: 2
+---
+
+```ts
+import { useQuery } from '@iostore/react';
+
+const users = useQuery({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+- Put input params into `key`.
+- Always pass `signal` to network requests.
+- Distinguish `isLoading` (first load) and `isFetching` (includes refetch).
+
+
+## Deep Dive (Query Engineering)
+
+- [React adapter entry](/en/cookbook/async-query/react-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/react-adapter/quick-start/)

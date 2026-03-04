@@ -4,20 +4,30 @@ export {
   createQueryClient,
   getDefaultClient,
   isDehydratedQuery,
+  isDehydratedInfiniteQuery,
   resetDefaultClient,
   safeRefetch,
 } from './client.js';
 export { hashKey } from './utils.js';
-export { getFocusManager } from './focus-manager.js';
-export { getOnlineManager } from './online-manager.js';
+export { getFocusManager, resetFocusManager } from './focus-manager.js';
+export { getOnlineManager, resetOnlineManager } from './online-manager.js';
 
 export type {
+  InfiniteData,
   IoDataStatus,
   IoDehydrateOptions,
+  IoDehydratedInfiniteQuery,
   IoDehydratedQuery,
   IoDehydratedState,
   IoFetchStatus,
   IoHydrateOptions,
+  IoInfiniteQueryDefinition,
+  IoInfiniteQueryDerivedFlags,
+  IoInfiniteQueryHandle,
+  IoInfiniteQueryObserver,
+  IoInfiniteQueryObserverOptions,
+  IoInfiniteQueryObserverResult,
+  IoInfiniteQueryState,
   IoMutation,
   IoMutationDerivedFlags,
   IoMutationOptions,

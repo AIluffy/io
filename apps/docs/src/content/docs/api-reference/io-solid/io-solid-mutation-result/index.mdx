@@ -1,0 +1,52 @@
+---
+title: "IoSolidMutationResult"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+IoSolidMutationResult<TData, TVariables, TError>
+```
+
+## 属性
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoMutationState<TData, TError>>` |
+| flags | `Accessor<IoMutationDerivedFlags>` |
+| mutate | `(variables: TVariables) => void` |
+| mutateAsync | `(variables: TVariables) => Promise<TData>` |
+| reset | `() => void` |
+| cancel | `() => void` |
+| mutation | `IoMutation<TData, TVariables, TError>` |
+
+## 最小示例
+
+```ts
+import type { IoSolidMutationResult } from '@iostore/solid';
+
+let value!: IoSolidMutationResult;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [IoSolidInfiniteQueryResult](../io-solid-infinite-query-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseInfiniteQueryResult](../io-solid-suspense-infinite-query-result/)
+- [IoSolidSuspenseQueryResult](../io-solid-suspense-query-result/)
+
+## 源码
+
+- `packages/io-solid/src/lib/use-query.ts`

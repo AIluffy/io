@@ -1,3 +1,22 @@
+## 0.0.4 (2026-03-04)
+
+### 🚀 Features
+
+- **adapters:** align non-react query APIs with react parity ([dc87a1e](https://github.com/AIluffy/oin/commit/dc87a1e))
+- **io-react:** add infinite query hooks ([226ccad](https://github.com/AIluffy/oin/commit/226ccad))
+- **io-react:** add React 19 client/rsc compatibility layer ([deba665](https://github.com/AIluffy/oin/commit/deba665))
+- **io-vue:** add useInfiniteQuery composable ([eca748b](https://github.com/AIluffy/oin/commit/eca748b))
+- **query:** add infinite query type surface ([5372bd5](https://github.com/AIluffy/oin/commit/5372bd5))
+- **query:** implement infinite query runtime ([a2dc084](https://github.com/AIluffy/oin/commit/a2dc084))
+
+### 🩹 Fixes
+
+- **io-react:** stabilize suspense infinite query pending promise ([bde69be](https://github.com/AIluffy/oin/commit/bde69be))
+
+### ❤️ Thank You
+
+- ailuffy @AIluffy
+
 ## 0.0.3 (2026-02-28)
 
 ### 🚀 Features

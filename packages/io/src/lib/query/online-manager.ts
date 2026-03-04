@@ -4,12 +4,14 @@ export type OnlineManager = {
   isOnline: () => boolean;
   setOnline: (online: boolean) => void;
   subscribe: (listener: OnlineManagerListener) => () => void;
+  destroy: () => void;
 };
 
 let onlineManager: OnlineManager | undefined;
 
 type RuntimeWindow = {
   addEventListener?: (type: string, listener: () => void) => void;
+  removeEventListener?: (type: string, listener: () => void) => void;
 };
 
 type RuntimeNavigator = {
@@ -46,6 +48,7 @@ function getNavigatorOnline(): boolean {
 
 function createOnlineManager(): OnlineManager {
   let online = getNavigatorOnline();
+  let destroyed = false;
   const listeners = new Set<OnlineManagerListener>();
 
   const notify = (): void => {
@@ -55,7 +58,7 @@ function createOnlineManager(): OnlineManager {
   };
 
   const setOnline = (next: boolean): void => {
-    if (online === next) {
+    if (destroyed || online === next) {
       return;
     }
     online = next;
@@ -63,24 +66,41 @@ function createOnlineManager(): OnlineManager {
   };
 
   const runtimeWindow = getRuntimeWindow();
+  const onOnline = (): void => {
+    setOnline(true);
+  };
+  const onOffline = (): void => {
+    setOnline(false);
+  };
+
   if (runtimeWindow) {
-    runtimeWindow.addEventListener?.('online', () => {
-      setOnline(true);
-    });
-    runtimeWindow.addEventListener?.('offline', () => {
-      setOnline(false);
-    });
+    runtimeWindow.addEventListener?.('online', onOnline);
+    runtimeWindow.addEventListener?.('offline', onOffline);
   }
+
+  const destroy = (): void => {
+    if (destroyed) {
+      return;
+    }
+    destroyed = true;
+    listeners.clear();
+    runtimeWindow?.removeEventListener?.('online', onOnline);
+    runtimeWindow?.removeEventListener?.('offline', onOffline);
+  };
 
   return {
     isOnline: () => online,
     setOnline,
     subscribe: (listener) => {
+      if (destroyed) {
+        return () => undefined;
+      }
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
       };
     },
+    destroy,
   };
 }
 
@@ -89,4 +109,9 @@ export function getOnlineManager(): OnlineManager {
     onlineManager = createOnlineManager();
   }
   return onlineManager;
+}
+
+export function resetOnlineManager(): void {
+  onlineManager?.destroy();
+  onlineManager = undefined;
 }

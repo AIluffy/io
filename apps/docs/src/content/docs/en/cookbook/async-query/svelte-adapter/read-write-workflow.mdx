@@ -1,0 +1,107 @@
+---
+title: "Read/Write Workflow"
+description: "Implement query + mutation + invalidate main flow in Svelte."
+sidebar:
+  order: 3
+---
+
+## Main Flow: Query + Mutation + Invalidate
+
+```ts
+import { createMutationStore, createQueryStore } from '@iostore/svelte';
+
+const TODOS_KEY = ['todos'];
+
+export const todosStore = createQueryStore({
+  key: TODOS_KEY,
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+export const createTodoStore = createMutationStore({
+  mutationFn: (title: string) =>
+    fetch('/api/todos', { method: 'POST', body: JSON.stringify({ title }) }).then((r) => r.json()),
+  onSuccess: async () => {
+    await todosStore.invalidate();
+  },
+});
+```
+
+## useIO Local-State Composition (Migrated from Query Architecture)
+
+```ts
+import { io } from '@iostore/store';
+import { toWritable, createQueryStore } from '@iostore/svelte';
+
+const localState = io({ tab: 'all', page: 1 });
+export const tab = toWritable(localState.tab);
+
+export const todosStore = createQueryStore({
+  key: ['todos'],
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+```
+
+- Keep remote truth in Query; use useIO (or Svelte store adapters) for local interaction state.
+- When local state drives query behavior, encode all params into the query `key`.
+- For input-heavy flows, combine with `batch` and scheduling strategies.
+
+### Related APIs
+- [to-readable](/en/api-reference/io-svelte/to-readable/)
+- [to-writable](/en/api-reference/io-svelte/to-writable/)
+- [create-query-store](/en/api-reference/io-svelte/create-query-store/)
+
+## Failure Handling and Rollback
+
+- Use bounded retries for network jitter; expose business errors directly without retries.
+- When using optimistic update, snapshot in `onMutate` and rollback in `onError`.
+- Cancellation (`AbortError`) should not be treated as incident-grade errors.
+
+## Query Key Rules
+
+1. Keep keys serializable with stable ordering.
+2. Include filters, tenant, and pagination parameters in keys.
+3. Never put functions, class instances, or DOM nodes in keys.
+
+## Pitfall Comparison
+
+### Wrong: key misses parameters
+```ts
+// wrong: tenantId not included in key
+key: ['users']
+```
+
+### Recommended: key mirrors request parameters
+```ts
+key: ['users', tenantId]
+```
+
+### Wrong: guess-and-patch cache after write
+```ts
+onSuccess: (item) => {
+  cache.push(item);
+}
+```
+
+### Recommended: unify write-after-read consistency with invalidation
+```ts
+onSuccess: async () => {
+  await todos.invalidate();
+}
+```
+
+## Related APIs
+
+- [Mutation APIs](/en/api-reference/io-svelte/)
+- [Query core: createMutation](/en/api-reference/io-query/create-mutation/)
+- [Query core: deriveMutationFlags](/en/api-reference/io-query/derive-mutation-flags/)
+
+## Next
+
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

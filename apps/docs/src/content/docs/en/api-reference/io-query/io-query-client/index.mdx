@@ -19,9 +19,12 @@ IoQueryClient
 | Name | Type |
 | --- | --- |
 | defineQuery | `<TData = unknown, TError = Error>(definition: IoQueryDefinition<TData, TError>) => IoQueryHandle<TData, TError>` |
+| defineInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(definition: IoInfiniteQueryDefinition<TData, TError, TPageParam>) => IoInfiniteQueryHandle<TData, TError, TPageParam>` |
 | observeQuery | `<TData = unknown, TError = Error, TSelected = TData>(options: IoQueryObserverOptions<TData, TError, TSelected>) => IoQueryObserver<TSelected, TError>` |
+| observeInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: IoInfiniteQueryObserverOptions<TData, TError, TPageParam, TSelected>) => IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
 | fetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
 | prefetchQuery | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<void>` |
+| prefetchInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(input: IoInfiniteQueryDefinition<TData, TError, TPageParam>, pages?: number) => Promise<void>` |
 | ensureQueryData | `<TData = unknown, TError = Error>(input: IoQueryInput<TData, TError>) => Promise<TData>` |
 | mutation | `<TData = unknown, TVariables = void, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutation<TData, TVariables, TError>` |
 | invalidateQueries | `(filter?: IoQueryFilter, refetch?: boolean) => void` |
@@ -34,6 +37,10 @@ IoQueryClient
 | setQueriesData | `<TData = unknown>(filter: IoQueryFilter, updater: (prev: TData \| undefined) => TData) => void` |
 | getQueryState | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryState<TData, TError> \| undefined` |
 | getQuery | `<TData = unknown, TError = Error>(key: IoQueryKey) => IoQueryHandle<TData, TError> \| undefined` |
+| getInfiniteQuery | `<TData = unknown, TError = Error, TPageParam = unknown>(key: IoQueryKey) => IoInfiniteQueryHandle<TData, TError, TPageParam> \| undefined` |
+| getInfiniteQueryData | `<TData = unknown, TPageParam = unknown>(key: IoQueryKey) => InfiniteData<TData, TPageParam> \| undefined` |
+| setInfiniteQueryData | `<TData = unknown, TPageParam = unknown>(key: IoQueryKey, updater: InfiniteData<TData, TPageParam> \| ((prev: InfiniteData<TData, TPageParam> \| undefined) => InfiniteData<TData, TPageParam>)) => void` |
+| getInfiniteQueryState | `<TData = unknown, TError = Error, TPageParam = unknown>(key: IoQueryKey) => IoInfiniteQueryState<TData, TError, TPageParam> \| undefined` |
 | getQueries | `(filter?: IoQueryFilter) => IoQueryHandle<unknown, unknown>[]` |
 | dehydrate | `(options?: IoDehydrateOptions) => IoDehydratedState` |
 | hydrate | `(state: IoDehydratedState, options?: IoHydrateOptions) => void` |
@@ -56,10 +63,10 @@ console.log(value);
 
 ## Related APIs
 
+- [InfiniteData](../infinite-data/)
 - [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
 - [IoDehydratedQuery](../io-dehydrated-query/)
-- [IoDehydratedState](../io-dehydrated-state/)
-- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## Source
 

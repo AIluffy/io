@@ -1,0 +1,39 @@
+---
+title: Standard Query (Query Store)
+description: Implement cache-aware, cancelable queries in Svelte using query stores.
+sidebar:
+  order: 2
+---
+
+```ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const users = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+```svelte
+<script lang="ts">
+  import { users } from './stores';
+</script>
+
+{#if $users.isLoading}
+  <p>Loading…</p>
+{:else if $users.error}
+  <p>{$users.error.message}</p>
+{:else}
+  <pre>{JSON.stringify($users.data, null, 2)}</pre>
+{/if}
+```
+
+- Svelte integration is store-first; there is no `useQuery` hook export.
+- Put input params into `key`.
+- Always pass `signal` to network requests.
+
+
+## Deep Dive (Query Engineering)
+
+- [Svelte adapter entry](/en/cookbook/async-query/svelte-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/svelte-adapter/quick-start/)

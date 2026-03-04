@@ -1,0 +1,26 @@
+---
+title: Mutation (useMutation)
+description: Handle writes, optimistic updates, and invalidation in React.
+sidebar:
+  order: 4
+---
+
+```tsx
+import { useMutation } from '@iostore/react';
+
+const createTodo = useMutation({
+  mutationFn: (payload: { title: string }) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then((r) => r.json()),
+});
+```
+
+Prefer invalidation after successful writes, and treat abort as control flow.
+
+
+## Deep Dive (Query Engineering)
+
+- [React adapter entry](/en/cookbook/async-query/react-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/react-adapter/read-write-workflow/)

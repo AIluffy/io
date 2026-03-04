@@ -1,0 +1,50 @@
+---
+title: "resolveInfiniteQueryHandle"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TPageParam = unknown>(options: { input: ResolveInfiniteQueryInput<TData, TError, TPageParam>; client?: IoQueryClient; }) => IoInfiniteQueryHandle<TData, TError, TPageParam>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `{ input: ResolveInfiniteQueryInput<TData, TError, TPageParam>; client?: IoQueryClient; }` |
+
+## Returns
+
+`IoInfiniteQueryHandle<TData, TError, TPageParam>`
+
+## Minimal Example
+
+```ts
+import { resolveInfiniteQueryHandle } from '@iostore/react/rsc';
+
+const result = resolveInfiniteQueryHandle(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveQueryHandle](../resolve-query-handle/)
+- [useInfiniteQuery](../use-infinite-query/)
+
+## Source
+
+- `packages/io-react/src/lib/rsc-safe.ts`

@@ -1,4 +1,8 @@
 import type {
+  IoMutation,
+  IoMutationDerivedFlags,
+  IoMutationOptions,
+  IoMutationState,
   IoQueryClient,
   IoQueryDefinition,
   IoQueryHandle,
@@ -8,7 +12,11 @@ import type {
 } from '@iostore/store/query';
 import type { Accessor } from 'solid-js';
 
-import { getDefaultClient } from '@iostore/store/query';
+import {
+  createMutation,
+  deriveMutationFlags,
+  getDefaultClient,
+} from '@iostore/store/query';
 import { onCleanup } from 'solid-js';
 
 import { useIO, useIOSelector } from './adapters.js';
@@ -31,6 +39,16 @@ type IoUseQueryOptions<TData, TError = Error, TSelected = TData> =
   | IoUseQueryDefinitionOptions<TData, TError, TSelected>
   | IoUseQueryHandleOptions<TData, TError, TSelected>;
 
+type IoUseSuspenseQueryOptions<TData, TError = Error, TSelected = TData> =
+  | Omit<
+      IoUseQueryDefinitionOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >
+  | Omit<
+      IoUseQueryHandleOptions<TData, TError, TSelected>,
+      'enabled' | 'placeholderData'
+    >;
+
 export type IoSolidQueryResult<TData, TError = Error, TSelected = TData> = {
   state: Accessor<IoQueryObserverResult<TSelected, TError>>;
   data: Accessor<TSelected | undefined>;
@@ -42,6 +60,21 @@ export type IoSolidQueryResult<TData, TError = Error, TSelected = TData> = {
   cancel: () => void;
   query: IoQueryHandle<TData, TError>;
   observer: IoQueryObserver<TSelected, TError>;
+};
+
+export type IoSolidSuspenseQueryResult<TData, TError = Error, TSelected = TData> =
+  IoSolidQueryResult<TData, TError, TSelected> & {
+    data: Accessor<TSelected>;
+  };
+
+export type IoSolidMutationResult<TData, TVariables, TError = Error> = {
+  state: Accessor<IoMutationState<TData, TError>>;
+  flags: Accessor<IoMutationDerivedFlags>;
+  mutate: (variables: TVariables) => void;
+  mutateAsync: (variables: TVariables) => Promise<TData>;
+  reset: () => void;
+  cancel: () => void;
+  mutation: IoMutation<TData, TVariables, TError>;
 };
 
 function isHandleOptions<TData, TError, TSelected>(
@@ -111,5 +144,47 @@ export function useQuery<TData, TError = Error, TSelected = TData>(
     cancel: () => query.cancel(),
     query,
     observer,
+  };
+}
+
+export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
+  options: IoUseSuspenseQueryOptions<TData, TError, TSelected>,
+): IoSolidSuspenseQueryResult<TData, TError, TSelected> {
+  const result = useQuery<TData, TError, TSelected>({
+    ...options,
+    enabled: true,
+  } as IoUseQueryOptions<TData, TError, TSelected>);
+
+  if (result.state().status === 'error' && result.state().error !== null) {
+    throw result.state().error;
+  }
+
+  if (result.state().status === 'pending') {
+    throw result.observer.read();
+  }
+
+  return result as IoSolidSuspenseQueryResult<TData, TError, TSelected>;
+}
+
+export function useMutation<
+  TData,
+  TVariables,
+  TError = Error,
+  TContext = unknown,
+>(
+  options: IoMutationOptions<TData, TVariables, TError, TContext>,
+): IoSolidMutationResult<TData, TVariables, TError> {
+  const mutation = createMutation<TData, TVariables, TError, TContext>(options);
+  const state = useIO(mutation);
+  const flags = useIOSelector(mutation, (value) => deriveMutationFlags(value));
+
+  return {
+    state,
+    flags,
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    reset: mutation.reset,
+    cancel: mutation.cancel,
+    mutation,
   };
 }

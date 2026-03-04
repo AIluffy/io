@@ -1,0 +1,52 @@
+---
+title: "toInfiniteQueryStore"
+description: "函数 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要该包提供的这项行为能力时使用此函数。
+
+## 签名
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam>, query: IoInfiniteQueryHandle<TData, TError, TPageParam>, options?: IoQueryStoreOptions) => IoInfiniteQueryStore<TData, TError, TPageParam, TSelected>
+```
+
+## 参数
+
+| Name | Type |
+| --- | --- |
+| observer | `IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
+| query | `IoInfiniteQueryHandle<TData, TError, TPageParam>` |
+| options | `IoQueryStoreOptions` |
+
+## 返回
+
+`IoInfiniteQueryStore<TData, TError, TPageParam, TSelected>`
+
+## 最小示例
+
+```ts
+import { toInfiniteQueryStore } from '@iostore/svelte';
+
+const result = toInfiniteQueryStore(/* ...args */);
+console.log(result);
+```
+
+## 常见误用
+
+- 调用前请确认参数类型与可空性约束。
+- 注意导入路径与运行环境（服务端/客户端）是否匹配。
+
+## 相关 API
+
+- [createInfiniteQueryStore](../create-infinite-query-store/)
+- [createMutationStore](../create-mutation-store/)
+- [createQueryStore](../create-query-store/)
+- [createSuspenseInfiniteQueryStore](../create-suspense-infinite-query-store/)
+
+## 源码
+
+- `packages/io-svelte/src/lib/stores.ts`

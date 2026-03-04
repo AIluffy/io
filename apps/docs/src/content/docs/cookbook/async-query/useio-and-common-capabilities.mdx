@@ -1,103 +1,33 @@
 ---
-title: useIO 与通用能力联动
-description: 在 Query 场景中结合 useIO、derived、行为扩展与批处理构建稳定页面状态。
+title: "useIO 与通用能力联动（已迁移）"
+description: "本页内容已迁移到各框架适配层的读写实战章节。"
 sidebar:
   order: 5
 ---
 
-## 是什么
+## 迁移说明
 
-`useQuery` 负责远端数据生命周期，`useIO` 负责本地响应式状态读取。两者结合后，可以把“请求状态”和“本地交互状态”拆分管理，再通过通用能力（`derived`、`withBehaviors`、`batch`、DevTools）协同。
+`useIO` 在 Query 场景中的用法，已从「查询架构」统一迁移到各框架适配层，避免跨目录来回跳转。
 
-## 何时使用
+从现在开始，请在对应框架的 **读写实战（read-write-workflow）** 页面查看：
 
-- 页面同时有远端数据与本地筛选/分页/草稿状态。
-- 你需要持久化本地参数（如 keyword、page）并驱动 Query key。
-- 你需要降低高频输入导致的渲染抖动。
+- 本地交互状态与远端 Query 状态的边界划分
+- `useIO`（或 Svelte store 适配）驱动 Query key 的方式
+- 常见误区与工程建议（key 对齐、批处理、调度策略）
 
-## 核心 API
+## 新入口
 
-- [useIO](/api-reference/io-react/use-io/)
-- [useQuery](/api-reference/io-react/use-query/)
-- [derived](/api-reference/io/derived/)
-- [withBehaviors](/api-reference/io/with-behaviors/)
-- [batch](/api-reference/io/batch/)
+- [React：读写实战](/cookbook/async-query/react-adapter/read-write-workflow/)
+- [Vue：读写实战](/cookbook/async-query/vue-adapter/read-write-workflow/)
+- [Svelte：读写实战](/cookbook/async-query/svelte-adapter/read-write-workflow/)
+- [Solid：读写实战](/cookbook/async-query/solid-adapter/read-write-workflow/)
+- [Lynx：读写实战](/cookbook/async-query/lynx-adapter/read-write-workflow/)
+- [Next.js：读写实战](/cookbook/async-query/next-adapter/read-write-workflow/)
+- [Nuxt：读写实战](/cookbook/async-query/nuxt-adapter/read-write-workflow/)
+- [SvelteKit：读写实战](/cookbook/async-query/sveltekit-adapter/read-write-workflow/)
 
-## 最小示例
+## 推荐阅读顺序
 
-```tsx
-import { useIO, useQuery } from '@iostore/react';
-import { io } from '@iostore/store';
-import { derived } from '@iostore/store/derived';
-import { persist, schedule, withBehaviors } from '@iostore/store/behavior';
-
-const filterStore = withBehaviors(
-  io({
-    keyword: '',
-    page: 1,
-  }),
-  [
-    persist({ key: 'docs-async-query-filters' }),
-    schedule('microtask'),
-  ],
-);
-
-const queryKeyView = derived(filterStore, (s) => ['todos', s.keyword, s.page] as const);
-
-export function TodoPage() {
-  const filters = useIO(filterStore);
-  const queryKey = useIO(queryKeyView);
-
-  const todosQuery = useQuery({
-    key: queryKey,
-    queryFn: ({ signal }) =>
-      fetch(`/api/todos?keyword=${filters.keyword}&page=${filters.page}`, { signal }).then((r) => r.json()),
-  });
-
-  return (
-    <div>
-      <input
-        value={filters.keyword}
-        onChange={(event) => filterStore.keyword.set(event.currentTarget.value)}
-      />
-      <button onClick={() => filterStore.page.set((n) => n + 1)}>Next</button>
-      <div>{todosQuery.isFetching ? 'loading' : 'idle'}</div>
-    </div>
-  );
-}
-```
-
-## 直接读取 client.query 返回对象
-
-可以。`useIO` 能直接读取 `client.defineQuery(...)` 返回的对象，因为它本身就是可订阅、可快照读取的 IO 节点。
-
-```tsx
-const query = client.defineQuery({
-  key: ['todo', id],
-  queryFn: ({ signal }) => fetchTodo(id, signal),
-});
-
-const state = useIO(query);
-```
-
-但要注意两点：
-
-- `useIO(query)` 只负责读取和订阅，不会自动帮你触发请求。
-- 页面场景通常优先用 `useQuery(...)`，它会把拉取、重拉、状态标记一起处理好。
-
-## 常见误区
-
-- 把 Query data 全量复制到本地 IO，再双向维护两份真值源。
-- key 依赖本地状态，却没有把依赖参数完整放进 key。
-- 高并发更新时不使用 `batch()`，导致中间态频繁渲染。
-
-## 实践建议
-
-- 远端数据以 Query 为主，本地 UI 参数以 IO 为主，明确边界。
-- 对输入密集场景，把 `schedule('microtask')` 作为默认起点。
-- 结合 [DevTools](/cookbook/devtools/) 观察 query + local state 的联动时间线。
-- 与 [Persist](/cookbook/persist/) 组合保存筛选参数，与 [Batching](/cookbook/batching/) 组合合并本地更新。
-
-## 下一步
-
-- 继续：[Query Key、缓存与刷新](./query-keys-cache-and-refetch/)
+1. [Query 专题首页](/cookbook/async-query/)
+2. 进入你的框架适配入口（例如 [React 适配](/cookbook/async-query/react-adapter/)）
+3. 按 `概览 -> quick-start -> read-write-workflow -> production-patterns` 完成闭环

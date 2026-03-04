@@ -20,8 +20,8 @@ This section focuses on `@iostore/store/query` and its adapters, covering lifecy
 1. Start with the [Async TodoList Tutorial](./tutorial-async-todo-list/) to get one complete end-to-end flow.
 2. Continue in the [Playground](./playground/) to observe failure, retry, and recovery behavior.
 3. Move to [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/) for shared runtime semantics.
-4. Add [useIO and Common Capability Composition](./useio-and-common-capabilities/) to connect local UI state and query state.
-5. Build core capabilities (keys, cache, mutation, pagination, SSR), then apply them in adapters.
+4. Build core capabilities (keys, cache, mutation, pagination, SSR), then apply them in adapters.
+5. Learn local-state composition with useIO in each adapter's Read/Write Workflow page.
 
 ## Capability Map
 
@@ -30,31 +30,51 @@ This section focuses on `@iostore/store/query` and its adapters, covering lifecy
 | End-to-end tutorial from zero | [Async TodoList Tutorial](./tutorial-async-todo-list/) |
 | Interactive drill and failure recovery | [Playground](./playground/) |
 | Client creation and request lifecycle | [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/) |
-| useIO + common capability composition | [useIO and Common Capability Composition](./useio-and-common-capabilities/) |
+| useIO local-state composition | Adapter-level [Read/Write Workflow](./react-adapter/read-write-workflow/) (migrated) |
 | Key design, cache hit, refetch | [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/) |
 | Mutation, optimistic update, rollback, invalidation | [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/) |
+| Architecture overview and state machine | [Architecture Overview and State Machine](./architecture-and-state-machine/) |
 | Pagination, prefetch, cancellation | [Pagination, Prefetch, and Cancellation](./pagination-prefetch-and-cancellation/) |
+| Infinite Query deep dive | [Infinite Query: Endless Loading and Page Windows](./infinite-query/) |
 | SSR prefetch and cache seed | [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/) |
-| Framework integration | [React Adapter](./react-adapter/) to [SvelteKit Adapter](./sveltekit-adapter/) |
+| Framework integration (folderized) | [React Adapter entry](./react-adapter/) (same structure for all adapters) |
+
+## Adapter Folder Structure (Unified Across 8 Frameworks)
+
+Each adapter now follows the same 4-page structure:
+
+1. `/<framework>-adapter/` (overview)
+2. `/<framework>-adapter/quick-start/` (10-minute setup)
+3. `/<framework>-adapter/read-write-workflow/` (read/write workflow)
+4. `/<framework>-adapter/production-patterns/` (production rollout)
+
+Covered frameworks: React, Vue, Svelte, Solid, Lynx, Next.js, Nuxt, SvelteKit.
+
+## Adapter Entries
+
+- [React Adapter](./react-adapter/)
+- [Vue Adapter](./vue-adapter/)
+- [Svelte Adapter](./svelte-adapter/)
+- [Solid Adapter](./solid-adapter/)
+- [Lynx Adapter](./lynx-adapter/)
+- [Next.js Adapter](./next-adapter/)
+- [Nuxt Adapter](./nuxt-adapter/)
+- [SvelteKit Adapter](./sveltekit-adapter/)
 
 ## Recommended Reading Order
 
 1. [Async TodoList Tutorial](./tutorial-async-todo-list/)
 2. [Playground](./playground/)
 3. [Vanilla: Query Client and Lifecycle](./vanilla-query-client-and-lifecycle/)
-4. [useIO and Common Capability Composition](./useio-and-common-capabilities/)
-5. [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)
-6. [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/)
+4. [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)
+5. [Mutation and Optimistic Update](./mutation-optimistic-update-and-invalidation/)
+6. [Architecture Overview and State Machine](./architecture-and-state-machine/)
 7. [Pagination, Prefetch, and Cancellation](./pagination-prefetch-and-cancellation/)
-8. [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/)
-9. [React Adapter](./react-adapter/)
-10. [Vue Adapter](./vue-adapter/)
-11. [Svelte Adapter](./svelte-adapter/)
-12. [Solid Adapter](./solid-adapter/)
-13. [Lynx Adapter](./lynx-adapter/)
-14. [Next.js Adapter](./next-adapter/)
-15. [Nuxt Adapter](./nuxt-adapter/)
-16. [SvelteKit Adapter](./sveltekit-adapter/)
+8. [Infinite Query: Endless Loading and Page Windows](./infinite-query/)
+9. [SSR Cache Seeding Strategy](./ssr-cache-seeding-strategy/)
+10. Pick your target adapter entry (for example, [React Adapter](./react-adapter/)).
+11. Complete its fixed 4-page path: `overview -> quick-start -> read-write-workflow -> production-patterns`.
+12. Learn useIO local-state composition in the adapter Read/Write Workflow chapter (migrated from Query Architecture).
 
 ## Next Steps
 

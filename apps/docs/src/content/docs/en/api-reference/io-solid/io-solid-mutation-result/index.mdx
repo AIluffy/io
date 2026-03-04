@@ -1,0 +1,52 @@
+---
+title: "IoSolidMutationResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSolidMutationResult<TData, TVariables, TError>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoMutationState<TData, TError>>` |
+| flags | `Accessor<IoMutationDerivedFlags>` |
+| mutate | `(variables: TVariables) => void` |
+| mutateAsync | `(variables: TVariables) => Promise<TData>` |
+| reset | `() => void` |
+| cancel | `() => void` |
+| mutation | `IoMutation<TData, TVariables, TError>` |
+
+## Minimal Example
+
+```ts
+import type { IoSolidMutationResult } from '@iostore/solid';
+
+let value!: IoSolidMutationResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoSolidInfiniteQueryResult](../io-solid-infinite-query-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseInfiniteQueryResult](../io-solid-suspense-infinite-query-result/)
+- [IoSolidSuspenseQueryResult](../io-solid-suspense-query-result/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-query.ts`

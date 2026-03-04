@@ -159,6 +159,68 @@ describe('@iostore/query observer runtime', () => {
     observer.dispose();
   });
 
+
+  it('supports infinite query paging and derived flags', async () => {
+    const client = createQueryClient();
+
+    const query = client.defineInfiniteQuery<number, Error, number>({
+      key: ['infinite', 'pages'],
+      initialPageParam: 1,
+      queryFn: async ({ pageParam }) => pageParam,
+      getNextPageParam: (lastPage) => (lastPage < 3 ? lastPage + 1 : null),
+      getPreviousPageParam: (firstPage) => (firstPage > 1 ? firstPage - 1 : null),
+    });
+
+    await expect(query.fetchNextPage()).resolves.toMatchObject({
+      pages: [1],
+      pageParams: [1],
+    });
+
+    await expect(query.fetchNextPage()).resolves.toMatchObject({
+      pages: [1, 2],
+      pageParams: [1, 2],
+    });
+
+    const flags = query.getFlags();
+    expect(flags.hasNextPage).toBe(true);
+    expect(flags.hasPreviousPage).toBe(false);
+
+    await expect(query.fetchPreviousPage()).resolves.toMatchObject({
+      pages: [1, 2],
+      pageParams: [1, 2],
+    });
+  });
+
+  it('hydrates and dehydrates infinite query state', async () => {
+    const source = createQueryClient();
+
+    const infinite = source.defineInfiniteQuery<number, Error, number>({
+      key: ['hydrate', 'infinite'],
+      initialPageParam: 0,
+      queryFn: async ({ pageParam }) => pageParam + 1,
+      getNextPageParam: (lastPage) => (lastPage < 2 ? lastPage : null),
+    });
+
+    await infinite.fetchNextPage();
+
+    const dehydrated = source.dehydrate();
+    expect(dehydrated.infiniteQueries).toHaveLength(1);
+
+    const target = createQueryClient();
+    target.hydrate(dehydrated);
+
+    const restored = target
+      .defineInfiniteQuery<number, Error, number>({
+        key: ['hydrate', 'infinite'],
+        initialPageParam: 0,
+        queryFn: async ({ pageParam }) => pageParam + 1,
+        getNextPageParam: () => null,
+      })
+      .getData();
+
+    expect(restored?.pages).toEqual([1]);
+    expect(restored?.pageParams).toEqual([0]);
+  });
   it('hydrates and dehydrates query state', async () => {
     const source = createQueryClient();
     const sourceObserver = source.observeQuery<number>({

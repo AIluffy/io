@@ -1,0 +1,40 @@
+---
+title: "ResolveQueryInput"
+description: "类型 API 参考。"
+---
+
+
+## 何时使用
+
+当你需要复用类型结构时使用此类型别名。
+
+## 签名
+
+```ts
+ResolveQueryInput<TData, TError>
+```
+
+## 最小示例
+
+```ts
+import type { ResolveQueryInput } from '@iostore/react/rsc';
+
+let value!: ResolveQueryInput;
+console.log(value);
+```
+
+## 常见误用
+
+- 避免在用户文档中展开过于复杂的类型细节。
+- 调整类型别名时注意下游兼容性。
+
+## 相关 API
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [UseInfiniteQueryOptions](../use-infinite-query-options/)
+- [UseInfiniteQueryResult](../use-infinite-query-result/)
+- [UseMutationResult](../use-mutation-result/)
+
+## 源码
+
+- `packages/io-react/src/lib/rsc-safe.ts`

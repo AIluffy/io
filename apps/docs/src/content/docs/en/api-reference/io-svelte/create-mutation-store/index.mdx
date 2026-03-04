@@ -1,0 +1,50 @@
+---
+title: "createMutationStore"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TVariables, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoMutationStore<TData, TVariables, TError>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoMutationOptions<TData, TVariables, TError, TContext>` |
+
+## Returns
+
+`IoMutationStore<TData, TVariables, TError>`
+
+## Minimal Example
+
+```ts
+import { createMutationStore } from '@iostore/svelte';
+
+const result = createMutationStore(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [createInfiniteQueryStore](../create-infinite-query-store/)
+- [createQueryStore](../create-query-store/)
+- [createSuspenseInfiniteQueryStore](../create-suspense-infinite-query-store/)
+- [createSuspenseQueryStore](../create-suspense-query-store/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

@@ -1,0 +1,50 @@
+---
+title: "useMutation"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TVariables, TError = Error, TContext = unknown>(options: IoMutationOptions<TData, TVariables, TError, TContext>) => IoVueMutationResult<TData, TVariables, TError>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `IoMutationOptions<TData, TVariables, TError, TContext>` |
+
+## Returns
+
+`IoVueMutationResult<TData, TVariables, TError>`
+
+## Minimal Example
+
+```ts
+import { useMutation } from '@iostore/vue';
+
+const result = useMutation(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ioRef](../io-ref/)
+- [useInfiniteQuery](../use-infinite-query/)
+- [useIO](../use-io/)
+- [useIOSelector](../use-ioselector/)
+
+## Source
+
+- `packages/io-vue/src/lib/query.ts`

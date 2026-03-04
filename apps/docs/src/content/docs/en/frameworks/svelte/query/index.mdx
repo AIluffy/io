@@ -1,0 +1,20 @@
+---
+title: Query Capability Matrix
+description: Svelte Query guides and decision map.
+sidebar:
+  order: 1
+---
+
+This section organizes Query usage in Svelte by standard query, infinite query, and advanced patterns.
+
+| Scenario | Recommended page | Core API |
+| --- | --- | --- |
+| Single resource fetch | [Standard query](./use-query/) | `createQueryStore` / `toQueryStore` |
+| Infinite list / load more | [Infinite query](./use-infinite-query/) | `createInfiniteQueryStore` / `toInfiniteQueryStore` |
+| Encapsulation and optimization | [Advanced patterns](./advanced-patterns/) | key design, cancellation, prefetch |
+
+
+## Deep Dive (Query Engineering)
+
+- [Svelte adapter entry](/en/cookbook/async-query/svelte-adapter/)
+- Fixed path: `overview -> quick-start -> read-write-workflow -> production-patterns`

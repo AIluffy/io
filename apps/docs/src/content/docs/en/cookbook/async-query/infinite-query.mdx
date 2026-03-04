@@ -1,0 +1,86 @@
+---
+title: "Infinite Query: Endless Loading and Page Windows"
+description: From a first infinite list to maxPages sliding window, bidirectional loading, and cancellation control.
+sidebar:
+  order: 9
+---
+
+## Why Infinite Query
+
+A standard query manages one `TData`; an infinite query manages page-accumulated data:
+
+```ts
+type InfiniteData<TData, TPageParam> = {
+  pages: readonly TData[];
+  pageParams: readonly TPageParam[];
+};
+```
+
+Use it for infinite scroll, load-more feeds, and bidirectional chat history.
+
+## First runnable example
+
+```tsx
+import { useInfiniteQuery } from '@iostore/react';
+
+type Page = { items: { id: number; title: string }[]; nextCursor: number | null };
+
+export function Feed() {
+  const feed = useInfiniteQuery<Page, Error, number>({
+    key: ['feed'],
+    initialPageParam: 0,
+    queryFn: async ({ signal, pageParam }) => {
+      const res = await fetch(`/api/feed?cursor=${pageParam}`, { signal });
+      return (await res.json()) as Page;
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+
+  const rows = feed.data?.pages.flatMap((page) => page.items) ?? [];
+
+  return (
+    <>
+      {rows.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
+      <button disabled={!feed.hasNextPage || feed.isFetchingNextPage} onClick={() => void feed.fetchNextPage()}>
+        {feed.isFetchingNextPage ? 'Loading...' : 'Load more'}
+      </button>
+    </>
+  );
+}
+```
+
+## Core options
+
+| Option | Required | Notes |
+| --- | --- | --- |
+| `initialPageParam` | Yes | Initial page input |
+| `queryFn({ signal, pageParam })` | Yes | Adds `pageParam` vs standard query |
+| `getNextPageParam(lastPage, allPages, lastPageParam, allPageParams)` | Yes | Return `null/undefined` to stop |
+| `getPreviousPageParam(...)` | No | Enables backward loading |
+| `maxPages` | No | Caps cached pages; trims by fetch direction |
+
+## State fields and operations
+
+- Data fields: `data.pages`, `data.pageParams`
+- Direction field: `fetchDirection` (`forward` / `backward` / `null`)
+- Derived flags: `hasNextPage`, `hasPreviousPage`, `isFetchingNextPage`, `isFetchingPreviousPage`
+
+Common actions:
+
+- `fetchNextPage()` / `fetchPreviousPage()`
+- `refetch()` (hook-level mapping to `refetchAllPages()`)
+- `prefetch()`
+- `invalidate(refetch?)`
+- `cancel()`
+
+## Relation to page-based pagination
+
+- Numbered pages: start at [`Pagination, Prefetch, and Cancellation`](./pagination-prefetch-and-cancellation/)
+- Endless feeds: use Infinite Query to avoid manual aggregation boilerplate
+
+## Next steps
+
+- React hook API: [`useInfiniteQuery`](/en/api-reference/io-react/use-infinite-query/)
+- Suspense variant: [`useSuspenseInfiniteQuery`](/en/api-reference/io-react/use-suspense-infinite-query/)

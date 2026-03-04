@@ -1,0 +1,51 @@
+---
+title: "useSuspenseInfiniteQuery"
+description: "Function API reference."
+---
+
+
+## When to Use
+
+Use this function when you need this behavior from the package API.
+
+## Signature
+
+```ts
+<TData, TError = Error, TPageParam = unknown, TSelected = InfiniteData<TData, TPageParam>>(options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>, suspenseOptions?: SuspenseCompatOptions) => UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Parameters
+
+| Name | Type |
+| --- | --- |
+| options | `UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>` |
+| suspenseOptions | `SuspenseCompatOptions` |
+
+## Returns
+
+`UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected>`
+
+## Minimal Example
+
+```ts
+import { useSuspenseInfiniteQuery } from '@iostore/react';
+
+const result = useSuspenseInfiniteQuery(/* ...args */);
+console.log(result);
+```
+
+## Common Pitfalls
+
+- Validate argument types and nullability before calling.
+- Confirm import path and runtime environment (server/client) expectations.
+
+## Related APIs
+
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

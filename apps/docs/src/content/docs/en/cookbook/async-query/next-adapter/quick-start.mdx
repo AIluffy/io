@@ -1,0 +1,88 @@
+---
+title: "10-Minute Quick Start"
+description: "Build a runnable minimal query setup in Next.js."
+sidebar:
+  order: 2
+---
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/react react next
+```
+
+## Minimal Copyable Example
+
+```tsx
+// app/users/page.tsx (Server Component)
+import { createQueryClient } from '@iostore/store/query';
+import { UsersClient } from './users-client';
+
+export default async function UsersPage() {
+  const client = createQueryClient();
+  const query = client.defineQuery({
+    key: ['users', 'acme'],
+    queryFn: ({ signal }) =>
+      fetch('https://example.com/api/users?tenant=acme', { signal }).then((r) => r.json()),
+  });
+
+  await query.prefetch();
+  const initialUsers = query.getState().data;
+
+  return <UsersClient initialUsers={initialUsers ?? []} />;
+}
+```
+
+```tsx
+// app/users/users-client.tsx (Client Component)
+'use client';
+
+import { useQuery } from '@iostore/react';
+
+export function UsersClient({ initialUsers }: { initialUsers: Array<{ id: string; name: string }> }) {
+  const users = useQuery({
+    key: ['users', 'acme'],
+    queryFn: ({ signal }) => fetch('/api/users?tenant=acme', { signal }).then((r) => r.json()),
+    placeholderData: initialUsers,
+  });
+
+  if (users.isLoading) return <p>Loading...</p>;
+  if (users.error) return <p>{String(users.error)}</p>;
+  return <pre>{JSON.stringify(users.data, null, 2)}</pre>;
+}
+```
+
+## State Branching Checklist
+
+- First load: branch on `isLoading` (or equivalent state).
+- Background refresh: rely on `isFetching` (or observer `fetchStatus`).
+- Error state: render diagnosable output, do not swallow `error`.
+
+## Cancellation Semantics (AbortSignal)
+
+- Always forward `signal` from `queryFn` to `fetch` or your request client.
+- Treat cancellation as control flow, not as a business failure toast.
+- Enable cancellation on fast navigation (`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`).
+
+## 3 Things to Replace After Copying
+
+1. Replace demo key with your domain key (`users` -> `orders`).
+2. Replace request URL and response type with real API contracts.
+3. Tune retry and cancellation strategy based on screen interaction intensity.
+
+## Related APIs
+
+- [Next.js adapter API](/en/api-reference/io-react/)
+- [Query core (io-query)](/en/api-reference/io-query/)
+
+## Next
+
+- [Read/Write Workflow](./read-write-workflow/)
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

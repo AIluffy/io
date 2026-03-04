@@ -11,7 +11,7 @@ Use this function when you need this behavior from the package API.
 ## Signature
 
 ```ts
-<TData, TError = Error, TSelected = TData>(options: UseQueryOptions<TData, TError, TSelected>) => UseSuspenseQueryResult<TData, TError, TSelected>
+<TData, TError = Error, TSelected = TData>(options: UseQueryOptions<TData, TError, TSelected>, suspenseOptions?: SuspenseCompatOptions) => UseSuspenseQueryResult<TData, TError, TSelected>
 ```
 
 ## Parameters
@@ -19,6 +19,7 @@ Use this function when you need this behavior from the package API.
 | Name | Type |
 | --- | --- |
 | options | `UseQueryOptions<TData, TError, TSelected>` |
+| suspenseOptions | `SuspenseCompatOptions` |
 
 ## Returns
 
@@ -40,10 +41,10 @@ console.log(result);
 
 ## Related APIs
 
-- [useIO](../use-io/)
-- [useIOSelector](../use-ioselector/)
-- [useMutation](../use-mutation/)
-- [useQuery](../use-query/)
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
 
 ## Source
 

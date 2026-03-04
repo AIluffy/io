@@ -1,0 +1,40 @@
+---
+title: "IoSuspenseInfiniteQueryStore"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSuspenseInfiniteQueryStore<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { IoSuspenseInfiniteQueryStore } from '@iostore/svelte';
+
+let value!: IoSuspenseInfiniteQueryStore;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoInfiniteQueryStore](../io-infinite-query-store/)
+- [IoMutationStore](../io-mutation-store/)
+- [IoQueryStore](../io-query-store/)
+- [IoSuspenseQueryStore](../io-suspense-query-store/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

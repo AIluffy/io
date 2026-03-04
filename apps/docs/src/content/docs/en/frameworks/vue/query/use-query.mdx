@@ -1,0 +1,29 @@
+---
+title: Standard Query (useQuery)
+description: Implement cache-aware, cancelable queries in Vue.
+sidebar:
+  order: 2
+---
+
+```ts
+import { computed } from 'vue';
+import { useQuery } from '@iostore/vue';
+
+const users = useQuery({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+
+const isLoading = computed(() => users.state.value.isLoading);
+const data = computed(() => users.data.value);
+```
+
+- Vue query results are exposed via `state` and `data` `ShallowRef`s.
+- Put input params into `key`.
+- Always pass `signal` to network requests.
+
+
+## Deep Dive (Query Engineering)
+
+- [Vue adapter entry](/en/cookbook/async-query/vue-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/vue-adapter/quick-start/)

@@ -1,0 +1,33 @@
+---
+title: Infinite Query (useInfiniteQuery)
+description: Build load-more and infinite scrolling in Vue.
+sidebar:
+  order: 3
+---
+
+```ts
+import { computed } from 'vue';
+import { useInfiniteQuery } from '@iostore/vue';
+
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+
+const rows = computed(() =>
+  feed.data.value?.pages.flatMap((page) => page.items) ?? [],
+);
+```
+
+- Render from `feed.data.value?.pages`.
+- Return `null` from `getNextPageParam` when done.
+- Add `maxPages` to keep memory bounded.
+
+
+## Deep Dive (Query Engineering)
+
+- [Vue adapter entry](/en/cookbook/async-query/vue-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/vue-adapter/production-patterns/)

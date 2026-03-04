@@ -1,0 +1,75 @@
+---
+title: "10 分钟上手"
+description: "在 Lynx 中完成可运行的 Query 最小接入。"
+sidebar:
+  order: 2
+---
+
+## 安装
+
+```bash
+npm i @iostore/store @iostore/lynx @lynx-js/react
+```
+
+## 最小可复制示例
+
+```tsx
+import { useQuery } from '@iostore/lynx';
+
+type FeedItem = { id: string; title: string };
+
+export function Feed({ tab }: { tab: string }) {
+  const feed = useQuery<FeedItem[]>({
+    key: ['feed', tab],
+    queryFn: ({ signal }) =>
+      fetch(`/api/feed?tab=${tab}`, { signal }).then((r) => r.json()),
+    cancelOnUnmount: true,
+  });
+
+  if (feed.isLoading) return <text>Loading...</text>;
+  if (feed.error) return <text>{String(feed.error)}</text>;
+
+  return (
+    <view>
+      {(feed.data ?? []).map((item) => (
+        <text key={item.id}>{item.title}</text>
+      ))}
+    </view>
+  );
+}
+```
+
+## 状态分支渲染建议
+
+- 首屏加载：使用 `isLoading`（或等价状态）。
+- 后台刷新：使用 `isFetching`（或观察者 `fetchStatus`）。
+- 错误态：直接展示可诊断信息，不要吞掉 `error`。
+
+## 取消语义（AbortSignal）
+
+- `queryFn` 必须透传 `signal` 到 `fetch` / 请求客户端。
+- 把取消当作控制流，不当作业务失败弹窗。
+- 页面快速切换场景启用取消（`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`）。
+
+## 复制后需要改的 3 处
+
+1. 把示例 key 改成业务域 key（例如 `users` -> `orders`）。
+2. 把请求 URL 与返回类型改成项目真实接口。
+3. 把重试、取消策略调成你的页面交互强度。
+
+## 相关 API
+
+- [Lynx 适配 API](/api-reference/io-lynx/)
+- [Query 核心（io-query）](/api-reference/io-query/)
+
+## 下一步
+
+- [读写实战](./read-write-workflow/)
+- [进阶与上线](./production-patterns/)
+
+
+## 导航
+
+- [返回本框架概览](./)
+- [返回 Query 专题](/cookbook/async-query/)
+- [继续：进阶与上线](./production-patterns/)

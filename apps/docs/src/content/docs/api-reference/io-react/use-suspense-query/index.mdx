@@ -11,7 +11,7 @@ description: "函数 API 参考。"
 ## 签名
 
 ```ts
-<TData, TError = Error, TSelected = TData>(options: UseQueryOptions<TData, TError, TSelected>) => UseSuspenseQueryResult<TData, TError, TSelected>
+<TData, TError = Error, TSelected = TData>(options: UseQueryOptions<TData, TError, TSelected>, suspenseOptions?: SuspenseCompatOptions) => UseSuspenseQueryResult<TData, TError, TSelected>
 ```
 
 ## 参数
@@ -19,6 +19,7 @@ description: "函数 API 参考。"
 | Name | Type |
 | --- | --- |
 | options | `UseQueryOptions<TData, TError, TSelected>` |
+| suspenseOptions | `SuspenseCompatOptions` |
 
 ## 返回
 
@@ -40,10 +41,10 @@ console.log(result);
 
 ## 相关 API
 
-- [useIO](../use-io/)
-- [useIOSelector](../use-ioselector/)
-- [useMutation](../use-mutation/)
-- [useQuery](../use-query/)
+- [ensureInfiniteQueryData](../ensure-infinite-query-data/)
+- [ensureQueryData](../ensure-query-data/)
+- [resolveInfiniteQueryHandle](../resolve-infinite-query-handle/)
+- [resolveQueryHandle](../resolve-query-handle/)
 
 ## 源码
 

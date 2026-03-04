@@ -1,0 +1,45 @@
+---
+title: "Production Patterns"
+description: "Handle pagination, prefetch, cancellation, retry, and rollout troubleshooting in Nuxt."
+sidebar:
+  order: 4
+---
+
+## SSR / CSR Boundary Strategy
+
+```ts
+import { createQueryClient } from '@iostore/store/query';
+
+export async function buildDashboardState() {
+  const client = createQueryClient();
+  const dashboard = client.defineQuery({
+    key: ['dashboard'],
+    queryFn: ({ signal }) => $fetch('/api/dashboard', { signal }),
+  });
+
+  await dashboard.prefetch();
+  return client.dehydrate();
+}
+```
+
+- Create a request-scoped query client; never share singleton clients across requests.
+- Transfer only serializable data in SSR (plain objects/arrays).
+- Keep invalidate/refetch semantics after hydration; seed cache is not the terminal state.
+
+## Production Troubleshooting Checklist
+
+1. Verify key parity between server and client.
+2. Ensure dehydrated payload is not polluted by non-serializable values.
+3. Ensure invalidate still runs after writes to avoid stale post-hydration data.
+4. Review timeout and retry policies to prevent amplified server retries.
+
+## Related APIs
+
+- [Query core: createQueryClient](/en/api-reference/io-query/create-query-client/)
+- [Query core: dehydrate/hydrate](/en/api-reference/io-query/io-dehydrate-options/)
+- [Nuxt adapter API](/en/api-reference/io-vue/)
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)

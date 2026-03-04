@@ -1,65 +1,47 @@
 ---
 title: 分页、预取与取消
-description: 在长列表中平衡体验与流量，避免并发覆盖和重复项。
+description: 拆分理解普通分页与 Infinite Query 分页，按场景选择更稳健的策略。
 sidebar:
   order: 8
 ---
 
-## 是什么
+## 5.1 普通分页查询模式
 
-分页场景通常组合三件事：稳定分页 key、下一页预取、在途请求取消。
-
-## 何时使用
-
-- 列表按 page/cursor 分段加载。
-- 你希望滚动前预取下一页减少等待。
-- 你需要在切页时避免旧请求覆盖新结果。
-
-## 核心 API
-
-- [io-query-key](/api-reference/io-query/io-query-key/)
-- [io-query-filter](/api-reference/io-query/io-query-filter/)
-- [io-query-client](/api-reference/io-query/io-query-client/)
-
-## 最小示例
+适合固定页码（`page=1,2,3...`）场景：
 
 ```ts
 const current = client.defineQuery({
   key: ['users', { page, pageSize }],
   queryFn: ({ signal }) => fetch(`/api/users?page=${page}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
 });
-
-if (current.getData()?.hasMore) {
-  const next = page + 1;
-  await client
-    .query({
-      key: ['users', { page: next, pageSize }],
-      queryFn: ({ signal }) =>
-        fetch(`/api/users?page=${next}&pageSize=${pageSize}`, { signal }).then((r) => r.json()),
-    })
-    .prefetch();
-}
-
-current.cancel();
 ```
 
-## getData() 与 snapshot().data
+建议：
 
-`current.getData()` 是 `current.snapshot().data` 的快捷写法。  
-两者都读取当前缓存数据，按可读性选择即可。
+- 把分页参数放进 key。
+- 仅在 `hasMore` 为真时预取下一页。
 
-## 常见误区
+## 5.2 Infinite Query 预取与取消
 
-- 分页参数没进 key，导致串页。
-- 每次滚动都盲目预取，造成流量放大。
-- append 不按主键去重，出现重复行。
+适合无限滚动/加载更多：
 
-## 实践建议
+```ts
+await client.prefetchInfiniteQuery(
+  {
+    key: ['feed'],
+    initialPageParam: 0,
+    queryFn: ({ signal, pageParam }) =>
+      fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  },
+  3,
+);
+```
 
-- 只在 `hasMore` 为真时预取。
-- 把取消请求视为正常控制流，不当作业务错误。
-- 分页响应统一包含 `hasMore` 与稳定主键。
+- 第二个参数可指定预取页数（如上示例预取 3 页）。
+- 调用 `cancel()` 会取消当前请求，并重置当前方向状态。
 
-## 下一步
+## 选择建议
 
-- 继续：[SSR 缓存注入策略](./ssr-cache-seeding-strategy/)
+- **页码分页**：`defineQuery` + 预取下一页。
+- **无限滚动**：`defineInfiniteQuery` / `useInfiniteQuery`。

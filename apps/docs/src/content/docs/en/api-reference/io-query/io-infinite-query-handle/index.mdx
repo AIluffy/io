@@ -1,0 +1,63 @@
+---
+title: "IoInfiniteQueryHandle"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoInfiniteQueryHandle<TData, TError, TPageParam>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| key | `IoQueryKey` |
+| keyHash | `KeyHash` |
+| fetchNextPage | `(signal?: AbortSignal) => Promise<InfiniteData<TData, TPageParam>>` |
+| fetchPreviousPage | `(signal?: AbortSignal) => Promise<InfiniteData<TData, TPageParam>>` |
+| refetchAllPages | `(signal?: AbortSignal) => Promise<InfiniteData<TData, TPageParam>>` |
+| prefetch | `() => Promise<void>` |
+| ensureData | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| reset | `() => void` |
+| setData | `(updater: InfiniteData<TData, TPageParam> \| ((prev: InfiniteData<TData, TPageParam> \| undefined) => InfiniteData<TData, TPageParam>)) => void` |
+| getData | `() => InfiniteData<TData, TPageParam> \| undefined` |
+| getState | `() => IoInfiniteQueryState<TData, TError, TPageParam>` |
+| getFlags | `() => IoInfiniteQueryDerivedFlags` |
+| isActive | `boolean` |
+| observerCount | `number` |
+| subscribe | `(fn: (state: IoInfiniteQueryState<TData, TError, TPageParam>) => void) => IoUnsubscribe` |
+| subscribeUpdate | `(fn: (update: IoUpdate) => void) => IoUnsubscribe` |
+
+## Minimal Example
+
+```ts
+import type { IoInfiniteQueryHandle } from '@iostore/store/query';
+
+let value!: IoInfiniteQueryHandle;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [InfiniteData](../infinite-data/)
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`

@@ -1,3 +1,5 @@
+'use client';
+
 import type {
   IoMutation,
   IoMutationDerivedFlags,
@@ -20,6 +22,7 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useIO } from './use-io.js';
+import { suspendWithReactUse } from './suspense-compat.js';
 
 type UseQueryDefinitionOptions<TData, TError, TSelected> =
   IoQueryDefinition<TData, TError> &
@@ -62,6 +65,10 @@ export type UseMutationResult<
     cancel: () => void;
     mutation: IoMutation<TData, TVariables, TError>;
   };
+
+type SuspenseCompatOptions = {
+  useReactUseHook?: boolean;
+};
 
 export type UseSuspenseQueryResult<
   TData,
@@ -226,6 +233,7 @@ export function useMutation<
 
 export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
   options: UseQueryOptions<TData, TError, TSelected>,
+  suspenseOptions?: SuspenseCompatOptions,
 ): UseSuspenseQueryResult<TData, TError, TSelected> {
   const result = useQuery<TData, TError, TSelected>(options);
 
@@ -234,7 +242,7 @@ export function useSuspenseQuery<TData, TError = Error, TSelected = TData>(
   }
 
   if (result.status === 'pending') {
-    throw result.query.fetch(false);
+    suspendWithReactUse(result.query.fetch(false), suspenseOptions?.useReactUseHook ?? false);
   }
 
   return {

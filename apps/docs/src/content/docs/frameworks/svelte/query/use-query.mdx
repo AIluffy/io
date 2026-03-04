@@ -1,0 +1,48 @@
+---
+title: 标准查询（Query Store）
+description: 在 Svelte 中通过 Query Store 落地可缓存、可刷新、可取消的标准查询。
+sidebar:
+  order: 2
+---
+
+## 最小示例
+
+```ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const users = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+});
+```
+
+```svelte
+<script lang="ts">
+  import { users } from './stores';
+</script>
+
+{#if $users.isLoading}
+  <p>Loading…</p>
+{:else if $users.error}
+  <p>{$users.error.message}</p>
+{:else}
+  <pre>{JSON.stringify($users.data, null, 2)}</pre>
+{/if}
+```
+
+## 使用要点
+
+- Svelte 适配层以 **store API** 为主，不提供 `useQuery` Hook。
+- 把业务参数放进 `key`，避免缓存串用。
+- 在 `queryFn` 中透传 `signal`，支持取消。
+
+## 继续阅读
+
+- [无限查询](./use-infinite-query/)
+- [高级模式](./advanced-patterns/)
+
+
+## 深入阅读（Query 工程）
+
+- [Svelte 适配入口](/cookbook/async-query/svelte-adapter/)
+- [推荐延伸页面](/cookbook/async-query/svelte-adapter/quick-start/)

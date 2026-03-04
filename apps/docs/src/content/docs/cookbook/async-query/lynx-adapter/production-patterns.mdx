@@ -1,0 +1,46 @@
+---
+title: "进阶与上线"
+description: "在 Lynx 中处理分页、预取、取消、重试与上线排障。"
+sidebar:
+  order: 4
+---
+
+## Infinite Query 与窗口控制
+
+```tsx
+import { useInfiniteQuery } from '@iostore/lynx';
+
+const feed = useInfiniteQuery({
+  key: ['feed', 'home'],
+  initialPageParam: null as string | null,
+  queryFn: ({ signal, pageParam }) => {
+    'background only';
+    return fetch('/api/feed?cursor=' + (pageParam ?? ''), { signal }).then((r) => r.json());
+  },
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+  maxPages: 5,
+  cancelOnUnmount: true,
+});
+```
+
+- 通过 `maxPages` 控制内存窗口，避免无限累积。
+- 滚动触底触发前先检查 `isFetchingNextPage`。
+- 列表高频切换场景默认开启取消策略。
+
+## 预取、重试与性能策略
+
+1. 路由切换前执行 `prefetch`，降低首屏等待。
+2. 网络波动使用有限重试（例如 1-2 次），业务错误不重试。
+3. 通过 `select` 裁剪渲染字段，减少无关更新。
+4. 统一处理取消，不把 `AbortError` 计入告警。
+
+## 相关 API
+
+- [Query 核心：createQueryClient](/api-reference/io-query/create-query-client/)
+- [Query 核心：dehydrate/hydrate](/api-reference/io-query/io-dehydrate-options/)
+- [Lynx 适配 API](/api-reference/io-lynx/)
+
+## 导航
+
+- [返回本框架概览](./)
+- [返回 Query 专题](/cookbook/async-query/)

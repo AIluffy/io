@@ -1,0 +1,58 @@
+---
+title: "Next.js 适配"
+description: "Next.js Query 落地总览：选型、能力矩阵与分步学习路径。"
+sidebar:
+  order: 1
+---
+
+## 适用场景
+
+- 你需要在 Next.js 中快速建立“可取消、可缓存、可失效刷新”的查询链路。
+- 你希望把“快速上手 -> 读写实战 -> 生产上线”按固定结构交付给团队。
+- 重点是 request-scope query client、SSR 预取与 hydration 一致性。
+
+## API 能力矩阵
+
+| 能力 | 主 API | 是否覆盖 |
+| --- | --- | --- |
+| 标准查询 | `useQuery` | 是 |
+| 无限查询 | `useInfiniteQuery` | 是 |
+| 变更操作 | `useMutation` | 是 |
+| Suspense 变体 | `useSuspense*` | 是 |
+| SSR/CSR 一致性 | 重点 | 是 |
+
+## 与其他框架差异
+
+- 重点是 request-scope query client、SSR 预取与 hydration 一致性。
+- 统一语义保持一致：`fetch / refetch / prefetch / invalidate / cancel`。
+- 差异主要在返回值消费方式（对象 / Ref / Accessor / Store）。
+
+## 常见选型分叉
+
+### 1. 先做单资源还是直接做分页
+- 单资源/单页：先用标准查询建立 key 与取消语义。
+- 列表滚动：直接进入无限查询，避免后续重构为分页模型。
+
+### 2. 先做写操作还是先做只读
+- 建议先完成只读 query，再接 mutation + invalidate。
+- 写操作上线前必须验证失败回滚和重试策略。
+
+### 3. 是否需要 SSR 首屏命中
+- 当前框架以 SSR/CSR 打通为主线，优先处理 hydration 与 request-scope。
+
+## 相关 API
+
+- [Query 核心（io-query）](/api-reference/io-query/)
+- [Next.js 适配 API](/api-reference/io-react/)
+
+## 本框架学习路径（4 页）
+
+1. [概览（当前页）](./)
+2. [10 分钟上手](./quick-start/)
+3. [读写实战](./read-write-workflow/)
+4. [进阶与上线](./production-patterns/)
+
+## 导航
+
+- [返回 Query 专题](/cookbook/async-query/)
+- [框架总览](/frameworks/next/)

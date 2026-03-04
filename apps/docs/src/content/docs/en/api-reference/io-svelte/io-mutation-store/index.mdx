@@ -1,0 +1,40 @@
+---
+title: "IoMutationStore"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoMutationStore<TData, TVariables, TError>
+```
+
+## Minimal Example
+
+```ts
+import type { IoMutationStore } from '@iostore/svelte';
+
+let value!: IoMutationStore;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoInfiniteQueryStore](../io-infinite-query-store/)
+- [IoQueryStore](../io-query-store/)
+- [IoSuspenseInfiniteQueryStore](../io-suspense-infinite-query-store/)
+- [IoSuspenseQueryStore](../io-suspense-query-store/)
+
+## Source
+
+- `packages/io-svelte/src/lib/stores.ts`

@@ -1,0 +1,28 @@
+---
+title: Infinite Query (useInfiniteQuery)
+description: Build load-more and infinite scrolling in React.
+sidebar:
+  order: 3
+---
+
+```ts
+import { useInfiniteQuery } from '@iostore/react';
+
+const feed = useInfiniteQuery({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+```
+
+- Render from `data.pages`.
+- Return `null` from `getNextPageParam` when done.
+- Add `maxPages` to keep memory bounded.
+
+
+## Deep Dive (Query Engineering)
+
+- [React adapter entry](/en/cookbook/async-query/react-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/react-adapter/production-patterns/)

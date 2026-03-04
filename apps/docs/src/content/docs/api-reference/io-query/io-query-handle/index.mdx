@@ -19,7 +19,7 @@ IoQueryHandle<TData, TError>
 | Name | Type |
 | --- | --- |
 | key | `IoQueryKey` |
-| keyHash | `string` |
+| keyHash | `KeyHash` |
 | fetch | `(force?: boolean) => Promise<TData>` |
 | prefetch | `() => Promise<void>` |
 | ensureData | `() => Promise<TData>` |
@@ -51,10 +51,10 @@ console.log(value);
 
 ## 相关 API
 
+- [InfiniteData](../infinite-data/)
 - [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
 - [IoDehydratedQuery](../io-dehydrated-query/)
-- [IoDehydratedState](../io-dehydrated-state/)
-- [IoDehydrateOptions](../io-dehydrate-options/)
 
 ## 源码
 

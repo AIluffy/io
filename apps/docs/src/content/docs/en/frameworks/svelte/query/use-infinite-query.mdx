@@ -1,0 +1,44 @@
+---
+title: Infinite Query (Infinite Query Store)
+description: Build load-more and infinite scrolling in Svelte.
+sidebar:
+  order: 3
+---
+
+```ts
+import { createInfiniteQueryStore } from '@iostore/svelte';
+
+export const feed = createInfiniteQueryStore({
+  key: ['feed'],
+  initialPageParam: 0,
+  queryFn: ({ signal, pageParam }) =>
+    fetch(`/api/feed?cursor=${pageParam}`, { signal }).then((r) => r.json()),
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+});
+```
+
+```svelte
+<script lang="ts">
+  import { feed } from './stores';
+
+  $: rows = $feed.data?.pages.flatMap((page) => page.items) ?? [];
+</script>
+
+{#each rows as row}
+  <div>{row.title}</div>
+{/each}
+
+<button disabled={!$feed.hasNextPage} on:click={() => feed.fetchNextPage()}>
+  Load more
+</button>
+```
+
+- Use `createInfiniteQueryStore` / `toInfiniteQueryStore` for infinite data.
+- Render from `$feed.data.pages`.
+- Add `maxPages` to keep memory bounded.
+
+
+## Deep Dive (Query Engineering)
+
+- [Svelte adapter entry](/en/cookbook/async-query/svelte-adapter/)
+- [Recommended follow-up page](/en/cookbook/async-query/svelte-adapter/production-patterns/)

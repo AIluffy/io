@@ -1,0 +1,40 @@
+---
+title: "UseInfiniteQueryOptions"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>
+```
+
+## Minimal Example
+
+```ts
+import type { UseInfiniteQueryOptions } from '@iostore/react';
+
+let value!: UseInfiniteQueryOptions;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [ResolveInfiniteQueryInput](../resolve-infinite-query-input/)
+- [ResolveQueryInput](../resolve-query-input/)
+- [UseInfiniteQueryResult](../use-infinite-query-result/)
+- [UseMutationResult](../use-mutation-result/)
+
+## Source
+
+- `packages/io-react/src/lib/use-infinite-query.ts`

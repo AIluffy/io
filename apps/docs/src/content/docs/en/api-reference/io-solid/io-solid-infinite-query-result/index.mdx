@@ -1,0 +1,56 @@
+---
+title: "IoSolidInfiniteQueryResult"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+IoSolidInfiniteQueryResult<TData, TError, TPageParam, TSelected>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| state | `Accessor<IoInfiniteQueryObserverResult<TSelected, TError, TPageParam>>` |
+| data | `Accessor<TSelected>` |
+| error | `Accessor<TError>` |
+| fetchNextPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| fetchPreviousPage | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| refetch | `() => Promise<InfiniteData<TData, TPageParam>>` |
+| prefetch | `() => Promise<void>` |
+| invalidate | `(refetch?: boolean) => void` |
+| cancel | `() => void` |
+| query | `IoInfiniteQueryHandle<TData, TError, TPageParam>` |
+| observer | `IoInfiniteQueryObserver<TSelected, TError, TPageParam>` |
+
+## Minimal Example
+
+```ts
+import type { IoSolidInfiniteQueryResult } from '@iostore/solid';
+
+let value!: IoSolidInfiniteQueryResult;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoSolidMutationResult](../io-solid-mutation-result/)
+- [IoSolidQueryResult](../io-solid-query-result/)
+- [IoSolidSuspenseInfiniteQueryResult](../io-solid-suspense-infinite-query-result/)
+- [IoSolidSuspenseQueryResult](../io-solid-suspense-query-result/)
+
+## Source
+
+- `packages/io-solid/src/lib/use-infinite-query.ts`

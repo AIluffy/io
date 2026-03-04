@@ -1,0 +1,47 @@
+---
+title: "InfiniteData"
+description: "Type API reference."
+---
+
+
+## When to Use
+
+Use this type alias to model reusable type shapes.
+
+## Signature
+
+```ts
+InfiniteData<TData, TPageParam>
+```
+
+## Properties
+
+| Name | Type |
+| --- | --- |
+| pages | `readonly TData[]` |
+| pageParams | `readonly TPageParam[]` |
+
+## Minimal Example
+
+```ts
+import type { InfiniteData } from '@iostore/store/query';
+
+let value!: InfiniteData;
+console.log(value);
+```
+
+## Common Pitfalls
+
+- Avoid over-expanding complex aliases in user-facing docs.
+- Keep aliases stable to prevent downstream type breakage.
+
+## Related APIs
+
+- [IoDataStatus](../io-data-status/)
+- [IoDehydratedInfiniteQuery](../io-dehydrated-infinite-query/)
+- [IoDehydratedQuery](../io-dehydrated-query/)
+- [IoDehydratedState](../io-dehydrated-state/)
+
+## Source
+
+- `packages/io/src/lib/query/types.ts`
