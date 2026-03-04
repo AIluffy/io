@@ -4,6 +4,10 @@ export type IoUnsubscribe = () => void;
 
 export type IoQueryKey = readonly unknown[];
 
+export type KeyHash = string & {
+  readonly __brand: 'IoKeyHash';
+};
+
 export type IoDataStatus = 'pending' | 'success' | 'error';
 
 export type IoFetchStatus = 'idle' | 'fetching' | 'paused';
@@ -134,7 +138,7 @@ export type IoInfiniteQueryDerivedFlags = IoQueryDerivedFlags & {
 
 export type IoQueryHandle<TData = unknown, TError = Error> = {
   readonly key: IoQueryKey;
-  readonly keyHash: string;
+  readonly keyHash: KeyHash;
   fetch(force?: boolean): Promise<TData>;
   prefetch(): Promise<void>;
   ensureData(): Promise<TData>;
@@ -157,7 +161,7 @@ export type IoInfiniteQueryHandle<
   TPageParam = unknown,
 > = {
   readonly key: IoQueryKey;
-  readonly keyHash: string;
+  readonly keyHash: KeyHash;
   fetchNextPage(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
   fetchPreviousPage(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
   refetchAllPages(signal?: AbortSignal): Promise<InfiniteData<TData, TPageParam>>;
@@ -187,7 +191,7 @@ export type IoInfiniteQueryHandle<
 export type IoQueryObserver<TData = unknown, TError = Error> =
   IoUnit<IoQueryObserverResult<TData, TError>> & {
     readonly key: IoQueryKey;
-    readonly keyHash: string;
+    readonly keyHash: KeyHash;
     readonly query: IoQueryHandle<unknown, TError>;
     fetch(): Promise<unknown>;
     refetch(): Promise<unknown>;
@@ -231,7 +235,7 @@ export type IoInfiniteQueryObserver<
   TPageParam = unknown,
 > = IoUnit<IoInfiniteQueryObserverResult<TData, TError, TPageParam>> & {
   readonly key: IoQueryKey;
-  readonly keyHash: string;
+  readonly keyHash: KeyHash;
   readonly query: IoInfiniteQueryHandle<unknown, TError, TPageParam>;
   fetchNextPage(): Promise<InfiniteData<unknown, TPageParam>>;
   fetchPreviousPage(): Promise<InfiniteData<unknown, TPageParam>>;
@@ -313,13 +317,13 @@ export type IoQueryInput<TData = unknown, TError = Error> =
 
 export type IoDehydratedQuery = {
   key: IoQueryKey;
-  keyHash: string;
+  keyHash: KeyHash;
   state: IoQueryState<unknown, unknown>;
 };
 
 export type IoDehydratedInfiniteQuery = {
   readonly key: IoQueryKey;
-  readonly keyHash: string;
+  readonly keyHash: KeyHash;
   readonly state: IoInfiniteQueryState<unknown, unknown, unknown>;
 };
 

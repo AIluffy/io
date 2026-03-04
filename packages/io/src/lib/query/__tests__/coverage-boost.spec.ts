@@ -8,11 +8,15 @@ import {
 } from '../client-hydration.js';
 import { isInfiniteHandle } from '../client-helpers.js';
 import { createQueryCache } from '../query-cache.js';
+import type { KeyHash } from '../types.js';
 import { hashKey } from '../utils.js';
 
 function createDefaults() {
   return createQueryDefaults({});
 }
+
+// Test-only branded hash fixture for hydration-shape guards.
+const MOCK_KEY_HASH = 'h' as KeyHash;
 
 describe('query coverage boost', () => {
   it('validates dehydrated query shape checks', () => {
@@ -21,7 +25,7 @@ describe('query coverage boost', () => {
     // 覆盖 client-hydration.ts L83 的 false 分支：缺失 keyHash/state 字段。
     expect(isDehydratedQuery({ key: ['k'] })).toBe(false);
     // 覆盖 client-hydration.ts L83 的 true 分支：对象包含 key/keyHash/state。
-    expect(isDehydratedQuery({ key: ['k'], keyHash: 'h', state: {} })).toBe(true);
+    expect(isDehydratedQuery({ key: ['k'], keyHash: MOCK_KEY_HASH, state: {} })).toBe(true);
   });
 
   it('validates dehydrated infinite query guard branches', () => {
@@ -29,17 +33,17 @@ describe('query coverage boost', () => {
     expect(isDehydratedInfiniteQuery('x')).toBe(false);
     // 覆盖 client-hydration.ts L92 的 false 分支：state 不是对象。
     expect(
-      isDehydratedInfiniteQuery({ key: ['k'], keyHash: 'h', state: 1 }),
+      isDehydratedInfiniteQuery({ key: ['k'], keyHash: MOCK_KEY_HASH, state: 1 }),
     ).toBe(false);
     // 覆盖 client-hydration.ts L92 的 false 分支：state 不含 fetchDirection。
     expect(
-      isDehydratedInfiniteQuery({ key: ['k'], keyHash: 'h', state: {} }),
+      isDehydratedInfiniteQuery({ key: ['k'], keyHash: MOCK_KEY_HASH, state: {} }),
     ).toBe(false);
     // 覆盖 client-hydration.ts L92 的 true 分支：state 含 fetchDirection。
     expect(
       isDehydratedInfiniteQuery({
         key: ['k'],
-        keyHash: 'h',
+        keyHash: MOCK_KEY_HASH,
         state: { fetchDirection: null },
       }),
     ).toBe(true);

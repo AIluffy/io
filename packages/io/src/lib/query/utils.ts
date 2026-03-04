@@ -1,4 +1,4 @@
-import type { IoQueryKey } from './types.js';
+import type { IoQueryKey, KeyHash } from './types.js';
 import { emitError } from '../utils/debug/debug.js';
 import { getInternal } from '../utils/internal/internal-access.js';
 import type { IoMutationOp } from '../utils/types/types.js';
@@ -117,15 +117,15 @@ function normalizeDelay(delayMs: number): number {
   return Math.max(0, delayMs);
 }
 
-export function hashKey(key: IoQueryKey): string {
-  return serialize(key, new WeakSet<object>());
+export function hashKey(key: IoQueryKey): KeyHash {
+  return serialize(key, new WeakSet<object>()) as KeyHash;
 }
 
 export function keyMatches(
   queryKey: IoQueryKey,
   filterKey: IoQueryKey,
   exact = false,
-  queryKeyHash?: string,
+  queryKeyHash?: KeyHash,
 ): boolean {
   if (exact) {
     return (queryKeyHash ?? hashKey(queryKey)) === hashKey(filterKey);

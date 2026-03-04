@@ -1,3 +1,5 @@
+'use client';
+
 import type {
   InfiniteData,
   IoInfiniteQueryDefinition,
@@ -12,6 +14,7 @@ import { getDefaultClient, hashKey } from '@iostore/store/query';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useIO } from './use-io.js';
+import { suspendWithReactUse } from './suspense-compat.js';
 
 type UseInfiniteQueryDefinitionOptions<TData, TError, TPageParam, TSelected> =
   IoInfiniteQueryDefinition<TData, TError, TPageParam> &
@@ -56,6 +59,10 @@ export type UseInfiniteQueryResult<
   cancel: () => void;
   query: IoInfiniteQueryHandle<TData, TError, TPageParam>;
   observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam>;
+};
+
+type SuspenseCompatOptions = {
+  useReactUseHook?: boolean;
 };
 
 export type UseSuspenseInfiniteQueryResult<
@@ -186,6 +193,7 @@ export function useSuspenseInfiniteQuery<
   TSelected = InfiniteData<TData, TPageParam>,
 >(
   options: UseInfiniteQueryOptions<TData, TError, TPageParam, TSelected>,
+  suspenseOptions?: SuspenseCompatOptions,
 ): UseSuspenseInfiniteQueryResult<TData, TError, TPageParam, TSelected> {
   const result = useInfiniteQuery<TData, TError, TPageParam, TSelected>(options);
 
@@ -194,7 +202,7 @@ export function useSuspenseInfiniteQuery<
   }
 
   if (result.status === 'pending') {
-    throw result.observer.read();
+    suspendWithReactUse(result.query.fetchNextPage(), suspenseOptions?.useReactUseHook ?? false);
   }
 
   const data = result.observer.read() as unknown as TSelected;

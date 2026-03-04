@@ -1,3 +1,5 @@
+'use client';
+
 import type { IoSchedule } from '@iostore/store';
 
 import { createScheduledDispatcher, isServerEnv } from '@iostore/store';

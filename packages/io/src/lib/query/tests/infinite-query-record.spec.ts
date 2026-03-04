@@ -4,6 +4,7 @@ import {
   createInfiniteQueryRecord,
   type NormalizedInfiniteQueryDefinition,
 } from '../infinite-query-record.js';
+import { hashKey } from '../utils.js';
 
 function createDefinition(options: {
   key?: readonly unknown[];
@@ -26,7 +27,7 @@ function createDefinition(options: {
 }): NormalizedInfiniteQueryDefinition<number, Error, number> {
   return {
     key: options.key ?? ['infinite', 'record'],
-    keyHash: JSON.stringify(options.key ?? ['infinite', 'record']),
+    keyHash: hashKey(options.key ?? ['infinite', 'record']),
     queryFn: options.queryFn,
     initialPageParam: options.initialPageParam ?? 0,
     getNextPageParam: options.getNextPageParam ?? ((lastPage) => lastPage + 1),

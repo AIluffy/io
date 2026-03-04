@@ -1,22 +1,25 @@
 import { io } from '../core/api/io.js';
-import { batch } from '../utils/reactive/batch.js';
 import type { IoUnit, IoUpdate, IoUpdateAnnotation } from '../utils/types/types.js';
 
-import { createGcScheduler } from './gc-scheduler.js';
 import { createInitialQueryState, deriveQueryFlags } from './query.js';
+import {
+  createObserverManager,
+  createRecordGcController,
+  createRecordStaleChecker,
+  patchRecordState,
+  readRecordState,
+  resetRecordState,
+  updateRecordDefinition,
+} from './record-shared.js';
 import { executeWithRetry } from './retry-executor.js';
-import { readUnitState, setUnitState } from './unit-state.js';
 import type {
   IoQueryDefinition,
   IoQueryDerivedFlags,
   IoQueryState,
   IoUnsubscribe,
+  KeyHash,
 } from './types.js';
-import {
-  createAbortError,
-  isAbortError,
-  reportBackgroundError,
-} from './utils.js';
+import { createAbortError, isAbortError, reportBackgroundError } from './utils.js';
 
 type QueryUnitBox<TData, TError> = {
   value: IoUnit<IoQueryState<TData, TError>>;
@@ -24,7 +27,7 @@ type QueryUnitBox<TData, TError> = {
 
 export type NormalizedQueryDefinition<TData, TError> =
   IoQueryDefinition<TData, TError> & {
-    keyHash: string;
+    keyHash: KeyHash;
     staleTime: number;
     gcTime: number;
     retry: number;
@@ -34,7 +37,7 @@ export type NormalizedQueryDefinition<TData, TError> =
 
 export type QueryRecord<TData, TError> = {
   readonly key: readonly unknown[];
-  readonly keyHash: string;
+  readonly keyHash: KeyHash;
   readonly definition: NormalizedQueryDefinition<TData, TError>;
   readonly observerCount: number;
   readonly isActive: boolean;
@@ -58,36 +61,6 @@ export type QueryRecord<TData, TError> = {
   subscribeUpdate: (fn: (update: IoUpdate) => void) => IoUnsubscribe;
 };
 
-function patchState<TData, TError>(
-  unit: IoUnit<IoQueryState<TData, TError>>,
-  patch: Partial<IoQueryState<TData, TError>>,
-  annotation?: IoUpdateAnnotation,
-): void {
-  batch(() => {
-    setUnitState(
-      unit,
-      (current) => ({
-        ...current,
-        ...patch,
-      }),
-      annotation,
-    );
-  });
-}
-
-function createDefinitionConflictError(
-  keyHash: string,
-  field: string,
-  expected: unknown,
-  received: unknown,
-): Error {
-  return new Error(
-    `defineQuery: conflicting ${field} for key ${keyHash}. Expected ${String(
-      expected,
-    )}, received ${String(received)}.`,
-  );
-}
-
 export function createQueryRecord<TData, TError>(options: {
   definition: NormalizedQueryDefinition<TData, TError>;
   onGarbageCollect: () => void;
@@ -99,34 +72,34 @@ export function createQueryRecord<TData, TError>(options: {
   const unit = holder.value;
 
   let definition = options.definition;
-  let observerCount = 0;
   let inFlightPromise: Promise<TData> | null = null;
   let abortController: AbortController | null = null;
   let fetchGeneration = 0;
 
-  const gcScheduler = createGcScheduler({
+  const gcController = createRecordGcController({
     getGcTime: () => definition.gcTime,
-    hasObservers: () => observerCount > 0,
+    hasObservers: () => observers.getObserverCount() > 0,
     hasInFlight: () => inFlightPromise !== null,
     onCollect: options.onGarbageCollect,
   });
 
-  const touch = (): void => {
-    gcScheduler.touch();
+  const observers = createObserverManager({
+    unit,
+    onObserverAdded: () => gcController.touch(),
+    onObserverRemoved: () => gcController.schedule(),
+  });
+
+  const patchState = (
+    patch: Partial<IoQueryState<TData, TError>>,
+    annotation?: IoUpdateAnnotation,
+  ): void => {
+    patchRecordState(unit, patch, annotation);
   };
 
-  const isStale = (state = readUnitState(unit)): boolean => {
-    if (state.isInvalidated) {
-      return true;
-    }
-    if (state.status !== 'success') {
-      return true;
-    }
-    if (!Number.isFinite(definition.staleTime)) {
-      return false;
-    }
-    return Date.now() - state.dataUpdatedAt >= definition.staleTime;
-  };
+  const isStale = createRecordStaleChecker({
+    getDefinition: () => definition,
+    getState: () => readRecordState(unit),
+  });
 
   const cancel = (): void => {
     if (!inFlightPromise && !abortController) {
@@ -138,23 +111,19 @@ export function createQueryRecord<TData, TError>(options: {
     abortController = null;
     inFlightPromise = null;
 
-    const current = readUnitState(unit);
+    const current = readRecordState(unit);
     if (current.fetchStatus !== 'idle') {
-      patchState(unit, {
-        fetchStatus: 'idle',
-      }, {
-        action: 'query.fetch.cancel',
-        meta: {
-          keyHash: definition.keyHash,
-        },
-      });
+      patchState(
+        { fetchStatus: 'idle' },
+        { action: 'query.fetch.cancel', meta: { keyHash: definition.keyHash } },
+      );
     }
 
-    gcScheduler.schedule();
+    gcController.schedule();
   };
 
   const fetch = (force = false): Promise<TData> => {
-    touch();
+    gcController.touch();
 
     if (!definition.canFetch) {
       return Promise.reject(
@@ -162,7 +131,7 @@ export function createQueryRecord<TData, TError>(options: {
       );
     }
 
-    const state = readUnitState(unit);
+    const state = readRecordState(unit);
     if (!force && state.status === 'success' && !isStale(state)) {
       return Promise.resolve(state.data as TData);
     }
@@ -177,21 +146,16 @@ export function createQueryRecord<TData, TError>(options: {
     const { signal } = controller;
     abortController = controller;
 
-    const nextStatus =
-      state.status === 'success' || state.data !== undefined ? 'success' : 'pending';
-    patchState(unit, {
-      status: nextStatus,
-      fetchStatus: 'fetching',
-      error: null,
-      failureCount: 0,
-      failureReason: null,
-    }, {
-      action: 'query.fetch.start',
-      meta: {
-        force,
-        keyHash: definition.keyHash,
+    patchState(
+      {
+        status: state.status === 'success' || state.data !== undefined ? 'success' : 'pending',
+        fetchStatus: 'fetching',
+        error: null,
+        failureCount: 0,
+        failureReason: null,
       },
-    });
+      { action: 'query.fetch.start', meta: { force, keyHash: definition.keyHash } },
+    );
 
     let failureCount = 0;
     const promise = (async () => {
@@ -204,79 +168,59 @@ export function createQueryRecord<TData, TError>(options: {
           isCancelled: () => currentGeneration !== fetchGeneration,
           onFailedAttempt: (count, error) => {
             failureCount = count;
-            patchState(unit, {
-              failureCount: count,
-              failureReason: error as TError,
-            }, {
-              action: 'query.fetch.retry',
-              meta: {
-                failureCount: count,
-                keyHash: definition.keyHash,
+            patchState(
+              { failureCount: count, failureReason: error as TError },
+              {
+                action: 'query.fetch.retry',
+                meta: { failureCount: count, keyHash: definition.keyHash },
               },
-            });
+            );
           },
         });
 
-        patchState(unit, {
-          status: 'success',
-          fetchStatus: 'idle',
-          data,
-          error: null,
-          dataUpdatedAt: Date.now(),
-          failureCount: 0,
-          failureReason: null,
-          isInvalidated: false,
-          isPlaceholderData: false,
-        }, {
-          action: 'query.fetch.success',
-          meta: {
-            keyHash: definition.keyHash,
+        patchState(
+          {
+            status: 'success',
+            fetchStatus: 'idle',
+            data,
+            error: null,
+            dataUpdatedAt: Date.now(),
+            failureCount: 0,
+            failureReason: null,
+            isInvalidated: false,
+            isPlaceholderData: false,
           },
-        });
+          { action: 'query.fetch.success', meta: { keyHash: definition.keyHash } },
+        );
 
         return data;
       } catch (error) {
-        if (
-          isAbortError(error) ||
-          currentGeneration !== fetchGeneration ||
-          signal.aborted
-        ) {
-          if (currentGeneration === fetchGeneration) {
-            const current = readUnitState(unit);
-            if (current.fetchStatus !== 'idle') {
-              patchState(unit, {
-                fetchStatus: 'idle',
-              }, {
-                action: 'query.fetch.abort',
-                meta: {
-                  keyHash: definition.keyHash,
-                },
-              });
-            }
+        if (isAbortError(error) || currentGeneration !== fetchGeneration || signal.aborted) {
+          if (currentGeneration === fetchGeneration && readRecordState(unit).fetchStatus !== 'idle') {
+            patchState(
+              { fetchStatus: 'idle' },
+              { action: 'query.fetch.abort', meta: { keyHash: definition.keyHash } },
+            );
           }
           throw createAbortError();
         }
 
-        patchState(unit, {
-          status: 'error',
-          fetchStatus: 'idle',
-          error: error as TError,
-          errorUpdatedAt: Date.now(),
-          failureCount,
-          failureReason: error as TError,
-        }, {
-          action: 'query.fetch.error',
-          meta: {
-            keyHash: definition.keyHash,
+        patchState(
+          {
+            status: 'error',
+            fetchStatus: 'idle',
+            error: error as TError,
+            errorUpdatedAt: Date.now(),
+            failureCount,
+            failureReason: error as TError,
           },
-        });
-
+          { action: 'query.fetch.error', meta: { keyHash: definition.keyHash } },
+        );
         throw error;
       }
     })();
 
     inFlightPromise = promise;
-
     void promise
       .finally(() => {
         if (inFlightPromise === promise) {
@@ -286,169 +230,12 @@ export function createQueryRecord<TData, TError>(options: {
           abortController = null;
         }
         if (currentGeneration === fetchGeneration) {
-          gcScheduler.schedule();
+          gcController.schedule();
         }
       })
       .catch(() => undefined);
 
     return promise;
-  };
-
-  const prefetch = (): Promise<void> =>
-    fetch(false)
-      .then(() => undefined)
-      .catch((error: unknown) => {
-        reportBackgroundError('query.prefetchQuery()', error, unit);
-      });
-
-  const ensureData = (): Promise<TData> => {
-    const current = readUnitState(unit);
-    if (current.status === 'success' && !isStale(current)) {
-      return Promise.resolve(current.data as TData);
-    }
-    return fetch(false);
-  };
-
-  const invalidate = (refetch = true): void => {
-    patchState(unit, {
-      isInvalidated: true,
-    }, {
-      action: 'query.invalidate',
-      meta: {
-        keyHash: definition.keyHash,
-        refetch,
-      },
-    });
-
-    if (refetch) {
-      void fetch(true).catch((error: unknown) => {
-        reportBackgroundError('query.invalidate()', error, unit);
-      });
-    }
-  };
-
-  const setData = (
-    updater: TData | ((prev: TData | undefined) => TData),
-  ): void => {
-    touch();
-    const current = readUnitState(unit);
-    const nextData =
-      typeof updater === 'function'
-        ? (updater as (prev: TData | undefined) => TData)(current.data)
-        : updater;
-
-    patchState(unit, {
-      status: 'success',
-      data: nextData,
-      error: null,
-      dataUpdatedAt: Date.now(),
-      failureCount: 0,
-      failureReason: null,
-      isInvalidated: false,
-      isPlaceholderData: false,
-    }, {
-      action: 'query.setData',
-      meta: {
-        keyHash: definition.keyHash,
-      },
-    });
-  };
-
-  const reset = (): void => {
-    cancel();
-    batch(() => {
-      setUnitState(
-        unit,
-        createInitialQueryState<TData, TError>(),
-        {
-          action: 'query.reset',
-          meta: {
-            keyHash: definition.keyHash,
-          },
-        },
-      );
-    });
-    gcScheduler.schedule();
-  };
-
-  const hydrate = (state: IoQueryState<TData, TError>): void => {
-    patchState(unit, {
-      ...state,
-      fetchStatus: 'idle',
-      isPlaceholderData: false,
-    }, {
-      action: 'query.hydrate',
-      meta: {
-        keyHash: definition.keyHash,
-      },
-    });
-  };
-
-  const setDefinition = (next: NormalizedQueryDefinition<TData, TError>): void => {
-    const canUpgradeSeeded = !definition.canFetch && next.canFetch;
-
-    if (definition.queryFn !== next.queryFn && !canUpgradeSeeded) {
-      throw createDefinitionConflictError(
-        definition.keyHash,
-        'queryFn',
-        definition.queryFn,
-        next.queryFn,
-      );
-    }
-
-    if (!canUpgradeSeeded) {
-      if (definition.staleTime !== next.staleTime) {
-        throw createDefinitionConflictError(
-          definition.keyHash,
-          'staleTime',
-          definition.staleTime,
-          next.staleTime,
-        );
-      }
-      if (definition.gcTime !== next.gcTime) {
-        throw createDefinitionConflictError(
-          definition.keyHash,
-          'gcTime',
-          definition.gcTime,
-          next.gcTime,
-        );
-      }
-      if (definition.retry !== next.retry) {
-        throw createDefinitionConflictError(
-          definition.keyHash,
-          'retry',
-          definition.retry,
-          next.retry,
-        );
-      }
-    }
-
-    definition = canUpgradeSeeded ? next : definition;
-    gcScheduler.schedule();
-  };
-
-  const addObserver = (): void => {
-    observerCount += 1;
-    touch();
-  };
-
-  const removeObserver = (): void => {
-    observerCount = Math.max(0, observerCount - 1);
-    gcScheduler.schedule();
-  };
-
-  const subscribe = (fn: (state: IoQueryState<TData, TError>) => void): IoUnsubscribe => {
-    addObserver();
-    const unsub = unit.subscribe(fn);
-    let unsubscribed = false;
-    return () => {
-      if (unsubscribed) {
-        return;
-      }
-      unsubscribed = true;
-      unsub();
-      removeObserver();
-    };
   };
 
   return {
@@ -462,19 +249,22 @@ export function createQueryRecord<TData, TError>(options: {
       return definition;
     },
     get observerCount() {
-      return observerCount;
+      return observers.getObserverCount();
     },
     get isActive() {
-      return observerCount > 0;
+      return observers.getObserverCount() > 0;
     },
-    touch,
-    setDefinition,
+    touch: () => gcController.touch(),
+    setDefinition: (next) => {
+      definition = updateRecordDefinition('defineQuery', definition, next);
+      gcController.schedule();
+    },
     getState: () => {
-      touch();
+      gcController.touch();
       return unit.snapshot();
     },
     getFlags: (isFetchedAfterMount = false) => {
-      touch();
+      gcController.touch();
       return deriveQueryFlags(unit.snapshot(), {
         isStale: isStale(),
         isFetchedAfterMount,
@@ -483,16 +273,75 @@ export function createQueryRecord<TData, TError>(options: {
     isStale,
     getInFlightPromise: () => inFlightPromise,
     fetch,
-    prefetch,
-    ensureData,
-    invalidate,
+    prefetch: () =>
+      fetch(false)
+        .then(() => undefined)
+        .catch((error: unknown) => {
+          reportBackgroundError('query.prefetchQuery()', error, unit);
+        }),
+    ensureData: () => {
+      const current = readRecordState(unit);
+      if (current.status === 'success' && !isStale(current)) {
+        return Promise.resolve(current.data as TData);
+      }
+      return fetch(false);
+    },
+    invalidate: (refetch = true) => {
+      patchState(
+        { isInvalidated: true },
+        { action: 'query.invalidate', meta: { keyHash: definition.keyHash, refetch } },
+      );
+      if (refetch) {
+        void fetch(true).catch((error: unknown) => {
+          reportBackgroundError('query.invalidate()', error, unit);
+        });
+      }
+    },
     cancel,
-    reset,
-    setData,
-    hydrate,
-    addObserver,
-    removeObserver,
-    subscribe,
+    reset: () => {
+      cancel();
+      resetRecordState({
+        unit,
+        createInitialState: () => createInitialQueryState<TData, TError>(),
+        annotation: { action: 'query.reset', meta: { keyHash: definition.keyHash } },
+      });
+      gcController.schedule();
+    },
+    setData: (updater) => {
+      gcController.touch();
+      const current = readRecordState(unit);
+      const nextData =
+        typeof updater === 'function'
+          ? (updater as (prev: TData | undefined) => TData)(current.data)
+          : updater;
+
+      patchState(
+        {
+          status: 'success',
+          data: nextData,
+          error: null,
+          dataUpdatedAt: Date.now(),
+          failureCount: 0,
+          failureReason: null,
+          isInvalidated: false,
+          isPlaceholderData: false,
+        },
+        { action: 'query.setData', meta: { keyHash: definition.keyHash } },
+      );
+    },
+    hydrate: (state) => {
+      patchState(
+        {
+          ...state,
+          fetchStatus: 'idle',
+          isPlaceholderData: false,
+        },
+        { action: 'query.hydrate', meta: { keyHash: definition.keyHash } },
+      );
+    },
+    addObserver: () => observers.addObserver(),
+    removeObserver: () => observers.removeObserver(),
+    subscribe: (fn) => observers.subscribe(fn),
     subscribeUpdate: (fn) => unit.subscribeUpdate(fn),
   };
 }

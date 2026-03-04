@@ -31,6 +31,10 @@ type ResolvedObserverOptions<TData, TError, TPageParam, TSelected> = {
   onSettled?: (data: TSelected | undefined, error: TError | null) => void;
 };
 
+type SelectedDataResult<TData, TError, TPageParam> = {
+  state: IoInfiniteQueryState<TData, TError, TPageParam>;
+};
+
 function resolvePlaceholderData<TData>(
   value: TData | (() => TData) | undefined,
 ): TData | undefined {
@@ -73,6 +77,106 @@ function resolveOptions<TData, TError, TPageParam, TSelected>(
   };
 }
 
+function deriveSelectedData<TData, TError, TPageParam, TSelected>(
+  baseResult: IoInfiniteQueryState<TData, TError, TPageParam>,
+  resolvedOptions: ResolvedObserverOptions<TData, TError, TPageParam, TSelected>,
+): SelectedDataResult<TSelected, TError, TPageParam> {
+  const baseData = baseResult.data;
+  let selected: TSelected | undefined;
+  let isPlaceholderData = false;
+
+  if (baseData !== undefined) {
+    selected = resolvedOptions.select
+      ? resolvedOptions.select(baseData)
+      : (baseData as unknown as TSelected);
+  } else if (baseResult.status === 'pending') {
+    selected = resolvePlaceholderData(resolvedOptions.placeholderData);
+    isPlaceholderData = selected !== undefined;
+  }
+
+  const status =
+    isPlaceholderData && baseResult.status === 'pending' ? 'success' : baseResult.status;
+
+  return {
+    state: {
+      status,
+      fetchStatus: baseResult.fetchStatus,
+      data: selected as unknown as InfiniteData<TSelected, TPageParam> | undefined,
+      error: baseResult.error,
+      dataUpdatedAt: baseResult.dataUpdatedAt,
+      errorUpdatedAt: baseResult.errorUpdatedAt,
+      failureCount: baseResult.failureCount,
+      failureReason: baseResult.failureReason,
+      isInvalidated: baseResult.isInvalidated,
+      isPlaceholderData,
+      fetchDirection: baseResult.fetchDirection,
+    },
+  };
+}
+
+function assembleObserverResult<TData, TError, TPageParam>(
+  selectedResult: IoInfiniteQueryState<TData, TError, TPageParam>,
+  flags: ReturnType<InfiniteQueryRecord<TData, TError, TPageParam>['getFlags']>,
+): IoInfiniteQueryObserverResult<TData, TError, TPageParam> {
+  return {
+    ...selectedResult,
+    ...flags,
+    isFetchingNextPage:
+      selectedResult.fetchStatus === 'fetching' && selectedResult.fetchDirection === 'forward',
+    isFetchingPreviousPage:
+      selectedResult.fetchStatus === 'fetching' && selectedResult.fetchDirection === 'backward',
+  };
+}
+
+function buildQueryActions<TData, TError, TPageParam, TSelected>(
+  record: InfiniteQueryRecord<TData, TError, TPageParam>,
+  fetchedAfterMount: () => boolean,
+): IoInfiniteQueryObserver<TSelected, TError, TPageParam>['query'] {
+  return {
+    key: record.key,
+    keyHash: record.keyHash,
+    fetchNextPage: () => record.fetchNextPage(),
+    fetchPreviousPage: () => record.fetchPreviousPage(),
+    refetchAllPages: () => record.refetchAllPages(),
+    prefetch: () => record.prefetch(),
+    ensureData: () => record.ensureData(),
+    invalidate: (refetch = true) => {
+      record.invalidate(refetch);
+    },
+    cancel: () => {
+      record.cancel();
+    },
+    reset: () => {
+      record.reset();
+    },
+    setData: (updater) => {
+      record.setData(
+        updater as
+          | InfiniteData<TData, TPageParam>
+          | ((
+              prev: InfiniteData<TData, TPageParam> | undefined,
+            ) => InfiniteData<TData, TPageParam>),
+      );
+    },
+    getData: () =>
+      record.getState().data as unknown as InfiniteData<TSelected, TPageParam> | undefined,
+    getState: () =>
+      record.getState() as unknown as IoInfiniteQueryState<TSelected, TError, TPageParam>,
+    getFlags: () => record.getFlags(fetchedAfterMount()),
+    get isActive() {
+      return record.isActive;
+    },
+    get observerCount() {
+      return record.observerCount;
+    },
+    subscribe: (fn) =>
+      record.subscribe((state) => {
+        fn(state as unknown as IoInfiniteQueryState<TSelected, TError, TPageParam>);
+      }),
+    subscribeUpdate: (fn) => record.subscribeUpdate(fn),
+  };
+}
+
 export function createInfiniteQueryObserver<
   TData,
   TError,
@@ -109,20 +213,10 @@ export function createInfiniteQueryObserver<
 
   const buildResult = (): IoInfiniteQueryObserverResult<TSelected, TError, TPageParam> => {
     const base = record.getState();
-    const baseData = base.data;
-
-    let selected = undefined as TSelected | undefined;
-    let isPlaceholderData = false;
-
     try {
-      if (baseData !== undefined) {
-        selected = resolvedOptions.select
-          ? resolvedOptions.select(baseData)
-          : (baseData as unknown as TSelected);
-      } else if (base.status === 'pending') {
-        selected = resolvePlaceholderData(resolvedOptions.placeholderData);
-        isPlaceholderData = selected !== undefined;
-      }
+      const selectedResult = deriveSelectedData(base, resolvedOptions);
+      const flags = record.getFlags(fetchedAfterMount);
+      return assembleObserverResult(selectedResult.state, flags);
     } catch (error) {
       const errorState: IoInfiniteQueryState<TSelected, TError, TPageParam> = {
         status: 'error',
@@ -137,41 +231,8 @@ export function createInfiniteQueryObserver<
         isPlaceholderData: false,
         fetchDirection: null,
       };
-      return {
-        ...errorState,
-        ...record.getFlags(fetchedAfterMount),
-        isFetchingNextPage: false,
-        isFetchingPreviousPage: false,
-      };
+      return assembleObserverResult(errorState, record.getFlags(fetchedAfterMount));
     }
-
-    const status =
-      isPlaceholderData && base.status === 'pending' ? 'success' : base.status;
-
-    const nextState: IoInfiniteQueryState<TSelected, TError, TPageParam> = {
-      status,
-      fetchStatus: base.fetchStatus,
-      data: selected as unknown as InfiniteData<TSelected, TPageParam> | undefined,
-      error: base.error,
-      dataUpdatedAt: base.dataUpdatedAt,
-      errorUpdatedAt: base.errorUpdatedAt,
-      failureCount: base.failureCount,
-      failureReason: base.failureReason,
-      isInvalidated: base.isInvalidated,
-      isPlaceholderData,
-      fetchDirection: base.fetchDirection,
-    };
-
-    const flags = record.getFlags(fetchedAfterMount);
-
-    return {
-      ...nextState,
-      ...flags,
-      isFetchingNextPage:
-        nextState.fetchStatus === 'fetching' && nextState.fetchDirection === 'forward',
-      isFetchingPreviousPage:
-        nextState.fetchStatus === 'fetching' && nextState.fetchDirection === 'backward',
-    };
   };
 
   const holder = io(
@@ -315,6 +376,8 @@ export function createInfiniteQueryObserver<
     onlineUnsub();
   };
 
+  const queryActions = buildQueryActions(record, () => fetchedAfterMount);
+
   const observer: IoInfiniteQueryObserver<TSelected, TError, TPageParam> = {
     get: () => unit.get(),
     set: (next) => unit.set(next),
@@ -331,49 +394,7 @@ export function createInfiniteQueryObserver<
     },
     key: record.key,
     keyHash: record.keyHash,
-    query: {
-      key: record.key,
-      keyHash: record.keyHash,
-      fetchNextPage: () => record.fetchNextPage(),
-      fetchPreviousPage: () => record.fetchPreviousPage(),
-      refetchAllPages: () => record.refetchAllPages(),
-      prefetch: () => record.prefetch(),
-      ensureData: () => record.ensureData(),
-      invalidate: (refetch = true) => {
-        record.invalidate(refetch);
-      },
-      cancel: () => {
-        record.cancel();
-      },
-      reset: () => {
-        record.reset();
-      },
-      setData: (updater) => {
-        record.setData(
-          updater as
-            | InfiniteData<TData, TPageParam>
-            | ((
-                prev: InfiniteData<TData, TPageParam> | undefined,
-              ) => InfiniteData<TData, TPageParam>),
-        );
-      },
-      getData: () =>
-        record.getState().data as unknown as InfiniteData<TSelected, TPageParam> | undefined,
-      getState: () =>
-        record.getState() as unknown as IoInfiniteQueryState<TSelected, TError, TPageParam>,
-      getFlags: () => record.getFlags(fetchedAfterMount),
-      get isActive() {
-        return record.isActive;
-      },
-      get observerCount() {
-        return record.observerCount;
-      },
-      subscribe: (fn) =>
-        record.subscribe((state) => {
-          fn(state as unknown as IoInfiniteQueryState<TSelected, TError, TPageParam>);
-        }),
-      subscribeUpdate: (fn) => record.subscribeUpdate(fn),
-    },
+    query: queryActions,
     fetchNextPage: () => record.fetchNextPage(),
     fetchPreviousPage: () => record.fetchPreviousPage(),
     refetchAllPages: () => record.refetchAllPages(),
