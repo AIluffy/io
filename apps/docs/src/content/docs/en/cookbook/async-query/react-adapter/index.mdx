@@ -1,0 +1,58 @@
+---
+title: "React Adapter"
+description: "React query integration map: decisions, capability matrix, and learning path."
+sidebar:
+  order: 1
+---
+
+## When to Use
+
+- You need a fast path to build cancelable, cacheable, and invalidation-aware query flows in React.
+- You want a fixed structure from onboarding to production rollout for your team.
+- Returns object-style state, suitable for hook composition and component-level branching.
+
+## API Capability Matrix
+
+| Capability | Primary API | Covered |
+| --- | --- | --- |
+| Standard query | `useQuery` | Yes |
+| Infinite query | `useInfiniteQuery` | Yes |
+| Mutation | `useMutation` | Yes |
+| Suspense variants | `useSuspense*` | Yes |
+| SSR/CSR consistency | Optional | Yes |
+
+## Differences from Other Adapters
+
+- Returns object-style state, suitable for hook composition and component-level branching.
+- Unified semantics remain aligned: `fetch / refetch / prefetch / invalidate / cancel`.
+- Main differences are result consumption style (object / Ref / Accessor / Store).
+
+## Common Decision Branches
+
+### 1. Start with single-resource or pagination first
+- Single resource/page: establish key and cancellation semantics with standard query first.
+- Scrolling list: go directly with infinite query to avoid later pagination rewrites.
+
+### 2. Build write flow now or later
+- Recommended: complete read query first, then add mutation + invalidate.
+- Before rollout, verify retry and rollback for write paths.
+
+### 3. Need SSR first screen hit?
+- Client-only flows can postpone SSR and add prefetch at route boundaries later.
+
+## Related APIs
+
+- [Query core (io-query)](/en/api-reference/io-query/)
+- [React adapter API](/en/api-reference/io-react/)
+
+## Learning Path (4 Pages)
+
+1. [Overview (this page)](./)
+2. [10-Minute Quick Start](./quick-start/)
+3. [Read/Write Workflow](./read-write-workflow/)
+4. [Production Patterns](./production-patterns/)
+
+## Navigation
+
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Framework overview](/en/frameworks/react/)

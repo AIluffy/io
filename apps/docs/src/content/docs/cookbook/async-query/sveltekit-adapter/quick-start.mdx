@@ -1,0 +1,79 @@
+---
+title: "10 分钟上手"
+description: "在 SvelteKit 中完成可运行的 Query 最小接入。"
+sidebar:
+  order: 2
+---
+
+## 安装
+
+```bash
+npm i @iostore/store @iostore/svelte svelte @sveltejs/kit
+```
+
+## 最小可复制示例
+
+```ts
+// +page.server.ts
+export const load = async ({ fetch }) => {
+  const initialUsers = await fetch('/api/users').then((r) => r.json());
+  return { initialUsers };
+};
+```
+
+```ts
+// src/lib/users-store.ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const usersStore = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+  cancelOnUnsubscribe: true,
+});
+```
+
+```svelte
+<script lang="ts">
+  import { usersStore } from '$lib/users-store';
+  export let data: { initialUsers: Array<{ id: string; name: string }> };
+
+  if (data.initialUsers && !$usersStore.data) {
+    usersStore.query.setData(data.initialUsers);
+  }
+</script>
+```
+
+## 状态分支渲染建议
+
+- 首屏加载：使用 `isLoading`（或等价状态）。
+- 后台刷新：使用 `isFetching`（或观察者 `fetchStatus`）。
+- 错误态：直接展示可诊断信息，不要吞掉 `error`。
+
+## 取消语义（AbortSignal）
+
+- `queryFn` 必须透传 `signal` 到 `fetch` / 请求客户端。
+- 把取消当作控制流，不当作业务失败弹窗。
+- 页面快速切换场景启用取消（`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`）。
+
+## 复制后需要改的 3 处
+
+1. 把示例 key 改成业务域 key（例如 `users` -> `orders`）。
+2. 把请求 URL 与返回类型改成项目真实接口。
+3. 把重试、取消策略调成你的页面交互强度。
+
+## 相关 API
+
+- [SvelteKit 适配 API](/api-reference/io-svelte/)
+- [Query 核心（io-query）](/api-reference/io-query/)
+
+## 下一步
+
+- [读写实战](./read-write-workflow/)
+- [进阶与上线](./production-patterns/)
+
+
+## 导航
+
+- [返回本框架概览](./)
+- [返回 Query 专题](/cookbook/async-query/)
+- [继续：进阶与上线](./production-patterns/)

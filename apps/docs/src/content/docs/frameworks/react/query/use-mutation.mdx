@@ -24,3 +24,9 @@ const createTodo = useMutation({
 - 写操作成功后优先 `invalidateQueries`，不要手写猜测式同步。
 - 需要秒回时可使用乐观更新，再在失败时回滚。
 - 区分 `isPending`（提交中）与查询态字段，避免 UI 状态混淆。
+
+
+## 深入阅读（Query 工程）
+
+- [React 适配入口](/cookbook/async-query/react-adapter/)
+- [推荐延伸页面](/cookbook/async-query/react-adapter/read-write-workflow/)

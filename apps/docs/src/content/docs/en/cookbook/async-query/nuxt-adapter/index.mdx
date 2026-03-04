@@ -1,0 +1,58 @@
+---
+title: "Nuxt Adapter"
+description: "Nuxt query integration map: decisions, capability matrix, and learning path."
+sidebar:
+  order: 1
+---
+
+## When to Use
+
+- You need a fast path to build cancelable, cacheable, and invalidation-aware query flows in Nuxt.
+- You want a fixed structure from onboarding to production rollout for your team.
+- Focuses on responsibility boundaries between `useAsyncData` and query client.
+
+## API Capability Matrix
+
+| Capability | Primary API | Covered |
+| --- | --- | --- |
+| Standard query | `useQuery` | Yes |
+| Infinite query | `useInfiniteQuery` | Yes |
+| Mutation | `useMutation` | Yes |
+| Suspense variants | Prefer route-boundary handling | No |
+| SSR/CSR consistency | Primary | Yes |
+
+## Differences from Other Adapters
+
+- Focuses on responsibility boundaries between `useAsyncData` and query client.
+- Unified semantics remain aligned: `fetch / refetch / prefetch / invalidate / cancel`.
+- Main differences are result consumption style (object / Ref / Accessor / Store).
+
+## Common Decision Branches
+
+### 1. Start with single-resource or pagination first
+- Single resource/page: establish key and cancellation semantics with standard query first.
+- Scrolling list: go directly with infinite query to avoid later pagination rewrites.
+
+### 2. Build write flow now or later
+- Recommended: complete read query first, then add mutation + invalidate.
+- Before rollout, verify retry and rollback for write paths.
+
+### 3. Need SSR first screen hit?
+- This adapter prioritizes SSR/CSR continuity, so solve hydration and request-scope first.
+
+## Related APIs
+
+- [Query core (io-query)](/en/api-reference/io-query/)
+- [Nuxt adapter API](/en/api-reference/io-vue/)
+
+## Learning Path (4 Pages)
+
+1. [Overview (this page)](./)
+2. [10-Minute Quick Start](./quick-start/)
+3. [Read/Write Workflow](./read-write-workflow/)
+4. [Production Patterns](./production-patterns/)
+
+## Navigation
+
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Framework overview](/en/frameworks/nuxt/)

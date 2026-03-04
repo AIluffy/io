@@ -1,0 +1,113 @@
+---
+title: "Read/Write Workflow"
+description: "Implement query + mutation + invalidate main flow in React."
+sidebar:
+  order: 3
+---
+
+## Main Flow: Query + Mutation + Invalidate
+
+```tsx
+import { useMutation, useQuery } from '@iostore/react';
+
+const TODOS_KEY = ['todos'] as const;
+
+const todos = useQuery({
+  key: TODOS_KEY,
+  queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+const createTodo = useMutation({
+  mutationFn: (title: string) =>
+    fetch('/api/todos', { method: 'POST', body: JSON.stringify({ title }) }).then((r) => r.json()),
+  onSuccess: () => {
+    void todos.invalidate();
+  },
+});
+
+async function submit(title: string) {
+  await createTodo.mutateAsync(title);
+}
+```
+
+## useIO Local-State Composition (Migrated from Query Architecture)
+
+```tsx
+import { io } from '@iostore/store';
+import { useIO, useQuery } from '@iostore/react';
+
+const localState = io({ tab: 'all', page: 1 });
+
+function Example() {
+  const local = useIO(localState);
+  const q = useQuery({
+    key: ['todos', local.tab, local.page],
+    queryFn: ({ signal }) => fetch('/api/todos', { signal }).then((r) => r.json()),
+  });
+  return <div>{q.isFetching ? 'loading' : 'ready'}</div>;
+}
+```
+
+- Keep remote truth in Query; use useIO (or Svelte store adapters) for local interaction state.
+- When local state drives query behavior, encode all params into the query `key`.
+- For input-heavy flows, combine with `batch` and scheduling strategies.
+
+### Related APIs
+- [use-io](/en/api-reference/io-react/use-io/)
+- [use-query](/en/api-reference/io-react/use-query/)
+
+## Failure Handling and Rollback
+
+- Use bounded retries for network jitter; expose business errors directly without retries.
+- When using optimistic update, snapshot in `onMutate` and rollback in `onError`.
+- Cancellation (`AbortError`) should not be treated as incident-grade errors.
+
+## Query Key Rules
+
+1. Keep keys serializable with stable ordering.
+2. Include filters, tenant, and pagination parameters in keys.
+3. Never put functions, class instances, or DOM nodes in keys.
+
+## Pitfall Comparison
+
+### Wrong: key misses parameters
+```ts
+// wrong: tenantId not included in key
+key: ['users']
+```
+
+### Recommended: key mirrors request parameters
+```ts
+key: ['users', tenantId]
+```
+
+### Wrong: guess-and-patch cache after write
+```ts
+onSuccess: (item) => {
+  cache.push(item);
+}
+```
+
+### Recommended: unify write-after-read consistency with invalidation
+```ts
+onSuccess: async () => {
+  await todos.invalidate();
+}
+```
+
+## Related APIs
+
+- [Mutation APIs](/en/api-reference/io-react/)
+- [Query core: createMutation](/en/api-reference/io-query/create-mutation/)
+- [Query core: deriveMutationFlags](/en/api-reference/io-query/derive-mutation-flags/)
+
+## Next
+
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

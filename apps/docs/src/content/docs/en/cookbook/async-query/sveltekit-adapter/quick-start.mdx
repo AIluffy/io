@@ -1,0 +1,79 @@
+---
+title: "10-Minute Quick Start"
+description: "Build a runnable minimal query setup in SvelteKit."
+sidebar:
+  order: 2
+---
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/svelte svelte @sveltejs/kit
+```
+
+## Minimal Copyable Example
+
+```ts
+// +page.server.ts
+export const load = async ({ fetch }) => {
+  const initialUsers = await fetch('/api/users').then((r) => r.json());
+  return { initialUsers };
+};
+```
+
+```ts
+// src/lib/users-store.ts
+import { createQueryStore } from '@iostore/svelte';
+
+export const usersStore = createQueryStore({
+  key: ['users'],
+  queryFn: ({ signal }) => fetch('/api/users', { signal }).then((r) => r.json()),
+  cancelOnUnsubscribe: true,
+});
+```
+
+```svelte
+<script lang="ts">
+  import { usersStore } from '$lib/users-store';
+  export let data: { initialUsers: Array<{ id: string; name: string }> };
+
+  if (data.initialUsers && !$usersStore.data) {
+    usersStore.query.setData(data.initialUsers);
+  }
+</script>
+```
+
+## State Branching Checklist
+
+- First load: branch on `isLoading` (or equivalent state).
+- Background refresh: rely on `isFetching` (or observer `fetchStatus`).
+- Error state: render diagnosable output, do not swallow `error`.
+
+## Cancellation Semantics (AbortSignal)
+
+- Always forward `signal` from `queryFn` to `fetch` or your request client.
+- Treat cancellation as control flow, not as a business failure toast.
+- Enable cancellation on fast navigation (`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`).
+
+## 3 Things to Replace After Copying
+
+1. Replace demo key with your domain key (`users` -> `orders`).
+2. Replace request URL and response type with real API contracts.
+3. Tune retry and cancellation strategy based on screen interaction intensity.
+
+## Related APIs
+
+- [SvelteKit adapter API](/en/api-reference/io-svelte/)
+- [Query core (io-query)](/en/api-reference/io-query/)
+
+## Next
+
+- [Read/Write Workflow](./read-write-workflow/)
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

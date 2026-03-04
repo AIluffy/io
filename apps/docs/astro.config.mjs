@@ -97,7 +97,6 @@ const sidebarTopics = [
           { slug: 'cookbook/async-query/playground' },
           { slug: 'cookbook/async-query/architecture-and-state-machine' },
           { slug: 'cookbook/async-query/vanilla-query-client-and-lifecycle' },
-          { slug: 'cookbook/async-query/useio-and-common-capabilities' },
           { slug: 'cookbook/async-query/query-keys-cache-and-refetch' },
           {
             slug: 'cookbook/async-query/mutation-optimistic-update-and-invalidation',
@@ -112,14 +111,86 @@ const sidebarTopics = [
         translations: { 'zh-CN': '适配器集成' },
         collapsed: false,
         items: [
-          { slug: 'cookbook/async-query/react-adapter' },
-          { slug: 'cookbook/async-query/vue-adapter' },
-          { slug: 'cookbook/async-query/svelte-adapter' },
-          { slug: 'cookbook/async-query/solid-adapter' },
-          { slug: 'cookbook/async-query/lynx-adapter' },
-          { slug: 'cookbook/async-query/next-adapter' },
-          { slug: 'cookbook/async-query/nuxt-adapter' },
-          { slug: 'cookbook/async-query/sveltekit-adapter' },
+          {
+            label: 'React Adapter',
+            translations: { 'zh-CN': 'React 适配' },
+            items: [
+              { slug: 'cookbook/async-query/react-adapter' },
+              { slug: 'cookbook/async-query/react-adapter/quick-start' },
+              { slug: 'cookbook/async-query/react-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/react-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Vue Adapter',
+            translations: { 'zh-CN': 'Vue 适配' },
+            items: [
+              { slug: 'cookbook/async-query/vue-adapter' },
+              { slug: 'cookbook/async-query/vue-adapter/quick-start' },
+              { slug: 'cookbook/async-query/vue-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/vue-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Svelte Adapter',
+            translations: { 'zh-CN': 'Svelte 适配' },
+            items: [
+              { slug: 'cookbook/async-query/svelte-adapter' },
+              { slug: 'cookbook/async-query/svelte-adapter/quick-start' },
+              { slug: 'cookbook/async-query/svelte-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/svelte-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Solid Adapter',
+            translations: { 'zh-CN': 'Solid 适配' },
+            items: [
+              { slug: 'cookbook/async-query/solid-adapter' },
+              { slug: 'cookbook/async-query/solid-adapter/quick-start' },
+              { slug: 'cookbook/async-query/solid-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/solid-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Lynx Adapter',
+            translations: { 'zh-CN': 'Lynx 适配' },
+            items: [
+              { slug: 'cookbook/async-query/lynx-adapter' },
+              { slug: 'cookbook/async-query/lynx-adapter/quick-start' },
+              { slug: 'cookbook/async-query/lynx-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/lynx-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Next.js Adapter',
+            translations: { 'zh-CN': 'Next.js 适配' },
+            items: [
+              { slug: 'cookbook/async-query/next-adapter' },
+              { slug: 'cookbook/async-query/next-adapter/quick-start' },
+              { slug: 'cookbook/async-query/next-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/next-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'Nuxt Adapter',
+            translations: { 'zh-CN': 'Nuxt 适配' },
+            items: [
+              { slug: 'cookbook/async-query/nuxt-adapter' },
+              { slug: 'cookbook/async-query/nuxt-adapter/quick-start' },
+              { slug: 'cookbook/async-query/nuxt-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/nuxt-adapter/production-patterns' },
+            ],
+          },
+          {
+            label: 'SvelteKit Adapter',
+            translations: { 'zh-CN': 'SvelteKit 适配' },
+            items: [
+              { slug: 'cookbook/async-query/sveltekit-adapter' },
+              { slug: 'cookbook/async-query/sveltekit-adapter/quick-start' },
+              { slug: 'cookbook/async-query/sveltekit-adapter/read-write-workflow' },
+              { slug: 'cookbook/async-query/sveltekit-adapter/production-patterns' },
+            ],
+          },
         ],
       },
     ],

@@ -1,0 +1,75 @@
+---
+title: "10-Minute Quick Start"
+description: "Build a runnable minimal query setup in Lynx."
+sidebar:
+  order: 2
+---
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/lynx @lynx-js/react
+```
+
+## Minimal Copyable Example
+
+```tsx
+import { useQuery } from '@iostore/lynx';
+
+type FeedItem = { id: string; title: string };
+
+export function Feed({ tab }: { tab: string }) {
+  const feed = useQuery<FeedItem[]>({
+    key: ['feed', tab],
+    queryFn: ({ signal }) =>
+      fetch(`/api/feed?tab=${tab}`, { signal }).then((r) => r.json()),
+    cancelOnUnmount: true,
+  });
+
+  if (feed.isLoading) return <text>Loading...</text>;
+  if (feed.error) return <text>{String(feed.error)}</text>;
+
+  return (
+    <view>
+      {(feed.data ?? []).map((item) => (
+        <text key={item.id}>{item.title}</text>
+      ))}
+    </view>
+  );
+}
+```
+
+## State Branching Checklist
+
+- First load: branch on `isLoading` (or equivalent state).
+- Background refresh: rely on `isFetching` (or observer `fetchStatus`).
+- Error state: render diagnosable output, do not swallow `error`.
+
+## Cancellation Semantics (AbortSignal)
+
+- Always forward `signal` from `queryFn` to `fetch` or your request client.
+- Treat cancellation as control flow, not as a business failure toast.
+- Enable cancellation on fast navigation (`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`).
+
+## 3 Things to Replace After Copying
+
+1. Replace demo key with your domain key (`users` -> `orders`).
+2. Replace request URL and response type with real API contracts.
+3. Tune retry and cancellation strategy based on screen interaction intensity.
+
+## Related APIs
+
+- [Lynx adapter API](/en/api-reference/io-lynx/)
+- [Query core (io-query)](/en/api-reference/io-query/)
+
+## Next
+
+- [Read/Write Workflow](./read-write-workflow/)
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

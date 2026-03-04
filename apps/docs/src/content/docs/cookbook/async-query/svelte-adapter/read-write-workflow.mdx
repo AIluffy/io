@@ -1,0 +1,117 @@
+---
+title: '读写实战'
+description: '在 Svelte 中落地 query + mutation + invalidate 主链路。'
+sidebar:
+  order: 3
+---
+
+## 主链路：Query + Mutation + Invalidate
+
+```ts
+import { createMutationStore, createQueryStore } from '@iostore/svelte';
+
+const TODOS_KEY = ['todos'];
+
+export const todosStore = createQueryStore({
+  key: TODOS_KEY,
+  queryFn: ({ signal }) =>
+    fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+
+export const createTodoStore = createMutationStore({
+  mutationFn: (title: string) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+    }).then((r) => r.json()),
+  onSuccess: async () => {
+    await todosStore.invalidate();
+  },
+});
+```
+
+## useIO 联动本地状态
+
+```ts
+import { io } from '@iostore/store';
+import { toWritable, createQueryStore } from '@iostore/svelte';
+
+const localState = io({ tab: 'all', page: 1 });
+export const tab = toWritable(localState.tab);
+
+export const todosStore = createQueryStore({
+  key: ['todos'],
+  queryFn: ({ signal }) =>
+    fetch('/api/todos', { signal }).then((r) => r.json()),
+});
+```
+
+- 远端真值由 Query 管理，本地交互状态由 useIO（Svelte 对应 store 适配）管理。
+- 本地状态驱动查询时，参数必须完整进入 `key`。
+- 输入高频场景建议结合 `batch` 与调度策略。
+
+### 相关 API
+
+- [to-readable](/api-reference/io-svelte/to-readable/)
+- [to-writable](/api-reference/io-svelte/to-writable/)
+- [create-query-store](/api-reference/io-svelte/create-query-store/)
+
+## 失败处理与回滚建议
+
+- 对网络抖动使用有限重试；对业务错误直接暴露并停止重试。
+- 有乐观更新时，在 `onMutate` 保存快照，在 `onError` 回滚。
+- 取消（AbortError）不应写入错误看板。
+
+## Query Key 设计规范
+
+1. key 只放可序列化数据，且顺序稳定。
+2. 把筛选条件、租户、分页参数全部纳入 key。
+3. 不要在 key 中放函数、类实例、DOM 节点。
+
+## 常见错误对照
+
+### 错误：key 不含参数
+
+```ts
+// 错误：tenantId 未进入 key
+key: ['users'];
+```
+
+### 推荐：key 与请求参数一一对应
+
+```ts
+key: ['users', tenantId];
+```
+
+### 错误：写后手工猜测同步
+
+```ts
+// 错误：直接本地拼补丁，长期会偏离服务端
+onSuccess: (item) => {
+  cache.push(item);
+};
+```
+
+### 推荐：写后统一失效刷新
+
+```ts
+onSuccess: async () => {
+  await todos.invalidate();
+};
+```
+
+## 相关 API
+
+- [Mutation（写操作）](/api-reference/io-svelte/)
+- [Query 核心：createMutation](/api-reference/io-query/create-mutation/)
+- [Query 核心：deriveMutationFlags](/api-reference/io-query/derive-mutation-flags/)
+
+## 下一步
+
+- [进阶与上线](./production-patterns/)
+
+## 导航
+
+- [返回本框架概览](./)
+- [返回 Query 专题](/cookbook/async-query/)
+- [继续：进阶与上线](./production-patterns/)

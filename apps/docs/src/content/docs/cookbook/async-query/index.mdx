@@ -20,8 +20,8 @@ sidebar:
 1. 先完成 [异步 TodoList 教程](./tutorial-async-todo-list/)，快速建立完整心智模型。
 2. 再在 [Playground](./playground/) 里走一遍交互，观察失败、重试与恢复。
 3. 继续 [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/) 建立公共语义。
-4. 用 [useIO 与通用能力联动](./useio-and-common-capabilities/) 把本地状态与 Query 串起来。
-5. 完成 key、缓存、重试、分页等核心能力，再进入各框架适配页。
+4. 先掌握 key、缓存、重试、分页等核心能力，再进入各框架适配页。
+5. 在框架适配页的「读写实战」中学习 useIO 与本地状态联动。
 
 ## 能力地图
 
@@ -30,35 +30,51 @@ sidebar:
 | 从 0 到 1 的完整示例 | [异步 TodoList 教程](./tutorial-async-todo-list/) |
 | 交互式演练与故障恢复 | [Playground](./playground/) |
 | Client 创建与请求生命周期 | [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/) |
-| useIO 与通用能力联动 | [useIO 与通用能力联动](./useio-and-common-capabilities/) |
+| useIO 联动本地状态 | 各框架适配页的 [读写实战](./react-adapter/read-write-workflow/)（统一迁移） |
 | Key 设计、缓存命中、手动刷新 | [Query Key、缓存与刷新](./query-keys-cache-and-refetch/) |
 | 提交、乐观更新、回滚与失效 | [提交与乐观更新](./mutation-optimistic-update-and-invalidation/) |
 | 架构总览与状态机 | [架构总览与状态机](./architecture-and-state-machine/) |
 | 分页、预取与取消 | [分页、预取与取消](./pagination-prefetch-and-cancellation/) |
 | Infinite Query 专题 | [Infinite Query：无限加载与分页窗口](./infinite-query/) |
 | SSR 预取与缓存注入 | [SSR 缓存注入策略](./ssr-cache-seeding-strategy/) |
-| 框架接入 | [React 适配](./react-adapter/) 到 [SvelteKit 适配](./sveltekit-adapter/) |
+| 框架接入（目录化） | [React 适配入口](./react-adapter/)（其余框架同结构） |
+
+## 适配器目录结构（8 框架统一）
+
+每个框架都使用同一套 4 页结构：
+
+1. `/<framework>-adapter/`（概览）
+2. `/<framework>-adapter/quick-start/`（10 分钟上手）
+3. `/<framework>-adapter/read-write-workflow/`（读写实战）
+4. `/<framework>-adapter/production-patterns/`（进阶与上线）
+
+已覆盖框架：React、Vue、Svelte、Solid、Lynx、Next.js、Nuxt、SvelteKit。
+
+## 框架入口
+
+- [React 适配](./react-adapter/)
+- [Vue 适配](./vue-adapter/)
+- [Svelte 适配](./svelte-adapter/)
+- [Solid 适配](./solid-adapter/)
+- [Lynx 适配](./lynx-adapter/)
+- [Next.js 适配](./next-adapter/)
+- [Nuxt 适配](./nuxt-adapter/)
+- [SvelteKit 适配](./sveltekit-adapter/)
 
 ## 推荐阅读顺序
 
 1. [异步 TodoList 教程](./tutorial-async-todo-list/)
 2. [Playground](./playground/)
 3. [Vanilla：Query Client 与生命周期](./vanilla-query-client-and-lifecycle/)
-4. [useIO 与通用能力联动](./useio-and-common-capabilities/)
-5. [Query Key、缓存与刷新](./query-keys-cache-and-refetch/)
-6. [提交与乐观更新](./mutation-optimistic-update-and-invalidation/)
-7. [架构总览与状态机](./architecture-and-state-machine/)
-8. [分页、预取与取消](./pagination-prefetch-and-cancellation/)
-9. [Infinite Query：无限加载与分页窗口](./infinite-query/)
-10. [SSR 缓存注入策略](./ssr-cache-seeding-strategy/)
-11. [React 适配](./react-adapter/)
-12. [Vue 适配](./vue-adapter/)
-13. [Svelte 适配](./svelte-adapter/)
-14. [Solid 适配](./solid-adapter/)
-15. [Lynx 适配](./lynx-adapter/)
-16. [Next.js 适配](./next-adapter/)
-17. [Nuxt 适配](./nuxt-adapter/)
-18. [SvelteKit 适配](./sveltekit-adapter/)
+4. [Query Key、缓存与刷新](./query-keys-cache-and-refetch/)
+5. [提交与乐观更新](./mutation-optimistic-update-and-invalidation/)
+6. [架构总览与状态机](./architecture-and-state-machine/)
+7. [分页、预取与取消](./pagination-prefetch-and-cancellation/)
+8. [Infinite Query：无限加载与分页窗口](./infinite-query/)
+9. [SSR 缓存注入策略](./ssr-cache-seeding-strategy/)
+10. 选择你的目标框架入口（例如 [React 适配](./react-adapter/)）。
+11. 按该框架的固定 4 页路径完成：`概览 -> quick-start -> read-write-workflow -> production-patterns`。
+12. 在「读写实战」章节学习 useIO 联动本地状态（已从 Query 架构统一迁移）。
 
 ## 下一步
 

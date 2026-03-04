@@ -1,103 +1,33 @@
 ---
-title: useIO and Common Capability Composition
-description: Combine useIO, derived views, behaviors, and batching with Query workflows.
+title: "useIO Composition (Migrated)"
+description: "This content has been migrated to adapter-level Read/Write Workflow chapters."
 sidebar:
   order: 5
 ---
 
-## What It Is
+## Migration Note
 
-`useQuery` manages remote request lifecycle, while `useIO` manages local reactive UI state. Together, they let you separate remote truth from local interaction state and compose with shared capabilities like `derived`, `withBehaviors`, `batch`, and DevTools.
+`useIO` usage in query workflows has been moved from Query Architecture into adapter-level docs, so each framework now has a complete, self-contained path.
 
-## When to Use
+Please use each adapter's **Read/Write Workflow** page for:
 
-- A page has both remote data and local filter/pagination/draft state.
-- You need persisted local params (for example keyword/page) to drive query keys.
-- You need to reduce render jitter under high-frequency input.
+- local interaction state vs remote query state boundaries
+- driving query keys with `useIO` (or Svelte store adapters)
+- key alignment, batching, scheduling, and practical pitfalls
 
-## Core API
+## New Entry Points
 
-- [useIO](/en/api-reference/io-react/use-io/)
-- [useQuery](/en/api-reference/io-react/use-query/)
-- [derived](/en/api-reference/io/derived/)
-- [withBehaviors](/en/api-reference/io/with-behaviors/)
-- [batch](/en/api-reference/io/batch/)
+- [React: Read/Write Workflow](/en/cookbook/async-query/react-adapter/read-write-workflow/)
+- [Vue: Read/Write Workflow](/en/cookbook/async-query/vue-adapter/read-write-workflow/)
+- [Svelte: Read/Write Workflow](/en/cookbook/async-query/svelte-adapter/read-write-workflow/)
+- [Solid: Read/Write Workflow](/en/cookbook/async-query/solid-adapter/read-write-workflow/)
+- [Lynx: Read/Write Workflow](/en/cookbook/async-query/lynx-adapter/read-write-workflow/)
+- [Next.js: Read/Write Workflow](/en/cookbook/async-query/next-adapter/read-write-workflow/)
+- [Nuxt: Read/Write Workflow](/en/cookbook/async-query/nuxt-adapter/read-write-workflow/)
+- [SvelteKit: Read/Write Workflow](/en/cookbook/async-query/sveltekit-adapter/read-write-workflow/)
 
-## Minimal Example
+## Recommended Reading Path
 
-```tsx
-import { useIO, useQuery } from '@iostore/react';
-import { io } from '@iostore/store';
-import { derived } from '@iostore/store/derived';
-import { persist, schedule, withBehaviors } from '@iostore/store/behavior';
-
-const filterStore = withBehaviors(
-  io({
-    keyword: '',
-    page: 1,
-  }),
-  [
-    persist({ key: 'docs-async-query-filters' }),
-    schedule('microtask'),
-  ],
-);
-
-const queryKeyView = derived(filterStore, (s) => ['todos', s.keyword, s.page] as const);
-
-export function TodoPage() {
-  const filters = useIO(filterStore);
-  const queryKey = useIO(queryKeyView);
-
-  const todosQuery = useQuery({
-    key: queryKey,
-    queryFn: ({ signal }) =>
-      fetch(`/api/todos?keyword=${filters.keyword}&page=${filters.page}`, { signal }).then((r) => r.json()),
-  });
-
-  return (
-    <div>
-      <input
-        value={filters.keyword}
-        onChange={(event) => filterStore.keyword.set(event.currentTarget.value)}
-      />
-      <button onClick={() => filterStore.page.set((n) => n + 1)}>Next</button>
-      <div>{todosQuery.isFetching ? 'loading' : 'idle'}</div>
-    </div>
-  );
-}
-```
-
-## Reading client.defineQuery() directly with useIO
-
-Yes. `useIO` can read the object returned by `client.defineQuery(...)` directly, because that object is an IO node with snapshot and subscription capabilities.
-
-```tsx
-const query = client.defineQuery({
-  key: ['todo', id],
-  queryFn: ({ signal }) => fetchTodo(id, signal),
-});
-
-const state = useIO(query);
-```
-
-Two important notes:
-
-- `useIO(query)` only reads/subscribes. It does not auto-trigger fetching.
-- For page-level query flows, prefer `useQuery(...)` so fetch/refetch/status are handled together.
-
-## Common Pitfalls
-
-- Duplicating query data into local IO as a second source of truth.
-- Driving query params from local state but not encoding all params in the key.
-- Skipping `batch()` in burst updates and producing noisy intermediate renders.
-
-## Practical Guidance
-
-- Keep remote truth in Query and local UI intent in IO.
-- Start with `schedule('microtask')` for input-heavy flows.
-- Use [DevTools](/en/cookbook/devtools/) to inspect query/local timeline interactions.
-- Combine with [Persist](/en/cookbook/persist/) for local param durability and [Batching](/en/cookbook/batching/) for grouped local updates.
-
-## Next Steps
-
-- Continue with [Query Keys, Cache, and Refetch](./query-keys-cache-and-refetch/)
+1. [Async Query Index](/en/cookbook/async-query/)
+2. Open your adapter entry (for example [React Adapter](/en/cookbook/async-query/react-adapter/))
+3. Follow `overview -> quick-start -> read-write-workflow -> production-patterns`

@@ -1,0 +1,68 @@
+---
+title: "10-Minute Quick Start"
+description: "Build a runnable minimal query setup in Vue."
+sidebar:
+  order: 2
+---
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/vue vue
+```
+
+## Minimal Copyable Example
+
+```ts
+import { computed, ref } from 'vue';
+import { useQuery } from '@iostore/vue';
+
+type User = { id: string; name: string };
+
+const tenantId = ref('acme');
+
+const users = useQuery<User[]>({
+  key: ['users', tenantId.value],
+  queryFn: ({ signal }) =>
+    fetch(`/api/users?tenant=${tenantId.value}`, { signal }).then((r) => r.json()),
+  cancelOnDispose: true,
+});
+
+const rows = computed(() => users.data.value ?? []);
+const isLoading = computed(() => users.state.value.isLoading);
+```
+
+## State Branching Checklist
+
+- First load: branch on `isLoading` (or equivalent state).
+- Background refresh: rely on `isFetching` (or observer `fetchStatus`).
+- Error state: render diagnosable output, do not swallow `error`.
+
+## Cancellation Semantics (AbortSignal)
+
+- Always forward `signal` from `queryFn` to `fetch` or your request client.
+- Treat cancellation as control flow, not as a business failure toast.
+- Enable cancellation on fast navigation (`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`).
+
+## 3 Things to Replace After Copying
+
+1. Replace demo key with your domain key (`users` -> `orders`).
+2. Replace request URL and response type with real API contracts.
+3. Tune retry and cancellation strategy based on screen interaction intensity.
+
+## Related APIs
+
+- [Vue adapter API](/en/api-reference/io-vue/)
+- [Query core (io-query)](/en/api-reference/io-query/)
+
+## Next
+
+- [Read/Write Workflow](./read-write-workflow/)
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)

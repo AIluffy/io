@@ -1,0 +1,46 @@
+---
+title: "进阶与上线"
+description: "在 SvelteKit 中处理分页、预取、取消、重试与上线排障。"
+sidebar:
+  order: 4
+---
+
+## SSR / CSR 边界策略
+
+```ts
+// hooks.server.ts / +layout.server.ts
+import { createQueryClient } from '@iostore/store/query';
+
+export async function loadDashboard(fetch: typeof globalThis.fetch) {
+  const client = createQueryClient();
+  const query = client.defineQuery({
+    key: ['dashboard'],
+    queryFn: ({ signal }) => fetch('/api/dashboard', { signal }).then((r) => r.json()),
+  });
+
+  await query.prefetch();
+  return client.dehydrate();
+}
+```
+
+- 每个请求创建独立 query client，禁止跨请求复用单例。
+- SSR 仅传输可序列化数据（plain object/array）。
+- Hydration 后继续保留 invalidate/refetch 语义，不把缓存注入当成终态。
+
+## 生产排障清单
+
+1. 检查 server/client 的 key 是否完全一致。
+2. 检查 dehydrated 数据是否被非序列化值污染。
+3. 检查写后是否仍执行 invalidate，避免“首屏新、交互旧”。
+4. 检查请求超时与重试配置，避免服务端重放放大。
+
+## 相关 API
+
+- [Query 核心：createQueryClient](/api-reference/io-query/create-query-client/)
+- [Query 核心：dehydrate/hydrate](/api-reference/io-query/io-dehydrate-options/)
+- [SvelteKit 适配 API](/api-reference/io-svelte/)
+
+## 导航
+
+- [返回本框架概览](./)
+- [返回 Query 专题](/cookbook/async-query/)

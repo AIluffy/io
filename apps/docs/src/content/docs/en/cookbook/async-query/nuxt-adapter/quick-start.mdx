@@ -1,0 +1,78 @@
+---
+title: "10-Minute Quick Start"
+description: "Build a runnable minimal query setup in Nuxt."
+sidebar:
+  order: 2
+---
+
+## Install
+
+```bash
+npm i @iostore/store @iostore/vue vue nuxt
+```
+
+## Minimal Copyable Example
+
+```ts
+// composables/useDashboardQuery.ts
+import { useQuery } from '@iostore/vue';
+
+export function useDashboardQuery() {
+  return useQuery({
+    key: ['dashboard'],
+    queryFn: ({ signal }) => $fetch('/api/dashboard', { signal }),
+    cancelOnDispose: true,
+  });
+}
+```
+
+```vue
+<script setup lang="ts">
+const { data: initial } = await useAsyncData('dashboard', () => $fetch('/api/dashboard'));
+const dashboard = useDashboardQuery();
+
+if (initial.value && !dashboard.data.value) {
+  dashboard.query.setData(initial.value);
+}
+</script>
+
+<template>
+  <p v-if="dashboard.state.value.isLoading">Loading...</p>
+  <pre v-else>{{ dashboard.data.value }}</pre>
+</template>
+```
+
+## State Branching Checklist
+
+- First load: branch on `isLoading` (or equivalent state).
+- Background refresh: rely on `isFetching` (or observer `fetchStatus`).
+- Error state: render diagnosable output, do not swallow `error`.
+
+## Cancellation Semantics (AbortSignal)
+
+- Always forward `signal` from `queryFn` to `fetch` or your request client.
+- Treat cancellation as control flow, not as a business failure toast.
+- Enable cancellation on fast navigation (`cancelOnUnmount` / `cancelOnDispose` / `cancelOnUnsubscribe`).
+
+## 3 Things to Replace After Copying
+
+1. Replace demo key with your domain key (`users` -> `orders`).
+2. Replace request URL and response type with real API contracts.
+3. Tune retry and cancellation strategy based on screen interaction intensity.
+
+## Related APIs
+
+- [Nuxt adapter API](/en/api-reference/io-vue/)
+- [Query core (io-query)](/en/api-reference/io-query/)
+
+## Next
+
+- [Read/Write Workflow](./read-write-workflow/)
+- [Production Patterns](./production-patterns/)
+
+
+## Navigation
+
+- [Back to adapter overview](./)
+- [Back to Async Query](/en/cookbook/async-query/)
+- [Continue to production patterns](./production-patterns/)
