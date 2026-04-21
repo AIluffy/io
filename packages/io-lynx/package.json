@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@lynx-js/react": "*",
-    "vite": "^7.3.1",
+    "vite": "^7.3.2",
     "@iostore/store": "*"
   },
   "nx": {
